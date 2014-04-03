@@ -1,0 +1,7 @@
+[Misc]
+Name=StyleProject
+Name[x-test]=xxStyleProjectxx
+ConfigPage=
+Comment=Style for qt4
+[KDE]
+WidgetStyle=StyleProject
