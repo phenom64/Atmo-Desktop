@@ -3,7 +3,11 @@ QT       += widgets
 TARGET = styleproject
 TEMPLATE = lib
 
-SOURCES += styleproject.cpp
+SOURCES += styleproject.cpp \
+    init.cpp \
+    buttons.cpp \
+    pixelmetric.cpp \
+    polish.cpp
 
 HEADERS += styleproject.h
 
