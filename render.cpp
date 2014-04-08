@@ -50,27 +50,57 @@ Render::partRect(const QRect &rect, const Part &part, const int roundNess, const
 {
     int x, y, w, h;
     rect.getRect(&x, &y, &w, &h);
+
     int midWidth = w;
     if (sides&Right)
         midWidth-=roundNess;
     if (sides&Left)
         midWidth-=roundNess;
+
     int midHeight = h;
     if (sides&Top)
         midHeight-=roundNess;
     if (sides&Bottom)
         midHeight-=roundNess;
+
+    int left(bool(sides&Left)*roundNess)
+            , top(bool(sides&Top)*roundNess)
+            , right(bool(sides&Right)*roundNess)
+            , bottom(bool(sides&Bottom)*roundNess);
+
     switch (part)
     {
     case TopLeftPart: return QRect(0, 0, roundNess, roundNess);
-    case TopMidPart: return QRect(sides&Left?roundNess:0, 0, midWidth, roundNess);
-    case TopRightPart: return QRect(w-(sides&Right?roundNess:0), 0, roundNess, roundNess);
-    case LeftPart: return QRect(0, sides&Top?roundNess:0, roundNess, midHeight);
-    case CenterPart: return QRect(sides&Left?roundNess:0, sides&Top?roundNess:0, midWidth, midHeight);
-    case RightPart: return QRect(w-(sides&Right?roundNess:0), roundNess, roundNess, midHeight);
-    case BottomLeftPart: return QRect(0, h-(sides&Bottom?roundNess:0), roundNess, roundNess);
-    case BottomMidPart: return QRect(sides&Left?roundNess:0, h-(sides&Bottom?roundNess:0), midWidth, roundNess);
-    case BottomRightPart: return QRect(w-(sides&Left?roundNess:0), h-(sides&Bottom?roundNess:0), roundNess, roundNess);
+    case TopMidPart: return QRect(left, 0, midWidth, roundNess);
+    case TopRightPart: return QRect(w-right, 0, roundNess, roundNess);
+    case LeftPart: return QRect(0, top, roundNess, midHeight);
+    case CenterPart: return QRect(left, top, midWidth, midHeight);
+    case RightPart: return QRect(w-right, top, roundNess, midHeight);
+    case BottomLeftPart: return QRect(0, h-bottom, roundNess, roundNess);
+    case BottomMidPart: return QRect(left, h-bottom, midWidth, roundNess);
+    case BottomRightPart: return QRect(w-right, h-bottom, roundNess, roundNess);
+    default: return QRect();
+    }
+}
+
+QRect
+Render::rect(const QRect &rect, const Part &part, const int roundNess) const
+{
+    int x, y, w, h;
+    rect.getRect(&x, &y, &w, &h);
+    int midWidth = w-(roundNess*2);
+    int midHeight = h-(roundNess*2);
+    switch (part)
+    {
+    case TopLeftPart: return QRect(0, 0, roundNess, roundNess);
+    case TopMidPart: return QRect(roundNess, 0, midWidth, roundNess);
+    case TopRightPart: return QRect(w-roundNess, 0, roundNess, roundNess);
+    case LeftPart: return QRect(0, roundNess, roundNess, midHeight);
+    case CenterPart: return QRect(roundNess, roundNess, midWidth, midHeight);
+    case RightPart: return QRect(w-roundNess, roundNess, roundNess, midHeight);
+    case BottomLeftPart: return QRect(0, h-roundNess, roundNess, roundNess);
+    case BottomMidPart: return QRect(roundNess, h-roundNess, midWidth, roundNess);
+    case BottomRightPart: return QRect(w-roundNess, h-roundNess, roundNess, roundNess);
     default: return QRect();
     }
 }
@@ -84,7 +114,7 @@ Render::isCornerPart(const Part &part) const
 QPixmap
 Render::genPart(const Part &part, const QPixmap &source, const Sides &sides, QRect &inSource, const int roundNess) const
 {
-    inSource = partRect(source.rect(), part, roundNess, sides);
+    inSource = rect(source.rect(), part, roundNess);
     QPixmap rt = source.copy(inSource);
     if (!isCornerPart(part))
         return rt;
@@ -98,28 +128,19 @@ Render::genPart(const Part &part, const QPixmap &source, const Sides &sides, QRe
 bool
 Render::needPart(const Part &part, const Sides &sides) const
 {
-//    switch (part)
-//    {
-//    case TopLeftPart: return sides&Top||sides&Left;
-//    case TopMidPart: return sides&Top;
-//    case TopRightPart: return sides&Top||sides&Right;
-//    case LeftPart: return sides&Left;
-//    case CenterPart: return true;
-//    case RightPart: return sides&Right;
-//    case BottomLeftPart: return sides&Left||sides&Bottom;
-//    case BottomMidPart: return sides&Bottom;
-//    case BottomRightPart: return sides&Right||sides&Bottom;
-//    default: return false;
-//    }
-    if (part < LeftPart)
-        return sides & Top;
-    if (part == LeftPart)
-        return sides & Left;
-    if (part == RightPart)
-        return sides & Right;
-    if (part > RightPart)
-        return sides & Bottom;
-    return true; //center
+    switch (part)
+    {
+    case TopLeftPart: return bool((sides&Top)&&(sides&Left));
+    case TopMidPart: return bool(sides&Top);
+    case TopRightPart: return bool((sides&Top)&&(sides&Right));
+    case LeftPart: return bool(sides&Left);
+    case CenterPart: return true;
+    case RightPart: return bool(sides&Right);
+    case BottomLeftPart: return bool((sides&Bottom)&&(sides&Left));
+    case BottomMidPart: return bool(sides&Bottom);
+    case BottomRightPart: return bool((sides&Bottom)&&(sides&Right));
+    default: return false;
+    }
 }
 
 void
@@ -138,7 +159,7 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
         {
             QRect r;
             const QPixmap &partPix = genPart((Part)i, pix, sides, r, roundNess);
-            painter->drawTiledPixmap(r, partPix);
+            painter->drawTiledPixmap(partRect(rect, (Part)i, roundNess, sides), partPix);
         }
     }
 }

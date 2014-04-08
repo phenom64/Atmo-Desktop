@@ -4,8 +4,12 @@
 #include <QPlastiqueStyle>
 
 #define CCSize CC_MdiControls+1
-#define CSize CE_ShapedFrame+1
-#define PSize PE_PanelMenu+1
+#define CESize CE_ShapedFrame+1
+#define PESize PE_PanelMenu+1
+
+#define isSunken state & (State_Sunken | State_Selected | State_On)
+#define isHovered state & State_MouseOver
+#define isEnabled state & State_Enabled
 
 class StyleProject : public QPlastiqueStyle
 {
@@ -36,6 +40,11 @@ public:
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
 
     /* functions called for drawing */
+    bool controlSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
+    bool primitiveSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
+    bool complexSkipper(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const { return true; }
+
+    /* controls */
     bool drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
@@ -43,6 +52,13 @@ public:
     bool drawCheckBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+
+    /* complex controls */
+    bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
+
+    /* primitives */
+    bool drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
@@ -50,9 +66,9 @@ public:
     typedef bool (StyleProject::*StylePrimitive)(const QStyleOption *, QPainter *, const QWidget *) const;
 
 private:
-    StyleComplexControl m_complexControl[CCSize];
-    StyleControl m_control[CSize];
-    StylePrimitive m_primitive[PSize];
+    StyleComplexControl m_cc[CCSize];
+    StyleControl m_ce[CESize];
+    StylePrimitive m_pe[PESize];
 };
 
 #endif // STYLEPROJECT_H

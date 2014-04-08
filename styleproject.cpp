@@ -27,28 +27,22 @@ StyleProject::StyleProject()
 void
 StyleProject::drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (m_control[element])
-        if ((this->*m_control[element])(option, painter, widget))
-            return;
-    QPlastiqueStyle::drawControl(element, option, painter, widget);
+    if (!(m_ce[element] && (this->*m_ce[element])(option, painter, widget)))
+        QPlastiqueStyle::drawControl(element, option, painter, widget);
 }
 
 void
 StyleProject::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    if (m_complexControl[control])
-        if ((this->*m_complexControl[control])(option, painter, widget))
-            return;
-    QPlastiqueStyle::drawComplexControl(control, option, painter, widget);
+    if (!(m_cc[control] && (this->*m_cc[control])(option, painter, widget)))
+        QPlastiqueStyle::drawComplexControl(control, option, painter, widget);
 }
 
 void
 StyleProject::drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (m_primitive[element])
-        if ((this->*m_primitive[element])(option, painter, widget))
-            return;
-    QPlastiqueStyle::drawPrimitive(element, option, painter, widget);
+    if (!(m_pe[element] && (this->*m_pe[element])(option, painter, widget)))
+        QPlastiqueStyle::drawPrimitive(element, option, painter, widget);
 }
 
 void

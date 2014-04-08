@@ -16,7 +16,7 @@ public:
     ~Render(){}
     static Render *instance();
     static inline void generateData() { instance()->_generateData(); }
-    static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides &parts = All)
+    static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND-1, const Sides &parts = All)
     { instance()->_renderMask(rect, painter, brush, roundNess, parts); }
 
 protected:
@@ -26,6 +26,7 @@ protected:
     bool needPart(const Part &part, const Sides &sides) const;
     QPixmap genPart(const Part &part, const QPixmap &source, const Sides &sides, QRect &inSource, const int roundNess) const;
     QRect partRect(const QRect &rect, const Part &part, const int roundNess, const Sides &sides) const;
+    QRect rect(const QRect &rect, const Part &part, const int roundNess) const;
 
 private:
     static Render *m_instance;

@@ -8,7 +8,8 @@ SOURCES += styleproject.cpp \
     buttons.cpp \
     pixelmetric.cpp \
     polish.cpp \
-    render.cpp
+    render.cpp \
+    inputs.cpp
 
 HEADERS += styleproject.h \
     render.h
