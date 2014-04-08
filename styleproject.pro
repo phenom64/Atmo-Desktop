@@ -9,10 +9,12 @@ SOURCES += styleproject.cpp \
     pixelmetric.cpp \
     polish.cpp \
     render.cpp \
-    inputs.cpp
+    inputs.cpp \
+    ops.cpp
 
 HEADERS += styleproject.h \
-    render.h
+    render.h \
+    ops.h
 
 unix {
     target.path = $$[QT_INSTALL_PLUGINS]/styles

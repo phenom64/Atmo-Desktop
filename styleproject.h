@@ -59,6 +59,7 @@ public:
 
     /* primitives */
     bool drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
