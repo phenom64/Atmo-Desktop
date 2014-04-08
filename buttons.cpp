@@ -5,6 +5,7 @@
 #include <QPushButton>
 
 #include "styleproject.h"
+#include "render.h"
 
 /*
  * This here paints the button, in order to override
@@ -29,7 +30,8 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
 bool
 StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    return false;
+    Render::renderMask(option->rect, painter, option->palette.color(QPalette::Button));
+    return true;
 }
 
 bool
@@ -37,6 +39,9 @@ StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter,
 {
     return false;
 }
+
+
+/* checkboxes */
 
 bool
 StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -49,6 +54,8 @@ StyleProject::drawCheckBoxLabel(const QStyleOption *option, QPainter *painter, c
 {
     return false;
 }
+
+/* radiobuttons */
 
 bool
 StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const

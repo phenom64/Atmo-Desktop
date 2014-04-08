@@ -1,6 +1,7 @@
 #include <QStylePlugin>
 
 #include "styleproject.h"
+#include "render.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -20,6 +21,7 @@ StyleProject::StyleProject()
 {
     init();
     assignMethods();
+    Render::generateData();
 }
 
 void
