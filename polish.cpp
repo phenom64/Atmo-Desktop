@@ -1,3 +1,4 @@
+#include <QToolBar>
 
 #include "styleproject.h"
 
@@ -14,5 +15,14 @@
 void
 StyleProject::polish(QWidget *widget)
 {
+    if (!widget)
+        return;
+
+    /* needed for mac os x lion like toolbuttons,
+     * we need to repaint the toolbar when a action
+     * has been triggered, otherwise we are painting
+     * errors */
+    if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
+        connect(bar, SIGNAL(actionTriggered(QAction*)), bar, SLOT(update()));
     QPlastiqueStyle::polish(widget);
 }

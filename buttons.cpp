@@ -111,38 +111,65 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     geo.getCoords(&x, &y, &r, &b);
     const QToolBar *bar = qobject_cast<const QToolBar *>(widget->parentWidget());
     int sides = Render::All;
+    bool nextSelected(false), prevSelected(false);
     if (bar)
     {
-        if (qobject_cast<QToolButton *>(bar->childAt(r+margin, hc)))
+        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
+        {
             sides &= ~Render::Right;
-        if (qobject_cast<QToolButton *>(bar->childAt(x-margin, hc)))
+            if (btn->isChecked())
+                nextSelected = true;
+        }
+        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc)))
+        {
             sides &= ~Render::Left;
-        if (qobject_cast<QToolButton *>(bar->childAt(wc, b+margin)))
+            if (btn->isChecked())
+                prevSelected = true;
+        }
+        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin)))
+        {
             sides &= ~Render::Bottom;
-        if (qobject_cast<QToolButton *>(bar->childAt(wc, y-margin)))
+            if (btn->isChecked())
+                nextSelected = true;
+        }
+        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin)))
+        {
             sides &= ~Render::Top;
+            if (btn->isChecked())
+                prevSelected = true;
+        }
+        if (const QToolButton *btn = qobject_cast<const QToolButton *>(widget))
+            if (btn->isChecked())
+                nextSelected = true;
     }
+    Render::Shadow shadow = Render::Etched;
     QColor bc(option->palette.color(QPalette::Button));
     if (option->isEnabled)
     {
         if (option->isHovered)
             bc = bc.lighter(110);
         if (option->isSunken)
+        {
             bc = bc.darker(110);
+            shadow = Render::Sunken;
+        }
     }
 #define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
     QRect rect(option->rect);
     QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    lg.setColorAt(0.0f, Ops::mid(bc, Qt::white, 2, 1));
-    lg.setColorAt(1.0f, Ops::mid(bc, Qt::black, 7, 1));
+    const QColor &start = Ops::mid(bc, Qt::white, 2, 1), &end = Ops::mid(bc, Qt::black, 7, 1);
+    lg.setColorAt(0.0f, option->isSunken ? end : start);
+    lg.setColorAt(1.0f, option->isSunken ? start : end);
     Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, (Render::Sides)sides);
     painter->setOpacity(0.5f);
-    Render::renderShadow(Render::Etched, option->rect, painter, 4, (Render::Sides)sides);
-    if (!(sides&Render::Right))
+    Render::renderShadow(shadow, option->rect, painter, 4, (Render::Sides)sides);
+    if (!(sides&Render::Right) && !nextSelected)
     {
         painter->setPen(Qt::black);
         painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
     }
+    if (option->isSunken)
+        Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, (Render::Sides)((int)Render::All-sides));
     painter->setOpacity(1.0f);
     const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->isEnabled ? QIcon::Normal : QIcon::Disabled);
     Qt::Alignment iAlign = Qt::AlignCenter, tAlign = Qt::AlignCenter;

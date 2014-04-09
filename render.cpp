@@ -64,6 +64,7 @@ Render::initShadowParts()
         pix.fill(Qt::transparent);
         QPainter p(&pix);
         p.setRenderHint(QPainter::Antialiasing);
+        float add(i?(float)i/100.0f:0);
         switch (s)
         {
         case Sunken:
@@ -76,8 +77,8 @@ Render::initShadowParts()
             rect.setBottom(rect.bottom()-1);
             p.drawRoundedRect(rect, i, i);
             p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            QRadialGradient rg(pix.rect().center()+QPointF(0, 0.25f), qFloor(size/2));
-            rg.setColorAt(0.8f, Qt::black);
+            QRadialGradient rg(pix.rect().center()+QPointF(0, qMin(0.25f, add)), qFloor(size/2));
+            rg.setColorAt(qMin(0.8f, 0.6f+add), Qt::black);
             rg.setColorAt(1.0f, Qt::transparent);
             p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
             p.fillRect(rect, rg);
@@ -85,7 +86,7 @@ Render::initShadowParts()
         }
         case Raised:
         {
-            QRadialGradient rg(pix.rect().center()+QPointF(0, 0.25f), qFloor(size/2));
+            QRadialGradient rg(pix.rect().center()+QPointF(0, add), qFloor(size/2));
             rg.setColorAt(0.7f, Qt::black);
             rg.setColorAt(1.0f, Qt::transparent);
             p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?

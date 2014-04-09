@@ -41,4 +41,6 @@ StyleProject::assignMethods()
     m_pe[PE_IndicatorToolBarSeparator] = &StyleProject::primitiveSkipper;
     m_pe[PE_PanelLineEdit] = &StyleProject::drawLineEdit;
     m_pe[PE_Frame] = &StyleProject::drawFrame;
+    m_pe[PE_PanelMenuBar] = &StyleProject::primitiveSkipper;
+    m_pe[PE_IndicatorDockWidgetResizeHandle] = &StyleProject::primitiveSkipper;
 }
