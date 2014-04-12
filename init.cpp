@@ -1,5 +1,7 @@
+#include <QApplication>
 
 #include "styleproject.h"
+#include "ops.h"
 
 void
 StyleProject::init()
@@ -10,6 +12,8 @@ StyleProject::init()
         m_ce[i] = 0;
     for (int i = 0; i < PESize; ++i)
         m_pe[i] = 0;
+    QPalette p(QApplication::palette());
+    m_specialColor = Ops::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
 }
 
 /* here we assign functions to perform the
@@ -18,29 +22,47 @@ StyleProject::init()
  * we will add more as we go
  */
 
+#define method(_method_) &StyleProject::_method_
+
 void
 StyleProject::assignMethods()
 {
-    /* controls */
-    m_ce[CE_PushButton] = &StyleProject::drawPushButton;
-    m_ce[CE_PushButtonBevel] = &StyleProject::drawPushButtonBevel;
-    m_ce[CE_PushButtonLabel] = &StyleProject::drawPushButtonLabel;
-    m_ce[CE_CheckBox] = &StyleProject::drawCheckBox;
-    m_ce[CE_CheckBoxLabel] = &StyleProject::drawCheckBoxLabel;
-    m_ce[CE_RadioButton] = &StyleProject::drawRadioButton;
-    m_ce[CE_RadioButtonLabel] = &StyleProject::drawRadioButtonLabel;
-    m_ce[CE_ToolButtonLabel] = &StyleProject::drawToolButtonLabel;
-    m_ce[CE_ToolBar] = &StyleProject::controlSkipper;
-    m_ce[CE_Splitter] = &StyleProject::controlSkipper;
-    m_ce[CE_SizeGrip] = &StyleProject::controlSkipper;
+    /* control elements */
+    m_ce[CE_PushButton] = method(drawPushButton);
+    m_ce[CE_PushButtonBevel] = method(drawPushButtonBevel);
+    m_ce[CE_PushButtonLabel] = method(drawPushButtonLabel);
+    m_ce[CE_CheckBox] = method(drawCheckBox);
+    m_ce[CE_CheckBoxLabel] = method(drawCheckBoxLabel);
+    m_ce[CE_RadioButton] = method(drawRadioButton);
+    m_ce[CE_RadioButtonLabel] = method(drawRadioButtonLabel);
+    m_ce[CE_ToolButtonLabel] = method(drawToolButtonLabel);
+    m_ce[CE_ToolBar] = method(drawToolBar);
+    m_ce[CE_Splitter] = method(drawSplitter);
+    m_ce[CE_SizeGrip] = method(controlSkipper);
+    m_ce[CE_MenuBarItem] = method(drawMenuItem);
+    m_ce[CE_MenuItem] = method(drawMenuItem);
+    m_ce[CE_TabBarTab] = method(drawTab);
+    m_ce[CE_TabBarTabShape] = method(drawTabShape);
+    m_ce[CE_TabBarTabLabel] = method(drawTabLabel);
+    m_ce[CE_MenuBarEmptyArea] = method(controlSkipper);
 
     /* complex controls */
-    m_cc[CC_ToolButton] = &StyleProject::drawToolButton;
+    m_cc[CC_ToolButton] = method(drawToolButton);
+    m_cc[CC_ScrollBar] = method(drawScrollBar);
+    m_cc[CC_Slider] = method(drawSlider);
+    m_cc[CC_ComboBox] = method(drawComboBox);
 
-    /* primitives */
-    m_pe[PE_IndicatorToolBarSeparator] = &StyleProject::primitiveSkipper;
-    m_pe[PE_PanelLineEdit] = &StyleProject::drawLineEdit;
-    m_pe[PE_Frame] = &StyleProject::drawFrame;
-    m_pe[PE_PanelMenuBar] = &StyleProject::primitiveSkipper;
-    m_pe[PE_IndicatorDockWidgetResizeHandle] = &StyleProject::primitiveSkipper;
+    /* primitive elements */
+    m_pe[PE_IndicatorToolBarSeparator] = method(primitiveSkipper);
+    m_pe[PE_PanelLineEdit] = method(drawLineEdit);
+    m_pe[PE_Frame] = method(drawFrame);
+    m_pe[PE_PanelMenuBar] = method(primitiveSkipper);
+    m_pe[PE_IndicatorDockWidgetResizeHandle] = method(drawSplitter);
+    m_pe[PE_FrameStatusBarItem] = method(primitiveSkipper);
+    m_pe[PE_PanelStatusBar] = method(drawStatusBar);
+    m_pe[PE_Widget] = method(drawWindow);
+    m_pe[PE_FrameWindow] = method(drawWindow);
+    m_pe[PE_IndicatorToolBarHandle] = method(primitiveSkipper);
+    m_pe[PE_FrameTabBarBase] = method(drawTabBar);
+    m_pe[PE_FrameTabWidget] = method(drawTabWidget);
 }

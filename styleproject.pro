@@ -1,6 +1,6 @@
-QT       += widgets
-
-TARGET = styleproject
+QT       += widgets dbus
+CONFIG   += qt dbus
+TARGET   = styleproject
 TEMPLATE = lib
 
 SOURCES += styleproject.cpp \
@@ -10,11 +10,20 @@ SOURCES += styleproject.cpp \
     polish.cpp \
     render.cpp \
     inputs.cpp \
-    ops.cpp
+    ops.cpp \
+    panels.cpp \
+    overlay.cpp \
+    macmenu.cpp \
+    items.cpp \
+    sliders.cpp \
+    tabs.cpp
 
 HEADERS += styleproject.h \
     render.h \
-    ops.h
+    ops.h \
+    overlay.h \
+    macmenu.h \
+    macmenu-dbus.h
 
 unix {
     target.path = $$[QT_INSTALL_PLUGINS]/styles

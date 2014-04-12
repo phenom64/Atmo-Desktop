@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <qmath.h>
+#include <QWidget>
 
 #include "render.h"
 
@@ -57,28 +58,34 @@ void
 Render::initShadowParts()
 {
     for (int s = 0; s < ShadowCount; ++s)
-    for (int i = 0; i < MAXRND+1; ++i)
+    for (int r = 0; r < MAXRND+1; ++r)
     {
-        const int size = i*2+1;
+        if (!r)
+            continue;
+        const int size = r*2+1;
         QPixmap pix(size, size);
         pix.fill(Qt::transparent);
         QPainter p(&pix);
         p.setRenderHint(QPainter::Antialiasing);
-        float add(i?(float)i/100.0f:0);
+        float add(r>4?(float)r/100.0f:0);
         switch (s)
         {
         case Sunken:
         {
-            p.setPen(Qt::NoPen);
-            p.setBrush(QColor(255, 255, 255, 255));
             QRect rect(pix.rect());
-            p.drawRoundedRect(rect, i, i);
+            p.setPen(Qt::NoPen);
+            const int rnd(bool(r>2)?r:1);
+            if (r > 1)
+            {
+                p.setBrush(QColor(255, 255, 255, 255));
+                p.drawRoundedRect(rect, rnd, rnd);
+            }
             p.setBrush(Qt::black);
-            rect.setBottom(rect.bottom()-1);
-            p.drawRoundedRect(rect, i, i);
+            rect.setBottom(rect.bottom()-bool(r>1)*1);
+            p.drawRoundedRect(rect, rnd, rnd);
             p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
             QRadialGradient rg(pix.rect().center()+QPointF(0, qMin(0.25f, add)), qFloor(size/2));
-            rg.setColorAt(qMin(0.8f, 0.6f+add), Qt::black);
+            rg.setColorAt(r>3?qMin(0.8f, 0.6f+add):0, Qt::black);
             rg.setColorAt(1.0f, Qt::transparent);
             p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
             p.fillRect(rect, rg);
@@ -87,7 +94,7 @@ Render::initShadowParts()
         case Raised:
         {
             QRadialGradient rg(pix.rect().center()+QPointF(0, add), qFloor(size/2));
-            rg.setColorAt(0.7f, Qt::black);
+            rg.setColorAt(0.5f, Qt::black);
             rg.setColorAt(1.0f, Qt::transparent);
             p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
             p.fillRect(pix.rect(), rg);
@@ -97,19 +104,19 @@ Render::initShadowParts()
             p.setBrush(Qt::NoBrush);
             p.translate(0.5f, 0.5f);
             p.setPen(QColor(255, 255, 255, 96));
-            p.drawRoundedRect(pix.rect().adjusted(0, 1, -1, -1), i, i);
+            p.drawRoundedRect(pix.rect().adjusted(0, 1, -1, -1), r, r);
             p.setPen(Qt::black);
-            p.drawRoundedRect(pix.rect().adjusted(0, 0, -1, -2), i, i);
+            p.drawRoundedRect(pix.rect().adjusted(0, 0, -1, -2), r, r);
             break;
         default: break;
         }
         p.end();
-        splitShadowParts((Shadow)s, i, size, pix);
+        splitShadowParts((Shadow)s, r, size, pix);
     }
 }
 
 void
-Render::splitShadowParts(const Shadow shadow, const int roundNess, const int size, const QPixmap &source)
+Render::splitShadowParts(const Shadow shadow, int roundNess, const int size, const QPixmap &source)
 {
     m_shadow[shadow][roundNess][TopLeftPart] = source.copy(0, 0, roundNess, roundNess);
     m_shadow[shadow][roundNess][TopMidPart] = source.copy(roundNess, 0, size-roundNess*2, roundNess);
@@ -123,7 +130,7 @@ Render::splitShadowParts(const Shadow shadow, const int roundNess, const int siz
 }
 
 QRect
-Render::partRect(const QRect &rect, const Part &part, const int roundNess, const Sides &sides) const
+Render::partRect(const QRect &rect, const Part part, const int roundNess, const Sides sides) const
 {
     int x, y, w, h;
     rect.getRect(&x, &y, &w, &h);
@@ -161,7 +168,7 @@ Render::partRect(const QRect &rect, const Part &part, const int roundNess, const
 }
 
 QRect
-Render::rect(const QRect &rect, const Part &part, const int roundNess) const
+Render::rect(const QRect &rect, const Part part, const int roundNess) const
 {
     int x, y, w, h;
     rect.getRect(&x, &y, &w, &h);
@@ -183,15 +190,15 @@ Render::rect(const QRect &rect, const Part &part, const int roundNess) const
 }
 
 bool
-Render::isCornerPart(const Part &part) const
+Render::isCornerPart(const Part part) const
 {
     return part==TopLeftPart||part==TopRightPart||part==BottomLeftPart||part==BottomRightPart;
 }
 
 QPixmap
-Render::genPart(const Part &part, const QPixmap &source, const int roundNess) const
+Render::genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const
 {
-    QPixmap rt = source.copy(rect(source.rect(), part, roundNess));
+    QPixmap rt = source.copy(partRect(source.rect(), part, roundNess, sides));
     if (!isCornerPart(part))
         return rt;
     QPainter p(&rt);
@@ -202,7 +209,7 @@ Render::genPart(const Part &part, const QPixmap &source, const int roundNess) co
 }
 
 bool
-Render::needPart(const Part &part, const Sides &sides) const
+Render::needPart(const Part part, const Sides sides) const
 {
     switch (part)
     {
@@ -220,28 +227,61 @@ Render::needPart(const Part &part, const Sides &sides) const
 }
 
 void
-Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides &sides)
+Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
 {
+    if (!rect.isValid())
+        return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2-1);
+    if (!roundNess)
+        roundNess = 1;
     QPixmap pix(rect.size());
     pix.fill(Qt::transparent);
     QPainter p(&pix);
+    if (!p.isActive())
+        return;
     p.fillRect(pix.rect(), brush);
     p.end();
 
     for (int i = 0; i < PartCount; ++i)
         if (needPart((Part)i, sides))
         {
-            const QPixmap &partPix = genPart((Part)i, pix, roundNess);
-            painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), partPix);
+            if (i != CenterPart && !roundNess)
+                continue;
+            const QPixmap &partPix = genPart((Part)i, pix, roundNess, sides);
+            painter->drawPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), partPix);
         }
 }
 
 void
-Render::_renderShadow(const Shadow &shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides &sides)
+Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides)
 {
+    if (!rect.isValid())
+        return;
     roundNess = qMin(qMin(MAXRND, roundNess), rect.height()/2-1);
+    if (!roundNess)
+        roundNess = 1;
     for (int i = 0; i < PartCount; ++i)
-        if (needPart((Part)i, sides))
-            painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), m_shadow[shadow][roundNess][i]);
+        if (i == CenterPart || roundNess)
+            if (needPart((Part)i, sides))
+                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), m_shadow[shadow][roundNess][i]);
+}
+
+Render::Sides
+Render::checkedForWindowEdges(const QWidget *w, Sides from)
+{
+    if (!w)
+        return from;
+    QPoint topLeft = w->mapTo(w->window(), w->rect().topLeft());
+    QRect winRect = w->window()->rect();
+    QRect widgetRect = QRect(topLeft, w->size());
+
+    if (widgetRect.left() <= winRect.left())
+        from &= ~Render::Left;
+    if (widgetRect.right() >= winRect.right())
+        from &= ~Render::Right;
+    if (widgetRect.bottom() >= winRect.bottom())
+        from &= ~Render::Bottom;
+    if (widgetRect.top() <= winRect.top())
+        from &= ~Render::Top;
+    return from;
 }

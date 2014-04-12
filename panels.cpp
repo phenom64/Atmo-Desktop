@@ -1,0 +1,107 @@
+#include <QPainter>
+#include <QStyleOption>
+#include <QDebug>
+#include <QToolBar>
+#include <QMainWindow>
+
+#include "styleproject.h"
+#include "render.h"
+#include "ops.h"
+
+bool
+StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (!widget || !widget->window() || !painter->isActive())
+        return true;
+
+    Render::Sides sides = Render::All;
+    QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
+    QRect winRect = widget->window()->rect();
+    QRect widgetRect = QRect(topLeft, widget->size());
+
+    if (widgetRect.left() <= winRect.left())
+        sides &= ~Render::Left;
+    if (widgetRect.right() >= winRect.right())
+        sides &= ~Render::Right;
+    if (widgetRect.bottom() >= winRect.bottom())
+        sides &= ~Render::Bottom;
+    //needless to check for top I think ;-)
+
+    const QRect &rect(widget->rect());
+    const QColor &start(Ops::mid(m_specialColor, Qt::white, 4, 1));
+    const QColor &end(Ops::mid(m_specialColor, Qt::black, 4, 1));
+    QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+    lg.setColorAt(0.0f, start);
+    lg.setColorAt(1.0f, end);
+
+    Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, lg, 3, sides);
+    Render::renderShadow(Render::Etched, rect, painter, 4, sides);
+    return true;
+}
+
+bool
+StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (!painter->isActive())
+        return false;
+    painter->fillRect(option->rect, QColor(0, 0, 0, 128));
+    return true;
+}
+
+bool
+StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (!widget || !widget->window() || !painter->isActive())
+        return true;
+
+    uint sides = Render::All;
+    QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
+    QRect winRect = widget->window()->rect();
+    QRect widgetRect = QRect(topLeft, widget->size());
+
+    if (widgetRect.left() <= winRect.left())
+        sides &= ~Render::Left;
+    if (widgetRect.right() >= winRect.right())
+        sides &= ~Render::Right;
+    if (widgetRect.top() <= winRect.top())
+        sides &= ~Render::Top;
+
+    const QRect &rect(widget->rect());
+    const QColor &start(Ops::mid(m_specialColor, Qt::white, 4, 1));
+    const QColor &end(Ops::mid(m_specialColor, Qt::black, 4, 1));
+    QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+    lg.setColorAt(0.0f, start);
+    lg.setColorAt(1.0f, end);
+
+    QBrush b(end);
+    if (castObj(const QMainWindow *, win, widget->window()))
+    {
+        sides = 0;
+        if (widget->geometry().top() != widget->window()->rect().top())
+            sides = Render::Top;
+        else
+            b = lg;
+        castObj(const QToolBar *, toolBar, widget);
+        if (win->toolBarArea(const_cast<QToolBar *>(toolBar)) == Qt::TopToolBarArea)
+            Render::renderMask(rect, painter, b, 3, sides);
+    }
+
+    if (sides & Render::Top)
+    {
+        painter->save();
+        painter->setOpacity(0.5f);
+        Render::renderShadow(Render::Etched, rect, painter, 4, sides);
+        painter->restore();
+    }
+    return true;
+}
+
+bool
+StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (!(widget && widget->isWindow()) || !painter->isActive())
+        return true;
+
+    Render::renderShadow(Render::Sunken, option->rect, painter, 32, Render::Top);
+    return true;
+}

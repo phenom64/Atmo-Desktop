@@ -13,7 +13,7 @@
 
 /*
  * This here paints the button, in order to override
- * QPlastiqueStyle painting, simply return true here
+ * QCommonStyle painting, simply return true here
  * and paint what you want yourself.
  */
 
@@ -35,10 +35,12 @@ bool
 StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     painter->save();
+    if (!painter->isActive())
+        return false;
     QColor bc(option->palette.color(QPalette::Button));
-    if (option->isHovered)
+    if (option->HOVER)
         bc = bc.lighter();
-    if (option->isSunken)
+    if (option->SUNKEN)
         bc = bc.darker();
 
     painter->setOpacity(0.75f);
@@ -100,8 +102,8 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     if (widget && !widget->parentWidget())
         return false;
 
-    const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
-    if (!opt)
+    castOpt(ToolButton, opt, option);
+    if (!opt || !painter->isActive())
         return false;
 
 
@@ -110,7 +112,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
     geo.getCoords(&x, &y, &r, &b);
     const QToolBar *bar = qobject_cast<const QToolBar *>(widget->parentWidget());
-    int sides = Render::All;
+    Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false);
     if (bar)
     {
@@ -144,34 +146,34 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     }
     Render::Shadow shadow = Render::Etched;
     QColor bc(option->palette.color(QPalette::Button));
-    if (option->isEnabled)
+    if (option->ENABLED)
     {
-        if (option->isHovered)
+        if (option->HOVER)
             bc = bc.lighter(110);
-        if (option->isSunken)
+        if (option->SUNKEN)
         {
             bc = bc.darker(110);
             shadow = Render::Sunken;
         }
     }
-#define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
-    QRect rect(option->rect);
+
+    QRect rect(opt->rect);
     QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    const QColor &start = Ops::mid(bc, Qt::white, 2, 1), &end = Ops::mid(bc, Qt::black, 7, 1);
-    lg.setColorAt(0.0f, option->isSunken ? end : start);
-    lg.setColorAt(1.0f, option->isSunken ? start : end);
-    Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, (Render::Sides)sides);
+    const QColor &start = Ops::mid(bc, Qt::white, 2, 1), &end = Ops::mid(bc, Qt::black, 2, 1);
+    lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
+    lg.setColorAt(1.0f, opt->SUNKEN ? Ops::mid(bc, end) : end);
+    Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
     painter->setOpacity(0.5f);
-    Render::renderShadow(shadow, option->rect, painter, 4, (Render::Sides)sides);
+    Render::renderShadow(shadow, opt->rect, painter, 4, sides);
     if (!(sides&Render::Right) && !nextSelected)
     {
         painter->setPen(Qt::black);
         painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
     }
-    if (option->isSunken)
-        Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, (Render::Sides)((int)Render::All-sides));
+    if (option->SUNKEN)
+        Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides);
     painter->setOpacity(1.0f);
-    const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->isEnabled ? QIcon::Normal : QIcon::Disabled);
+    const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
     Qt::Alignment iAlign = Qt::AlignCenter, tAlign = Qt::AlignCenter;
 
     switch (opt->toolButtonStyle)
@@ -191,6 +193,6 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
         drawItemPixmap(painter, option->rect, iAlign, pix);
     if (opt->toolButtonStyle)
-        drawItemText(painter, rect, tAlign, option->palette, opt->isEnabled, opt->text, QPalette::ButtonText);
+        drawItemText(painter, rect, tAlign, opt->palette, opt->ENABLED, opt->text, QPalette::ButtonText);
     return true;
 }

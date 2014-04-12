@@ -1,17 +1,23 @@
 #ifndef STYLEPROJECT_H
 #define STYLEPROJECT_H
 
-#include <QPlastiqueStyle>
+#include <QCommonStyle>
 
 #define CCSize CC_MdiControls+1
 #define CESize CE_ShapedFrame+1
 #define PESize PE_PanelMenu+1
 
-#define isSunken state & (State_Sunken | State_Selected | State_On)
-#define isHovered state & State_MouseOver
-#define isEnabled state & State_Enabled
+#define SUNKEN state & (State_Sunken | State_Selected | State_On)
+#define HOVER state & State_MouseOver
+#define ENABLED state & State_Enabled
 
-class StyleProject : public QPlastiqueStyle
+#define castOpt(_Type_, _varName_, _fromVar_) const QStyleOption##_Type_ *_varName_ = qstyleoption_cast<const QStyleOption##_Type_ *>(_fromVar_)
+#define castObj(_Type_, _varName_, _fromVar_) _Type_ _varName_ = qobject_cast<_Type_>(_fromVar_)
+
+#define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
+#define sAdjust(_X1_, _Y1_, _X2_, _Y2_) adjust(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
+
+class StyleProject : public QCommonStyle
 {
     Q_OBJECT
     Q_CLASSINFO ("X-KDE-CustomElements", "true")
@@ -34,17 +40,23 @@ public:
     void drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const QPixmap &pixmap) const;
 
     int pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const;
+    int styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const;
 
     void polish(QWidget *widget);
+    void unpolish(QWidget *widget);
 
+    QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget) const;
+    QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const;
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
+
+    bool eventFilter(QObject *, QEvent *);
 
     /* functions called for drawing */
     bool controlSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
     bool primitiveSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
     bool complexSkipper(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const { return true; }
 
-    /* controls */
+    /* control elements */
     bool drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
@@ -53,13 +65,26 @@ public:
     bool drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
+    bool drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
+    bool drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
+    bool drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
 
-    /* primitives */
+    /* primitive elements */
     bool drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
@@ -70,6 +95,7 @@ private:
     StyleComplexControl m_cc[CCSize];
     StyleControl m_ce[CESize];
     StylePrimitive m_pe[PESize];
+    QColor m_specialColor;
 };
 
 #endif // STYLEPROJECT_H
