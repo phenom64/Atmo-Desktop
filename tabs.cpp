@@ -182,3 +182,9 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
     Render::renderMask(r, painter, opt->palette.color(QPalette::Button), 4, sides);
     return true;
 }
+
+bool
+StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    return false;
+}

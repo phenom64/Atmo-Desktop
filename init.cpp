@@ -12,6 +12,8 @@ StyleProject::init()
         m_ce[i] = 0;
     for (int i = 0; i < PESize; ++i)
         m_pe[i] = 0;
+    for (int i = 0; i < EVSize; ++i)
+        m_ev[i] = 0;
     QPalette p(QApplication::palette());
     m_specialColor = Ops::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
 }
@@ -45,6 +47,7 @@ StyleProject::assignMethods()
     m_ce[CE_TabBarTabShape] = method(drawTabShape);
     m_ce[CE_TabBarTabLabel] = method(drawTabLabel);
     m_ce[CE_MenuBarEmptyArea] = method(controlSkipper);
+    m_ce[CE_ItemViewItem] = method(drawViewItem);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -65,4 +68,8 @@ StyleProject::assignMethods()
     m_pe[PE_IndicatorToolBarHandle] = method(primitiveSkipper);
     m_pe[PE_FrameTabBarBase] = method(drawTabBar);
     m_pe[PE_FrameTabWidget] = method(drawTabWidget);
+    m_pe[PE_IndicatorTabClose] = method(drawTabCloser);
+
+    /* events */
+    m_ev[QEvent::Paint] = method(paintEvent);
 }

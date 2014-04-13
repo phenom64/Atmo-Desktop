@@ -6,6 +6,7 @@
 #include <qmath.h>
 #include <QEvent>
 #include <QToolBar>
+#include <QAbstractItemView>
 
 #include "styleproject.h"
 #include "render.h"
@@ -116,35 +117,46 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
 {
+    if (e->type() < EVSize && m_ev[e->type()])
+        return (this->*m_ev[e->type()])(o, e);
+
     switch (e->type())
     {
-    /* for some reason KTabWidget is an idiot and
-     * doesnt use the style at all for painting, only
-     * for the tabBar apparently (that inside the
-     * KTabWidget) so we simply override the painting
-     * for the KTabWidget and paint what we want
-     * anyway.
-     */
-    case QEvent::Paint:
+    case QEvent::Leave:
+    case QEvent::HoverLeave:
+    case QEvent::Enter:
+    case QEvent::HoverEnter:
     {
-        if (o->inherits("KTabWidget"))
-        {
-            QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
-            QPainter p(tabWidget);
-            QStyleOptionTabWidgetFrameV2 opt;
-            opt.initFrom(tabWidget);
-            drawTabWidget(&opt, &p, tabWidget);
-            p.end();
-            return true;
-        }
+        if (castObj(QAbstractItemView *, v, o))
+            v->viewport()->update();
         break;
     }
     case QEvent::ActionChanged:
     {
         if (castObj(QToolBar *, toolBar, o))
             toolBar->update();
+        break;
     }
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
+}
+
+QRect
+StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
+{
+    if (flags == Qt::AlignCenter)
+        flags = Qt::AlignLeft|Qt::AlignVCenter;
+    QRect ret(pixmap.rect());
+    if (flags & (Qt::AlignHCenter|Qt::AlignVCenter))
+        ret.moveCenter(r.center());
+    if (flags & Qt::AlignLeft)
+        ret.moveLeft(r.left());
+    if (flags & Qt::AlignRight)
+        ret.moveRight(r.right());
+    if (flags & Qt::AlignTop)
+        ret.moveTop(r.top());
+    if (flags & Qt::AlignBottom)
+        ret.moveBottom(r.bottom());
+    return ret;
 }

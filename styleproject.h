@@ -2,10 +2,12 @@
 #define STYLEPROJECT_H
 
 #include <QCommonStyle>
+#include <QEvent>
 
 #define CCSize CC_MdiControls+1
 #define CESize CE_ShapedFrame+1
 #define PESize PE_PanelMenu+1
+#define EVSize QEvent::PlatformPanel+1
 
 #define SUNKEN state & (State_Sunken | State_Selected | State_On)
 #define HOVER state & State_MouseOver
@@ -47,6 +49,7 @@ public:
 
     QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget) const;
     QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const;
+    QRect itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const;
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
 
     bool eventFilter(QObject *, QEvent *);
@@ -70,6 +73,7 @@ public:
     bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
@@ -85,16 +89,22 @@ public:
     bool drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+
+    /* events */
+    bool paintEvent(QObject *o, QEvent *e);
 
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
     typedef bool (StyleProject::*StyleControl)(const QStyleOption *, QPainter *, const QWidget *) const;
     typedef bool (StyleProject::*StylePrimitive)(const QStyleOption *, QPainter *, const QWidget *) const;
+    typedef bool (StyleProject::*EventFilter)(QObject *o, QEvent *e);
 
 private:
     StyleComplexControl m_cc[CCSize];
     StyleControl m_ce[CESize];
     StylePrimitive m_pe[PESize];
+    EventFilter m_ev[EVSize];
     QColor m_specialColor;
 };
 

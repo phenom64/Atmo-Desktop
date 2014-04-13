@@ -4,6 +4,7 @@
 #include <QLayout>
 #include <QMenuBar>
 #include <QToolButton>
+#include <QAbstractItemView>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -24,6 +25,8 @@
  * pretty much any way here.
  */
 
+#define installFilter(_VAR_) _VAR_->removeEventFilter(this); _VAR_->installEventFilter(this)
+
 void
 StyleProject::polish(QWidget *widget)
 {
@@ -37,8 +40,7 @@ StyleProject::polish(QWidget *widget)
      */
     if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
     {
-        bar->removeEventFilter(this);
-        bar->installEventFilter(this);
+        installFilter(bar);
     }
 
     if (QFrame *frame = qobject_cast<QFrame *>(widget))
@@ -46,10 +48,16 @@ StyleProject::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(frame->window()))
             OverLay::manage(frame, 100);
 
+    if (castObj(QAbstractItemView *, view, widget))
+    {
+        view->setAttribute(Qt::WA_Hover);
+        view->setAttribute(Qt::WA_MouseTracking);
+        installFilter(view);
+    }
+
     if (widget->inherits("KTabWidget"))
     {
-        widget->removeEventFilter(this);
-        widget->installEventFilter(this);
+        installFilter(widget);
     }
 
 #if !defined(QT_NO_DBUS)

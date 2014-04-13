@@ -16,7 +16,8 @@ SOURCES += styleproject.cpp \
     macmenu.cpp \
     items.cpp \
     sliders.cpp \
-    tabs.cpp
+    tabs.cpp \
+    events.cpp
 
 HEADERS += styleproject.h \
     render.h \

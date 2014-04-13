@@ -1,4 +1,5 @@
 #include <QLineEdit>
+#include <QTabBar>
 #include <QStyleOption>
 
 #include "styleproject.h"
@@ -24,7 +25,13 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     }
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
-    case PM_ToolBarFrameWidth: return 4;
+    case PM_ToolBarFrameWidth:
+    {
+//        if (castObj(const QToolBar *, toolBar, widget))
+//            if (toolBar->findChild<const QTabBar *>())
+//                return 0;
+        return 4;
+    }
     case PM_MenuBarItemSpacing: return 4;
 //    case PM_SliderThickness: return 12;
     case PM_SliderLength:
