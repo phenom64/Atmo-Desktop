@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <kdecoration.h>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include "factory.h"
 
 class Factory;
@@ -28,6 +30,11 @@ public:
 protected:
     bool eventFilter(QObject *, QEvent *);
     void paint(QPainter &p);
+    void populate();
+
+private:
+    QHBoxLayout *m_titleLayout;
+    QVBoxLayout *m_mainLayout;
 };
 
-#endif
+#endif //KWINCLIENT_H

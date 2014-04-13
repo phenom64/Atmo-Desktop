@@ -16,4 +16,4 @@ public:
 };
 
 
-#endif FACTORY_H
+#endif //FACTORY_H
