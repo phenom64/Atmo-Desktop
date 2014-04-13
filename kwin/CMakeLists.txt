@@ -1,13 +1,16 @@
 project (kwin3-styleproject)
 
 set (KWIN_SRCS
-    kwinclient.cpp)
+    kwinclient.cpp
+    factory.cpp)
     
 set (KWIN_HDRS
-    kwinclient.h)
+    kwinclient.h
+    factory.h)
     
 set (KWIN_MOC_HDRS
-    kwinclient.h)
+    kwinclient.h
+    factory.h)
     
 #qt4_wrap_cpp (KWIN_MOC_SRCS ${KWIN_MOC_HDRS})
 

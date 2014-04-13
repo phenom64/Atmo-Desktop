@@ -3,25 +3,31 @@
 
 #include <QWidget>
 #include <kdecoration.h>
+#include "factory.h"
 
+class Factory;
 class KwinClient : public KDecoration
 {
     Q_OBJECT
 public:
-    KwinClient(KDecorationBridge *bridge = 0, KDecorationFactory *factory = 0);
+    KwinClient(KDecorationBridge *bridge, Factory *factory);
 
     // functions not implemented in KDecoration
     void init();
     void activeChange() {}
-    void borders(int &left, int &right, int &top, int &bottom) const {}
-    void captionChange() {}
+    void borders(int &left, int &right, int &top, int &bottom) const;
+    void captionChange();
     void desktopChange() {}
     void iconChange() {}
     void maximizeChange() {}
-    QSize minimumSize() const { return QSize(); }
+    QSize minimumSize() const;
     KDecorationDefines::Position mousePosition(const QPoint &p) const { return KDecorationDefines::PositionCenter; }
-    void resize(const QSize &s) {}
+    void resize(const QSize &s);
     void shadeChange() {}
+
+protected:
+    bool eventFilter(QObject *, QEvent *);
+    void paint(QPainter &p);
 };
 
 #endif
