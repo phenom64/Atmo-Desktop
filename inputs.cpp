@@ -11,7 +11,7 @@
 #include "styleproject.h"
 #include "render.h"
 #include "overlay.h"
-#include "ops.h"
+#include "stylelib/ops.h"
 
 bool
 StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const

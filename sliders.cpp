@@ -7,7 +7,7 @@
 
 #include "styleproject.h"
 #include "render.h"
-#include "ops.h"
+#include "stylelib/ops.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const

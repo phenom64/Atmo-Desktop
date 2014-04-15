@@ -7,10 +7,12 @@
 #include <QEvent>
 #include <QToolBar>
 #include <QAbstractItemView>
+#include <QMainWindow>
 
 #include "styleproject.h"
 #include "render.h"
-#include "ops.h"
+#include "stylelib/ops.h"
+#include "stylelib/xhandler.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -27,6 +29,7 @@ public:
 Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 
 StyleProject::StyleProject()
+    : QCommonStyle()
 {
     init();
     assignMethods();
@@ -122,6 +125,18 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
 
     switch (e->type())
     {
+    case QEvent::Show:
+    {
+        if (castObj(QMainWindow *, win, o))
+        {
+            unsigned int d(1);
+            XHandler::setXProperty<unsigned int>(win->winId(), XHandler::MainWindow, &d);
+            unsigned int c(m_specialColor[0].rgba());
+//            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
+//            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
+            XHandler::setXProperty<unsigned int>(win->winId(), XHandler::HeadColor, &c);
+        }
+    }
     case QEvent::Leave:
     case QEvent::HoverLeave:
     case QEvent::Enter:

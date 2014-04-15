@@ -6,9 +6,11 @@
 #include <QToolButton>
 #include <QAbstractItemView>
 
+
 #include "styleproject.h"
 #include "overlay.h"
-#include "ops.h"
+#include "stylelib/ops.h"
+#include "stylelib/shadowhandler.h"
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
@@ -43,7 +45,15 @@ StyleProject::polish(QWidget *widget)
         installFilter(bar);
     }
 
-    if (QFrame *frame = qobject_cast<QFrame *>(widget))
+    if (castObj(QMainWindow *, win, widget))
+    {
+        installFilter(win);
+    }
+
+    if (widget->isWindow())
+        ShadowHandler::manage(widget);
+
+    if (castObj(QFrame *, frame, widget))
         if (frame->frameShadow() == QFrame::Sunken
                 && qobject_cast<QMainWindow *>(frame->window()))
             OverLay::manage(frame, 100);

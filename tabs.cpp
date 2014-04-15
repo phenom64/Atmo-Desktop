@@ -13,7 +13,7 @@
 #include <QToolBar>
 
 #include "styleproject.h"
-#include "ops.h"
+#include "stylelib/ops.h"
 #include "render.h"
 
 bool
@@ -59,7 +59,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
     {
         if (opt->state & State_Selected)
-            bgc = Ops::mid(m_specialColor, Qt::black, 4, 1);
+            bgc = m_specialColor[1];
         else
             return true;
         sides = Render::All & ~Render::Top;
@@ -96,7 +96,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
         if (Ops::isSafariTabBar(tabBar))
         {
             sides &= ~Render::Top;
-            Render::renderMask(widget->rect(), painter, Ops::mid(m_specialColor, Qt::black, 2, 1), 32, sides);
+            Render::renderMask(widget->rect(), painter, Ops::mid(m_specialColor[1], Qt::black, 4, 1), 32, sides);
             painter->save();
             painter->setOpacity(0.5f);
             Render::renderShadow(Render::Sunken, widget->rect().adjusted(0, 0, 0, 1), painter, 32, sides);
@@ -165,7 +165,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         if (Ops::isSafariTabBar(tabBar))
         {
             sides &= ~Render::Top;
-            Render::renderMask(barRect.adjusted(0, 0, 0, -1), painter, Ops::mid(m_specialColor, Qt::black, 2, 1), 32, sides);
+            Render::renderMask(barRect.adjusted(0, 0, 0, -1), painter, Ops::mid(m_specialColor[1], Qt::black, 2, 1), 32, sides);
             painter->save();
             painter->setOpacity(0.5f);
             Render::renderShadow(Render::Sunken, barRect, painter, 32, sides);

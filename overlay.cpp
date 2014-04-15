@@ -1,5 +1,5 @@
 #include "overlay.h"
-#include "ops.h"
+#include "stylelib/ops.h"
 
 OverLay::OverLay(QFrame *parent, int opacity)
     : QWidget(parent)

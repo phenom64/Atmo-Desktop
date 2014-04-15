@@ -6,7 +6,7 @@
 
 #include "styleproject.h"
 #include "render.h"
-#include "ops.h"
+#include "stylelib/ops.h"
 
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -28,11 +28,9 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
     //needless to check for top I think ;-)
 
     const QRect &rect(widget->rect());
-    const QColor &start(Ops::mid(m_specialColor, Qt::white, 4, 1));
-    const QColor &end(Ops::mid(m_specialColor, Qt::black, 4, 1));
     QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    lg.setColorAt(0.0f, start);
-    lg.setColorAt(1.0f, end);
+    lg.setColorAt(0.0f, m_specialColor[0]);
+    lg.setColorAt(1.0f, m_specialColor[1]);
 
     Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, lg, 3, sides);
     Render::renderShadow(Render::Etched, rect, painter, 4, sides);
@@ -51,7 +49,7 @@ StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || !widget->window() || !painter->isActive())
+    if (!widget || !widget->parentWidget() || !widget->window() || !painter->isActive())
         return true;
 
     uint sides = Render::All;
@@ -66,21 +64,21 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     if (widgetRect.top() <= winRect.top())
         sides &= ~Render::Top;
 
-    const QRect &rect(widget->rect());
-    const QColor &start(Ops::mid(m_specialColor, Qt::white, 4, 1));
-    const QColor &end(Ops::mid(m_specialColor, Qt::black, 4, 1));
-    QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    lg.setColorAt(0.0f, start);
-    lg.setColorAt(1.0f, end);
+    const QRect &rect(widget->rect());;
 
-    QBrush b(end);
-    if (castObj(const QMainWindow *, win, widget->window()))
+    if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
+        QBrush b(m_specialColor[1]);
         sides = 0;
-        if (widget->geometry().top() != widget->window()->rect().top())
+        if (widget->geometry().top() != win->rect().top())
             sides = Render::Top;
         else
+        {
+            QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+            lg.setColorAt(0.0f, m_specialColor[0]);
+            lg.setColorAt(1.0f, m_specialColor[1]);
             b = lg;
+        }
         castObj(const QToolBar *, toolBar, widget);
         if (win->toolBarArea(const_cast<QToolBar *>(toolBar)) == Qt::TopToolBarArea)
             Render::renderMask(rect, painter, b, 3, sides);

@@ -5,6 +5,7 @@
 #include <kdecoration.h>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+
 #include "factory.h"
 
 class Factory;
@@ -16,7 +17,7 @@ public:
 
     // functions not implemented in KDecoration
     void init();
-    void activeChange() {}
+    void activeChange();
     void borders(int &left, int &right, int &top, int &bottom) const;
     void captionChange();
     void desktopChange() {}
@@ -26,15 +27,19 @@ public:
     KDecorationDefines::Position mousePosition(const QPoint &p) const { return KDecorationDefines::PositionCenter; }
     void resize(const QSize &s);
     void shadeChange() {}
+    void reset(unsigned long changed);
 
 protected:
     bool eventFilter(QObject *, QEvent *);
     void paint(QPainter &p);
-    void populate();
+    void populate(const QString &buttons);
 
 private:
     QHBoxLayout *m_titleLayout;
     QVBoxLayout *m_mainLayout;
+    QLinearGradient m_unoGradient;
+    QColor m_unoColor;
+    bool m_isUno;
 };
 
 #endif //KWINCLIENT_H

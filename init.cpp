@@ -1,7 +1,9 @@
 #include <QApplication>
+#include <QDebug>
 
 #include "styleproject.h"
-#include "ops.h"
+#include "stylelib/ops.h"
+#include "render.h"
 
 void
 StyleProject::init()
@@ -15,7 +17,9 @@ StyleProject::init()
     for (int i = 0; i < EVSize; ++i)
         m_ev[i] = 0;
     QPalette p(QApplication::palette());
-    m_specialColor = Ops::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
+    QColor c = Ops::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
+    m_specialColor[0] = Ops::mid(c, Qt::white, 4, 1);
+    m_specialColor[1] = Ops::mid(c, Qt::black, 4, 1);
 }
 
 /* here we assign functions to perform the

@@ -6,10 +6,6 @@
 
 #include "ops.h"
 
-Ops::Ops()
-{
-}
-
 QColor
 Ops::mid(const QColor &c1, const QColor c2, int i1, int i2)
 {

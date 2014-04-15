@@ -105,7 +105,7 @@ private:
     StyleControl m_ce[CESize];
     StylePrimitive m_pe[PESize];
     EventFilter m_ev[EVSize];
-    QColor m_specialColor;
+    QColor m_specialColor[2];
 };
 
 #endif // STYLEPROJECT_H

@@ -5,10 +5,9 @@
 #include <QWidget>
 
 class QTabBar;
-class Ops
+class Q_DECL_EXPORT Ops
 {
 public:
-    Ops();
     static QColor mid(const QColor &c1, const QColor c2, int i1 = 1, int i2 = 1);
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);

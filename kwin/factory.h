@@ -10,7 +10,7 @@ class Factory : public QObject, public KDecorationFactory
 {
     Q_OBJECT
 public:
-    Factory(): QObject(), KDecorationFactory() {}
+    Factory();
     KDecoration *createDecoration(KDecorationBridge *bridge);
     bool supports(Ability ability) const;
 };

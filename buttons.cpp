@@ -9,7 +9,7 @@
 
 #include "styleproject.h"
 #include "render.h"
-#include "ops.h"
+#include "stylelib/ops.h"
 
 /*
  * This here paints the button, in order to override
