@@ -8,7 +8,7 @@ class Q_DECL_EXPORT ShadowHandler
 {
 public:
     static QPixmap x11Pixmap(const QPixmap &pix);
-    static unsigned long *shadows(const int size = 32);
+    static unsigned long *shadows(const int size = 48);
     static void installShadows(WId w);
     static void manage(QWidget *w);
     static void removeDelete();

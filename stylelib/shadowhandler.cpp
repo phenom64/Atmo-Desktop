@@ -2,6 +2,7 @@
 #include <QX11Info>
 #include <QPainter>
 #include <QEvent>
+#include <QImage>
 
 #include "shadowhandler.h"
 
@@ -25,7 +26,7 @@ ShadowHandler::x11Pixmap(const QPixmap &pix)
 {
     Pixmap x11Pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
     QPixmap qPix(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
-    qPix.fill(Qt::red);
+    qPix.fill(Qt::transparent);
     QPainter p(&qPix);
     p.setCompositionMode(QPainter::CompositionMode_Source);
     p.drawPixmap(0, 0, pix);
@@ -35,6 +36,23 @@ ShadowHandler::x11Pixmap(const QPixmap &pix)
 
 static QPixmap *pix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+static QRect part(int part, int size)
+{
+    const int d(1);
+    switch (part)
+    {
+    case 0: return QRect(size, 0, d, size);
+    case 1: return QRect(size+d, 0, size, size);
+    case 2: return QRect(size+d, size, size, d);
+    case 3: return QRect(size+d, size+d, size, size);
+    case 4: return QRect(size, size+d, d, size);
+    case 5: return QRect(0, size+d, size, size);
+    case 6: return QRect(0, size, size, d);
+    case 7: return QRect(0, 0, size, size);
+    default: return QRect();
+    }
+}
+
 unsigned long
 *ShadowHandler::shadows(const int size)
 {
@@ -43,18 +61,36 @@ unsigned long
     if (!shadows)
     {
         unsigned long *data = new unsigned long[12];
+
+        int s(size*2+1);
+        QImage img(s, s, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+
+        QPainter p(&img);
+        QRadialGradient rg(img.rect().center()+QPoint(1, 1), size);
+        rg.setColorAt(0.0f, Qt::black);
+        rg.setColorAt(0.5f, QColor(0, 0, 0, 64));
+        rg.setColorAt(0.7f, QColor(0, 0, 0, 16));
+        rg.setColorAt(0.9f, Qt::transparent);
+        p.fillRect(img.rect(), rg);
+        p.end();
+
+        const int sd[4] = { size*0.75f, size*0.8f, size*0.9f, size*0.8f };
         for (int i = 0; i < 12; ++i)
         {
             if (i < 8)
             {
-                pix[i] = new QPixmap();
-                Pixmap x11Pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), size, size, 32);
-                *pix[i] = QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared);
-                pix[i]->fill(Qt::red);
+                QRect r(part(i, size));
+                QPixmap px(r.size());
+                px.fill(Qt::transparent);
+                QPainter pt(&px);
+                pt.drawTiledPixmap(px.rect(), QPixmap::fromImage(img).copy(r));
+                pt.end();
+                pix[i] = new QPixmap(x11Pixmap(px));
                 data[i] = pix[i]->handle();
             }
             else
-                data[i] = size;
+                data[i] = sd[i-8];
         }
         XHandler::setXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow, data, 12);
         shadows = data;
