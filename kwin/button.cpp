@@ -2,6 +2,7 @@
 #include <QMouseEvent>
 
 #include "button.h"
+#include "../stylelib/ops.h"
 
 Button::Button(Type type, KwinClient *client, QWidget *parent)
     : QWidget(parent)
@@ -9,7 +10,15 @@ Button::Button(Type type, KwinClient *client, QWidget *parent)
     , m_hasPress(false)
     , m_client(client)
 {
+    setAttribute(Qt::WA_NoSystemBackground);
+    setAttribute(Qt::WA_Hover);
     setFixedSize(16, 16);
+    for (int i = 0; i < TypeCount; ++i)
+        m_paintEvent[i] = 0;
+
+    m_paintEvent[Close] = &Button::paintClose;
+    m_paintEvent[Min] = &Button::paintMin;
+    m_paintEvent[Max] = &Button::paintMax;
 }
 
 Button::~Button()
@@ -20,17 +29,8 @@ Button::~Button()
 void
 Button::paintEvent(QPaintEvent *)
 {
-    QColor c;
-    switch (m_type)
-    {
-    case Close: c = Qt::red; break;
-    case Min: c = Qt::yellow; break;
-    case Max: c = Qt::green; break;
-    default: c = Qt::black; break;
-    }
-    QPainter p(this);
-    p.fillRect(rect(), c);
-    p.end();
+    if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])())
+        return;
 }
 
 void
@@ -61,4 +61,78 @@ Button::mouseReleaseEvent(QMouseEvent *e)
             }
         }
     }
+}
+
+void
+Button::drawBase(const QColor &c, QPainter &p, QRect &r) const
+{
+    const QColor bg(QColor(255, 255, 255, 127));
+    const QColor fg(QColor(0, 0, 0, 127));
+    r.adjust(2, 2, -2, -2);
+    p.setBrush(Ops::mid(Qt::white, bg));
+    p.drawEllipse(r.translated(0, 1));
+    p.setBrush(Ops::mid(Qt::white, fg));
+    p.drawEllipse(r);
+    r.adjust(1, 1, -1, -1);
+    QRadialGradient rg(r.center()+QPoint(1, 2), r.width()/2);
+    rg.setColorAt(0.4f, c);
+    rg.setColorAt(1.0f, Ops::mid(c, Qt::black, 3, 1));
+    p.setBrush(rg);
+    p.drawEllipse(r);
+}
+
+static uint fcolors[3] = { 0xFFD86F6B, 0xFFD8CA6B, 0xFF76D86B };
+
+bool
+Button::paintClose()
+{
+    QPainter p(this);
+    p.setPen(Qt::NoPen);
+    p.setRenderHint(QPainter::Antialiasing);
+//    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
+    QRect r(rect());
+    drawBase(fcolors[m_type], p, r);
+    if (underMouse())
+    {
+        p.setBrush(m_client->options()->color(KDecoration::ColorFont));
+        p.drawEllipse(r.adjusted(3, 3, -3, -3));
+    }
+    p.end();
+    return true;
+}
+
+bool
+Button::paintMax()
+{
+    QPainter p(this);
+    p.setPen(Qt::NoPen);
+    p.setRenderHint(QPainter::Antialiasing);
+//    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
+    QRect r(rect());
+    drawBase(fcolors[m_type], p, r);
+    if (underMouse())
+    {
+        p.setBrush(m_client->options()->color(KDecoration::ColorFont));
+        p.drawEllipse(r.adjusted(3, 3, -3, -3));
+    }
+    p.end();
+    return true;
+}
+
+bool
+Button::paintMin()
+{
+    QPainter p(this);
+    p.setPen(Qt::NoPen);
+    p.setRenderHint(QPainter::Antialiasing);
+//    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
+    QRect r(rect());
+    drawBase(fcolors[m_type], p, r);
+    if (underMouse())
+    {
+        p.setBrush(m_client->options()->color(KDecoration::ColorFont));
+        p.drawEllipse(r.adjusted(3, 3, -3, -3));
+    }
+    p.end();
+    return true;
 }
