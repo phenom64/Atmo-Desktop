@@ -5,16 +5,19 @@
 #include <kwindowinfo.h>
 #include <QPainter>
 #include <QHBoxLayout>
+#include <QTimer>
 
 #include "kwinclient.h"
 #include "button.h"
 #include "../stylelib/ops.h"
 #include "../stylelib/shadowhandler.h"
 
+#define TITLEHEIGHT 22
+
 KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
-    , m_mainLayout(0)
+    , m_stretch(0)
     , m_isUno(false)
 {
     setParent(factory);
@@ -25,16 +28,21 @@ KwinClient::init()
 {
     createMainWidget();
     widget()->installEventFilter(this);
-//    KWindowInfo info(windowId(), NET::WMWindowType, NET::WM2WindowClass);
-    m_mainLayout = new QVBoxLayout(widget());
-    m_mainLayout->setSpacing(0);
-    m_mainLayout->setContentsMargins(0, 0, 0, 0);
-    m_titleLayout = new QHBoxLayout();
-    m_mainLayout->addLayout(m_titleLayout);
-    m_mainLayout->addStretch();
-    widget()->setLayout(m_mainLayout);
+    m_titleLayout = new QHBoxLayout(widget());
+    m_titleLayout->setSpacing(0);
+    m_titleLayout->setContentsMargins(0, 0, 0, 0);
     reset(63);
     ShadowHandler::installShadows(windowId());
+    QTimer::singleShot(1, this, SLOT(postInit()));
+}
+
+void
+KwinClient::postInit()
+{
+    m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
+    if (unsigned int *uno = XHandler::getXProperty<unsigned int>(windowId(), XHandler::MainWindow))
+        m_isUno = *uno;
+    widget()->update();
 }
 
 void
@@ -63,7 +71,7 @@ KwinClient::populate(const QString &buttons)
         case 'X': t = Button::Close; break;
         case 'I': t = Button::Min; break;
         case 'A': t = Button::Max; break;
-        case '_': m_titleLayout->addSpacing(4); supported = false; break;
+        case '_': m_titleLayout->addSpacing(2); supported = false; break;
         default: supported = false; break;
         }
         if (supported)
@@ -75,6 +83,8 @@ void
 KwinClient::resize(const QSize &s)
 {
     widget()->resize(s);
+//    m_stretch->resize(s-QSize(0, TITLEHEIGHT));
+    m_titleLayout->setGeometry(QRect(0, 0, s.width(), TITLEHEIGHT));
 }
 
 void
@@ -82,7 +92,7 @@ KwinClient::borders(int &left, int &right, int &top, int &bottom) const
 {
     left = 0;
     right = 0;
-    top = 16;
+    top = TITLEHEIGHT;
     bottom = 0;
 }
 
@@ -116,6 +126,9 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     case QEvent::Wheel:
         titlebarMouseWheelOperation(static_cast<QWheelEvent *>(e)->delta());
         return true;
+    case QEvent::Show:
+    case QEvent::Resize:
+        m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
     default: break;
     }
     return KDecoration::eventFilter(o, e);
@@ -124,7 +137,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
 void
 KwinClient::paint(QPainter &p)
 {
-    QRect r(0, 0, width(), 16);
+    QRect r(m_titleLayout->geometry());
     if (m_isUno)
         p.fillRect(r, m_unoGradient);
     QFont f(p.font());
@@ -147,7 +160,7 @@ KwinClient::activeChange()
     if (unsigned int *bg = XHandler::getXProperty<unsigned int>(windowId(), XHandler::HeadColor))
     {
         m_unoColor = QColor(*bg);
-        QRect r(0, 0, width(), 16);
+        QRect r(m_titleLayout->geometry());
         m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
         m_unoGradient.setColorAt(0.0f, Ops::mid(m_unoColor, Qt::white));
         m_unoGradient.setColorAt(1.0f, m_unoColor);
@@ -188,4 +201,6 @@ KwinClient::reset(unsigned long changed)
         m_titleLayout->addStretch();
         populate(options()->titleButtonsRight());
     }
+    if (changed & SettingDecoration)
+        m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
 }

@@ -70,7 +70,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     {
         QBrush b(m_specialColor[1]);
         sides = 0;
-        if (widget->geometry().top() != win->rect().top())
+        if (widget->geometry().top() > win->rect().top())
             sides = Render::Top;
         else
         {

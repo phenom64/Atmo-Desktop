@@ -83,7 +83,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 {
     switch (ct)
     {
-    case CT_ToolButton: return contentsSize+QSize(8, 8);
+    case CT_ToolButton: return contentsSize+QSize(10, 8);
     case CT_MenuBarItem: return contentsSize+QSize(8, 0);
     default: break;
     }
@@ -99,62 +99,6 @@ StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, 
     default: break;
     }
     return QCommonStyle::subControlRect(cc, opt, sc, w);
-}
-
-int
-StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const
-{
-    switch (sh)
-    {
-    case SH_TabBar_Alignment:
-    {
-        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(w)))
-            return Qt::AlignLeft;
-        return Qt::AlignCenter;
-    }
-    default: break;
-    }
-    return QCommonStyle::styleHint(sh, opt, w, shret);
-}
-
-bool
-StyleProject::eventFilter(QObject *o, QEvent *e)
-{
-    if (e->type() < EVSize && m_ev[e->type()])
-        return (this->*m_ev[e->type()])(o, e);
-
-    switch (e->type())
-    {
-    case QEvent::Show:
-    {
-        if (castObj(QMainWindow *, win, o))
-        {
-            unsigned int d(1);
-            XHandler::setXProperty<unsigned int>(win->winId(), XHandler::MainWindow, &d);
-            unsigned int c(m_specialColor[0].rgba());
-//            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
-//            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
-            XHandler::setXProperty<unsigned int>(win->winId(), XHandler::HeadColor, &c);
-        }
-    }
-    case QEvent::Leave:
-    case QEvent::HoverLeave:
-    case QEvent::Enter:
-    case QEvent::HoverEnter:
-    {
-        if (castObj(QAbstractItemView *, v, o))
-            v->viewport()->update();
-        break;
-    }
-    case QEvent::ActionChanged:
-    {
-        if (castObj(QToolBar *, toolBar, o))
-            toolBar->update();
-        break;
-    }
-    default: break;
-    }
-    return QCommonStyle::eventFilter(o, e);
 }
 
 QRect

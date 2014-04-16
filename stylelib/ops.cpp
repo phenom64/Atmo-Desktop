@@ -38,6 +38,11 @@ Ops::isSafariTabBar(const QTabBar *tabBar)
     const bool s(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth);
     if (!s)
         return false;
+    QPoint topLeft = tabBar->mapTo(mainWin, tabBar->rect().topLeft());
+    QRect winRect = mainWin->rect();
+    QRect tabBarRect = QRect(topLeft, tabBar->size());
+    if (tabBarRect.top() <= winRect.top())
+        return true;
     const QPoint &checkPoint(tabBar->mapTo(mainWin, tabBar->rect().translated(1, -6).topLeft()));
     if (isOrInsideA<const QToolBar *>(mainWin->childAt(checkPoint)))
         return true;

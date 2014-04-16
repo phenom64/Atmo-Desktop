@@ -103,7 +103,7 @@ Render::initShadowParts()
         case Etched:
             p.setBrush(Qt::NoBrush);
             p.translate(0.5f, 0.5f);
-            p.setPen(QColor(255, 255, 255, 96));
+            p.setPen(Qt::white/*QColor(255, 255, 255, 96)*/);
             p.drawRoundedRect(pix.rect().adjusted(0, 1, -1, -1), r, r);
             p.setPen(Qt::black);
             p.drawRoundedRect(pix.rect().adjusted(0, 0, -1, -2), r, r);

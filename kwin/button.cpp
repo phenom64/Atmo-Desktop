@@ -63,25 +63,63 @@ Button::mouseReleaseEvent(QMouseEvent *e)
     }
 }
 
+/**
+ * @brief Button::drawBase
+ * @param c
+ * @param p
+ * @param r
+ * draw a maclike decobuttonbase using color c
+ */
+
 void
-Button::drawBase(const QColor &c, QPainter &p, QRect &r) const
+Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
-    const QColor bg(QColor(255, 255, 255, 127));
-    const QColor fg(QColor(0, 0, 0, 127));
+    c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
+    const QColor low(Ops::mid(c, Qt::black, 5, 3));
+    const QColor high(QColor(255, 255, 255, 127));
     r.adjust(2, 2, -2, -2);
-    p.setBrush(Ops::mid(Qt::white, bg));
+    p.setBrush(high);
     p.drawEllipse(r.translated(0, 1));
-    p.setBrush(Ops::mid(Qt::white, fg));
+    p.setBrush(low);
     p.drawEllipse(r);
     r.adjust(1, 1, -1, -1);
-    QRadialGradient rg(r.center()+QPoint(1, 2), r.width()/2);
-    rg.setColorAt(0.4f, c);
-    rg.setColorAt(1.0f, Ops::mid(c, Qt::black, 3, 1));
+
+    QRadialGradient rg(r.center()+QPoint(1, r.height()/2-1), r.height()-1);
+    rg.setColorAt(0.0f, Ops::mid(c, Qt::white));
+    rg.setColorAt(0.5f, c);
+
+    rg.setColorAt(1.0f, Ops::mid(c, Qt::black));
     p.setBrush(rg);
     p.drawEllipse(r);
+
+    QRect rr(r);
+    rr.setWidth(6);
+    rr.setHeight(3);
+    rr.moveCenter(r.center());
+    rr.moveTop(r.top()+1);
+    QLinearGradient lg(rr.topLeft(), rr.bottomLeft());
+    lg.setColorAt(0.0f, QColor(255, 255, 255, 192));
+    lg.setColorAt(1.0f, QColor(255, 255, 255, 64));
+    p.setBrush(lg);
+    p.drawEllipse(rr);
 }
 
-static uint fcolors[3] = { 0xFFD86F6B, 0xFFD8CA6B, 0xFF76D86B };
+/** Stolen colors from bespin....
+ *  none of them are perfect, but
+ *  the uncommented ones are 'good enough'
+ *  for me, search the web/pick better
+ *  ones yourself if not happy
+ */
+
+// static uint fcolors[3] = {0x9C3A3A/*0xFFBF0303*/, 0xFFEB55/*0xFFF3C300*/, 0x77B753/*0xFF00892B*/};
+// Font
+//static uint fcolors[3] = {0xFFBF0303, 0xFFF3C300, 0xFF00892B};
+// Aqua
+// static uint fcolors[3] = { 0xFFD86F6B, 0xFFD8CA6B, 0xFF76D86B };
+
+ static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFFB1DE96 };
+// Aqua2
+// static uint fcolors[3] = { 0xFFBF2929, 0xFF29BF29, 0xFFBFBF29 };
 
 bool
 Button::paintClose()

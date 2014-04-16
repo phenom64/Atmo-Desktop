@@ -34,9 +34,12 @@ protected:
     void paint(QPainter &p);
     void populate(const QString &buttons);
 
+protected slots:
+    void postInit();
+
 private:
     QHBoxLayout *m_titleLayout;
-    QVBoxLayout *m_mainLayout;
+    QWidget *m_stretch;
     QLinearGradient m_unoGradient;
     QColor m_unoColor;
     bool m_isUno;

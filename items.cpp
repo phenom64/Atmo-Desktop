@@ -21,6 +21,18 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
 
+    /** For some reason 'selected' here means hover
+     *  and sunken means pressed.
+     */
+    if (opt->state & (State_Selected | State_Sunken))
+    {
+        QColor h(opt->palette.color(QPalette::Highlight));
+        if (!(opt->state & State_Sunken))
+            h.setAlpha(64);
+
+        painter->fillRect(opt->rect, h);
+    }
+
     if (opt->text.isEmpty())
         return true;
     QStringList text(opt->text.split("\t"));
@@ -42,12 +54,14 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
 
-    QColor h(opt->palette.color(QPalette::Highlight));
-    if (!(opt->SUNKEN) && opt->HOVER)
-        h.setAlpha(64);
-
     if (opt->SUNKEN || opt->HOVER)
+    {
+        QColor h(opt->palette.color(QPalette::Highlight));
+        if (!(opt->SUNKEN))
+            h.setAlpha(64);
+
         painter->fillRect(opt->rect, h);
+    }
 
     QPixmap pix(opt->icon.pixmap(opt->decorationSize));
     QRect iconRect(itemPixmapRect(opt->rect, opt->decorationAlignment, pix));

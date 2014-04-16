@@ -127,7 +127,7 @@ ShadowHandler::removeDelete()
         if (pix[i])
         {
             XFreePixmap(QX11Info::display(), pix[i]->handle());
-            delete [] pix[i];
+            delete pix[i];
             pix[i] = 0;
         }
     }

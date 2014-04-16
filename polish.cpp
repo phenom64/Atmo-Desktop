@@ -40,7 +40,7 @@ StyleProject::polish(QWidget *widget)
      * has been triggered, otherwise we are painting
      * errors
      */
-    if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
+    if (castObj(QToolBar *, bar, widget))
     {
         installFilter(bar);
     }
@@ -60,9 +60,21 @@ StyleProject::polish(QWidget *widget)
 
     if (castObj(QAbstractItemView *, view, widget))
     {
-        view->setAttribute(Qt::WA_Hover);
+        view->viewport()->setAttribute(Qt::WA_Hover);
         view->setAttribute(Qt::WA_MouseTracking);
         installFilter(view);
+    }
+
+    if (castObj(QMenuBar *, menuBar, widget))
+    {
+        menuBar->setMouseTracking(true);
+        menuBar->setAttribute(Qt::WA_Hover);
+    }
+
+    if (castObj(QMenu *, menu, widget))
+    {
+        menu->setMouseTracking(true);
+        menu->setAttribute(Qt::WA_Hover);
     }
 
     if (widget->inherits("KTabWidget"))
@@ -71,7 +83,7 @@ StyleProject::polish(QWidget *widget)
     }
 
 #if !defined(QT_NO_DBUS)
-    if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
+    if (castObj(QMenuBar *, menuBar, widget))
         Bespin::MacMenu::manage(menuBar);
 #endif
     QCommonStyle::polish(widget);

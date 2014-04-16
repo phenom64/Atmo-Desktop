@@ -55,11 +55,15 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         break;
     default: break;
     }
+    QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
+    QRect winRect = widget->window()->rect();
+    QRect widgetRect = QRect(topLeft, widget->size());
+
     QColor bgc(opt->palette.color(bg));
     if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
     {
         if (opt->state & State_Selected)
-            bgc = m_specialColor[1];
+            bgc = m_specialColor[(winRect.top() < widgetRect.top())];
         else
             return true;
         sides = Render::All & ~Render::Top;

@@ -76,4 +76,5 @@ StyleProject::assignMethods()
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);
+    m_ev[QEvent::Resize] = method(resizeEvent);
 }

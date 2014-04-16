@@ -23,7 +23,7 @@ protected:
     bool paintMin();
     bool paintMax();
 
-    void drawBase(const QColor &c, QPainter &p, QRect &r) const;
+    void drawBase(QColor c, QPainter &p, QRect &r) const;
 
     typedef bool (Button::*PaintEvent)();
 
