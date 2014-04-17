@@ -14,7 +14,7 @@
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
-#include "render.h"
+#include "stylelib/render.h"
 
 bool
 StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const

@@ -3,7 +3,7 @@
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
-#include "render.h"
+#include "stylelib/render.h"
 
 void
 StyleProject::init()

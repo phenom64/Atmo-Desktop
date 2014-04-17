@@ -16,7 +16,6 @@ set (SRCS
     panels.cpp
     pixelmetric.cpp
     polish.cpp
-    render.cpp
     sliders.cpp
     styleproject.cpp
     tabs.cpp
@@ -26,14 +25,12 @@ set (HDRS
     macmenu-dbus.h
     macmenu.h
     overlay.h
-    render.h
     styleproject.h)
     
 set (MOC_HDRS
     macmenu-dbus.h
     macmenu.h
     overlay.h
-    #render.h
     styleproject.h)  
     
 set (QT_USE_QTDBUS TRUE)

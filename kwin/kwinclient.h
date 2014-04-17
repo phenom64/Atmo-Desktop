@@ -44,7 +44,9 @@ public:
     void resize(const QSize &s);
     void shadeChange() {}
     void reset(unsigned long changed);
+
     inline TitleBar *titleBar() const { return m_titleBar; }
+    bool compositingActive() const;
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -59,6 +61,7 @@ private:
     TitleBar *m_titleBar;
     QLinearGradient m_unoGradient;
     QColor m_unoColor;
+    Factory *m_factory;
     bool m_isUno;
 };
 

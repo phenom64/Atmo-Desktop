@@ -9,7 +9,7 @@
 #include <QAbstractItemView>
 
 #include "styleproject.h"
-#include "render.h"
+#include "stylelib/render.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 

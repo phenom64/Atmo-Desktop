@@ -12,6 +12,7 @@
 #include "button.h"
 #include "../stylelib/ops.h"
 #include "../stylelib/shadowhandler.h"
+#include "../stylelib/render.h"
 
 #define TITLEHEIGHT 22
 
@@ -29,14 +30,7 @@ void
 TitleBar::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.fillRect(rect(), m_brush);
-    p.setPen(Qt::NoPen);
-    p.setBrush(Qt::black);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    const int rnd(8);
-    p.drawRoundedRect(rect().adjusted(0, 0, 0, rnd), rnd, rnd);
-    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    Render::renderMask(rect(), &p, m_brush, 4, Render::All & ~Render::Bottom);
     QFont f(p.font());
     f.setBold(m_client->isActive());
     p.setFont(f);
@@ -63,6 +57,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_titleLayout(0)
     , m_titleBar(0)
     , m_isUno(false)
+    , m_factory(factory)
 {
     setParent(factory);
 }
@@ -96,6 +91,12 @@ void
 KwinClient::postInit()
 {
     reset(63);
+}
+
+bool
+KwinClient::compositingActive() const
+{
+    return m_factory->compositingActive();
 }
 
 void
@@ -260,6 +261,8 @@ KwinClient::reset(unsigned long changed)
         m_titleBar->setBrush(m_unoGradient);
         m_titleBar->update();
     }
+    else
+        m_titleBar->setBrush(m_titleBar->palette().color(m_titleBar->backgroundRole()));
     ShadowHandler::installShadows(windowId());
     widget()->update();
 }
