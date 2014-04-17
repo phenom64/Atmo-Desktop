@@ -51,7 +51,7 @@ StyleProject::assignMethods()
     m_ce[CE_TabBarTabShape] = method(drawTabShape);
     m_ce[CE_TabBarTabLabel] = method(drawTabLabel);
     m_ce[CE_MenuBarEmptyArea] = method(controlSkipper);
-    m_ce[CE_ItemViewItem] = method(drawViewItem);
+    m_ce[CE_ItemViewItem] = method(drawViewItem); //draw item in views
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -73,6 +73,7 @@ StyleProject::assignMethods()
     m_pe[PE_FrameTabBarBase] = method(drawTabBar);
     m_pe[PE_FrameTabWidget] = method(drawTabWidget);
     m_pe[PE_IndicatorTabClose] = method(drawTabCloser);
+    m_pe[PE_PanelItemViewItem] = method(drawViewItemBg); //drack BACKGROUND of item in views...
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);

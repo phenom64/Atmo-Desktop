@@ -5,13 +5,16 @@ add_definitions (${QT_DEFINITIONS})
 set (libSRCS
     xhandler.cpp
     ops.cpp
-    shadowhandler.cpp)
+    shadowhandler.cpp
+    render.cpp)
     
 set (libHDRS
     xhandler.h
     ops.h
-    shadowhandler.h)
+    shadowhandler.h
+    render.h)
 
+set (QT_USE_QTDBUS TRUE)
 find_package (Qt4 REQUIRED)
 include (${QT_USE_FILE})
 

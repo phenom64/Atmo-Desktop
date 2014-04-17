@@ -29,6 +29,8 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         QColor h(opt->palette.color(QPalette::Highlight));
         if (!(opt->state & State_Sunken))
             h.setAlpha(64);
+        else
+            fg = QPalette::HighlightedText;
 
         painter->fillRect(opt->rect, h);
     }
@@ -46,11 +48,9 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 }
 
 bool
-StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ViewItemV4, opt, option);
-    castObj(const QAbstractItemView *, view, widget);
-
     if (!opt)
         return true;
 
@@ -62,6 +62,15 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
 
         painter->fillRect(opt->rect, h);
     }
+    return true;
+}
+
+bool
+StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ViewItemV4, opt, option);
+    castObj(const QAbstractItemView *, view, widget);
+    drawViewItemBg(option, painter, widget);
 
     QPixmap pix(opt->icon.pixmap(opt->decorationSize));
     QRect iconRect(itemPixmapRect(opt->rect, opt->decorationAlignment, pix));

@@ -9,6 +9,7 @@
 
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
+#include "stylelib/ops.h"
 
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
@@ -19,26 +20,20 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     switch (e->type())
     {
     case QEvent::Show:
-    {
         if (castObj(QMainWindow *, win, o))
         {
             unsigned int d(1);
             XHandler::setXProperty<unsigned int>(win->winId(), XHandler::MainWindow, &d);
             unsigned int c(m_specialColor[0].rgba());
-//            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
-//            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
+    //            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
+    //            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
             XHandler::setXProperty<unsigned int>(win->winId(), XHandler::HeadColor, &c);
+            Ops::updateWindow(win->winId());
         }
-    }
-    case QEvent::Leave:
-    case QEvent::HoverLeave:
-    case QEvent::Enter:
-    case QEvent::HoverEnter:
-    {
-        if (castObj(QAbstractItemView *, v, o))
-            v->viewport()->update();
-        break;
-    }
+//    case QEvent::Leave:
+//    case QEvent::HoverLeave:
+//    case QEvent::Enter:
+//    case QEvent::HoverEnter:
     case QEvent::ActionChanged:
     {
         if (castObj(QToolBar *, toolBar, o))
@@ -87,5 +82,17 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
         if (winRect.top() <= widgetRect.top())
             toolBar->setContentsMargins(0, 0, 0, 5);
     }
+
+//    if (castObj(QMainWindow *, win, o))
+//    {
+//        unsigned int d(1);
+//        XHandler::setXProperty<unsigned int>(win->winId(), XHandler::MainWindow, &d);
+//        unsigned int c(m_specialColor[0].rgba());
+////            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
+////            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
+//        XHandler::setXProperty<unsigned int>(win->winId(), XHandler::HeadColor, &c);
+//        Ops::updateWindow(win->winId());
+//    }
+
     return QCommonStyle::eventFilter(o, e);
 }

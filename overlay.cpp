@@ -187,12 +187,12 @@ OverLay::updateOverlay()
                 if (w->rect().contains(m_frame->rect())) //sick, if we are inside we shouldn't do nothing
                     continue;
 
-                sides &= ~l[i];
                 if (QFrame *frame = getFrameForWidget(w, pos[i]))
                     if (OverLay *lay = frame->findChild<OverLay*>())
                         if (lay->size() == frame->size())
                             if (!(lay->lines() & wl[i]))
-                                sides |= l[i];
+                                continue;
+                sides &= ~l[i];
             }
     QRect winRect = m_frame->window()->rect();
     winRect.moveTopLeft(m_frame->mapFrom(m_frame->window(), winRect.topLeft()));
@@ -242,6 +242,15 @@ OverLay::mappedRect(const QWidget *widget)
     return QRect(topLeft, bottomRight);
 }
 
+bool
+OverLay::frameIsInteresting(const QFrame *frame, const Position &pos) const
+{
+    if (frame && frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
+        if (mappedRect(frame).contains(m_position[pos]))
+            return true;
+    return false;
+}
+
 QFrame
 *OverLay::getFrameForWidget(QWidget *w, const Position &pos) const
 {
@@ -251,21 +260,16 @@ QFrame
         frame = qobject_cast<QFrame *>(w);
         if (frameIsInteresting(frame, pos))
             return frame;
-        frame = w->findChild<QFrame *>();
-        if (frameIsInteresting(frame, pos))
-            return frame;
+        QList<QFrame *> frames = w->findChildren<QFrame *>();
+        for (int i = 0; i < frames.count(); ++i)
+        {
+            frame = frames.at(i);
+            if (frameIsInteresting(frame, pos))
+                return frame;
+        }
         w = w->parentWidget();
     }
     return 0;
-}
-
-bool
-OverLay::frameIsInteresting(const QFrame *frame, const Position &pos) const
-{
-    if (frame && frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
-        if (mappedRect(frame).contains(m_position[pos]))
-            return true;
-    return false;
 }
 
 void

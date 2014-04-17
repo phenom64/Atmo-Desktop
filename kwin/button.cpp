@@ -29,8 +29,13 @@ Button::~Button()
 void
 Button::paintEvent(QPaintEvent *)
 {
-    if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])())
+    QPainter p(this);
+    p.setBrushOrigin(-mapToParent(rect().topLeft()));
+//    p.fillRect(rect(), m_client->titleBar()->brush());
+    p.setBrushOrigin(rect().topLeft());
+    if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])(p))
         return;
+    p.end();
 }
 
 void
@@ -122,14 +127,13 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 // static uint fcolors[3] = { 0xFFBF2929, 0xFF29BF29, 0xFFBFBF29 };
 
 bool
-Button::paintClose()
+Button::paintClose(QPainter &p)
 {
-    QPainter p(this);
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
 //    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
     QRect r(rect());
-    drawBase(fcolors[m_type], p, r);
+    drawBase(m_client->isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
     if (underMouse())
     {
         p.setBrush(m_client->options()->color(KDecoration::ColorFont));
@@ -140,14 +144,13 @@ Button::paintClose()
 }
 
 bool
-Button::paintMax()
+Button::paintMax(QPainter &p)
 {
-    QPainter p(this);
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
 //    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
     QRect r(rect());
-    drawBase(fcolors[m_type], p, r);
+    drawBase(m_client->isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
     if (underMouse())
     {
         p.setBrush(m_client->options()->color(KDecoration::ColorFont));
@@ -158,14 +161,13 @@ Button::paintMax()
 }
 
 bool
-Button::paintMin()
+Button::paintMin(QPainter &p)
 {
-    QPainter p(this);
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
 //    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
     QRect r(rect());
-    drawBase(fcolors[m_type], p, r);
+    drawBase(m_client->isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
     if (underMouse())
     {
         p.setBrush(m_client->options()->color(KDecoration::ColorFont));

@@ -37,17 +37,17 @@ set (MOC_HDRS
     styleproject.h)  
     
 set (QT_USE_QTDBUS TRUE)
-set (QT_USE_QTNETWORK TRUE)
+#set (QT_USE_QTNETWORK TRUE)
 
 find_package (Qt4 REQUIRED)
 include (${QT_USE_FILE})
-qt4_wrap_cpp(MOC_SRCS ${MOC_HDRS})
+qt4_wrap_cpp (MOC_SRCS ${MOC_HDRS})
 
 find_package (KDE4)
 find_package (X11)
 
 add_library (styleproject SHARED ${SRCS} ${HDRS} ${MOC_SRCS})
-target_link_libraries (styleproject stylelib ${QT_LIBRARIES} ${QT_QTNETWORK_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries (styleproject stylelib ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
 
 install (TARGETS styleproject LIBRARY DESTINATION ${QT_PLUGINS_DIR}/styles)
 

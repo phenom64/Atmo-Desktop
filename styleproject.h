@@ -74,6 +74,7 @@ public:
     bool drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;

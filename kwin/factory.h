@@ -13,6 +13,7 @@ public:
     Factory();
     KDecoration *createDecoration(KDecorationBridge *bridge);
     bool supports(Ability ability) const;
+    void update(WId window);
 };
 
 

@@ -8,6 +8,22 @@
 
 #include "factory.h"
 
+class KwinClient;
+class TitleBar : public QWidget
+{
+public:
+    explicit TitleBar(KwinClient *client, QWidget *parent = 0);
+    void setBrush(const QBrush &brush);
+    inline QBrush brush() const { return m_brush; }
+
+protected:
+    void paintEvent(QPaintEvent *);
+
+private:
+    QBrush m_brush;
+    KwinClient *m_client;
+};
+
 class Factory;
 class KwinClient : public KDecoration
 {
@@ -28,6 +44,7 @@ public:
     void resize(const QSize &s);
     void shadeChange() {}
     void reset(unsigned long changed);
+    inline TitleBar *titleBar() const { return m_titleBar; }
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -39,7 +56,7 @@ protected slots:
 
 private:
     QHBoxLayout *m_titleLayout;
-    QWidget *m_stretch;
+    TitleBar *m_titleBar;
     QLinearGradient m_unoGradient;
     QColor m_unoColor;
     bool m_isUno;

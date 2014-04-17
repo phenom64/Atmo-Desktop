@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QHBoxLayout>
 #include <QTimer>
+#include <QPixmap>
 
 #include "kwinclient.h"
 #include "button.h"
@@ -14,10 +15,53 @@
 
 #define TITLEHEIGHT 22
 
+TitleBar::TitleBar(KwinClient *client, QWidget *parent)
+    : QWidget(parent)
+    , m_brush(QBrush())
+    , m_client(client)
+{
+    setFixedHeight(TITLEHEIGHT);
+    setAttribute(Qt::WA_NoSystemBackground);
+//    setAttribute(Qt::WA_TranslucentBackground);
+}
+
+void
+TitleBar::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.fillRect(rect(), m_brush);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::black);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    const int rnd(8);
+    p.drawRoundedRect(rect().adjusted(0, 0, 0, rnd), rnd, rnd);
+    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    QFont f(p.font());
+    f.setBold(m_client->isActive());
+    p.setFont(f);
+    if (m_client->isActive())
+    {
+        p.setPen(QColor(255, 255, 255, 127));
+        p.drawText(rect().translated(0, 1), Qt::AlignCenter, m_client->caption());
+    }
+    p.setPen(m_client->options()->color(KwinClient::ColorFont, m_client->isActive()));
+    p.drawText(rect(), Qt::AlignCenter, m_client->caption());
+    p.end();
+}
+
+void
+TitleBar::setBrush(const QBrush &brush)
+{
+    m_brush = brush;
+}
+
+///-------------------------------------------------------------------
+
 KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
-    , m_stretch(0)
+    , m_titleBar(0)
     , m_isUno(false)
 {
     setParent(factory);
@@ -28,21 +72,30 @@ KwinClient::init()
 {
     createMainWidget();
     widget()->installEventFilter(this);
-    m_titleLayout = new QHBoxLayout(widget());
+    widget()->setAttribute(Qt::WA_NoSystemBackground);
+    widget()->setAutoFillBackground(false);
+    m_titleBar = new TitleBar(this);
+    m_titleLayout = new QHBoxLayout();
     m_titleLayout->setSpacing(0);
     m_titleLayout->setContentsMargins(0, 0, 0, 0);
-    reset(63);
+    m_titleBar->setLayout(m_titleLayout);
+    QVBoxLayout *l = new QVBoxLayout(widget());
+    l->setSpacing(0);
+    l->setContentsMargins(0, 0, 0, 0);
+//    l->addLayout(m_titleLayout);
+    l->addWidget(m_titleBar);
+    l->addStretch();
+    widget()->setLayout(l);
+
     ShadowHandler::installShadows(windowId());
     QTimer::singleShot(1, this, SLOT(postInit()));
+    setAlphaEnabled(true);
 }
 
 void
 KwinClient::postInit()
 {
-    m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
-    if (unsigned int *uno = XHandler::getXProperty<unsigned int>(windowId(), XHandler::MainWindow))
-        m_isUno = *uno;
-    widget()->update();
+    reset(63);
 }
 
 void
@@ -83,8 +136,7 @@ void
 KwinClient::resize(const QSize &s)
 {
     widget()->resize(s);
-//    m_stretch->resize(s-QSize(0, TITLEHEIGHT));
-    m_titleLayout->setGeometry(QRect(0, 0, s.width(), TITLEHEIGHT));
+//    m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
 }
 
 void
@@ -112,7 +164,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     case QEvent::Paint:
     {
         QPainter p(widget());
-        p.setPen(options()->color(ColorFont, isActive()));
+        p.setRenderHint(QPainter::Antialiasing);
         paint(p);
         p.end();
         return true;
@@ -126,9 +178,10 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     case QEvent::Wheel:
         titlebarMouseWheelOperation(static_cast<QWheelEvent *>(e)->delta());
         return true;
-    case QEvent::Show:
-    case QEvent::Resize:
-        m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
+//    case QEvent::Show:
+//    case QEvent::Resize:
+//        m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
+//        m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
     default: break;
     }
     return KDecoration::eventFilter(o, e);
@@ -137,13 +190,16 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
 void
 KwinClient::paint(QPainter &p)
 {
-    QRect r(m_titleLayout->geometry());
-    if (m_isUno)
-        p.fillRect(r, m_unoGradient);
-    QFont f(p.font());
-    f.setBold(isActive());
-    p.setFont(f);
-    p.drawText(r, Qt::AlignCenter, caption());
+//    p.fillRect(m_titleLayout->geometry(), Qt::white);
+//    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+//    p.setPen(Qt::NoPen);
+//    p.setBrush(Qt::black);
+//    p.drawRoundedRect(m_titleLayout->geometry(), 8, 8);
+//    QFont f(p.font());
+//    f.setBold(isActive());
+//    p.setFont(f);
+//    p.setPen(options()->color(ColorFont, isActive()));
+//    p.drawText(m_titleBar->geometry(), Qt::AlignCenter, caption());
 }
 
 QSize
@@ -155,16 +211,6 @@ KwinClient::minimumSize() const
 void
 KwinClient::activeChange()
 {
-    if (unsigned int *uno = XHandler::getXProperty<unsigned int>(windowId(), XHandler::MainWindow))
-        m_isUno = *uno;
-    if (unsigned int *bg = XHandler::getXProperty<unsigned int>(windowId(), XHandler::HeadColor))
-    {
-        m_unoColor = QColor(*bg);
-        QRect r(m_titleLayout->geometry());
-        m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
-        m_unoGradient.setColorAt(0.0f, Ops::mid(m_unoColor, Qt::white));
-        m_unoGradient.setColorAt(1.0f, m_unoColor);
-    }
     ShadowHandler::installShadows(windowId());
     widget()->update();
 }
@@ -201,6 +247,19 @@ KwinClient::reset(unsigned long changed)
         m_titleLayout->addStretch();
         populate(options()->titleButtonsRight());
     }
-    if (changed & SettingDecoration)
-        m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
+
+    if (unsigned int *uno = XHandler::getXProperty<unsigned int>(windowId(), XHandler::MainWindow))
+        m_isUno = *uno;
+    if (unsigned int *bg = XHandler::getXProperty<unsigned int>(windowId(), XHandler::HeadColor))
+    {
+        m_unoColor = QColor(*bg);
+        QRect r(m_titleBar->rect());
+        m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
+        m_unoGradient.setColorAt(0.0f, Ops::mid(m_unoColor, Qt::white));
+        m_unoGradient.setColorAt(1.0f, m_unoColor);
+        m_titleBar->setBrush(m_unoGradient);
+        m_titleBar->update();
+    }
+    ShadowHandler::installShadows(windowId());
+    widget()->update();
 }

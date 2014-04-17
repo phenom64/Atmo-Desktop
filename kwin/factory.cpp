@@ -1,4 +1,8 @@
+#include <QDBusConnection>
+#include <QDBusMessage>
+
 #include "factory.h"
+#include "factorydbusadaptor.h"
 #include "../stylelib/xhandler.h"
 #include "../stylelib/shadowhandler.h"
 
@@ -15,7 +19,8 @@ Factory::Factory()
     , KDecorationFactory()
 {
     ShadowHandler::removeDelete();
-    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
+    new FactoryDbusAdaptor(this);
+    QDBusConnection::sessionBus().registerObject("/StyleProjectFactory", this);
 }
 
 bool
@@ -57,12 +62,16 @@ Factory::supports(Ability ability) const
     ///  The mask is still used to define the input region and the blurred
     ///  region, when the blur plugin is enabled.
     ///  @since 4.3
+    return true;
     case AbilityExtendIntoClientArea: ///< The decoration respects transparentRect()
+        return false;
     ///  @since 4.4
     case AbilityUsesBlurBehind: ///< The decoration wants the background to be blurred, when the blur plugin is enabled.
     /// @since 4.6
+    return false;
     case AbilityAnnounceAlphaChannel: ///< The decoration can tell whether it currently uses an alpha channel or not. Requires AbilityUsesAlphaChannel.
     /// @since 4.10
+    return true;
     // Tabbing
     case AbilityTabbing: ///< The decoration supports tabbing
     // TODO colors for individual button types
@@ -76,4 +85,17 @@ Factory::supports(Ability ability) const
     //END ABI stability stuff
     default: return false;
     }
+}
+
+void
+Factory::update(WId window)
+{
+    QList<KDecoration *> decos(findChildren<KDecoration *>());
+    for (int i = 0; i < decos.count(); ++i)
+    {
+        KDecoration *d = decos.at(i);
+        if (d->windowId() == window)
+            d->reset(63);
+    }
+
 }

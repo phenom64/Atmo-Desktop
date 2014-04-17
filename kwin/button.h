@@ -19,13 +19,13 @@ protected:
     void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
-    bool paintClose();
-    bool paintMin();
-    bool paintMax();
+    bool paintClose(QPainter &p);
+    bool paintMin(QPainter &p);
+    bool paintMax(QPainter &p);
 
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 
-    typedef bool (Button::*PaintEvent)();
+    typedef bool (Button::*PaintEvent)(QPainter &);
 
 private:
     PaintEvent m_paintEvent[TypeCount];

@@ -20,20 +20,6 @@ protected:
 };
 
 static ShowCatcher *showCatcher = 0;
-
-QPixmap
-ShadowHandler::x11Pixmap(const QPixmap &pix)
-{
-    Pixmap x11Pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
-    QPixmap qPix(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
-    qPix.fill(Qt::transparent);
-    QPainter p(&qPix);
-    p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.drawPixmap(0, 0, pix);
-    p.end();
-    return qPix;
-}
-
 static QPixmap *pix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static QRect part(int part, int size)
@@ -56,8 +42,7 @@ static QRect part(int part, int size)
 unsigned long
 *ShadowHandler::shadows(const int size)
 {
-    int n(0);
-    unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow, n);
+    unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow);
     if (!shadows)
     {
         unsigned long *data = new unsigned long[12];
@@ -81,12 +66,13 @@ unsigned long
             if (i < 8)
             {
                 QRect r(part(i, size));
-                QPixmap px(r.size());
-                px.fill(Qt::transparent);
-                QPainter pt(&px);
-                pt.drawTiledPixmap(px.rect(), QPixmap::fromImage(img).copy(r));
+                Pixmap x11Pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), r.width(), r.height(), 32);
+                pix[i] = new QPixmap();
+                *pix[i] = QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared);
+                pix[i]->fill(Qt::transparent);
+                QPainter pt(pix[i]);
+                pt.drawTiledPixmap(pix[i]->rect(), QPixmap::fromImage(img).copy(r));
                 pt.end();
-                pix[i] = new QPixmap(x11Pixmap(px));
                 data[i] = pix[i]->handle();
             }
             else
@@ -117,6 +103,7 @@ ShadowHandler::manage(QWidget *w)
 void
 ShadowHandler::removeDelete()
 {
+    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
     if (showCatcher)
     {
         delete showCatcher;
