@@ -138,6 +138,14 @@ KwinClient::resize(const QSize &s)
 {
     widget()->resize(s);
 //    m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
+    const int w(s.width()), h(s.height());
+    if (compositingActive())
+    {
+        QRegion r(2, 0, w-4, h);
+        r += QRegion(1, 0, w-2, h-1);
+        r += QRegion(0, 0, w, h-2);
+        setMask(r);
+    }
 }
 
 void
