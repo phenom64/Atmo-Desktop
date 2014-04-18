@@ -88,6 +88,32 @@ StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, 
 {
     switch (cc)
     {
+    case CC_ScrollBar:
+    {
+        castOpt(Slider, slider, opt);
+        if (!slider)
+            return QRect();
+
+        QRect r(slider->rect);
+        switch (sc)
+        {
+        case SC_ScrollBarGroove: return r;
+        case SC_ScrollBarSlider:
+        {
+            bool hor(slider->orientation == Qt::Horizontal);
+            int grooveSize(hor ? r.width() : r.height());
+            unsigned int range(slider->maximum-slider->minimum);
+            int sliderSize = (slider->pageStep*grooveSize) / (range+slider->pageStep);
+            sliderSize = qMax(pixelMetric(PM_ScrollBarSliderMin, opt, w), sliderSize);
+            int pos = sliderPositionFromValue(slider->minimum, slider->maximum, slider->sliderPosition, grooveSize-sliderSize, slider->upsideDown);
+            if (hor)
+                return QRect(pos, 0, sliderSize, r.height());
+            else
+                return QRect(0, pos, r.width(), sliderSize);
+        }
+        default: return QRect();
+        }
+    }
     default: break;
     }
     return QCommonStyle::subControlRect(cc, opt, sc, w);
