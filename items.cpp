@@ -8,18 +8,61 @@
 #include <QStyleOptionViewItemV3>
 #include <QStyleOptionViewItemV4>
 #include <QAbstractItemView>
+#include <QMenu>
 
 #include "styleproject.h"
+#include "stylelib/ops.h"
 
 bool
 StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(MenuItem, opt, option);
-    QPalette::ColorRole fg(QPalette::Window);
-    if (widget)
-        fg = widget->foregroundRole();
     if (!opt)
         return true;
+
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    QPalette::ColorRole fg(QPalette::Text), bg(QPalette::Base);
+    if (widget)
+    {
+        fg = widget->foregroundRole();
+        bg = widget->backgroundRole();
+    }
+
+    const bool isMenu(qobject_cast<const QMenu *>(widget));
+    const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);
+    const bool hasText(!opt->text.isEmpty());
+    const bool hasRadioButton(opt->checkType == QStyleOptionMenuItem::Exclusive);
+    const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
+    const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
+
+    const int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?32:0), square(opt->rect.height());
+
+    if (isSeparator)
+    {
+        painter->setPen(opt->palette.color(QPalette::Disabled, fg));
+        painter->translate(0, 0.5f);
+        const int top(opt->rect.top()), height(opt->rect.height()), width(opt->rect.width());
+        const int y(top+(height/2));
+        if (hasText)
+        {
+            painter->drawLine(0, y, leftMargin, y);
+            painter->drawLine(width-rightMargin, y, width, y);
+        }
+        else
+        {
+            painter->drawLine(0, y, width, y);
+            painter->restore();
+            return true;
+        }
+        painter->translate(0, -0.5f);
+    }
+
+    if (!hasText)
+    {
+        painter->restore();
+        return true;
+    }
 
     /** For some reason 'selected' here means hover
      *  and sunken means pressed.
@@ -30,20 +73,60 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         if (!(opt->state & State_Sunken))
             h.setAlpha(64);
         else
+        {
             fg = QPalette::HighlightedText;
+            bg = QPalette::Highlight;
+        }
 
         painter->fillRect(opt->rect, h);
     }
 
-    if (opt->text.isEmpty())
-        return true;
-    QStringList text(opt->text.split("\t"));
-    while (text.count() < 2)
-        text << QString();
-    int align[] = { Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
+    QRect button(leftMargin/2 - square/2, opt->rect.top(), square, square);
+    QRect textRect(opt->rect.adjusted(leftMargin, 0, -rightMargin, 0));
+    QRect arrow(textRect.right()+((rightMargin/2)-(square/2)), opt->rect.top(), square, square);
 
-    for (int i = 0; i < 2; ++i)
-        drawItemText(painter, opt->rect, align[i], opt->palette, opt->state & State_Enabled, text.at(i), fg);
+    if (hasRadioButton)
+    {
+        QRect copy(button.adjusted(2, 2, -2, -2));
+        painter->setBrush(opt->palette.color(fg));
+        painter->setPen(Qt::NoPen);
+        painter->drawEllipse(copy);
+        copy.adjust(2, 2, -2, -2);
+        painter->setBrush(opt->palette.color(bg));
+        painter->drawEllipse(copy);
+        if (opt->checked)
+        {
+            painter->setBrush(opt->palette.color(fg));
+            copy.adjust(2, 2, -2, -2);
+            painter->drawEllipse(copy);
+        }
+    }
+    else if (hasCheckBox)
+    {
+        QRect copy(button.adjusted(2, 2, -2, -2));
+        painter->setBrush(opt->palette.color(fg));
+        painter->setPen(Qt::NoPen);
+        painter->drawRoundedRect(copy, 3, 3);
+        copy.adjust(2, 2, -2, -2);
+        painter->setBrush(opt->palette.color(bg));
+        painter->drawRoundedRect(copy, 1, 1);
+        if (opt->checked)
+        {
+            copy.adjust(1, 1, -1, -1);
+            Ops::drawCheckMark(painter, opt->palette.color(fg), copy);
+        }
+    }
+
+    if (hasMenu)
+        Ops::drawArrow(painter, opt->palette.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right);
+
+    QStringList text(opt->text.split("\t"));
+    const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
+    const bool enabled[] = { opt->state & State_Enabled, false };
+
+    for (int i = 0; i < 2 && i < text.count(); ++i)
+        drawItemText(painter, textRect, align[i], opt->palette, enabled[i], text.at(i), fg);
+    painter->restore();
     return true;
 }
 

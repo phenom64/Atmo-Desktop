@@ -50,6 +50,12 @@ StyleProject::polish(QWidget *widget)
         installFilter(win);
     }
 
+    /** TODO:
+     *  Now the shadowhandler handles *ALL*
+     *  windows... that we dont want, we
+     *  dont want desktop panels etc to have a
+     *  shadow... fix.
+     */
     if (widget->isWindow())
         ShadowHandler::manage(widget);
 
@@ -67,12 +73,14 @@ StyleProject::polish(QWidget *widget)
 
     if (castObj(QMenuBar *, menuBar, widget))
     {
+        menuBar->setAutoFillBackground(false);
         menuBar->setMouseTracking(true);
         menuBar->setAttribute(Qt::WA_Hover);
     }
 
     if (castObj(QMenu *, menu, widget))
     {
+        menu->setAttribute(Qt::WA_TranslucentBackground);
         menu->setMouseTracking(true);
         menu->setAttribute(Qt::WA_Hover);
     }

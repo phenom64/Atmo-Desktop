@@ -7,6 +7,7 @@
 #include <QDBusMessage>
 #include <QColor>
 #include <QMap>
+#include <QPainter>
 
 #include "ops.h"
 
@@ -116,4 +117,52 @@ Ops::updateWindow(WId window)
     QDBusMessage msg = methodCall("update");
     msg << QVariant::fromValue((unsigned int)window);
     QDBusConnection::sessionBus().send(msg);
+}
+
+void
+Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r)
+{
+    p->save();
+    p->translate(r.topLeft());
+
+    const int size = qMin(r.width(), r.height());
+    const int third = size/3, thirds = third*2, sixth=third/2;
+    const int points[] = { third,third+sixth, third+sixth,thirds+sixth, thirds+sixth,third-sixth };
+
+    p->setRenderHint(QPainter::Antialiasing);
+    p->setPen(QPen(c, third*0.66f));
+    p->setBrush(Qt::NoBrush);
+
+    QPainterPath path;
+
+    path.addPolygon(QPolygon(3, points));
+    p->drawPath(path);
+    p->restore();
+}
+
+void
+Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction &d)
+{
+    p->save();
+    p->translate(r.topLeft());
+    p->setPen(Qt::NoPen);
+    p->setBrush(c);
+
+    const int size = qMin(r.width(), r.height());
+    const int points[]  = { 0,0, size,size/2, 0,size };
+
+    if (d != Right)
+    {
+        p->translate(r.center());
+        switch (d)
+        {
+        case Down: p->rotate(90); break;
+        case Left: p->rotate(180);
+        case Up: p->rotate(270);
+        }
+        p->translate(-r.center());
+    }
+    p->drawPolygon(QPolygon(3, points));
+
+    p->restore();
 }

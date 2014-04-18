@@ -11,6 +11,11 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 {
     switch (metric)
     {
+    case PM_MenuVMargin: return 6;
+    case PM_MenuHMargin: return 0;
+    case PM_MenuBarPanelWidth:
+    case PM_MenuPanelWidth: return 0;
+    case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent: return 1;
     case PM_SplitterWidth: return 1;
     case PM_DefaultFrameWidth:
@@ -40,7 +45,6 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
                 }
         return 4;
     }
-    case PM_MenuBarItemSpacing: return 4;
 //    case PM_SliderThickness: return 12;
     case PM_SliderLength:
     case PM_SliderControlThickness: return qMin(option->rect.height(), option->rect.width());

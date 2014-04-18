@@ -74,6 +74,8 @@ StyleProject::assignMethods()
     m_pe[PE_FrameTabWidget] = method(drawTabWidget);
     m_pe[PE_IndicatorTabClose] = method(drawTabCloser);
     m_pe[PE_PanelItemViewItem] = method(drawViewItemBg); //drack BACKGROUND of item in views...
+    m_pe[PE_PanelMenu] = method(drawMenu);
+    m_pe[PE_FrameMenu] = method(drawMenu);
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);

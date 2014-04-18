@@ -19,7 +19,8 @@ set (SRCS
     sliders.cpp
     styleproject.cpp
     tabs.cpp
-    stylehint.cpp)
+    stylehint.cpp
+    contentssize.cpp)
     
 set (HDRS
     macmenu-dbus.h

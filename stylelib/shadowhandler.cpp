@@ -67,8 +67,7 @@ unsigned long
             {
                 QRect r(part(i, size));
                 Pixmap x11Pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), r.width(), r.height(), 32);
-                pix[i] = new QPixmap();
-                *pix[i] = QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared);
+                pix[i] = new QPixmap(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
                 pix[i]->fill(Qt::transparent);
                 QPainter pt(pix[i]);
                 pt.drawTiledPixmap(pix[i]->rect(), QPixmap::fromImage(img).copy(r));

@@ -60,10 +60,15 @@ StyleProject::drawPrimitive(PrimitiveElement element, const QStyleOption *option
 void
 StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
 {
+    painter->save();
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextShowMnemonic; // Qt::TextHideMnemonic
-    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
+    if (textRole != QPalette::NoRole)
+        painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
+    painter->drawText(rect, flags, text);
+//    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
+    painter->restore();
 }
 
 void
@@ -76,19 +81,6 @@ QPixmap
 StyleProject::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const
 {
     return QCommonStyle::generatedIconPixmap(iconMode, pixmap, opt);
-}
-
-QSize
-StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget) const
-{
-    switch (ct)
-    {
-    case CT_ToolButton: return contentsSize+QSize(10, 8);
-    case CT_MenuBarItem: return contentsSize+QSize(8, 0);
-    default: break;
-    }
-
-    return QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
 }
 
 QRect

@@ -91,6 +91,7 @@ public:
     bool drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);
