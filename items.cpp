@@ -36,7 +36,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
 
-    const int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?32:0), square(opt->rect.height());
+    const int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?(hasMenu?32:6):0), square(opt->rect.height());
 
     if (isSeparator)
     {
