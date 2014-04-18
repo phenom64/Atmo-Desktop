@@ -20,24 +20,19 @@
 bool
 StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    /* uncomment the following lines and remove the
-     * return false in order to fill *all* pushbuttons
-     * w/ a beautiful red color and nothing else
-     */
-//    painter->fillRect(option->rect, Qt::red);
-//    return true;
-    return false;
-}
+    castOpt(Button, opt, option);
+    if (!opt)
+        return true;
 
-/* not sure if these 2 are needed at all */
+    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
+    if (widget)
+    {
+        bg = widget->backgroundRole();
+        fg = widget->foregroundRole();
+    }
 
-bool
-StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
-{
     painter->save();
-    if (!painter->isActive())
-        return false;
-    QColor bc(option->palette.color(QPalette::Button));
+    QColor bc(option->palette.color(bg));
     if (option->HOVER)
         bc = bc.lighter();
     if (option->SUNKEN)
@@ -51,14 +46,24 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
     lg.setColorAt(0.0f, Ops::mid(bc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, Ops::mid(bc, Qt::black, 7, 1));
     Render::renderMask(r, painter, lg);
+
+    drawItemText(painter, opt->rect, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
     painter->restore();
+    return true;
+}
+
+/* not sure if these 2 are needed at all */
+
+bool
+StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
     return true;
 }
 
 bool
 StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    return false;
+    return true;
 }
 
 

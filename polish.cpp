@@ -70,21 +70,18 @@ StyleProject::polish(QWidget *widget)
         view->setAttribute(Qt::WA_MouseTracking);
         installFilter(view);
     }
-
-    if (castObj(QMenuBar *, menuBar, widget))
+    if (qobject_cast<QMenu *>(widget)||qobject_cast<QMenuBar *>(widget))
     {
-        menuBar->setAutoFillBackground(false);
-        menuBar->setMouseTracking(true);
-        menuBar->setAttribute(Qt::WA_Hover);
+        widget->setAttribute(Qt::WA_TranslucentBackground);
+        widget->setMouseTracking(true);
+        widget->setAttribute(Qt::WA_Hover);
+        /**
+         * Apparently some menues fight back and dont
+         * want mousetracking, we filter and set mousetracking
+         * when the menu is shown.
+         */
+        installFilter(widget);
     }
-
-    if (castObj(QMenu *, menu, widget))
-    {
-        menu->setAttribute(Qt::WA_TranslucentBackground);
-        menu->setMouseTracking(true);
-        menu->setAttribute(Qt::WA_Hover);
-    }
-
     if (widget->inherits("KTabWidget"))
     {
         installFilter(widget);
