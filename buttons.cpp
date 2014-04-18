@@ -67,7 +67,38 @@ StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter,
 bool
 StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    return false;
+    castOpt(Button, opt, option);
+    if (!opt)
+        return true;
+
+    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
+    if (widget)
+    {
+        bg = widget->backgroundRole();
+        fg = widget->foregroundRole();
+    }
+    int size(opt->rect.height());
+    QRect checkRect(0, 0, size, size);
+    QRect textRect(opt->rect.adjusted(size, 0, 0, 0));
+    const float o(painter->opacity());
+    painter->setOpacity(0.5f*o);
+    Render::renderShadow(Render::Raised, checkRect, painter, 5);
+    painter->setOpacity(o);
+
+
+    const QColor bgc(opt->palette.color(bg));
+    QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+    lg.setColorAt(0.0f, Ops::mid(bgc, Qt::white, 5, 1));
+    lg.setColorAt(1.0f, Ops::mid(bgc, Qt::black, 7, 1));
+
+    Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg, 2);
+
+    if (opt->state & State_On)
+        Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect);
+
+
+    drawItemText(painter, textRect, Qt::AlignLeft|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    return true;
 }
 
 bool
@@ -81,7 +112,40 @@ StyleProject::drawCheckBoxLabel(const QStyleOption *option, QPainter *painter, c
 bool
 StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    return false;
+    castOpt(Button, opt, option);
+    if (!opt)
+        return true;
+
+    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
+    if (widget)
+    {
+        bg = widget->backgroundRole();
+        fg = widget->foregroundRole();
+    }
+    int size(opt->rect.height());
+    QRect checkRect(0, 0, size, size);
+    QRect textRect(opt->rect.adjusted(size, 0, 0, 0));
+    Render::renderShadow(Render::Raised, checkRect, painter);
+
+    const QColor bgc(opt->palette.color(bg));
+    QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+    lg.setColorAt(0.0f, Ops::mid(bgc, Qt::white, 5, 1));
+    lg.setColorAt(1.0f, Ops::mid(bgc, Qt::black, 7, 1));
+
+    Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg);
+
+    if (opt->state & State_On)
+    {
+        painter->save();
+        painter->setBrush(opt->palette.color(fg));
+        painter->setPen(Qt::NoPen);
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->drawEllipse(checkRect.adjusted(6, 6, -6, -6));
+        painter->restore();
+    }
+
+    drawItemText(painter, textRect, Qt::AlignLeft|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    return true;
 }
 
 bool
