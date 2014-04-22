@@ -101,13 +101,19 @@ Render::initShadowParts()
             break;
         }
         case Etched:
-            p.setBrush(Qt::NoBrush);
-            p.translate(0.5f, 0.5f);
-            p.setPen(Qt::white/*QColor(255, 255, 255, 96)*/);
-            p.drawRoundedRect(pix.rect().adjusted(0, 1, -1, -1), r, r);
-            p.setPen(Qt::black);
-            p.drawRoundedRect(pix.rect().adjusted(0, 0, -1, -2), r, r);
+        {
+            QRect rect(pix.rect());
+            p.setBrush(Qt::white);
+            p.setPen(Qt::NoPen);
+            p.drawRoundedRect(rect, r, r);
+            p.setBrush(Qt::black);
+            rect.setBottom(rect.bottom()-1);
+            p.drawRoundedRect(rect, r, r);
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            rect.adjust(1, 1, -1, -1);
+            p.drawRoundedRect(rect, r-1, r-1);
             break;
+        }
         default: break;
         }
         p.end();
@@ -284,4 +290,26 @@ Render::checkedForWindowEdges(const QWidget *w, Sides from)
     if (widgetRect.top() <= winRect.top())
         from &= ~Render::Top;
     return from;
+}
+
+void
+Render::colorizePixmap(QPixmap &pix, const QBrush &b)
+{
+    QImage tmp(pix.size(), QImage::Format_ARGB32);
+    tmp.fill(Qt::transparent);
+    QPainter p(&tmp);
+    p.fillRect(tmp.rect(), b);
+    p.end();
+
+    QImage img = pix.toImage().convertToFormat(QImage::Format_ARGB32);
+    QRgb *tmpColors = reinterpret_cast<QRgb *>(tmp.bits());
+    QRgb *pixColors = reinterpret_cast<QRgb *>(img.bits());
+    const int s(pix.height()*pix.width());
+    for (int i = 0; i < s; ++i)
+    {
+        QColor c(tmpColors[i]);
+        c.setAlpha(qMin(qAlpha(pixColors[i]), qAlpha(tmpColors[i])));
+        pixColors[i] = c.rgba();
+    }
+    pix = QPixmap::fromImage(img);
 }

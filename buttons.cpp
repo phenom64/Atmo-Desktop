@@ -10,6 +10,7 @@
 #include "styleproject.h"
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
+#include "stylelib/color.h"
 
 /*
  * This here paints the button, in order to override
@@ -43,8 +44,8 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
     painter->setOpacity(1.0f);
     QRect r(option->rect.adjusted(3, 3, -3, -3));
     QLinearGradient lg(r.topLeft(), r.bottomLeft());
-    lg.setColorAt(0.0f, Ops::mid(bc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, Ops::mid(bc, Qt::black, 7, 1));
+    lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
+    lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
     Render::renderMask(r, painter, lg);
 
     drawItemText(painter, opt->rect, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
@@ -83,8 +84,8 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
         fg = widget->foregroundRole();
     }
     int size(opt->rect.height());
-    QRect checkRect(0, 0, size, size);
-    QRect textRect(opt->rect.adjusted(size, 0, 0, 0));
+    QRect checkRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
+    QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
     const float o(painter->opacity());
     painter->setOpacity(0.5f*o);
     Render::renderShadow(Render::Raised, checkRect, painter, 5);
@@ -93,8 +94,8 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
 
     const QColor bgc(opt->palette.color(bg));
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-    lg.setColorAt(0.0f, Ops::mid(bgc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, Ops::mid(bgc, Qt::black, 7, 1));
+    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
+    lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
 
     Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg, 2);
 
@@ -128,14 +129,14 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
         fg = widget->foregroundRole();
     }
     int size(opt->rect.height());
-    QRect checkRect(0, 0, size, size);
-    QRect textRect(opt->rect.adjusted(size, 0, 0, 0));
+    QRect checkRect(subElementRect(SE_RadioButtonIndicator, opt, widget));
+    QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     Render::renderShadow(Render::Raised, checkRect, painter);
 
     const QColor bgc(opt->palette.color(bg));
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-    lg.setColorAt(0.0f, Ops::mid(bgc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, Ops::mid(bgc, Qt::black, 7, 1));
+    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
+    lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
 
     Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg);
 
@@ -228,11 +229,11 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
 
     QRect rect(opt->rect);
     QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    const QColor &start = Ops::mid(bc, Qt::white, 2, 1), &end = Ops::mid(bc, Qt::black, 2, 1);
+    const QColor &start = Color::mid(bc, Qt::white, 1, 2), &end = Color::mid(bc, Qt::black, 3, 1);
     lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
-    lg.setColorAt(1.0f, opt->SUNKEN ? Ops::mid(bc, end) : end);
+    lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
     Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
-    painter->setOpacity(0.5f);
+    painter->setOpacity(0.4f);
     Render::renderShadow(shadow, opt->rect, painter, 4, sides);
     if (!(sides&Render::Right) && !nextSelected)
     {

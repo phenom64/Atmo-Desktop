@@ -9,6 +9,7 @@
 #include "styleproject.h"
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
+#include "stylelib/color.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -37,8 +38,8 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget));
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
 
-    Ops::ensureContrast(bgc, fgc);
-    const QColor mid(Ops::mid(bgc, fgc));
+    Color::ensureContrast(bgc, fgc);
+    const QColor mid(Color::mid(bgc, fgc));
     painter->fillRect(up, mid);
     painter->fillRect(down, mid);
     painter->fillRect(groove, bgc);
@@ -59,7 +60,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     }
     QRect slider(subControlRect(CC_Slider, option, SC_SliderHandle, widget));
     QRect groove(subControlRect(CC_Slider, option, SC_SliderGroove, widget));
-    painter->fillRect(groove, Ops::mid(option->palette.color(bg), option->palette.color(fg)));
+    painter->fillRect(groove, Color::mid(option->palette.color(bg), option->palette.color(fg)));
     painter->fillRect(slider, option->palette.color(fg));
     return true;
 }

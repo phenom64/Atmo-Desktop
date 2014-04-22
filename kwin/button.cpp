@@ -3,6 +3,7 @@
 
 #include "button.h"
 #include "../stylelib/ops.h"
+#include "../stylelib/color.h"
 
 Button::Button(Type type, KwinClient *client, QWidget *parent)
     : QWidget(parent)
@@ -80,7 +81,7 @@ void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
-    const QColor low(Ops::mid(c, Qt::black, 5, 3));
+    const QColor low(Color::mid(c, Qt::black, 5, 3));
     const QColor high(QColor(255, 255, 255, 127));
     r.adjust(2, 2, -2, -2);
     p.setBrush(high);
@@ -90,10 +91,10 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     r.adjust(1, 1, -1, -1);
 
     QRadialGradient rg(r.center()+QPoint(1, r.height()/2-1), r.height()-1);
-    rg.setColorAt(0.0f, Ops::mid(c, Qt::white));
+    rg.setColorAt(0.0f, Color::mid(c, Qt::white));
     rg.setColorAt(0.5f, c);
 
-    rg.setColorAt(1.0f, Ops::mid(c, Qt::black));
+    rg.setColorAt(1.0f, Color::mid(c, Qt::black));
     p.setBrush(rg);
     p.drawEllipse(r);
 

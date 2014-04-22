@@ -9,17 +9,16 @@ void
 StyleProject::init()
 {
     for (int i = 0; i < CCSize; ++i)
+    {
         m_cc[i] = 0;
+        m_sc[i] = 0;
+    }
     for (int i = 0; i < CESize; ++i)
         m_ce[i] = 0;
     for (int i = 0; i < PESize; ++i)
         m_pe[i] = 0;
     for (int i = 0; i < EVSize; ++i)
         m_ev[i] = 0;
-    QPalette p(QApplication::palette());
-    QColor c = Ops::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
-    m_specialColor[0] = Ops::mid(c, Qt::white, 4, 1);
-    m_specialColor[1] = Ops::mid(c, Qt::black, 4, 1);
 }
 
 /* here we assign functions to perform the
@@ -52,6 +51,7 @@ StyleProject::assignMethods()
     m_ce[CE_TabBarTabLabel] = method(drawTabLabel);
     m_ce[CE_MenuBarEmptyArea] = method(controlSkipper);
     m_ce[CE_ItemViewItem] = method(drawViewItem); //draw item in views
+    m_ce[CE_ComboBoxLabel] = method(drawComboBoxLabel);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -80,4 +80,8 @@ StyleProject::assignMethods()
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);
     m_ev[QEvent::Resize] = method(resizeEvent);
+
+    /* subcontrol rects */
+    m_sc[CC_ScrollBar] = method(scrollBarRect);
+    m_sc[CC_ComboBox] = method(comboBoxRect);
 }

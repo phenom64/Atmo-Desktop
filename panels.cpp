@@ -7,6 +7,7 @@
 #include "styleproject.h"
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
+#include "stylelib/color.h"
 
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -29,11 +30,14 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
 
     const QRect &rect(widget->rect());
     QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    lg.setColorAt(0.0f, m_specialColor[0]);
-    lg.setColorAt(1.0f, m_specialColor[1]);
+    lg.setColorAt(0.0f, Color::titleBarColors[0]);
+    lg.setColorAt(1.0f, Color::titleBarColors[1]);
 
     Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, lg, 3, sides);
+    const int o(painter->opacity());
+    painter->setOpacity(0.5f);
     Render::renderShadow(Render::Etched, rect, painter, 4, sides);
+    painter->setOpacity(o);
     return true;
 }
 
@@ -52,6 +56,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     if (!widget || !widget->parentWidget() || !widget->window() || !painter->isActive())
         return true;
 
+    painter->save();
     uint sides = Render::All;
     QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
     QRect winRect = widget->window()->rect();
@@ -64,19 +69,19 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     if (widgetRect.top() <= winRect.top())
         sides &= ~Render::Top;
 
-    const QRect &rect(widget->rect());;
-
+    QRect rect(widget->rect());
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
-        QBrush b(m_specialColor[1]);
+        QBrush b(Color::titleBarColors[1]);
         sides = 0;
-        if (widget->geometry().top() > win->rect().top())
-            sides = Render::Top;
-        else
+        if (widget->geometry().top() <= win->rect().top())
         {
+            int th(win->property("titleHeight").toInt());
+            rect.setTop(rect.top()-th);
+            painter->translate(0, th);
             QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-            lg.setColorAt(0.0f, m_specialColor[0]);
-            lg.setColorAt(1.0f, m_specialColor[1]);
+            lg.setColorAt(0.0f, Color::titleBarColors[0]);
+            lg.setColorAt(1.0f, Color::titleBarColors[1]);
             b = lg;
         }
         castObj(const QToolBar *, toolBar, widget);
@@ -86,11 +91,10 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
 
     if (sides & Render::Top)
     {
-        painter->save();
         painter->setOpacity(0.5f);
         Render::renderShadow(Render::Etched, rect, painter, 4, sides);
-        painter->restore();
     }
+    painter->restore();
     return true;
 }
 

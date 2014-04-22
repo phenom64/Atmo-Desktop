@@ -56,10 +56,12 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
     , m_titleBar(0)
-    , m_isUno(false)
+    , m_headHeight(false)
     , m_factory(factory)
 {
     setParent(factory);
+    unsigned int height(TITLEHEIGHT);
+    XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
 }
 
 void
@@ -257,15 +259,20 @@ KwinClient::reset(unsigned long changed)
         populate(options()->titleButtonsRight());
     }
 
-    if (unsigned int *uno = XHandler::getXProperty<unsigned int>(windowId(), XHandler::MainWindow))
-        m_isUno = *uno;
-    if (unsigned int *bg = XHandler::getXProperty<unsigned int>(windowId(), XHandler::HeadColor))
+    int n(0);
+    if (unsigned int *data = XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n))
     {
-        m_unoColor = QColor(*bg);
-        QRect r(m_titleBar->rect());
+        if (n)
+            m_headHeight = data[0];
+        if (n > 1)
+            m_unoColor[0] = QColor::fromRgba(data[1]);
+        if (n > 2)
+            m_unoColor[1] = QColor::fromRgba(data[2]);
+
+        QRect r(0, 0, width(), m_headHeight);
         m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
-        m_unoGradient.setColorAt(0.0f, Ops::mid(m_unoColor, Qt::white));
-        m_unoGradient.setColorAt(1.0f, m_unoColor);
+        m_unoGradient.setColorAt(0.0f, m_unoColor[0]);
+        m_unoGradient.setColorAt(1.0f, m_unoColor[1]);
         m_titleBar->setBrush(m_unoGradient);
         m_titleBar->update();
     }

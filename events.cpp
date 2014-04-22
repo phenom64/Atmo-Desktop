@@ -13,17 +13,6 @@
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
 
-static void fixMainWindowTitleBar(QMainWindow *win, const QColor &cl)
-{
-    unsigned int d(1);
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::MainWindow, &d);
-    unsigned int c(cl.rgba());
-//            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
-//            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::HeadColor, &c);
-    Ops::updateWindow(win->winId());
-}
-
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
 {
@@ -33,10 +22,11 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     switch (e->type())
     {
     case QEvent::Show:
-        if (castObj(QMainWindow *, win, o))
-            fixMainWindowTitleBar(win, m_specialColor[0]);
-        else if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)) && !static_cast<QWidget *>(o)->hasMouseTracking())
+        if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
+        {
             static_cast<QWidget *>(o)->setMouseTracking(true);
+            static_cast<QWidget *>(o)->setAttribute(Qt::WA_Hover);
+        }
 //    case QEvent::Leave:
 //    case QEvent::HoverLeave:
 //    case QEvent::Enter:
@@ -78,16 +68,13 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
 bool
 StyleProject::resizeEvent(QObject *o, QEvent *e)
 {
-    QResizeEvent *re = static_cast<QResizeEvent *>(e);
+//    QResizeEvent *re = static_cast<QResizeEvent *>(e);
+    if (castObj(QWidget *, w, o))
+        if (w->isWindow())
+//            Ops::fixWindowTitleBar(w);
+            fixTitleLater(w);
     if (castObj(QToolBar *, toolBar, o))
         if (castObj(QMainWindow *, win, toolBar->parentWidget()))
-            if (win->toolBarArea(toolBar) == Qt::TopToolBarArea)
-    {
-        QPoint topLeft = toolBar->mapTo(win, toolBar->rect().topLeft());
-        QRect winRect = win->rect();
-        QRect widgetRect = QRect(topLeft, re->size());
-        if (winRect.top() <= widgetRect.top())
-            toolBar->setContentsMargins(0, 0, 0, 5);
-    }
+            updateToolBar(toolBar);
     return QCommonStyle::eventFilter(o, e);
 }

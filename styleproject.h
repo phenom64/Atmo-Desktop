@@ -3,22 +3,11 @@
 
 #include <QCommonStyle>
 #include <QEvent>
+#include "stylelib/macros.h"
 
-#define CCSize CC_MdiControls+1
-#define CESize CE_ShapedFrame+1
-#define PESize PE_PanelMenu+1
-#define EVSize QEvent::PlatformPanel+1
+#define DEBUG 1
 
-#define SUNKEN state & (State_Sunken | State_Selected | State_On)
-#define HOVER state & State_MouseOver
-#define ENABLED state & State_Enabled
-
-#define castOpt(_Type_, _varName_, _fromVar_) const QStyleOption##_Type_ *_varName_ = qstyleoption_cast<const QStyleOption##_Type_ *>(_fromVar_)
-#define castObj(_Type_, _varName_, _fromVar_) _Type_ _varName_ = qobject_cast<_Type_>(_fromVar_)
-
-#define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
-#define sAdjust(_X1_, _Y1_, _X2_, _Y2_) adjust(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
-
+class QToolBar;
 class StyleProject : public QCommonStyle
 {
     Q_OBJECT
@@ -26,7 +15,6 @@ class StyleProject : public QCommonStyle
 public:
     StyleProject();
     ~StyleProject(){}
-
     void init();
     void assignMethods();
 
@@ -47,12 +35,13 @@ public:
     void polish(QWidget *widget);
     void unpolish(QWidget *widget);
 
+    bool eventFilter(QObject *, QEvent *);
+
     QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget = 0) const;
     QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
+    QRect subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget) const;
     QRect itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const;
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
-
-    bool eventFilter(QObject *, QEvent *);
 
     /* functions called for drawing */
     bool controlSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
@@ -75,6 +64,7 @@ public:
     bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
     bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
@@ -97,18 +87,31 @@ public:
     bool paintEvent(QObject *o, QEvent *e);
     bool resizeEvent(QObject *o, QEvent *e);
 
+    /* subcontrolrects */
+    QRect scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
+    QRect comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
+
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
     typedef bool (StyleProject::*StyleControl)(const QStyleOption *, QPainter *, const QWidget *) const;
     typedef bool (StyleProject::*StylePrimitive)(const QStyleOption *, QPainter *, const QWidget *) const;
     typedef bool (StyleProject::*EventFilter)(QObject *o, QEvent *e);
+    typedef QRect (StyleProject::*SubControlRect)(const QStyleOptionComplex *, SubControl, const QWidget *) const;
+
+protected:
+    void fixTitleLater(QWidget *win);
+    void updateToolBar(QToolBar *toolBar);
+
+protected slots:
+    void fixTitle();
+    void fixMainWindowToolbar();
 
 private:
     StyleComplexControl m_cc[CCSize];
     StyleControl m_ce[CESize];
     StylePrimitive m_pe[PESize];
     EventFilter m_ev[EVSize];
-    QColor m_specialColor[2];
+    SubControlRect m_sc[CCSize];
 };
 
 #endif // STYLEPROJECT_H

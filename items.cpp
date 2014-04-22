@@ -69,16 +69,9 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
      */
     if (opt->state & (State_Selected | State_Sunken))
     {
-        QColor h(opt->palette.color(QPalette::Highlight));
-        if (!(opt->state & State_Sunken))
-            h.setAlpha(64);
-        else
-        {
-            fg = QPalette::HighlightedText;
-            bg = QPalette::Highlight;
-        }
-
-        painter->fillRect(opt->rect, h);
+        fg = QPalette::HighlightedText;
+        bg = QPalette::Highlight;
+        painter->fillRect(opt->rect, opt->palette.color(bg));
     }
 
     QRect button(leftMargin/2 - square/2, opt->rect.top(), square, square);
@@ -122,7 +115,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
-    const bool enabled[] = { opt->state & State_Enabled, false };
+    const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 
     for (int i = 0; i < 2 && i < text.count(); ++i)
         drawItemText(painter, textRect, align[i], opt->palette, enabled[i], text.at(i), fg);

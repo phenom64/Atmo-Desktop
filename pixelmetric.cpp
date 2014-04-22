@@ -2,6 +2,7 @@
 #include <QTabBar>
 #include <QStyleOption>
 #include <QMainWindow>
+#include <QComboBox>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -22,7 +23,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     {
         if (!widget)
             return 2;
-        if (qobject_cast<const QLineEdit *>(widget))
+        if (qobject_cast<const QLineEdit *>(widget)||qobject_cast<const QComboBox *>(widget))
             return 3;
         if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
             if (frame->frameShadow() == QFrame::Sunken && frame->findChild<OverLay *>())
@@ -31,20 +32,8 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     }
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
-    case PM_ToolBarFrameWidth:
-    {
-        if (castObj(const QToolBar *, toolBar, widget))
-            if (castObj(QMainWindow *, win, toolBar->parentWidget()))
-//                if (win->toolBarArea(toolBar) == Qt::TopToolBarArea)
-                {
-                    QPoint topLeft = toolBar->mapTo(win, toolBar->rect().topLeft());
-                    QRect winRect = win->rect();
-                    QRect widgetRect = QRect(topLeft, toolBar->size());
-                    if (winRect.top() <= widgetRect.top())
-                        return 2;
-                }
-        return 4;
-    }
+    case PM_ToolBarFrameWidth: return 2;
+    case PM_ToolBarHandleExtent: return 8;
 //    case PM_SliderThickness: return 12;
     case PM_SliderLength:
     case PM_SliderControlThickness: return qMin(option->rect.height(), option->rect.width());

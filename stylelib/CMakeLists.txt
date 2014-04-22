@@ -6,13 +6,16 @@ set (libSRCS
     xhandler.cpp
     ops.cpp
     shadowhandler.cpp
-    render.cpp)
+    render.cpp
+    color.cpp)
     
 set (libHDRS
     xhandler.h
     ops.h
     shadowhandler.h
-    render.h)
+    render.h
+    macros.h
+    color.h)
 
 set (QT_USE_QTDBUS TRUE)
 find_package (Qt4 REQUIRED)

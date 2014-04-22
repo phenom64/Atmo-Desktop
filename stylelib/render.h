@@ -22,6 +22,7 @@ public:
     static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All)
     { instance()->_renderShadow(shadow, rect, painter, roundNess, sides); }
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
+    static void colorizePixmap(QPixmap &pix, const QBrush &b);
 
 protected:
     void _generateData();

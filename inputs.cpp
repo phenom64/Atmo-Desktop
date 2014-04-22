@@ -6,18 +6,30 @@
 #include <QLineEdit>
 #include <QToolBar>
 #include <QGroupBox>
+#include <QComboBox>
 #include <QAbstractItemView>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
+#include "stylelib/color.h"
+
+static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b)
+{
+    Render::renderMask(r.adjusted(1, 1, -1, -2), p, b);
+    const int o(p->opacity());
+    p->setOpacity(0.25f);
+    Render::renderShadow(Render::Etched, r, p);
+    Render::renderShadow(Render::Sunken, r, p);
+    p->setOpacity(o);
+}
 
 bool
 StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!painter->isActive())
-        return false;
+    if (qobject_cast<const QComboBox *>(widget?widget->parentWidget():0))
+        return true;
     if (widget && widget->objectName() == "qt_spinbox_lineedit")
         return true;
 
@@ -26,11 +38,16 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
         if (qobject_cast<const QToolBar *>(lineEdit->parentWidget()))
             roundNess = MAXRND;
 
-    painter->save();
-    Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.color(QPalette::Base), roundNess);
-    painter->setOpacity(0.5f);
-    Render::renderShadow(Render::Sunken, option->rect, painter, roundNess);
-    painter->restore();
+    if (roundNess == MAXRND)
+        drawSafariLineEdit(option->rect, painter, option->palette.color(QPalette::Base));
+    else
+    {
+        Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.color(QPalette::Base), roundNess);
+        const int o(painter->opacity());
+        painter->setOpacity(0.5f);
+        Render::renderShadow(Render::Sunken, option->rect, painter, roundNess);
+        painter->setOpacity(o);
+    }
     return true;
 }
 
@@ -78,22 +95,70 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     if (!opt)
         return true;
 
-    QPalette::ColorRole fg(QPalette::ButtonText), bg(QPalette::Button);
-//    if (widget)
-//    {
-//        fg = widget->foregroundRole();
-//        bg = widget->backgroundRole();
-//    }
+    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText), ar(QPalette::HighlightedText);
+    if (widget)
+    {
+        bg = widget->backgroundRole();
+        fg = widget->foregroundRole();
+    }
 
     QRect arrow(subControlRect(CC_ComboBox, opt, SC_ComboBoxArrow, widget));
     QRect frame(subControlRect(CC_ComboBox, opt, SC_ComboBoxFrame, widget));
+    int m(3);
 
-    painter->fillRect(frame, opt->palette.color(bg));
-    painter->fillRect(arrow, Ops::mid(opt->palette.color(bg), opt->palette.color(fg)));
-    if (opt->editable)
+    if (!opt->editable)
     {
-        QRect edit(subControlRect(CC_ComboBox, opt, SC_ComboBoxEditField, widget));
-        painter->fillRect(edit, opt->palette.color(QPalette::Base));
+        const float o(painter->opacity());
+        painter->setOpacity(0.5f*o);
+        Render::renderShadow(Render::Raised, frame, painter, 5);
+        painter->setOpacity(o);
+
+
+        const QColor bgc(opt->palette.color(bg));
+        QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+
+        lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
+        lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
+
+        frame.adjust(m, m, -m, -m);
+        Render::renderMask(frame, painter, lg, 2);
+
+        const QColor hc(opt->palette.color(QPalette::Highlight));
+        lg.setColorAt(0.0f, Color::mid(hc, Qt::white, 5, 1));
+        lg.setColorAt(1.0f, Color::mid(hc, Qt::black, 7, 1));
+        arrow.adjust(0, m, -m, -m);
+        Render::renderMask(arrow, painter, lg, 2, Render::All & ~Render::Left);
+        painter->setPen(opt->palette.color(fg));
+        painter->setOpacity(0.5f);
+        painter->drawLine(arrow.topLeft()-QPoint(1, 0), arrow.bottomLeft()-QPoint(1, 0));
+        painter->setOpacity(o);
     }
+    else
+    {
+        drawSafariLineEdit(opt->rect, painter, opt->palette.color(QPalette::Base));
+    }
+    QRect iconRect(0, 0, frame.height(), frame.height());
+
+    drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
+    m*=2;
+    Ops::drawArrow(painter, opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText), arrow.adjusted(m*1.25f, m, -m, -m), Ops::Down);
+    return true;
+}
+
+bool
+StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ComboBox, opt, option);
+    if (!opt || opt->editable)
+        return true;
+    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
+    if (widget)
+    {
+        bg = widget->backgroundRole();
+        fg = widget->foregroundRole();
+    }
+    const int m(6);
+    QRect frameRect(subControlRect(CC_ComboBox, opt, SC_ComboBoxFrame, widget).adjusted(m, 0, -m, 0));
+    drawItemText(painter, frameRect, Qt::AlignLeft|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->currentText, fg);
     return true;
 }

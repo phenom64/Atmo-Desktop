@@ -42,6 +42,8 @@ StyleProject::polish(QWidget *widget)
      */
     if (castObj(QToolBar *, bar, widget))
     {
+        if (qobject_cast<QMainWindow *>(widget->parentWidget()))
+            connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
         installFilter(bar);
     }
 
@@ -57,7 +59,10 @@ StyleProject::polish(QWidget *widget)
      *  shadow... fix.
      */
     if (widget->isWindow())
+    {
+        installFilter(widget);
         ShadowHandler::manage(widget);
+    }
 
     if (castObj(QFrame *, frame, widget))
         if (frame->frameShadow() == QFrame::Sunken

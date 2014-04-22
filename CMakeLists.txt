@@ -20,7 +20,8 @@ set (SRCS
     styleproject.cpp
     tabs.cpp
     stylehint.cpp
-    contentssize.cpp)
+    contentssize.cpp
+    subrects.cpp)
     
 set (HDRS
     macmenu-dbus.h
@@ -32,7 +33,7 @@ set (MOC_HDRS
     macmenu-dbus.h
     macmenu.h
     overlay.h
-    styleproject.h)  
+    styleproject.h)
     
 set (QT_USE_QTDBUS TRUE)
 #set (QT_USE_QTNETWORK TRUE)

@@ -5,6 +5,8 @@
 #include <QImage>
 
 #include "shadowhandler.h"
+#include "../styleproject.h"
+#include "ops.h"
 
 class ShowCatcher : public QObject
 {

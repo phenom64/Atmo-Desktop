@@ -10,70 +10,10 @@
 #include <QPainter>
 
 #include "ops.h"
-
-QColor
-Ops::mid(const QColor &c1, const QColor c2, int i1, int i2)
-{
-    const int i3 = i1+i2;
-    int r,g,b,a;
-    r = qMin(255,(i1*c1.red() + i2*c2.red())/i3);
-    g = qMin(255,(i1*c1.green() + i2*c2.green())/i3);
-    b = qMin(255,(i1*c1.blue() + i2*c2.blue())/i3);
-    a = qMin(255,(i1*c1.alpha() + i2*c2.alpha())/i3);
-    return QColor(r,g,b,a);
-}
-
-int
-Ops::luminosity(const QColor &c)
-{
-    int r, g, b, a;
-    c.getRgb(&r, &g, &b, &a);
-    return (r*299 + g*587 + b*114)/1000;
-}
-
-bool
-Ops::contrast(const QColor &c1, const QColor &c2)
-{
-    int lum1 = luminosity(c1), lum2 = luminosity(c2);
-    if (qAbs(lum2-lum1)<125)
-        return false;
-
-    int r(qAbs(c1.red()-c2.red())),
-            g(qAbs(c1.green()-c2.green())),
-            b(qAbs(c1.blue()-c2.blue()));
-    return (r+g+b>500);
-}
-
-void
-Ops::setValue(const int value, QColor &c)
-{
-    c.setHsv(c.hue(), c.saturation(), qBound(0, value, 255), c.alpha());
-}
-
-static QMap<QColor, QColor> contrastMap[2];
-
-void
-Ops::ensureContrast(QColor &c1, QColor &c2)
-{
-    if (contrast(c1, c2))
-        return;
-    QColor dark = c1;
-    QColor light = c2;
-    bool inv(false);
-    if (luminosity(c2)<luminosity(c1))
-    {
-        dark = c2;
-        light = c1;
-        inv = true;
-    }
-    while (!contrast(dark, light))
-    {
-        setValue(dark.value()-1, dark);
-        setValue(light.value()+1, light);
-    }
-    c1 = inv ? light : dark;
-    c2 = inv ? dark : light;
-}
+#include "xhandler.h"
+#include "macros.h"
+#include "color.h"
+#include "../styleproject.h"
 
 QWidget
 *Ops::window(QWidget *w)
@@ -146,23 +86,69 @@ Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction &d)
     p->save();
     p->translate(r.topLeft());
     p->setPen(Qt::NoPen);
+    p->setRenderHint(QPainter::Antialiasing);
     p->setBrush(c);
 
-    const int size = qMin(r.width(), r.height());
-    const int points[]  = { 0,0, size,size/2, 0,size };
+    const int size = qMin(r.width(), r.height()), half(size/2);
+    const int points[]  = { 0,0, size,half, 0,size };
 
     if (d != Right)
     {
-        p->translate(r.center());
+        p->translate(half, half);
         switch (d)
         {
         case Down: p->rotate(90); break;
-        case Left: p->rotate(180);
-        case Up: p->rotate(270);
+        case Left: p->rotate(180); break;
+        case Up: p->rotate(270); break;
         }
-        p->translate(-r.center());
+        p->translate(-half, -half);
     }
     p->drawPolygon(QPolygon(3, points));
-
     p->restore();
+}
+
+QPalette::ColorRole
+Ops::opposingRole(const QPalette::ColorRole &role)
+{
+    switch (role)
+    {
+    case QPalette::Window: return QPalette::WindowText;
+    case QPalette::WindowText: return QPalette::Window;
+    case QPalette::Base: return QPalette::Text;
+    case QPalette::Text: return QPalette::Base;
+    case QPalette::AlternateBase: return QPalette::Text; //not exactly but close
+    case QPalette::ToolTipBase: return QPalette::ToolTipText;
+    case QPalette::ToolTipText: return QPalette::ToolTipBase;
+    case QPalette::Button: return QPalette::ButtonText;
+    case QPalette::ButtonText: return QPalette::Button;
+    default: return QPalette::WindowText;
+    }
+}
+
+static int getHeadHeight(QWidget *win)
+{
+    unsigned int *h = XHandler::getXProperty<unsigned int>(win->winId(), XHandler::DecoData);
+    if (!h)
+        return 0;
+    int height(*h);
+    win->setProperty("titleHeight", height);
+    if (castObj(QToolBar *, tb, win->childAt(1, 1)))
+        height += tb->height();
+    return height;
+}
+
+void
+Ops::fixWindowTitleBar(QWidget *win)
+{
+    unsigned int h = getHeadHeight(win);
+    if (!h)
+        return;
+    unsigned int d[3] = { h, Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba() };
+    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, d, 3);
+//            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
+//            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
+    updateWindow(win->winId());
+    const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
+    for (int i = 0; i < toolBars.size(); ++i)
+        toolBars.at(i)->update();
 }

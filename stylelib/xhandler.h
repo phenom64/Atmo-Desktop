@@ -12,7 +12,7 @@
 class Q_DECL_EXPORT XHandler
 {
 public:
-    enum Value { MainWindow, HeadColor, KwinShadows, StoreShadow, ValueCount };
+    enum Value { WindowData, KwinShadows, StoreShadow, DecoData, ValueCount };
     static Atom atom[ValueCount];
     template<typename T> static void setXProperty(const WId w, const Value v, T *d, unsigned int n = 1)
     {

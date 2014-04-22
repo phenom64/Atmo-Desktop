@@ -2,17 +2,22 @@
 #include <QWidget>
 #include <QStyleOptionComplex>
 #include <QStyleOptionSlider>
+#include <QStyleOptionComboBox>
 #include <QDebug>
 #include <qmath.h>
 #include <QEvent>
 #include <QToolBar>
 #include <QAbstractItemView>
 #include <QMainWindow>
+#include <QTimer>
+#include <QApplication>
+#include <QLayout>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/xhandler.h"
+#include "stylelib/color.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -34,6 +39,10 @@ StyleProject::StyleProject()
     init();
     assignMethods();
     Render::generateData();
+    QPalette p(QApplication::palette());
+    QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
+    Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
+    Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
 }
 
 void
@@ -60,12 +69,15 @@ StyleProject::drawPrimitive(PrimitiveElement element, const QStyleOption *option
 void
 StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
 {
+    if (text.isEmpty())
+        return;
     painter->save();
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextShowMnemonic; // Qt::TextHideMnemonic
     if (textRole != QPalette::NoRole)
         painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
+
     painter->drawText(rect, flags, text);
 //    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
     painter->restore();
@@ -81,41 +93,6 @@ QPixmap
 StyleProject::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const
 {
     return QCommonStyle::generatedIconPixmap(iconMode, pixmap, opt);
-}
-
-QRect
-StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
-{
-    switch (cc)
-    {
-    case CC_ScrollBar:
-    {
-        castOpt(Slider, slider, opt);
-        if (!slider)
-            return QRect();
-
-        QRect r(slider->rect);
-        switch (sc)
-        {
-        case SC_ScrollBarGroove: return r;
-        case SC_ScrollBarSlider:
-        {
-            bool hor(slider->orientation == Qt::Horizontal);
-            int grooveSize(hor ? r.width() : r.height());
-            unsigned int range(slider->maximum-slider->minimum);
-            int sliderSize(qMax(pixelMetric(PM_ScrollBarSliderMin, opt, w), (int)((slider->pageStep*grooveSize) / (range+slider->pageStep))));
-            int pos = sliderPositionFromValue(slider->minimum, slider->maximum, slider->sliderPosition, grooveSize-sliderSize, slider->upsideDown);
-            if (hor)
-                return QRect(pos, 0, sliderSize, r.height());
-            else
-                return QRect(0, pos, r.width(), sliderSize);
-        }
-        default: return QRect();
-        }
-    }
-    default: break;
-    }
-    return QCommonStyle::subControlRect(cc, opt, sc, w);
 }
 
 QRect
@@ -136,3 +113,53 @@ StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) c
         ret.moveBottom(r.bottom());
     return ret;
 }
+
+void
+StyleProject::fixTitleLater(QWidget *win)
+{
+    QTimer *t = new QTimer(win);
+    connect(t, SIGNAL(timeout()), this, SLOT(fixTitle()));
+    t->start(1000);
+}
+
+void
+StyleProject::fixTitle()
+{
+    if (castObj(QTimer *, t, sender()))
+    {
+        if (castObj(QWidget *, w, t->parent()))
+            Ops::fixWindowTitleBar(w);
+        t->stop();
+        t->deleteLater();
+    }
+}
+
+void
+StyleProject::updateToolBar(QToolBar *toolBar)
+{
+    QMainWindow *win = static_cast<QMainWindow *>(toolBar->parentWidget());
+    if (toolBar->isWindow() && toolBar->isFloating())
+    {
+        toolBar->setContentsMargins(0, 0, 0, 0);
+        if (toolBar->layout())
+            toolBar->layout()->setContentsMargins(4, 4, 4, 4);
+    }
+    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea && toolBar->layout())
+    {
+        if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
+        {
+            toolBar->setMovable(true);
+            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+            toolBar->setContentsMargins(0, 0, pixelMetric(PM_ToolBarHandleExtent), 6);
+        }
+        else
+            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
+    }
+}
+
+void
+StyleProject::fixMainWindowToolbar()
+{
+    updateToolBar(static_cast<QToolBar *>(sender()));
+}
+
