@@ -21,8 +21,8 @@ public:
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
     static void updateWindow(WId window);
-    static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r);
-    static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction &d);
+    static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);
+    static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align = Qt::AlignCenter, int size = 0);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static void fixWindowTitleBar(QWidget *win);
 

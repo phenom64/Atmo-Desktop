@@ -5,6 +5,8 @@
 #include <QMenuBar>
 #include <QToolButton>
 #include <QAbstractItemView>
+#include <QGroupBox>
+#include <QCheckBox>
 
 
 #include "styleproject.h"
@@ -63,6 +65,8 @@ StyleProject::polish(QWidget *widget)
         installFilter(widget);
         ShadowHandler::manage(widget);
     }
+    if (castObj(QScrollBar *, sb, widget))
+        sb->setAttribute(Qt::WA_Hover);
 
     if (castObj(QFrame *, frame, widget))
         if (frame->frameShadow() == QFrame::Sunken
@@ -80,6 +84,11 @@ StyleProject::polish(QWidget *widget)
         widget->setAttribute(Qt::WA_TranslucentBackground);
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
+        if (qobject_cast<QMenu *>(widget))
+        {
+            widget->setForegroundRole(QPalette::Text);
+            widget->setBackgroundRole(QPalette::Base);
+        }
         /**
          * Apparently some menues fight back and dont
          * want mousetracking, we filter and set mousetracking

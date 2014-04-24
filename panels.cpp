@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QToolBar>
 #include <QMainWindow>
+#include <QStyleOptionGroupBox>
+#include <QCheckBox>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -118,5 +120,40 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
         bg = widget->backgroundRole();
     }
     Render::renderMask(option->rect, painter, option->palette.color(bg), 6);
+    return true;
+}
+
+bool
+StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(GroupBox, opt, option);
+    if (!opt)
+        return true;
+
+//    QRect frame(subControlRect(CC_GroupBox, opt, SC_GroupBoxFrame, widget)); //no need?
+    QRect label(subControlRect(CC_GroupBox, opt, SC_GroupBoxLabel, widget));
+    QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
+    QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
+
+    const int o(painter->opacity());
+    painter->setOpacity(0.5f);
+    Render::renderShadow(Render::Sunken, cont, painter, 8);
+    painter->setOpacity(o);
+    if (opt->subControls & SC_GroupBoxCheckBox)
+    {
+        QStyleOptionButton btn;
+        btn.QStyleOption::operator =(*option);
+        btn.rect = check;
+        drawCheckBox(&btn, painter, 0);
+    }
+    if (!opt->text.isEmpty())
+    {
+        painter->save();
+        QFont f(painter->font());
+        f.setBold(true);
+        painter->setFont(f);
+        drawItemText(painter, label, opt->textAlignment, opt->palette, opt->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+        painter->restore();
+    }
     return true;
 }

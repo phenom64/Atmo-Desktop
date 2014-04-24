@@ -76,7 +76,18 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextShowMnemonic; // Qt::TextHideMnemonic
     if (textRole != QPalette::NoRole)
+    {
+        const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
+        if (bgRole != QPalette::NoRole && enabled)
+        {
+            const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
+            const int rgb(isDark?0:255);
+            const QColor bevel(rgb, rgb, rgb, 127);
+            painter->setPen(bevel);
+            painter->drawText(rect.translated(0, 1), flags, text);
+        }
         painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
+    }
 
     painter->drawText(rect, flags, text);
 //    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);

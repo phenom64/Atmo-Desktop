@@ -60,7 +60,7 @@ Ops::updateWindow(WId window)
 }
 
 void
-Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r)
+Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
 {
     p->save();
     p->translate(r.topLeft());
@@ -70,26 +70,46 @@ Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r)
     const int points[] = { third,third+sixth, third+sixth,thirds+sixth, thirds+sixth,third-sixth };
 
     p->setRenderHint(QPainter::Antialiasing);
-    p->setPen(QPen(c, third*0.66f));
+    QPen pen(c, third*(tristate?0.33f:0.66f), tristate?Qt::DashLine:Qt::SolidLine);
+    pen.setDashPattern(QVector<qreal>() << 0.05f << 1.5f);
+    pen.setStyle(tristate?Qt::CustomDashLine:Qt::SolidLine);
+    p->setPen(pen);
     p->setBrush(Qt::NoBrush);
 
     QPainterPath path;
-
     path.addPolygon(QPolygon(3, points));
     p->drawPath(path);
+
     p->restore();
 }
 
 void
-Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction &d)
+Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align, int size)
 {
     p->save();
-    p->translate(r.topLeft());
     p->setPen(Qt::NoPen);
     p->setRenderHint(QPainter::Antialiasing);
     p->setBrush(c);
 
-    const int size = qMin(r.width(), r.height()), half(size/2);
+    if (!size)
+        size = qMin(r.width(), r.height());
+    size &= ~1;
+
+    QRect rect(0, 0, size, size);
+    if (align & (Qt::AlignVCenter|Qt::AlignHCenter))
+        rect.moveCenter(r.center());
+    if (align & Qt::AlignLeft)
+        rect.moveLeft(r.left());
+    if (align & Qt::AlignRight)
+        rect.moveRight(r.right());
+    if (align & Qt::AlignTop)
+        rect.moveTop(r.top());
+    if (align & Qt::AlignBottom)
+        rect.moveBottom(r.bottom());
+
+    p->translate(rect.topLeft());
+
+    const int half(size >> 1);
     const int points[]  = { 0,0, size,half, 0,size };
 
     if (d != Right)
@@ -99,7 +119,7 @@ Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction &d)
         {
         case Down: p->rotate(90); break;
         case Left: p->rotate(180); break;
-        case Up: p->rotate(270); break;
+        case Up: p->rotate(-90); break;
         }
         p->translate(-half, -half);
     }
@@ -121,7 +141,7 @@ Ops::opposingRole(const QPalette::ColorRole &role)
     case QPalette::ToolTipText: return QPalette::ToolTipBase;
     case QPalette::Button: return QPalette::ButtonText;
     case QPalette::ButtonText: return QPalette::Button;
-    default: return QPalette::WindowText;
+    default: return QPalette::NoRole;
     }
 }
 

@@ -8,6 +8,7 @@
 #include <QResizeEvent>
 #include <QMenu>
 #include <QMenuBar>
+#include <QCheckBox>
 
 #include "styleproject.h"
 #include "stylelib/xhandler.h"

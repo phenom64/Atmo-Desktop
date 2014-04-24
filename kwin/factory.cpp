@@ -14,14 +14,14 @@ KDecoration
     return new KwinClient(bridge, this);
 }
 
-Atom Factory::s_wmAtom;
+//Atom Factory::s_wmAtom;
 
 Factory::Factory()
     : QObject()
     , KDecorationFactory()
 {
-    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
-    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
+//    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
+//    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
     ShadowHandler::removeDelete();
     new FactoryDbusAdaptor(this);
     QDBusConnection::sessionBus().registerObject("/StyleProjectFactory", this);
@@ -35,7 +35,8 @@ Factory::~Factory()
 bool
 Factory::compositingActive()
 {
-    return XGetSelectionOwner( QX11Info::display(), s_wmAtom ) != None;
+//    return XGetSelectionOwner( QX11Info::display(), s_wmAtom ) != None;
+    return QX11Info::isCompositingManagerRunning();
 }
 
 bool

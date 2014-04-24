@@ -83,7 +83,6 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
         bg = widget->backgroundRole();
         fg = widget->foregroundRole();
     }
-    int size(opt->rect.height());
     QRect checkRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
     QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
     const float o(painter->opacity());
@@ -99,11 +98,11 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
 
     Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg, 2);
 
-    if (opt->state & State_On)
-        Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect);
+    if (opt->state & (State_On|State_NoChange))
+        Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect, opt->state & State_NoChange);
 
-
-    drawItemText(painter, textRect, Qt::AlignLeft|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
 }
 
@@ -149,8 +148,8 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
         painter->drawEllipse(checkRect.adjusted(6, 6, -6, -6));
         painter->restore();
     }
-
-    drawItemText(painter, textRect, Qt::AlignLeft|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
 }
 

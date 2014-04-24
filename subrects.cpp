@@ -10,6 +10,7 @@
 #include <QToolBar>
 #include <QAbstractItemView>
 #include <QMainWindow>
+#include <QGroupBox>
 
 #include "styleproject.h"
 
@@ -33,21 +34,17 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     case SE_RadioButtonIndicator:
     case SE_CheckBoxIndicator:
     {
-        castOpt(Button, btn, opt);
-        if (!btn)
-            return QRect();
-        const int size(btn->rect.height());
-        QRect r(0, 0, size, size);
-        return visualRect(opt->direction, btn->rect, r);
+        if (opt->rect.width() == opt->rect.height())
+            return opt->rect;
+        const int size(opt->rect.height());
+        QRect r(opt->rect.topLeft(), QPoint(size, size));
+        return visualRect(opt->direction, opt->rect, r);
     }
     case SE_RadioButtonContents:
     case SE_CheckBoxContents:
     {
-        castOpt(Button, btn, opt);
-        if (!btn)
-            return QRect();
-        const int m(btn->rect.height()), w(btn->rect.width()-m);
-        return visualRect(opt->direction, btn->rect, QRect(m, 0, w, m));
+        const int m(opt->rect.height()), w(opt->rect.width()-m);
+        return visualRect(opt->direction, opt->rect, QRect(opt->rect.left()+m, opt->rect.top(), w, m));
     }
     default: return QCommonStyle::subElementRect(r, opt, widget);
     }
@@ -158,7 +155,7 @@ StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
     const int arrowSize(cb->rect.height());
     switch (sc)
     {
-    case SC_ComboBoxListBoxPopup:
+    case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...
     case SC_ComboBoxFrame: ret = cb->rect; break;
     case SC_ComboBoxArrow: ret = QRect(cb->rect.width()-arrowSize, 0, arrowSize, arrowSize); break;
     case SC_ComboBoxEditField: ret = cb->rect.adjusted(0, 0, -arrowSize, 0); break;
@@ -218,5 +215,33 @@ StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const
     default: return QCommonStyle::subControlRect(CC_ScrollBar, opt, sc, w);
     }
     return visualRect(slider->direction, slider->rect, ret);
+}
+
+QRect
+StyleProject::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+{
+    QRect ret;
+    castOpt(GroupBox, box, opt);
+    if (!box)
+        return ret;
+    ret = box->rect;
+    const int top(qMax(16, opt->fontMetrics.height()));
+    const int left(8);
+    switch (sc)
+    {
+    case SC_GroupBoxCheckBox:
+        ret = QRect(ret.left()+left, ret.top(), top, top);
+        break;
+    case SC_GroupBoxContents:
+        ret.setTop(ret.top()+top);
+        break;
+    case SC_GroupBoxFrame:
+        break;
+    case SC_GroupBoxLabel:
+        ret = QRect(ret.left()+left+(box->subControls&SC_GroupBoxCheckBox?top:0), ret.top(), ret.width()-top, top);
+        break;
+    default: return QCommonStyle::subControlRect(CC_GroupBox, opt, sc, w);
+    }
+    return visualRect(box->direction, opt->rect, ret);
 }
 

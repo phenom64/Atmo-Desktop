@@ -55,9 +55,11 @@ StyleProject::assignMethods()
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
+    m_cc[CC_SpinBox] = method(drawSpinBox);
     m_cc[CC_ScrollBar] = method(drawScrollBar);
     m_cc[CC_Slider] = method(drawSlider);
     m_cc[CC_ComboBox] = method(drawComboBox);
+    m_cc[CC_GroupBox] = method(drawGroupBox);
 
     /* primitive elements */
     m_pe[PE_IndicatorToolBarSeparator] = method(primitiveSkipper);
@@ -84,4 +86,5 @@ StyleProject::assignMethods()
     /* subcontrol rects */
     m_sc[CC_ScrollBar] = method(scrollBarRect);
     m_sc[CC_ComboBox] = method(comboBoxRect);
+    m_sc[CC_GroupBox] = method(groupBoxRect);
 }

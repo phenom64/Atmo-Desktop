@@ -39,49 +39,51 @@ public:
 
     QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget = 0) const;
     QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
-    QRect subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget) const;
+    QRect subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget = 0) const;
     QRect itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const;
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
 
     /* functions called for drawing */
-    bool controlSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
-    bool primitiveSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget) const { return true; }
-    bool complexSkipper(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const { return true; }
+    bool controlSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const { return true; }
+    bool primitiveSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const { return true; }
+    bool complexSkipper(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const { return true; }
 
     /* control elements */
-    bool drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawCheckBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawCheckBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* complex controls */
-    bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
-    bool drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
-    bool drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
-    bool drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const;
+    bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* primitive elements */
-    bool drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
-    bool drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget) const;
+    bool drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);
@@ -90,6 +92,7 @@ public:
     /* subcontrolrects */
     QRect scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
+    QRect groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
 
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;

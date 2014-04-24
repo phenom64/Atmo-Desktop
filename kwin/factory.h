@@ -20,7 +20,7 @@ public:
     void update(WId window);
 
 private:
-    static Atom s_wmAtom;
+//    static Atom s_wmAtom;
 };
 
 

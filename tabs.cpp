@@ -30,7 +30,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
     Render::Sides sides = Render::All;
-    QPalette::ColorRole fg(QPalette::ButtonText), bg(QPalette::Button);
+    QPalette::ColorRole fg(QPalette::WindowText), bg(QPalette::Window);
     //    if (widget)
     //    {
     //        fg = widget->foregroundRole();
@@ -178,7 +178,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
     painter->setOpacity(0.5f);
     Render::renderShadow(Render::Raised, rect, painter, 7, sides);
     painter->restore();
-    Render::renderMask(r, painter, opt->palette.color(QPalette::Button), 4, sides);
+    Render::renderMask(r, painter, opt->palette.color(QPalette::Window), 4, sides);
     return true;
 }
 
@@ -189,6 +189,7 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
 {
     const int size(qMin(option->rect.width(), option->rect.height())), _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
+
 
     const bool hover(option->HOVER);
     if (closer[hover].isNull())
@@ -212,10 +213,14 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
         }
         p.end();
 
+        bool isDark(false);
+        if (widget)
+            isDark = Color::luminosity(widget->palette().color(widget->foregroundRole())) > Color::luminosity(widget->palette().color(widget->backgroundRole()));
+        int cc(isDark?0:255);
         QPixmap tmp(pix);
-        Render::colorizePixmap(tmp, QColor(255, 255, 255, 127));
+        Render::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
         QPixmap tmp2(pix);
-        QPalette::ColorRole role(widget?widget->foregroundRole():QPalette::ButtonText);
+        QPalette::ColorRole role(widget?widget->foregroundRole():QPalette::WindowText);
         if (hover)
             role = QPalette::Highlight;
         Render::colorizePixmap(tmp2, option->palette.color(role));
