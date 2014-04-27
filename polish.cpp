@@ -7,12 +7,16 @@
 #include <QAbstractItemView>
 #include <QGroupBox>
 #include <QCheckBox>
-
+#include <QDockWidget>
+#include <QDesktopWidget>
+#include <QLabel>
+#include <QProgressBar>
 
 #include "styleproject.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/shadowhandler.h"
+#include "stylelib/progresshandler.h"
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
@@ -37,6 +41,8 @@ StyleProject::polish(QWidget *widget)
     if (!widget)
         return;
 
+    if (qobject_cast<QDesktopWidget *>(widget))
+        return;
     /* needed for mac os x lion like toolbuttons,
      * we need to repaint the toolbar when a action
      * has been triggered, otherwise we are painting
@@ -54,19 +60,49 @@ StyleProject::polish(QWidget *widget)
         installFilter(win);
     }
 
+    if (castObj(QProgressBar *, pBar, widget))
+        ProgressHandler::manage(pBar);
+
     /** TODO:
      *  Now the shadowhandler handles *ALL*
      *  windows... that we dont want, we
      *  dont want desktop panels etc to have a
      *  shadow... fix.
+     *
+     * EDIT: started working on it
      */
     if (widget->isWindow())
     {
         installFilter(widget);
-        ShadowHandler::manage(widget);
+        bool needShadows(false);
+        if (widget->windowType() == Qt::ToolTip && widget->inherits("QTipLabel"))
+        {
+            widget->setAttribute(Qt::WA_TranslucentBackground);
+            needShadows = true;
+        }
+        if (qobject_cast<QMenu *>(widget)
+                || qobject_cast<QDockWidget *>(widget)
+                || qobject_cast<QToolBar *>(widget))
+            needShadows = true;
+        if (needShadows)
+            ShadowHandler::manage(widget);
     }
     if (castObj(QScrollBar *, sb, widget))
         sb->setAttribute(Qt::WA_Hover);
+
+    if (widget->inherits("KTitleWidget"))
+    {
+        installFilter(widget);
+        QList<QWidget *> children = widget->findChildren<QWidget *>();
+        for (int i = 0; i < children.size(); ++i)
+        {
+            children.at(i)->setAutoFillBackground(false);
+            if (castObj(QFrame *, f, children.at(i)))
+                f->setFrameStyle(0);
+            if (castObj(QLabel *, l, children.at(i)))
+                l->setAlignment(Qt::AlignCenter);
+        }
+    }
 
     if (castObj(QFrame *, frame, widget))
         if (frame->frameShadow() == QFrame::Sunken

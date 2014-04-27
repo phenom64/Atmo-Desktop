@@ -13,6 +13,7 @@
 #include "../stylelib/ops.h"
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/render.h"
+#include "../stylelib/color.h"
 
 #define TITLEHEIGHT 22
 
@@ -30,7 +31,14 @@ void
 TitleBar::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
     Render::renderMask(rect(), &p, m_brush, 4, Render::All & ~Render::Bottom);
+    QLinearGradient lg(rect().topLeft(), rect().bottomLeft()+QPoint(0, height()));
+    lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
+    lg.setColorAt(0.5f, Qt::transparent);
+    p.setBrush(Qt::NoBrush);
+    p.setPen(QPen(lg, 1.0f));
+    p.drawRoundedRect(QRectF(rect()).translated(0.5f, 0.5f), 5, 5);
     QFont f(p.font());
     f.setBold(m_client->isActive());
     p.setFont(f);
@@ -41,6 +49,13 @@ TitleBar::paintEvent(QPaintEvent *)
     }
     p.setPen(m_client->options()->color(KwinClient::ColorFont, m_client->isActive()));
     p.drawText(rect(), Qt::AlignCenter, m_client->caption());
+
+    if (m_client->m_needSeparator)
+    {
+        QRectF r(rect());
+        r.translate(-0.5f, -0.5f);
+        p.drawLine(r.bottomLeft(), r.bottomRight());
+    }
     p.end();
 }
 
@@ -56,7 +71,8 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
     , m_titleBar(0)
-    , m_headHeight(false)
+    , m_headHeight(TITLEHEIGHT)
+    , m_needSeparator(true)
     , m_factory(factory)
 {
     setParent(factory);
@@ -265,19 +281,24 @@ KwinClient::reset(unsigned long changed)
         if (n)
             m_headHeight = data[0];
         if (n > 1)
-            m_unoColor[0] = QColor::fromRgba(data[1]);
+            m_titleColor[0] = QColor::fromRgba(data[1]);
         if (n > 2)
-            m_unoColor[1] = QColor::fromRgba(data[2]);
-
-        QRect r(0, 0, width(), m_headHeight);
-        m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
-        m_unoGradient.setColorAt(0.0f, m_unoColor[0]);
-        m_unoGradient.setColorAt(1.0f, m_unoColor[1]);
-        m_titleBar->setBrush(m_unoGradient);
-        m_titleBar->update();
+            m_titleColor[1] = QColor::fromRgba(data[2]);
+        if (n > 3)
+            m_needSeparator = (bool)data[3];
     }
     else
-        m_titleBar->setBrush(m_titleBar->palette().color(m_titleBar->backgroundRole()));
+    {
+        m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
+        m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
+        m_needSeparator = true;
+    }
+    QRect r(0, 0, width(), m_headHeight);
+    m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
+    m_unoGradient.setColorAt(0.0f, m_titleColor[0]);
+    m_unoGradient.setColorAt(1.0f, m_titleColor[1]);
+    m_titleBar->setBrush(m_unoGradient);
+    m_titleBar->update();
     ShadowHandler::installShadows(windowId());
     widget()->update();
 }

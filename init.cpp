@@ -52,6 +52,7 @@ StyleProject::assignMethods()
     m_ce[CE_MenuBarEmptyArea] = method(controlSkipper);
     m_ce[CE_ItemViewItem] = method(drawViewItem); //draw item in views
     m_ce[CE_ComboBoxLabel] = method(drawComboBoxLabel);
+    m_ce[CE_ProgressBar] = method(drawProgressBar);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -69,7 +70,7 @@ StyleProject::assignMethods()
     m_pe[PE_IndicatorDockWidgetResizeHandle] = method(drawSplitter);
     m_pe[PE_FrameStatusBarItem] = method(primitiveSkipper);
     m_pe[PE_PanelStatusBar] = method(drawStatusBar);
-    m_pe[PE_Widget] = method(drawWindow);
+    m_pe[PE_Widget] = method(primitiveSkipper);
     m_pe[PE_FrameWindow] = method(drawWindow);
     m_pe[PE_IndicatorToolBarHandle] = method(primitiveSkipper);
     m_pe[PE_FrameTabBarBase] = method(drawTabBar);
@@ -78,10 +79,13 @@ StyleProject::assignMethods()
     m_pe[PE_PanelItemViewItem] = method(drawViewItemBg); //drack BACKGROUND of item in views...
     m_pe[PE_PanelMenu] = method(drawMenu);
     m_pe[PE_FrameMenu] = method(drawMenu);
+    m_pe[PE_PanelScrollAreaCorner] = method(drawScrollAreaCorner);
+    m_pe[PE_PanelTipLabel] = method(drawToolTip);
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);
     m_ev[QEvent::Resize] = method(resizeEvent);
+    m_ev[QEvent::Show] = method(showEvent);
 
     /* subcontrol rects */
     m_sc[CC_ScrollBar] = method(scrollBarRect);

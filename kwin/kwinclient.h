@@ -60,9 +60,11 @@ private:
     QHBoxLayout *m_titleLayout;
     TitleBar *m_titleBar;
     QLinearGradient m_unoGradient;
-    QColor m_unoColor[2];
+    QColor m_titleColor[2];
     Factory *m_factory;
     int m_headHeight;
+    bool m_needSeparator;
+    friend class TitleBar;
 };
 
 #endif //KWINCLIENT_H

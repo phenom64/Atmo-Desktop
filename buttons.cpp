@@ -32,24 +32,26 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
         fg = widget->foregroundRole();
     }
 
-    painter->save();
-    QColor bc(option->palette.color(bg));
-    if (option->HOVER)
-        bc = bc.lighter();
-    if (option->SUNKEN)
-        bc = bc.darker();
+    if (!(opt->features & QStyleOptionButton::Flat))
+    {
+        QColor bc(option->palette.color(bg));
+        if (option->HOVER)
+            bc = bc.lighter();
+        if (option->SUNKEN)
+            bc = bc.darker();
 
-    painter->setOpacity(0.75f);
-    Render::renderShadow(Render::Raised, option->rect, painter);
-    painter->setOpacity(1.0f);
-    QRect r(option->rect.adjusted(3, 3, -3, -3));
-    QLinearGradient lg(r.topLeft(), r.bottomLeft());
-    lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
-    Render::renderMask(r, painter, lg);
+        const int o(painter->opacity());
+        painter->setOpacity(0.75f);
+        Render::renderShadow(Render::Raised, option->rect, painter);
+        painter->setOpacity(o);
+        QRect r(option->rect.adjusted(3, 3, -3, -3));
+        QLinearGradient lg(r.topLeft(), r.bottomLeft());
+        lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
+        lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
+        Render::renderMask(r, painter, lg);
+    }
 
     drawItemText(painter, opt->rect, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
-    painter->restore();
     return true;
 }
 

@@ -12,6 +12,24 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 {
     switch (metric)
     {
+//    case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
+    case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
+    case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
+        return 10;
+//    case PM_TabBarBaseHeight:	//22	Height of the area between the tab bar and the tab pages.
+//    case PM_TabBarBaseOverlap:	//23	Number of pixels the tab bar overlaps the tab bar base.
+//    case PM_TabBarScrollButtonWidth:	//?
+    case PM_TabBarTabShiftHorizontal:	//?	Horizontal pixel shift when a tab is selected.
+    case PM_TabBarTabShiftVertical:
+        return 0;
+    case PM_IndicatorHeight:
+    case PM_IndicatorWidth:
+    case PM_ExclusiveIndicatorWidth:
+    case PM_ExclusiveIndicatorHeight:
+        return 16;
+    case PM_CheckBoxLabelSpacing:
+    case PM_RadioButtonLabelSpacing:
+        return 4;
     case PM_MenuVMargin: return 6;
     case PM_MenuHMargin: return 0;
     case PM_MenuBarPanelWidth:
@@ -35,9 +53,11 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_ToolBarFrameWidth: return 2;
     case PM_ToolBarHandleExtent: return 8;
 //    case PM_SliderThickness: return 12;
+    case PM_ScrollBarExtent: return 12;
+    case PM_SliderThickness:
     case PM_SliderLength:
-    case PM_SliderControlThickness: return qMin(option->rect.height(), option->rect.width());
-//    case PM_SliderSpaceAvailable:
+    case PM_SliderControlThickness: return 18/*qMin(option->rect.height(), option->rect.width())*/;
+    case PM_ScrollBarSliderMin: return 32;
     case PM_ToolTipLabelFrameWidth:
         return 8;
     default: break;
@@ -170,8 +190,8 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     PM_CustomBase = 0xf0000000
 };*/
 
-//QStyle::PM_SliderThickness	11	Total slider thickness.
-//QStyle::PM_SliderControlThickness	12	Thickness of the slider handle.
-//QStyle::PM_SliderLength	13	Length of the slider.
-//QStyle::PM_SliderTickmarkOffset	14	The offset between the tickmarks and the slider.
-//QStyle::PM_SliderSpaceAvailable
+//case PM_SliderThickness	11	Total slider thickness.
+//case PM_SliderControlThickness	12	Thickness of the slider handle.
+//case PM_SliderLength	13	Length of the slider.
+//case PM_SliderTickmarkOffset	14	The offset between the tickmarks and the slider.
+//case PM_SliderSpaceAvailable

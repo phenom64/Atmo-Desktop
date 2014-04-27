@@ -119,7 +119,7 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
         fg = widget->foregroundRole();
         bg = widget->backgroundRole();
     }
-    Render::renderMask(option->rect, painter, option->palette.color(bg), 6);
+    Render::renderMask(option->rect, painter, option->palette.color(bg), 4);
     return true;
 }
 
@@ -136,7 +136,7 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
     const int o(painter->opacity());
-    painter->setOpacity(0.5f);
+    painter->setOpacity(0.33f);
     Render::renderShadow(Render::Sunken, cont, painter, 8);
     painter->setOpacity(o);
     if (opt->subControls & SC_GroupBoxCheckBox)
@@ -155,5 +155,15 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
         drawItemText(painter, label, opt->textAlignment, opt->palette, opt->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
         painter->restore();
     }
+    return true;
+}
+
+bool
+StyleProject::drawToolTip(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
+    lg.setColorAt(0.0f, Color::mid(option->palette.color(QPalette::ToolTipBase), Qt::white, 5, 1));
+    lg.setColorAt(1.0f, Color::mid(option->palette.color(QPalette::ToolTipBase), Qt::black, 5, 1));
+    Render::renderMask(option->rect, painter, lg, 4);
     return true;
 }

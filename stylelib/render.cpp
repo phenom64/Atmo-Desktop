@@ -263,7 +263,7 @@ Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter,
 {
     if (!rect.isValid())
         return;
-    roundNess = qMin(qMin(MAXRND, roundNess), rect.height()/2-1);
+    roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
     if (!roundNess)
         roundNess = 1;
     for (int i = 0; i < PartCount; ++i)

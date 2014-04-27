@@ -145,12 +145,24 @@ bool
 StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ViewItemV4, opt, option);
+    if (!opt)
+        return true;
     castObj(const QAbstractItemView *, view, widget);
     drawViewItemBg(option, painter, widget);
 
     QPixmap pix(opt->icon.pixmap(opt->decorationSize));
-    QRect iconRect(itemPixmapRect(opt->rect, opt->decorationAlignment, pix));
-    QRect textRect(opt->rect);
+    QRect r(opt->rect);
+    if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
+    {
+        r.setLeft(r.left()+pixelMetric(PM_IndicatorWidth)+pixelMetric(PM_CheckBoxLabelSpacing));
+        QStyleOptionButton btn;
+        btn.QStyleOption::operator =(*option);
+        if (opt->checkState)
+            btn.state |= (opt->checkState==Qt::PartiallyChecked?State_NoChange:State_On);
+        drawCheckBox(&btn, painter, 0);
+    }
+    QRect iconRect(itemPixmapRect(r, opt->decorationAlignment, pix));
+    QRect textRect(r);
     int m(4);
     switch (opt->decorationPosition)
     {

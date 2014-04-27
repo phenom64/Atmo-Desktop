@@ -134,37 +134,47 @@ Ops::opposingRole(const QPalette::ColorRole &role)
     {
     case QPalette::Window: return QPalette::WindowText;
     case QPalette::WindowText: return QPalette::Window;
+    case QPalette::AlternateBase:
     case QPalette::Base: return QPalette::Text;
     case QPalette::Text: return QPalette::Base;
-    case QPalette::AlternateBase: return QPalette::Text; //not exactly but close
     case QPalette::ToolTipBase: return QPalette::ToolTipText;
     case QPalette::ToolTipText: return QPalette::ToolTipBase;
     case QPalette::Button: return QPalette::ButtonText;
     case QPalette::ButtonText: return QPalette::Button;
+    case QPalette::Highlight: return QPalette::HighlightedText;
+    case QPalette::HighlightedText: return QPalette::Highlight;
     default: return QPalette::NoRole;
     }
 }
 
-static int getHeadHeight(QWidget *win)
+static int getHeadHeight(QWidget *win, unsigned int &needSeparator)
 {
     unsigned int *h = XHandler::getXProperty<unsigned int>(win->winId(), XHandler::DecoData);
     if (!h)
         return 0;
     int height(*h);
     win->setProperty("titleHeight", height);
-    if (castObj(QToolBar *, tb, win->childAt(1, 1)))
+    QWidget *first(win->childAt(1, 1));
+    if (castObj(QToolBar *, tb, first))
+    {
         height += tb->height();
+        needSeparator = 0;
+    }
+    else if (castObj(QTabBar *, bar, first))
+        needSeparator = 0;
     return height;
 }
 
 void
 Ops::fixWindowTitleBar(QWidget *win)
 {
-    unsigned int h = getHeadHeight(win);
+    unsigned int ns(1);
+    unsigned int h = getHeadHeight(win, ns);
     if (!h)
         return;
-    unsigned int d[3] = { h, Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba() };
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, d, 3);
+    int n(4);
+    unsigned int d[] = { h, Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba(), ns };
+    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, d, n);
 //            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     updateWindow(win->winId());

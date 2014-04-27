@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QApplication>
 #include <QLayout>
+#include <QProgressBar>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -74,7 +75,7 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     painter->save();
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
-    flags |= Qt::TextShowMnemonic; // Qt::TextHideMnemonic
+    flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
     if (textRole != QPalette::NoRole)
     {
         const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
@@ -130,7 +131,7 @@ StyleProject::fixTitleLater(QWidget *win)
 {
     QTimer *t = new QTimer(win);
     connect(t, SIGNAL(timeout()), this, SLOT(fixTitle()));
-    t->start(1000);
+    t->start(250);
 }
 
 void

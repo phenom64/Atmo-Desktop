@@ -9,6 +9,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QCheckBox>
+#include <QLabel>
 
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
@@ -22,12 +23,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
 
     switch (e->type())
     {
-    case QEvent::Show:
-        if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
-        {
-            static_cast<QWidget *>(o)->setMouseTracking(true);
-            static_cast<QWidget *>(o)->setAttribute(Qt::WA_Hover);
-        }
+//    case QEvent::Show:
 //    case QEvent::Leave:
 //    case QEvent::HoverLeave:
 //    case QEvent::Enter:
@@ -72,10 +68,32 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
 //    QResizeEvent *re = static_cast<QResizeEvent *>(e);
     if (castObj(QWidget *, w, o))
         if (w->isWindow())
-//            Ops::fixWindowTitleBar(w);
-            fixTitleLater(w);
+            Ops::fixWindowTitleBar(w);
+//            fixTitleLater(w);
     if (castObj(QToolBar *, toolBar, o))
         if (castObj(QMainWindow *, win, toolBar->parentWidget()))
             updateToolBar(toolBar);
+    return QCommonStyle::eventFilter(o, e);
+}
+
+bool
+StyleProject::showEvent(QObject *o, QEvent *e)
+{
+    castObj(QWidget *, w, o);
+    if (!w)
+        return QCommonStyle::eventFilter(o, e);
+    if (w->isWindow())
+        fixTitleLater(w);
+    if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
+    {
+        static_cast<QWidget *>(o)->setMouseTracking(true);
+        static_cast<QWidget *>(o)->setAttribute(Qt::WA_Hover);
+    }
+    if (w->inherits("KTitleWidget"))
+    {
+        QList<QLabel *> children = w->findChildren<QLabel *>();
+        for (int i = 0; i < children.size(); ++i)
+            children.at(i)->setAlignment(Qt::AlignCenter);
+    }
     return QCommonStyle::eventFilter(o, e);
 }

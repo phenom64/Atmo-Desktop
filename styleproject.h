@@ -8,6 +8,7 @@
 #define DEBUG 1
 
 class QToolBar;
+class QProgressBar;
 class StyleProject : public QCommonStyle
 {
     Q_OBJECT
@@ -65,6 +66,7 @@ public:
     bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawProgressBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
@@ -84,10 +86,13 @@ public:
     bool drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawToolTip(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);
     bool resizeEvent(QObject *o, QEvent *e);
+    bool showEvent(QObject *o, QEvent *e);
 
     /* subcontrolrects */
     QRect scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;

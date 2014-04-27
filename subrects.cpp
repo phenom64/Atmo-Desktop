@@ -11,8 +11,11 @@
 #include <QAbstractItemView>
 #include <QMainWindow>
 #include <QGroupBox>
+#include <QStyleOptionProgressBarV2>
+#include <QProgressBar>
 
 #include "styleproject.h"
+#include "stylelib/progresshandler.h"
 
 QRect
 StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
@@ -31,20 +34,51 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 {
     switch (r)
     {
+    case SE_ProgressBarLabel:
+    case SE_ProgressBarGroove: return opt->rect;
+    case SE_ProgressBarContents:
+    {
+        castOpt(ProgressBarV2, bar, opt);
+        if (!bar)
+            return QRect();
+        const bool hor(bar->orientation == Qt::Horizontal);
+        float d((hor?opt->rect.width():opt->rect.height())/100.0f);
+        int progress(d*bar->progress);
+        int w(hor?progress:bar->rect.width());
+        int h(hor?bar->rect.height():progress);
+        QRect r(0, hor?0:bar->rect.height()-progress, w, h);
+        if (bar->invertedAppearance)
+        {
+            if (hor)
+                r.moveRight(opt->rect.right());
+            else
+                r.moveTop(opt->rect.top());
+        }
+        if (bar->minimum == bar->maximum)
+            if (castObj(const QProgressBar *, pBar, widget))
+            {
+                int s(qMin(bar->rect.height(), bar->rect.width()));
+                r.setSize(QSize(s, s));
+
+                if (hor)
+                    r.moveLeft(ProgressHandler::busyValue(pBar));
+                else
+                    r.moveBottom(pBar->height()-ProgressHandler::busyValue(pBar));
+            }
+        return visualRect(opt->direction, opt->rect, r);
+    }
+    case SE_ViewItemCheckIndicator:
     case SE_RadioButtonIndicator:
     case SE_CheckBoxIndicator:
     {
-        if (opt->rect.width() == opt->rect.height())
-            return opt->rect;
-        const int size(opt->rect.height());
-        QRect r(opt->rect.topLeft(), QPoint(size, size));
+        QRect r(opt->rect.topLeft(), QPoint(opt->rect.topLeft()+QPoint(pixelMetric(PM_IndicatorWidth), pixelMetric(PM_IndicatorHeight))));
         return visualRect(opt->direction, opt->rect, r);
     }
     case SE_RadioButtonContents:
     case SE_CheckBoxContents:
     {
-        const int m(opt->rect.height()), w(opt->rect.width()-m);
-        return visualRect(opt->direction, opt->rect, QRect(opt->rect.left()+m, opt->rect.top(), w, m));
+        const int pmInd(pixelMetric(PM_IndicatorWidth)), pmSpc(pixelMetric(PM_CheckBoxLabelSpacing)), w(opt->rect.width()-(pmInd+pmSpc));
+        return visualRect(opt->direction, opt->rect, QRect(opt->rect.left()+pmInd+pmSpc, opt->rect.top(), w, opt->rect.height()));
     }
     default: return QCommonStyle::subElementRect(r, opt, widget);
     }
@@ -192,6 +226,8 @@ StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const
     case SC_ScrollBarGroove: ret = r; break;
     case SC_ScrollBarSlider:
     {
+        if (!range)
+            break;
         if (hor)
             ret = QRect(pos, 0, sliderSize, r.height());
         else

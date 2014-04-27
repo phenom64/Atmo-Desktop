@@ -47,6 +47,7 @@ unsigned long
     unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow);
     if (!shadows)
     {
+        qDebug() << "regenerating shadow data...";
         unsigned long *data = new unsigned long[12];
 
         int s(size*2+1);
@@ -54,15 +55,25 @@ unsigned long
         img.fill(Qt::transparent);
 
         QPainter p(&img);
-        QRadialGradient rg(img.rect().center()+QPoint(1, 1), size);
-        rg.setColorAt(0.0f, Qt::black);
-        rg.setColorAt(0.5f, QColor(0, 0, 0, 64));
-        rg.setColorAt(0.7f, QColor(0, 0, 0, 16));
-        rg.setColorAt(0.9f, Qt::transparent);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setPen(Qt::NoPen);
+        p.setBrush(Qt::NoBrush);
+        QRadialGradient rg(QRectF(img.rect()).center()+QPointF(0.0f, 0.5f), size);
+        rg.setColorAt(0.0f, QColor(0, 0, 0, 255));
+        rg.setColorAt(0.33f, QColor(0, 0, 0, 64));
+        rg.setColorAt(0.66f, QColor(0, 0, 0, 16));
+        rg.setColorAt(1.0f, Qt::transparent);
         p.fillRect(img.rect(), rg);
+        const int sd[4] = { size*0.75f, size*0.8f, size*0.9f, size*0.8f };
+        QRect r(0, 0, s, s);
+        r.adjust(sd[3], sd[0], -sd[1], -sd[2]);
+        p.setBrush(QColor(0, 0, 0, 96));
+        p.drawRoundedRect(r.adjusted(-1, -1, 1, 1), 5, 5);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.setBrush(Qt::black);
+        p.drawRoundedRect(r, 4, 4);
         p.end();
 
-        const int sd[4] = { size*0.75f, size*0.8f, size*0.9f, size*0.8f };
         for (int i = 0; i < 12; ++i)
         {
             if (i < 8)
@@ -104,7 +115,6 @@ ShadowHandler::manage(QWidget *w)
 void
 ShadowHandler::removeDelete()
 {
-    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
     if (showCatcher)
     {
         delete showCatcher;
@@ -119,6 +129,7 @@ ShadowHandler::removeDelete()
             pix[i] = 0;
         }
     }
+    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
 }
 
 

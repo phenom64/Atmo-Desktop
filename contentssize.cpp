@@ -65,6 +65,44 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_MenuBarItem: return contentsSize;
     case CT_MenuItem: return menuItemSize(qstyleoption_cast<const QStyleOptionMenuItem *>(opt), qobject_cast<const QMenu *>(widget), contentsSize);
     case CT_Menu: return contentsSize;
+    case CT_RadioButton:
+    case CT_CheckBox:
+    {
+        castOpt(Button, btn, opt);
+        if (!btn || btn->text.isEmpty())
+            return contentsSize;
+        int w(contentsSize.width());
+
+        if (ct==CT_CheckBox)
+        {
+            w+=pixelMetric(PM_IndicatorWidth, opt, widget);
+            w+=pixelMetric(PM_CheckBoxLabelSpacing, opt, widget);
+        }
+        else
+        {
+            w+=pixelMetric(PM_ExclusiveIndicatorWidth, opt, widget);
+            w+=pixelMetric(PM_RadioButtonLabelSpacing, opt, widget);
+        }
+
+        return QSize(w, contentsSize.height());
+    }
+    case CT_ComboBox:
+    {
+        castOpt(ComboBox, box, opt);
+        if (!box)
+            return contentsSize;
+        int w(contentsSize.width()), h(contentsSize.height());
+
+        if (box->frame)
+        {
+            w+=pixelMetric(PM_ComboBoxFrameWidth, opt, widget)*2;
+            h+=pixelMetric(PM_ComboBoxFrameWidth, opt, widget)*2;
+        }
+
+        w+=12; //margins left/right for text...
+        w+=h;
+        return QSize(w, h);
+    }
     default: break;
     }
 

@@ -45,7 +45,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     {
         Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.color(QPalette::Base), roundNess);
         const int o(painter->opacity());
-        painter->setOpacity(0.5f);
+        painter->setOpacity(0.33f);
         Render::renderShadow(Render::Sunken, option->rect, painter, roundNess);
         painter->setOpacity(o);
     }
@@ -182,8 +182,17 @@ StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, c
         fg = widget->foregroundRole();
     }
     const int m(6);
-    QRect frameRect(subControlRect(CC_ComboBox, opt, SC_ComboBoxEditField, widget).adjusted(m, 0, -m, 0));
-    drawItemText(painter, frameRect, Qt::AlignLeft|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->currentText, fg);
+    const bool ltr(opt->direction==Qt::LeftToRight);
+    QRect rect(subControlRect(CC_ComboBox, opt, SC_ComboBoxEditField, widget).adjusted(m, 0, -m, 0));
+    const int hor(ltr?Qt::AlignLeft:Qt::AlignRight);
+    if (!opt->currentIcon.isNull())
+    {
+        if (ltr)
+            rect.setLeft(rect.left()+opt->iconSize.width());
+        else
+            rect.setRight(rect.right()-opt->iconSize.width());
+    }
+    drawItemText(painter, rect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->currentText, fg);
     return true;
 }
 
@@ -201,7 +210,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 
     Render::renderMask(frame.adjusted(1, 1, -1, -1), painter, opt->palette.color(QPalette::Base), 3);
     const int o(painter->opacity());
-    painter->setOpacity(0.5f);
+    painter->setOpacity(0.33f);
     Render::renderShadow(Render::Sunken, frame, painter, 2);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down);
