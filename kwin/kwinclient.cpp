@@ -99,7 +99,9 @@ KwinClient::init()
     l->addWidget(m_titleBar);
     l->addStretch();
     widget()->setLayout(l);
-
+    m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
+    m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
+    m_needSeparator = true;
     ShadowHandler::installShadows(windowId());
     QTimer::singleShot(1, this, SLOT(postInit()));
     setAlphaEnabled(true);
@@ -276,16 +278,15 @@ KwinClient::reset(unsigned long changed)
     }
 
     int n(0);
-    if (unsigned int *data = XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n))
+    if (WindowData *data = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData, n))
     {
-        if (n)
-            m_headHeight = data[0];
-        if (n > 1)
-            m_titleColor[0] = QColor::fromRgb(data[1]);
-        if (n > 2)
-            m_titleColor[1] = QColor::fromRgb(data[2]);
-        if (n > 3)
-            m_needSeparator = (bool)data[3];
+        if (n == 4)
+        {
+            m_titleColor[0] = QColor::fromRgba(data->top);
+            m_titleColor[1] = QColor::fromRgba(data->bottom);
+            m_needSeparator = data->separator;
+            m_headHeight = data->height;
+        }
     }
     else
     {

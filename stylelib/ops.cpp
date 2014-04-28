@@ -169,12 +169,15 @@ void
 Ops::fixWindowTitleBar(QWidget *win)
 {
     unsigned int ns(1);
-    unsigned int h = getHeadHeight(win, ns);
-    if (!h)
+    WindowData wd;
+    wd.height = getHeadHeight(win, ns);
+    wd.separator = ns;
+    wd.top = Color::titleBarColors[0].rgba();
+    wd.bottom = Color::titleBarColors[1].rgba();
+    if (!wd.height)
         return;
-    int n(4);
-    unsigned int d[] = { h, Color::titleBarColors[0].rgb(), Color::titleBarColors[1].rgb(), ns };
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, d, n);
+    const int n(4);
+    XHandler::setXProperty<WindowData>(win->winId(), XHandler::WindowData, &wd, n);
 //            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     updateWindow(win->winId());

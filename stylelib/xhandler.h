@@ -9,6 +9,13 @@
 #include <QX11Info>
 #include <QDebug>
 
+typedef struct _WindowData
+{
+    QRgb top, bottom;
+    bool separator;
+    int height;
+} WindowData;
+
 class Q_DECL_EXPORT XHandler
 {
 public:
@@ -16,7 +23,7 @@ public:
     static Atom atom[ValueCount];
     template<typename T> static void setXProperty(const WId w, const Value v, T *d, unsigned int n = 1)
     {
-        Atom a = (v == KwinShadows) ? XA_CARDINAL : XA_ATOM;
+        Atom a = (v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM;
         XChangeProperty(QX11Info::display(), w, atom[v], a, 32, PropModeReplace, reinterpret_cast<unsigned char *>(d), n);
         XSync(QX11Info::display(), False);
     }
@@ -27,7 +34,7 @@ public:
         int format;
         unsigned long nitems, after;
         T *d = 0;
-        Atom a = (v == KwinShadows) ? XA_CARDINAL : XA_ATOM;
+        Atom a = (v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM;
         XGetWindowProperty(QX11Info::display(), w, atom[v], 0, (~0L), False, a, &type, &format, &nitems, &after, reinterpret_cast<unsigned char **>(&d));
         n = nitems;
         return d;
