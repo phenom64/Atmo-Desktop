@@ -31,13 +31,13 @@ void
 TitleBar::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
     Render::renderMask(rect(), &p, m_brush, 4, Render::All & ~Render::Bottom);
     QLinearGradient lg(rect().topLeft(), rect().bottomLeft()+QPoint(0, height()));
     lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
     lg.setColorAt(0.5f, Qt::transparent);
     p.setBrush(Qt::NoBrush);
     p.setPen(QPen(lg, 1.0f));
+    p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(rect()).translated(0.5f, 0.5f), 5, 5);
     QFont f(p.font());
     f.setBold(m_client->isActive());
@@ -281,9 +281,9 @@ KwinClient::reset(unsigned long changed)
         if (n)
             m_headHeight = data[0];
         if (n > 1)
-            m_titleColor[0] = QColor::fromRgba(data[1]);
+            m_titleColor[0] = QColor::fromRgb(data[1]);
         if (n > 2)
-            m_titleColor[1] = QColor::fromRgba(data[2]);
+            m_titleColor[1] = QColor::fromRgb(data[2]);
         if (n > 3)
             m_needSeparator = (bool)data[3];
     }

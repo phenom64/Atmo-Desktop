@@ -101,8 +101,8 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 
     const int o(painter->opacity());
     painter->setOpacity(0.5f);
-    Render::renderMask(groove, painter, opt->palette.color(fg));
-    Render::renderShadow(Render::Etched, groove.adjusted(-1, -1, 1, 2), painter);
+//    Render::renderMask(groove, painter, opt->palette.color(fg));
+    Render::renderShadow(Render::Sunken, groove.adjusted(-1, -1, 1, 2), painter);
     painter->setOpacity(0.75f);
     Render::renderShadow(Render::Raised, slider, painter);
     painter->setOpacity(o);

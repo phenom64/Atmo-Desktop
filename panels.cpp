@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QStyleOptionGroupBox>
 #include <QCheckBox>
+#include <QMenuBar>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -119,7 +120,10 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
         fg = widget->foregroundRole();
         bg = widget->backgroundRole();
     }
-    Render::renderMask(option->rect, painter, option->palette.color(bg), 4);
+    Render::Sides sides = Render::All;
+    if (widget && qobject_cast<QMenuBar *>(widget->parentWidget()))
+        sides &= ~Render::Top;
+    Render::renderMask(option->rect, painter, option->palette.color(bg), 4, sides);
     return true;
 }
 

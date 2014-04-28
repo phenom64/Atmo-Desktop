@@ -60,27 +60,19 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     if (!widget || !painter->isActive())
         return true;
 
-    int roundNess(2);
-    bool isGroupBox(false);
-    QRect r(option->rect);
-    if (qobject_cast<const QGroupBox *>(widget))
-    {
-        isGroupBox = true;
-        r.setTop(r.top()+8);
-        roundNess = 8;
-    }
-    QPalette::ColorRole base(widget->backgroundRole());
-    bool needFill(widget->autoFillBackground());
-    if (const QAbstractScrollArea *a = qobject_cast<const QAbstractScrollArea *>(widget))
-        if (a->viewport()->autoFillBackground())
-            base = a->viewport()->backgroundRole();
-        else
-            needFill = false;
+    castOpt(FrameV2, opt, option);
+    if (!opt)
+        return true;
 
-    if (isGroupBox || !findChild<OverLay *>())
+    castObj(const QFrame *, frame, widget);
+    if (frame && frame->frameShadow() != QFrame::Sunken)
+        return true;
+    int roundNess(2);
+    QRect r(option->rect);
+
+    if (!frame->findChild<OverLay *>())
     {
         painter->save();
-        painter->fillRect(r, option->palette.color(widget->backgroundRole()));
         painter->setOpacity(0.25f);
         Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess);
         painter->restore();

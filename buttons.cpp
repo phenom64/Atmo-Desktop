@@ -6,6 +6,7 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QStyleOptionToolButton>
+#include <QMainWindow>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -44,7 +45,8 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
         painter->setOpacity(0.75f);
         Render::renderShadow(Render::Raised, option->rect, painter);
         painter->setOpacity(o);
-        QRect r(option->rect.adjusted(3, 3, -3, -3));
+        int m(4);
+        QRect r(option->rect.adjusted(m, m, -m, -m));
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
         lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
@@ -98,7 +100,8 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
 
-    Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg, 2);
+    int m(3);
+    Render::renderMask(checkRect.adjusted(m, m, -m, -m), painter, lg, 2);
 
     if (opt->state & (State_On|State_NoChange))
         Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect, opt->state & State_NoChange);
@@ -139,7 +142,8 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
 
-    Render::renderMask(checkRect.adjusted(3, 3, -3, -3), painter, lg);
+    int m(3);
+    Render::renderMask(checkRect.adjusted(m, m, -m, -m), painter, lg);
 
     if (opt->state & State_On)
     {
@@ -184,7 +188,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     geo.getCoords(&x, &y, &r, &b);
     const QToolBar *bar = qobject_cast<const QToolBar *>(widget->parentWidget());
     Render::Sides sides = Render::All;
-    bool nextSelected(false), prevSelected(false);
+    bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     if (bar)
     {
         if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
@@ -214,6 +218,9 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         if (const QToolButton *btn = qobject_cast<const QToolButton *>(widget))
             if (btn->isChecked())
                 nextSelected = true;
+        if (const QMainWindow *win = qobject_cast<const QMainWindow *>(bar->parentWidget()))
+            if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
+                isInTopToolBar = true;
     }
     Render::Shadow shadow = Render::Etched;
     QColor bc(option->palette.color(QPalette::Button));
@@ -230,7 +237,12 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
 
     QRect rect(opt->rect);
     QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    const QColor &start = Color::mid(bc, Qt::white, 1, 2), &end = Color::mid(bc, Qt::black, 3, 1);
+    QColor start = Color::mid(bc, Qt::white, 8, 1), end = Color::mid(bc, Qt::black, 8, 1);
+    if (isInTopToolBar)
+    {
+        start = Color::mid(bc, Qt::white, 1, 2);
+        end = Color::mid(bc, Qt::black, 3, 1);
+    }
     lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
     lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
     Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);

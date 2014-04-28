@@ -46,7 +46,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         int progress(d*bar->progress);
         int w(hor?progress:bar->rect.width());
         int h(hor?bar->rect.height():progress);
-        QRect r(0, hor?0:bar->rect.height()-progress, w, h);
+        int x(bar->rect.x()), y(bar->rect.y());
+        QRect r(x, hor?y:(y+bar->rect.height())-progress, w, h);
         if (bar->invertedAppearance)
         {
             if (hor)
