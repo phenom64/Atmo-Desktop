@@ -166,6 +166,13 @@ KwinClient::resize(const QSize &s)
         r += QRegion(0, 0, w, h-2);
         setMask(r);
     }
+    else
+    {
+        QRegion r(0, 2, w, h-4);
+        r += QRegion(1, 1, w-2, h-2);
+        r += QRegion(2, 0, w-4, h);
+        setMask(r);
+    }
 }
 
 void
