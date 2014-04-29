@@ -8,7 +8,8 @@ set (libSRCS
     shadowhandler.cpp
     render.cpp
     color.cpp
-    progresshandler.cpp)
+    progresshandler.cpp
+    widgets.cpp)
     
 set (libHDRS
     xhandler.h
@@ -17,10 +18,12 @@ set (libHDRS
     render.h
     macros.h
     color.h
-    progresshandler.h)
+    progresshandler.h
+    widgets.h)
 
 set (libMocHDRS
-    progresshandler.h)
+    progresshandler.h
+    widgets.h)
 
 set (QT_USE_QTDBUS TRUE)
 find_package (Qt4 REQUIRED)

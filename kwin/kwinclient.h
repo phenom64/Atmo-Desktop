@@ -25,6 +25,7 @@ private:
 };
 
 class Factory;
+class SizeGrip;
 class KwinClient : public KDecoration
 {
     Q_OBJECT
@@ -65,6 +66,7 @@ private:
     int m_headHeight;
     bool m_needSeparator;
     friend class TitleBar;
+    SizeGrip *m_sizeGrip;
 };
 
 #endif //KWINCLIENT_H

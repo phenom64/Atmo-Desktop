@@ -14,6 +14,7 @@
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/render.h"
 #include "../stylelib/color.h"
+#include "../stylelib/widgets.h"
 
 #define TITLEHEIGHT 22
 
@@ -74,6 +75,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_headHeight(TITLEHEIGHT)
     , m_needSeparator(true)
     , m_factory(factory)
+    , m_sizeGrip(0)
 {
     setParent(factory);
     unsigned int height(TITLEHEIGHT);
@@ -285,7 +287,7 @@ KwinClient::reset(unsigned long changed)
     }
 
     int n(0);
-    if (WindowData *data = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData, n))
+    if (WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n)))
     {
         if (n == 4)
         {
@@ -294,6 +296,7 @@ KwinClient::reset(unsigned long changed)
             m_needSeparator = data->separator;
             m_headHeight = data->height;
         }
+        XFree(data);
     }
     else
     {
@@ -309,4 +312,6 @@ KwinClient::reset(unsigned long changed)
     m_titleBar->update();
     ShadowHandler::installShadows(windowId());
     widget()->update();
+    if (!m_sizeGrip)
+        m_sizeGrip = new SizeGrip(this);
 }

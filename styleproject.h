@@ -113,6 +113,7 @@ protected:
 protected slots:
     void fixTitle();
     void fixMainWindowToolbar();
+    void postOps();
 
 private:
     StyleComplexControl m_cc[CCSize];

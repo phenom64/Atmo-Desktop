@@ -40,6 +40,12 @@ StyleProject::StyleProject()
     init();
     assignMethods();
     Render::generateData();
+    QTimer::singleShot(0, this, SLOT(postOps()));
+}
+
+void
+StyleProject::postOps()
+{
     QPalette p(QApplication::palette());
     QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
     Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
