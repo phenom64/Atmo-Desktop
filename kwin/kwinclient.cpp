@@ -82,9 +82,18 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
 }
 
+KwinClient::~KwinClient()
+{
+    if (m_sizeGrip)
+        delete m_sizeGrip;
+    XHandler::deleteXProperty(windowId(), XHandler::DecoData);
+}
+
 void
 KwinClient::init()
 {
+    unsigned int height(TITLEHEIGHT);
+    XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
     createMainWidget();
     widget()->installEventFilter(this);
     widget()->setAttribute(Qt::WA_NoSystemBackground);

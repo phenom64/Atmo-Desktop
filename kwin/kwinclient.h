@@ -31,6 +31,7 @@ class KwinClient : public KDecoration
     Q_OBJECT
 public:
     KwinClient(KDecorationBridge *bridge, Factory *factory);
+    ~KwinClient();
 
     // functions not implemented in KDecoration
     void init();
