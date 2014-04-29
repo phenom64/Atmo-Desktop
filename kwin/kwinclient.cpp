@@ -298,13 +298,17 @@ KwinClient::reset(unsigned long changed)
     int n(0);
     if (WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n)))
     {
+        qDebug() << "got data from style for" << windowId() << "lets see if its valid....";
         if (n == 4)
         {
             m_titleColor[0] = QColor::fromRgba(data->top);
             m_titleColor[1] = QColor::fromRgba(data->bottom);
+            qDebug() << "got titlebar gradient colors:" << m_titleColor[0] << m_titleColor[1] << "and height:" << data->height;
             m_needSeparator = data->separator;
             m_headHeight = data->height;
         }
+        else
+            qDebug() << "apparently data wasnt valid for" << windowId();
         XFree(data);
     }
     else
