@@ -26,7 +26,9 @@ public:
         if (!d)
             return;
         Atom a = (v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM;
-        XChangeProperty(QX11Info::display(), w, atom[v], a, 32, PropModeReplace, reinterpret_cast<unsigned char *>(d), n);
+        unsigned long _n = n*sizeof(T)*8;
+        _n /= 32;
+        XChangeProperty(QX11Info::display(), w, atom[v], a, 32, PropModeReplace, reinterpret_cast<unsigned char *>(d), _n ? _n : n);
         XSync(QX11Info::display(), False);
     }
     static int _n;
