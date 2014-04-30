@@ -179,7 +179,7 @@ Ops::fixWindowTitleBar(QWidget *win)
         return;
     unsigned int d[4] = { Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba(), height, ns };
     const int n(4);
-    qDebug() << "sending data to deco, colors:" << Color::titleBarColors[0] << Color::titleBarColors[1] << "and height:" << height;
+//    qDebug() << "sending data to deco, colors:" << QColor::fromRgba(d[0]) << QColor::fromRgba(d[1]) << "and height:" << height;
     XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, d, n);
 //            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();

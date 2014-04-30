@@ -4,7 +4,7 @@
 #include "../kwin/kwinclient.h"
 #include <QSizeGrip>
 
-class SizeGrip : public QWidget
+class Q_DECL_EXPORT SizeGrip : public QWidget
 {
     Q_OBJECT
 public:

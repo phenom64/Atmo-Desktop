@@ -32,6 +32,8 @@ void
 TitleBar::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::NoBrush);
     Render::renderMask(rect(), &p, m_brush, 4, Render::All & ~Render::Bottom);
     QLinearGradient lg(rect().topLeft(), rect().bottomLeft()+QPoint(0, height()));
     lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
@@ -78,22 +80,25 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_sizeGrip(0)
 {
     setParent(factory);
-    unsigned int height(TITLEHEIGHT);
-    XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
 }
 
 KwinClient::~KwinClient()
 {
     if (m_sizeGrip)
         delete m_sizeGrip;
-    XHandler::deleteXProperty(windowId(), XHandler::DecoData);
+//    XHandler::deleteXProperty(windowId(), XHandler::DecoData);
 }
 
 void
 KwinClient::init()
 {
-    unsigned int height(TITLEHEIGHT);
-    XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
+    if (!isPreview())
+    {
+        unsigned int height(TITLEHEIGHT);
+        XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
+        ShadowHandler::installShadows(windowId());
+        setAlphaEnabled(true);
+    }
     createMainWidget();
     widget()->installEventFilter(this);
     widget()->setAttribute(Qt::WA_NoSystemBackground);
@@ -113,9 +118,7 @@ KwinClient::init()
     m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
     m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
     m_needSeparator = true;
-    ShadowHandler::installShadows(windowId());
     QTimer::singleShot(1, this, SLOT(postInit()));
-    setAlphaEnabled(true);
 }
 
 void
@@ -210,10 +213,10 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::Paint:
     {
-        QPainter p(widget());
-        p.setRenderHint(QPainter::Antialiasing);
-        paint(p);
-        p.end();
+//        QPainter p(widget());
+//        p.setRenderHint(QPainter::Antialiasing);
+//        paint(p);
+//        p.end();
         return true;
     }
     case QEvent::MouseButtonDblClick:
@@ -258,7 +261,8 @@ KwinClient::minimumSize() const
 void
 KwinClient::activeChange()
 {
-    ShadowHandler::installShadows(windowId());
+    if (!isPreview())
+        ShadowHandler::installShadows(windowId());
     widget()->update();
 }
 
@@ -295,20 +299,22 @@ KwinClient::reset(unsigned long changed)
         populate(options()->titleButtonsRight());
     }
 
+    if (isPreview())
+        return;
     int n(0);
     if (unsigned int *data = XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n))
     {
-        qDebug() << "got data from style for" << windowId() << "lets see if its valid....";
+//        qDebug() << "got data from style for" << windowId() << "lets see if its valid....";
         if (n == 4)
         {
             m_titleColor[0] = QColor::fromRgba(data[0]);
             m_titleColor[1] = QColor::fromRgba(data[1]);
             m_headHeight = data[2];
             m_needSeparator = data[3];
-            qDebug() << "got titlebar gradient colors:" << m_titleColor[0] << m_titleColor[1] << "and height:" << m_headHeight;
+//            qDebug() << "got titlebar gradient colors:" << m_titleColor[0] << m_titleColor[1] << "and height:" << m_headHeight;
         }
-        else
-            qDebug() << "apparently data wasnt valid for" << windowId();
+//        else
+//            qDebug() << "apparently data wasnt valid for" << windowId();
         XFree(data);
     }
     else

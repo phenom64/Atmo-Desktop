@@ -3,6 +3,8 @@
 #include <QPainter>
 #include <QEvent>
 #include <QImage>
+#include <X11/Xlib.h>
+#include <fixx11h.h>
 
 #include "shadowhandler.h"
 #include "../styleproject.h"
