@@ -301,7 +301,7 @@ KwinClient::reset(unsigned long changed)
     if (isPreview())
         return;
     int n(0);
-    if (WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowData, n)))
+    if (WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n)))
     {
         m_titleColor[0] = QColor::fromRgba(data->top);
         m_titleColor[1] = QColor::fromRgba(data->bottom);
