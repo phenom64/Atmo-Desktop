@@ -147,12 +147,12 @@ Ops::opposingRole(const QPalette::ColorRole &role)
     }
 }
 
-static quint32 getHeadHeight(QWidget *win, quint32 &needSeparator)
+static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
 {
-    quint8 *h = XHandler::getXProperty<quint8>(win->winId(), XHandler::DecoData);
+    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
     if (!h)
         return 0;
-    quint32 height(*h);
+    unsigned int height(*h);
     win->setProperty("titleHeight", height);
     QWidget *first(win->childAt(1, 1));
     if (castObj(QToolBar *, tb, first))
@@ -168,19 +168,19 @@ static quint32 getHeadHeight(QWidget *win, quint32 &needSeparator)
 void
 Ops::fixWindowTitleBar(QWidget *win)
 {
-    quint32 ns(1);
+    unsigned int ns(1);
 //    WindowData wd;
 //    wd.height = getHeadHeight(win, ns);
 //    wd.separator = ns;
 //    wd.top = Color::titleBarColors[0].rgba();
 //    wd.bottom = Color::titleBarColors[1].rgba();
-    quint32 height(getHeadHeight(win, ns));
+    unsigned int height(getHeadHeight(win, ns));
     if (!height)
         return;
-    quint32 d[4] = { Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba(), height, ns };
+    unsigned long d[4] = { Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba(), height, ns };
     const int n(4);
 //    qDebug() << "sending data to deco, colors:" << QColor::fromRgba(d[0]) << QColor::fromRgba(d[1]) << "and height:" << height;
-    XHandler::setXProperty<quint32>(win->winId(), XHandler::WindowData, XHandler::Long, d, n);
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::WindowData, XHandler::Long, d, n);
 //            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     updateWindow(win->winId());

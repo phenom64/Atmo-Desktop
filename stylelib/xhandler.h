@@ -20,6 +20,9 @@ public:
     enum Size { Byte = 8, Short = 16, Long = 32 };
     template<typename T> static void setXProperty(const WId w, const Value v, const Size size, T *d, unsigned int n = 1)
     {
+        if (size == Long)
+            if (sizeof(T) == 8)
+                n*=2;
         changeProperty(w, v, size, reinterpret_cast<unsigned char *>(d), n);
     }
     template<typename T> static T *getXProperty(const WId w, const Value v, int &n = _n)

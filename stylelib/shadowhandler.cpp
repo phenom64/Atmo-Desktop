@@ -43,14 +43,14 @@ static QRect part(int part, int size)
     }
 }
 
-quint32
+unsigned long
 *ShadowHandler::shadows(const int size)
 {
-    quint32 *shadows = XHandler::getXProperty<quint32>(QX11Info::appRootWindow(), XHandler::StoreShadow);
+    unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow);
     if (!shadows)
     {
         qDebug() << "regenerating shadow data...";
-        quint32 *data = new quint32[12];
+        unsigned long *data = new unsigned long[12];
 
         int s(size*2+1);
         QImage img(s, s, QImage::Format_ARGB32);
@@ -92,7 +92,7 @@ quint32
             else
                 data[i] = sd[i-8];
         }
-        XHandler::setXProperty<quint32>(QX11Info::appRootWindow(), XHandler::StoreShadow, XHandler::Long, data, 12);
+        XHandler::setXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow, XHandler::Long, data, 12);
         shadows = data;
     }
     return shadows;
@@ -102,7 +102,7 @@ void
 ShadowHandler::installShadows(WId w)
 {
     if (w != QX11Info::appRootWindow())
-        XHandler::setXProperty<quint32>(w, XHandler::KwinShadows, XHandler::Long, shadows(), 12);
+        XHandler::setXProperty<unsigned long>(w, XHandler::KwinShadows, XHandler::Long, shadows(), 12);
 }
 
 void

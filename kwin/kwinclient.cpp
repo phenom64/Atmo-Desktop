@@ -94,8 +94,8 @@ KwinClient::init()
 {
     if (!isPreview())
     {
-        quint8 height(TITLEHEIGHT);
-        XHandler::setXProperty<quint8>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
+        unsigned char height(TITLEHEIGHT);
+        XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
         ShadowHandler::installShadows(windowId());
         setAlphaEnabled(true);
     }
@@ -301,7 +301,7 @@ KwinClient::reset(unsigned long changed)
     if (isPreview())
         return;
     int n(0);
-    if (quint32 *data = XHandler::getXProperty<quint32>(windowId(), XHandler::WindowData, n))
+    if (unsigned long *data = XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowData, n))
     {
 //        qDebug() << "got data from style for" << windowId() << "lets see if its valid....";
 //        if (n == 4)

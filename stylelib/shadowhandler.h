@@ -7,7 +7,7 @@
 class Q_DECL_EXPORT ShadowHandler
 {
 public:
-    static quint32 *shadows(const int size = 32);
+    static unsigned long *shadows(const int size = 32);
     static void installShadows(WId w);
     static void manage(QWidget *w);
     static void removeDelete();

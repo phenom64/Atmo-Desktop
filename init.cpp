@@ -19,6 +19,11 @@ StyleProject::init()
         m_pe[i] = 0;
     for (int i = 0; i < EVSize; ++i)
         m_ev[i] = 0;
+
+//    int n(4);
+//    unsigned long _n = n*sizeof(long)*8;
+//    _n /= (sizeof(long) == 8) ? 8*sizeof(long) : 16;
+//    qDebug() << _n;
 }
 
 /* here we assign functions to perform the
