@@ -93,12 +93,22 @@ Render::initShadowParts()
         }
         case Raised:
         {
-            QRadialGradient rg(pix.rect().center()+QPointF(0, add), size/2.0f);
-            rg.setColorAt(0.6f, Qt::black);
-            rg.setColorAt(0.9f, Qt::transparent);
+//            QRadialGradient rg(pix.rect().center()+QPointF(0, add), size/2.0f);
+//            rg.setColorAt(0.6f, Qt::black);
+//            rg.setColorAt(0.9f, Qt::transparent);
 //            rg.setColorAt(1.0f, Qt::transparent);
-            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
-            p.fillRect(pix.rect(), rg);
+//            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
+//            p.fillRect(pix.rect(), rg);
+            p.setPen(Qt::NoPen);
+            int n(3);
+            int a(255/n);
+            for (int i = 1; i <= n; ++i)
+            {
+                p.setBrush(QColor(0, 0, 0, a*i));
+                int a(qMax(0, i-1));
+                int rnd(r-a);
+                p.drawRoundedRect(pix.rect().adjusted(a, a, -a, -a), rnd, rnd);
+            }
             break;
         }
         case Etched:

@@ -37,15 +37,15 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
     {
         QColor bc(option->palette.color(bg));
         if (option->HOVER)
-            bc = bc.lighter();
-        if (option->SUNKEN)
-            bc = bc.darker();
+            bc = Color::mid(bc, Qt::white);
+        if (option->SUNKEN || opt->features & QStyleOptionButton::DefaultButton)
+            bc = Color::mid(bc, Qt::black, 2, 1);
 
         const int o(painter->opacity());
         painter->setOpacity(0.75f);
         Render::renderShadow(Render::Raised, option->rect, painter);
         painter->setOpacity(o);
-        int m(4);
+        int m(2);
         QRect r(option->rect.adjusted(m, m, -m, -m));
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
@@ -100,7 +100,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
 
-    int m(3);
+    int m(2);
     Render::renderMask(checkRect.adjusted(m, m, -m, -m), painter, lg, 2);
 
     if (opt->state & (State_On|State_NoChange))
@@ -142,7 +142,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
 
-    int m(3);
+    int m(2);
     Render::renderMask(checkRect.adjusted(m, m, -m, -m), painter, lg);
 
     if (opt->state & State_On)

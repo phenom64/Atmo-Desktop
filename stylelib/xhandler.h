@@ -21,11 +21,11 @@ public:
     typedef unsigned int TypeSize;
     template<typename T> static void setXProperty(const WId w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
-        const TypeSize realSize(sizeof(T)*8);
-        if (realSize > size)
-            n *= realSize/8;
+        const TypeSize realSize(sizeof(T));
+        if (realSize > size/8)
+            n *= realSize;
 
-        changeProperty(w, v, size, reinterpret_cast<unsigned char *>(d), n);
+        changeProperty(w, v, qMin<TypeSize>(size, Long), reinterpret_cast<unsigned char *>(d), n);
     }
     template<typename T> static T *getXProperty(const WId w, const Value v, int &n = _n)
     {

@@ -119,7 +119,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         textRect.setRight(iconRect.left());
         textRect.setLeft(arrowRect.right());
     }
-    int m(3);
+    int m(2);
 
     if (!opt->editable)
     {

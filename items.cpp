@@ -151,42 +151,25 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     drawViewItemBg(option, painter, widget);
 
     QPixmap pix(opt->icon.pixmap(opt->decorationSize));
-    QRect r(opt->rect);
+
     if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
     {
-        r.setLeft(r.left()+pixelMetric(PM_IndicatorWidth)+pixelMetric(PM_CheckBoxLabelSpacing));
         QStyleOptionButton btn;
-        btn.QStyleOption::operator =(*option);
+//        btn.QStyleOption::operator =(*option);
+        btn.rect = subElementRect(SE_ItemViewItemCheckIndicator, opt, widget);
         if (opt->checkState)
             btn.state |= (opt->checkState==Qt::PartiallyChecked?State_NoChange:State_On);
         drawCheckBox(&btn, painter, 0);
     }
-    QRect iconRect(itemPixmapRect(r, opt->decorationAlignment, pix));
-    QRect textRect(r);
-    int m(4);
-    switch (opt->decorationPosition)
-    {
-    case QStyleOptionViewItem::Left: textRect.setLeft(iconRect.right()); break;
-    case QStyleOptionViewItem::Right: textRect.setRight(iconRect.left()); break;
-    case QStyleOptionViewItem::Top: textRect.setBottom(iconRect.top()); break;
-    case QStyleOptionViewItem::Bottom: textRect.setTop(iconRect.bottom()); break;
-    default: break;
-    }
 
-    if (opt->displayAlignment & Qt::AlignLeft)
-        textRect.setLeft(textRect.left()+m);
-    if (opt->displayAlignment & Qt::AlignTop)
-        textRect.setTop(textRect.top()+m);
-    if (opt->displayAlignment & Qt::AlignRight)
-        textRect.setRight(textRect.right()-m);
-    if (opt->displayAlignment & Qt::AlignBottom)
-        textRect.setBottom(textRect.bottom()-m);
+    QRect iconRect(subElementRect(SE_ItemViewItemDecoration, opt, widget));
+    QRect textRect(subElementRect(SE_ItemViewItemText, opt, widget));
 
-    QPalette::ColorRole fg(QPalette::Text);
-    if (opt->SUNKEN)
-        fg = QPalette::HighlightedText;
-
+    QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
     drawItemPixmap(painter, iconRect, opt->decorationAlignment, pix);
-    drawItemText(painter, textRect, opt->displayAlignment, opt->palette, opt->ENABLED, opt->text, fg);
+    int align(opt->displayAlignment);
+    if (opt->fontMetrics.boundingRect(opt->text).width() > opt->rect.width())
+        align &= ~Qt::AlignHCenter;
+    drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
 }

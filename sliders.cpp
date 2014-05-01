@@ -107,12 +107,14 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     Render::renderShadow(Render::Raised, slider, painter);
     painter->setOpacity(o);
 
+    --d;
     slider.adjust(d, d, -d, -d);
     QLinearGradient lg(0, d, 0, slider.height()); //buahahaha just noticed a bug in rendermask.
     lg.setColorAt(0.0f, Color::mid(option->palette.color(bg), Qt::white, 2, 1));
     lg.setColorAt(1.0f, Color::mid(option->palette.color(bg), Qt::black, 2, 1));
     Render::renderMask(slider, painter, lg);
-    int ds(slider.height()/3);
+    int ds(slider.height()/2);
+    ds &= ~1;
     QRect dot(0, 0, ds, ds);
     dot.moveCenter(slider.center());
     painter->save();
