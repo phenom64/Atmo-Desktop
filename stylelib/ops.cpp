@@ -169,20 +169,16 @@ void
 Ops::fixWindowTitleBar(QWidget *win)
 {
     unsigned int ns(1);
-//    WindowData wd;
-//    wd.height = getHeadHeight(win, ns);
-//    wd.separator = ns;
-//    wd.top = Color::titleBarColors[0].rgba();
-//    wd.bottom = Color::titleBarColors[1].rgba();
-    unsigned int height(getHeadHeight(win, ns));
-    if (!height)
+    WindowData wd;
+    wd.height = getHeadHeight(win, ns);
+    wd.separator = ns;
+    wd.top = Color::titleBarColors[0].rgba();
+    wd.bottom = Color::titleBarColors[1].rgba();
+    if (!wd.height)
         return;
-    unsigned long d[4] = { Color::titleBarColors[0].rgba(), Color::titleBarColors[1].rgba(), height, ns };
-    const int n(4);
-//    qDebug() << "sending data to deco, colors:" << QColor::fromRgba(d[0]) << QColor::fromRgba(d[1]) << "and height:" << height;
-    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::WindowData, XHandler::Long, d, n);
-//            qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
-//            qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::WindowData, XHandler::Long, reinterpret_cast<unsigned long *>(&wd), 4);
+//    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
+//    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     updateWindow(win->winId());
     const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
     for (int i = 0; i < toolBars.size(); ++i)

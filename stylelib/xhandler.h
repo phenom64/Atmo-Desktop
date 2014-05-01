@@ -8,7 +8,7 @@ typedef struct _WindowData
 {
     QRgb top, bottom;
     bool separator;
-    int height;
+    unsigned int height;
 } WindowData;
 
 static int _n = 0;
