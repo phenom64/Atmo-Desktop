@@ -13,7 +13,7 @@ static Atom atom[XHandler::ValueCount] =
 };
 
 void
-XHandler::changeProperty(const WId w, const Value v, const Size size, const unsigned char *data, const unsigned int nitems)
+XHandler::changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems)
 {
     if (!data)
         return;
