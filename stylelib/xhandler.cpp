@@ -13,12 +13,12 @@ static Atom atom[XHandler::ValueCount] =
 };
 
 void
-XHandler::changeProperty(const WId w, const Value v, const unsigned char *data, const int nitems)
+XHandler::changeProperty(const WId w, const Value v, const Size size, const unsigned char *data, const int nitems)
 {
     if (!data)
         return;
 //    Atom a = ((v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM);
-    XChangeProperty(QX11Info::display(), w, atom[v], XA_CARDINAL, 32, PropModeReplace, data, nitems);
+    XChangeProperty(QX11Info::display(), w, atom[v], XA_CARDINAL, size, PropModeReplace, data, nitems);
     XSync(QX11Info::display(), False);
 }
 

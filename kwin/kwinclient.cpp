@@ -94,8 +94,8 @@ KwinClient::init()
 {
     if (!isPreview())
     {
-        unsigned int height(TITLEHEIGHT);
-        XHandler::setXProperty<unsigned int>(windowId(), XHandler::DecoData, &height);
+        quint8 height(TITLEHEIGHT);
+        XHandler::setXProperty<quint8>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
         ShadowHandler::installShadows(windowId());
         setAlphaEnabled(true);
     }
@@ -298,21 +298,20 @@ KwinClient::reset(unsigned long changed)
         m_titleLayout->addStretch();
         populate(options()->titleButtonsRight());
     }
-
     if (isPreview())
         return;
     int n(0);
-    if (unsigned int *data = XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n))
+    if (quint32 *data = XHandler::getXProperty<quint32>(windowId(), XHandler::WindowData, n))
     {
 //        qDebug() << "got data from style for" << windowId() << "lets see if its valid....";
-        if (n == 4)
-        {
+//        if (n == 4)
+//        {
             m_titleColor[0] = QColor::fromRgba(data[0]);
             m_titleColor[1] = QColor::fromRgba(data[1]);
             m_headHeight = data[2];
             m_needSeparator = data[3];
 //            qDebug() << "got titlebar gradient colors:" << m_titleColor[0] << m_titleColor[1] << "and height:" << m_headHeight;
-        }
+//        }
 //        else
 //            qDebug() << "apparently data wasnt valid for" << windowId();
         XFree(data);
