@@ -111,7 +111,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 
     if (!opt->editable)
     {
-        Render::renderShadow(Render::Raised, frameRect, painter, 5, Render::All, 0.5f);
+        Render::renderShadow(Render::Raised, frameRect, painter, 5);
 
         const QColor bgc(opt->palette.color(bg));
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());

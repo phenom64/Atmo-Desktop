@@ -54,19 +54,6 @@ OverLay::paintEvent(QPaintEvent *)
 
     if (m_lines & Top)
     {
-//        if (QToolBar *bar = qobject_cast<QToolBar *>(m_frame->window()->childAt(m_positions[North])))
-//        {
-//            if (QMainWindow *mainWin = qobject_cast<QMainWindow *>(unoBar->window()))
-//                if (mainWin->toolBarArea(unoBar) == Qt::TopToolBarArea)
-//                {
-//                    QPalette::ColorRole unoRole = Style::config.UNO.__role[Style::Bg];
-//                    QColor unoColor = unoBar->palette().color(unoRole);
-//                    unoColor = Colors::mid(unoColor, Qt::black);
-//                    p.setPen(unoColor);
-//                    p.drawLine(r.topLeft(), r.topRight());
-//                }
-//        }
-//        else
         p.drawLine(r.topLeft(), r.topRight());
         r.setTop(r.top()+1);
     }
@@ -77,15 +64,8 @@ OverLay::paintEvent(QPaintEvent *)
     }
     if (m_lines & Bottom)
     {
-        if (Ops::isOrInsideA<QStatusBar *>(m_frame->window()->childAt(m_position[South])))
-        {
-
-        }
-        else
-        {
-            p.drawLine(r.bottomLeft(), r.bottomRight());
-            r.setBottom(r.bottom()-1);
-        }
+        p.drawLine(r.bottomLeft(), r.bottomRight());
+        r.setBottom(r.bottom()-1);
     }
     if (m_lines & Left)
         p.drawLine(r.topLeft(), r.bottomLeft());
@@ -150,50 +130,56 @@ void
 OverLay::updateOverlay()
 {
     static QMap<QFrame *, QSize> sm;
-    if (sm[m_frame] != m_frame->size())
+    if (sm.value(m_frame, QSize()) != m_frame->size())
     {
-        sm[m_frame] = m_frame->size();
+        sm.insert(m_frame, m_frame->size());
         return;
     }
 
     m_timer->stop();
     const QRect &r(m_frame->rect());
-    const int d = 1;
+    const int d(1);
 
 #define GP(_X_, _Y_) m_frame->mapTo(m_frame->window(), QPoint(_X_, _Y_))
     m_position[West] = GP(r.x()-d, r.center().y());
     m_position[North] = GP(r.center().x(), r.y()-d);
-    m_position[East] = GP(r.right()+d, r.center().y());
-    m_position[South] = GP(r.center().x(), r.bottom()+d);
+    m_position[East] = GP(r.right()+1+d, r.center().y());
+    m_position[South] = GP(r.center().x(), r.bottom()+1+d);
 #undef GP
 
     static Position pos[4] = { West, North, East, South };
     static Side l[4] = { Left, Top, Right, Bottom };
     static Side wl[4] = { Right, Bottom, Left, Top }; //reversed
     //debugging purposes
-    static QString s[4] = { "Left", "Top", "Right", "Bottom" };
-    static QString ws[4] = { "Right", "Bottom", "Left", "Top" };
+//    static QString s[4] = { "Left", "Top", "Right", "Bottom" };
+//    static QString ws[4] = { "Right", "Bottom", "Left", "Top" };
 
     Sides sides(All);
 
-    for (int i = 0; i < 4; ++i)
-        if (QWidget *w = m_frame->window()->childAt(m_position[i]))
-            if (w->objectName() == "qt_qmainwindow_extended_splitter"
-                    || Ops::isOrInsideA<QStatusBar *>(w)
-                    || (l[i] == Top && qobject_cast<QTabBar *>(w))
-                    || qobject_cast<QSplitterHandle *>(w)
-                    || getFrameForWidget(w, pos[i]))
-            {
-                if (w->rect().contains(m_frame->rect())) //sick, if we are inside we shouldn't do nothing
-                    continue;
+    for (int i = 0; i < PosCount; ++i)
+    {
+        QWidget *w = m_frame->window()->childAt(m_position[i]);
+        if (!w || w->isAncestorOf(m_frame))
+            continue;
 
-                if (QFrame *frame = getFrameForWidget(w, pos[i]))
-                    if (OverLay *lay = frame->findChild<OverLay*>())
-                        if (lay->size() == frame->size())
-                            if (!(lay->lines() & wl[i]))
-                                continue;
-                sides &= ~l[i];
-            }
+        if (w->objectName() == "qt_qmainwindow_extended_splitter"
+                || Ops::isOrInsideA<QStatusBar *>(w)
+                || (l[i] == Top && qobject_cast<QTabBar *>(w))
+                || qobject_cast<QSplitterHandle *>(w)
+                )
+        {
+            sides &= ~l[i];
+        }
+        else if (QFrame *f = getFrameForWidget(w, pos[i]))
+        {
+            if (OverLay *lay = f->findChild<OverLay*>())
+//                if (lay->size() == f->size())
+                    if (lay->lines() & wl[i])
+                        sides &= ~l[i];
+                    else
+                        sides |= l[i];
+        }
+    }
     QRect winRect = m_frame->window()->rect();
     winRect.moveTopLeft(m_frame->mapFrom(m_frame->window(), winRect.topLeft()));
     if(r.left() <= winRect.left())
