@@ -4,6 +4,8 @@
 
 #include "render.h"
 
+#define OPACITY 0.75f
+
 Render *Render::m_instance = 0;
 
 Render
@@ -66,6 +68,7 @@ Render::initShadowParts()
         QPixmap pix(size, size);
         pix.fill(Qt::transparent);
         QPainter p(&pix);
+//        p.setOpacity(OPACITY);
         p.setRenderHint(QPainter::Antialiasing);
         float add(r>4?(float)r/100.0f:0);
         switch (s)
@@ -100,7 +103,7 @@ Render::initShadowParts()
 //            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
 //            p.fillRect(pix.rect(), rg);
             p.setPen(Qt::NoPen);
-            int n(3);
+            int n(6);
             int a(255/n);
             for (int i = 1; i <= n; ++i)
             {
@@ -270,17 +273,20 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
 }
 
 void
-Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides)
+Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides)
 {
     if (!rect.isValid())
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
     if (!roundNess)
         roundNess = 1;
+    const float o(painter->opacity());
+    painter->setOpacity(opacity);
     for (int i = 0; i < PartCount; ++i)
         if (i == CenterPart || roundNess)
             if (needPart((Part)i, sides))
                 painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), m_shadow[shadow][roundNess][i]);
+    painter->setOpacity(o);
 }
 
 Render::Sides

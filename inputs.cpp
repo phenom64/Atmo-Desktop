@@ -19,11 +19,8 @@
 static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b)
 {
     Render::renderMask(r.adjusted(1, 1, -1, -2), p, b);
-    const int o(p->opacity());
-    p->setOpacity(0.25f);
-    Render::renderShadow(Render::Etched, r, p);
-    Render::renderShadow(Render::Sunken, r, p);
-    p->setOpacity(o);
+    Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.25f);
+    Render::renderShadow(Render::Sunken, r, p, 32, Render::All, 0.25f);
 }
 
 bool
@@ -44,10 +41,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     else
     {
         Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.color(QPalette::Base), roundNess);
-        const int o(painter->opacity());
-        painter->setOpacity(0.33f);
-        Render::renderShadow(Render::Sunken, option->rect, painter, roundNess);
-        painter->setOpacity(o);
+        Render::renderShadow(Render::Sunken, option->rect, painter, roundNess, Render::All, 0.33f);
     }
     return true;
 }
@@ -57,7 +51,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || !painter->isActive())
+    if (!widget)
         return true;
 
     castOpt(FrameV2, opt, option);
@@ -71,14 +65,8 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     QRect r(option->rect);
 
     if (!frame->findChild<OverLay *>())
-    {
-        painter->save();
-        painter->setOpacity(0.25f);
-        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess);
-        painter->restore();
-        return true;
-    }
-    return false;
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, 0.25f);
+    return true;
 }
 
 bool
@@ -123,10 +111,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 
     if (!opt->editable)
     {
-        const float o(painter->opacity());
-        painter->setOpacity(0.5f*o);
-        Render::renderShadow(Render::Raised, frameRect, painter, 5);
-        painter->setOpacity(o);
+        Render::renderShadow(Render::Raised, frameRect, painter, 5, Render::All, 0.5f);
 
         const QColor bgc(opt->palette.color(bg));
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
@@ -143,6 +128,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
         Render::renderMask(arrowRect, painter, lg, 2, Render::All & ~(ltr?Render::Left:Render::Right));
         painter->setPen(opt->palette.color(fg));
+        const float o(painter->opacity());
         painter->setOpacity(0.5f);
         if (ltr)
             painter->drawLine(arrowRect.topLeft()-QPoint(1, 0), arrowRect.bottomLeft()-QPoint(1, 0));
@@ -201,11 +187,8 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 //    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
 
     Render::renderMask(frame.adjusted(1, 1, -1, -1), painter, opt->palette.color(QPalette::Base), 3);
-    const int o(painter->opacity());
-    painter->setOpacity(0.33f);
-    Render::renderShadow(Render::Sunken, frame, painter, 2);
+    Render::renderShadow(Render::Sunken, frame, painter, 2, Render::All, 0.33f);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down);
-    painter->setOpacity(o);
     return true;
 }

@@ -41,12 +41,10 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
         if (option->SUNKEN || opt->features & QStyleOptionButton::DefaultButton)
             bc = Color::mid(bc, Qt::black, 2, 1);
 
-        const int o(painter->opacity());
-        painter->setOpacity(0.75f);
         Render::renderShadow(Render::Raised, option->rect, painter);
-        painter->setOpacity(o);
         int m(2);
-        QRect r(option->rect.adjusted(m, m, -m, -m));
+        const Render::Sides sides(Render::All);
+        QRect r(option->rect.shrinked(m));
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
         lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
@@ -82,17 +80,19 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
+    QRect checkRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
     if (widget)
     {
         bg = widget->backgroundRole();
         fg = widget->foregroundRole();
+        checkRect.setBottom(qMin(checkRect.bottom(), widget->rect().bottom()));
     }
-    QRect checkRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
+
     QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
-    const float o(painter->opacity());
-    painter->setOpacity(0.5f*o);
+//    const float o(painter->opacity());
+//    painter->setOpacity(0.5f*o);
     Render::renderShadow(Render::Raised, checkRect, painter, 5);
-    painter->setOpacity(o);
+//    painter->setOpacity(o);
 
 
     const QColor bgc(opt->palette.color(bg));
@@ -127,13 +127,15 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
         return true;
 
     QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
+    QRect checkRect(subElementRect(SE_RadioButtonIndicator, opt, widget));
     if (widget)
     {
         bg = widget->backgroundRole();
         fg = widget->foregroundRole();
+        checkRect.setBottom(qMin(checkRect.bottom(), widget->rect().bottom()));
+        checkRect.setWidth(checkRect.height());
     }
-    int size(opt->rect.height());
-    QRect checkRect(subElementRect(SE_RadioButtonIndicator, opt, widget));
+
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     Render::renderShadow(Render::Raised, checkRect, painter);
 
@@ -246,16 +248,14 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
     lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
     Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
-    painter->setOpacity(0.4f);
-    Render::renderShadow(shadow, opt->rect, painter, 4, sides);
+    Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
     if (!(sides&Render::Right) && !nextSelected)
     {
-        painter->setPen(QColor(0, 0, 0, 192));
+        painter->setPen(QColor(0, 0, 0, 127));
         painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
     }
     if (option->SUNKEN)
-        Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides);
-    painter->setOpacity(1.0f);
+        Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
     const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
     Qt::Alignment iAlign = Qt::AlignCenter, tAlign = Qt::AlignCenter;
 

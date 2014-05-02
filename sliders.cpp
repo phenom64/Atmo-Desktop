@@ -99,13 +99,8 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     groove.adjust(hor*d, !hor*d, -(hor*d), -(!hor*d)); //set the proper inset for the groove in order to account for the slider shadow
     --d;
 
-    const int o(painter->opacity());
-    painter->setOpacity(0.5f);
-//    Render::renderMask(groove, painter, opt->palette.color(fg));
-    Render::renderShadow(Render::Sunken, groove.adjusted(-1, -1, 1, 2), painter);
-    painter->setOpacity(0.75f);
+    Render::renderShadow(Render::Sunken, groove.adjusted(-1, -1, 1, 2), painter, 32, Render::All, 0.5f);
     Render::renderShadow(Render::Raised, slider, painter);
-    painter->setOpacity(o);
 
     --d;
     slider.adjust(d, d, -d, -d);
@@ -144,10 +139,7 @@ StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, con
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
     TRANSLATE(!opt->bottomToTop);
     Render::renderMask(cont.adjusted(1, 1, -1, -2), painter, opt->palette.color(QPalette::Highlight), 1);
-    const float o(painter->opacity());
-    painter->setOpacity(0.33f);
-    Render::renderShadow(Render::Sunken, groove, painter, 2);
-    painter->setOpacity(o);
+    Render::renderShadow(Render::Sunken, groove, painter, 2, Render::All, 0.33f);
 
     painter->setClipRect(cont);
     TRANSLATE(opt->bottomToTop);

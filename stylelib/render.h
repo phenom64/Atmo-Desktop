@@ -19,15 +19,15 @@ public:
     static inline void generateData() { instance()->_generateData(); }
     static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides sides = All)
     { instance()->_renderMask(rect, painter, brush, roundNess, sides); }
-    static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All)
-    { instance()->_renderShadow(shadow, rect, painter, roundNess, sides); }
+    static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All, const float opacity = 1.0f)
+    { instance()->_renderShadow(shadow, rect, painter, roundNess, opacity, sides); }
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
 
 protected:
     void _generateData();
     void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides);
-    void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides);
+    void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
     void initMaskParts();
     void initShadowParts();
     void splitShadowParts(const Shadow shadow, int roundNess, const int size, const QPixmap &source);

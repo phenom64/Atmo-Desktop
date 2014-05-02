@@ -66,8 +66,8 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         sides = Render::All & ~Render::Top;
     }
     painter->save();
-    painter->setOpacity(0.5f);
-    const int m(3);
+//    painter->setOpacity(0.5f);
+    const int m(2);
     QRect r(opt->rect);
     if (!(opt->state & State_Selected))
         r.sAdjust(m, m, -m, -m);
@@ -89,12 +89,10 @@ static void renderSafariBar(QPainter *p, const QRect &r, const QColor &c, Render
 {
     sides &= ~Render::Top;
     Render::renderMask(r, p, c, 32, sides);
-    p->save();
-    p->setOpacity(0.25f);
-    Render::renderShadow(Render::Sunken, r.adjusted(0, 0, 0, 1), p, 32, sides);
-    Render::renderShadow(Render::Etched, r, p, 2, Render::Top);
-    Render::renderShadow(Render::Sunken, r.adjusted(0, 0, 0, 1), p, 32, Render::Top);
-    p->restore();
+    const float o(0.25f);
+    Render::renderShadow(Render::Sunken, r.adjusted(0, 0, 0, 1), p, 32, sides, o);
+    Render::renderShadow(Render::Etched, r, p, 2, Render::Top, o);
+    Render::renderShadow(Render::Sunken, r.adjusted(0, 0, 0, 1), p, 32, Render::Top, o);
 }
 
 bool
@@ -124,7 +122,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
 
     if (!tabWidget || !opt)
         return true;
-    const int m(3);
+    const int m(2);
     QRect r(opt->rect.adjusted(m, m, -m, -m));
     QRect rect(opt->rect);
     if (const QTabBar *tabBar = tabWidget->findChild<const QTabBar *>())
@@ -174,10 +172,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
             return true;
         }
     }
-    painter->save();
-    painter->setOpacity(0.5f);
     Render::renderShadow(Render::Raised, rect, painter, 7, sides);
-    painter->restore();
     Render::renderMask(r, painter, opt->palette.color(QPalette::Window), 4, sides);
     return true;
 }

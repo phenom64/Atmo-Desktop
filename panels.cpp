@@ -37,10 +37,7 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
     lg.setColorAt(1.0f, Color::titleBarColors[1]);
 
     Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, lg, 3, sides);
-    const int o(painter->opacity());
-    painter->setOpacity(0.5f);
-    Render::renderShadow(Render::Etched, rect, painter, 4, sides);
-    painter->setOpacity(o);
+    Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
     return true;
 }
 
@@ -93,10 +90,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     }
 
     if (sides & Render::Top)
-    {
-        painter->setOpacity(0.5f);
-        Render::renderShadow(Render::Etched, rect, painter, 4, sides);
-    }
+        Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
     painter->restore();
     return true;
 }
@@ -139,10 +133,7 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
-    const int o(painter->opacity());
-    painter->setOpacity(0.33f);
-    Render::renderShadow(Render::Sunken, cont, painter, 8);
-    painter->setOpacity(o);
+    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, 0.33f);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
