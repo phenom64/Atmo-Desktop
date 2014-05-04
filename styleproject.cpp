@@ -82,6 +82,8 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
+    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
+        flags &= ~Qt::AlignHCenter;
     if (textRole != QPalette::NoRole)
     {
         const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
@@ -169,6 +171,11 @@ StyleProject::updateToolBar(QToolBar *toolBar)
             toolBar->setMovable(true);
             toolBar->layout()->setContentsMargins(0, 0, 0, 0);
             toolBar->setContentsMargins(0, 0, pixelMetric(PM_ToolBarHandleExtent), 6);
+        }
+        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
+        {
+            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+            toolBar->setMovable(false);
         }
         else
             toolBar->layout()->setContentsMargins(2, 2, 2, 2);

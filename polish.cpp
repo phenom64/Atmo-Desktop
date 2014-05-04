@@ -136,6 +136,13 @@ StyleProject::polish(QWidget *widget)
     {
         installFilter(widget);
     }
+#if 0
+    if (castObj(QTabBar *, tabBar, widget))
+    {
+        installFilter(tabBar);
+        connect(tabBar, SIGNAL(currentChanged(int)), Ops::instance(), SLOT(updateGeoFromSender()));
+    }
+#endif
 
 #if !defined(QT_NO_DBUS)
     if (castObj(QMenuBar *, menuBar, widget))

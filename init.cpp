@@ -86,6 +86,7 @@ StyleProject::assignMethods()
     m_pe[PE_FrameMenu] = method(drawMenu);
     m_pe[PE_PanelScrollAreaCorner] = method(drawScrollAreaCorner);
     m_pe[PE_PanelTipLabel] = method(drawToolTip);
+    m_pe[PE_IndicatorBranch] = method(drawTree);
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);

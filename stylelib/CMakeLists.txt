@@ -23,7 +23,8 @@ set (libHDRS
 
 set (libMocHDRS
     progresshandler.h
-    widgets.h)
+    widgets.h
+    ops.h)
 
 set (QT_USE_QTDBUS TRUE)
 find_package (Qt4 REQUIRED)

@@ -88,6 +88,7 @@ public:
     bool drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolTip(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);

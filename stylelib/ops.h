@@ -12,11 +12,13 @@
  */
 
 class QTabBar;
-class Q_DECL_EXPORT Ops
+class Q_DECL_EXPORT Ops : public QObject
 {
+    Q_OBJECT
 public:
     enum Dir{ Left, Up, Right, Down };
     typedef unsigned int Direction;
+    static Ops *instance();
 
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
@@ -39,6 +41,11 @@ public:
         }
         return false;
     }
+public slots:
+    void updateGeoFromSender();
+
+private:
+    static Ops *s_instance;
 };
 
 #endif // OPS_H

@@ -9,6 +9,7 @@
 #include <QStyleOptionViewItemV4>
 #include <QAbstractItemView>
 #include <QMenu>
+#include <QTreeView>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -172,4 +173,10 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
         align &= ~Qt::AlignHCenter;
     drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
+}
+
+bool
+StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    return !qobject_cast<const QTreeView *>(widget);
 }

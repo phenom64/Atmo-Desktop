@@ -8,12 +8,24 @@
 #include <QColor>
 #include <QMap>
 #include <QPainter>
+#include <QResizeEvent>
+#include <QApplication>
 
 #include "ops.h"
 #include "xhandler.h"
 #include "macros.h"
 #include "color.h"
 #include "../styleproject.h"
+
+Q_DECL_EXPORT Ops *Ops::s_instance = 0;
+
+Ops
+*Ops::instance()
+{
+    if (!s_instance)
+        s_instance = new Ops();
+    return s_instance;
+}
 
 QWidget
 *Ops::window(QWidget *w)
@@ -183,4 +195,12 @@ Ops::fixWindowTitleBar(QWidget *win)
     const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
     for (int i = 0; i < toolBars.size(); ++i)
         toolBars.at(i)->update();
+}
+
+void
+Ops::updateGeoFromSender()
+{
+    QWidget *w = static_cast<QWidget *>(sender());
+    QResizeEvent e(w->size(), w->size());
+    qApp->sendEvent(w, &e);
 }

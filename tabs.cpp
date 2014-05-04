@@ -11,6 +11,8 @@
 #include <QStyleOptionTabWidgetFrameV2>
 #include <QMainWindow>
 #include <QToolBar>
+#include <QPaintDevice>
+#include <QPainter>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -31,11 +33,41 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         return true;
     Render::Sides sides = Render::All;
     QPalette::ColorRole fg(QPalette::WindowText), bg(QPalette::Window);
-    //    if (widget)
-    //    {
-    //        fg = widget->foregroundRole();
-    //        bg = widget->backgroundRole();
-    //    }
+    if (widget)
+    {
+        fg = widget->foregroundRole();
+        bg = widget->backgroundRole();
+    }
+    QColor bgc(opt->palette.color(bg));
+    castObj(const QTabBar *, bar, widget);
+    if (Ops::isSafariTabBar(bar))
+    {
+        const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
+        const bool isFirst(opt->position == QStyleOptionTab::Beginning || opt->position == QStyleOptionTab::OnlyOneTab);
+//        const bool isLast(opt->position == QStyleOptionTab::End);
+        const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
+        const int o(pixelMetric(PM_TabBarTabOverlap));
+        QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
+//        if (isLeftOf)
+        if (painter->device() == widget)
+        {
+            r.setLeft(r.left()-(isFirst?o/2:o));
+            r.setRight(r.right()+o);
+        }
+//        else
+        QPainterPath p;
+        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p);
+        if (isSelected)
+        {
+            painter->save();
+            painter->setRenderHint(QPainter::Antialiasing);
+            painter->setBrush(Color::titleBarColors[1]);
+            painter->setPen(Qt::NoPen);
+            painter->drawPath(p);
+            painter->restore();
+        }
+        return true;
+    }
     switch (opt->shape)
     {
     case QTabBar::RoundedNorth:
@@ -56,15 +88,6 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         break;
     default: break;
     }
-    QColor bgc(opt->palette.color(bg));
-    if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-    {
-        if (opt->state & State_Selected)
-            bgc = Color::titleBarColors[1];
-        else
-            return true;
-        sides = Render::All & ~Render::Top;
-    }
     painter->save();
 //    painter->setOpacity(0.5f);
     const int m(2);
@@ -82,17 +105,36 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+#if 0
+    castOpt(TabV3, opt, option);
+    if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)) || !opt)
+        return false;
+
+    const QRect tr(subElementRect(SE_TabBarTabText, option, widget));
+    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+//    castObj(const QTabBar *, bar, widget);
+    const QTabBar *bar = static_cast<const QTabBar *>(widget); //tabbar guaranteed by qobject_cast above
+    QRect ir(QPoint(), bar->iconSize());
+    ir.moveCenter(opt->rect.center());
+    int d(8);
+    int index(bar->tabAt(opt->rect.center()));
+    int right(tr.left());
+//    if (index > bar->currentIndex())
+//        right+=d;
+    ir.moveRight(right);
+
+    drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(bar->iconSize()));
+    return true;
+#endif
     return false;
 }
 
-static void renderSafariBar(QPainter *p, const QRect &r, const QColor &c, Render::Sides sides)
+static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Render::Sides sides, QRect rect = QRect())
 {
-    sides &= ~Render::Top;
-    Render::renderMask(r, p, c, 32, sides);
-    const float o(0.25f);
-    Render::renderShadow(Render::Sunken, r.adjusted(0, 0, 0, 1), p, 32, sides, o);
-    Render::renderShadow(Render::Etched, r, p, 2, Render::Top, o);
-    Render::renderShadow(Render::Sunken, r.adjusted(0, 0, 0, 1), p, 32, Render::Top, o);
+    QRect r(rect.isValid()?rect:bar->rect());
+    p->fillRect(r, c);
+    r.setBottom(r.bottom()+1);
+    Render::renderShadow(Render::Sunken, r, p, 8, Render::Top|Render::Bottom, 0.5f);
 }
 
 bool
@@ -106,7 +148,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
     {
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, widget->rect(), Color::titleBarColors[1], sides);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 8, 1), sides);
             return true;
         }
     }
@@ -168,7 +210,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, barRect, Color::titleBarColors[1], sides);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 8, 1), sides, barRect);
             return true;
         }
     }

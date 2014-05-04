@@ -12,7 +12,11 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 {
     switch (metric)
     {
-//    case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
+    case PM_TabCloseIndicatorHeight:
+    case PM_TabCloseIndicatorWidth:
+        return 16;
+    case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
+        return 8;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
     case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
         return 10;
@@ -56,7 +60,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_ScrollBarExtent: return 12;
     case PM_SliderThickness:
     case PM_SliderLength:
-    case PM_SliderControlThickness: return 18/*qMin(option->rect.height(), option->rect.width())*/;
+    case PM_SliderControlThickness: return 16/*qMin(option->rect.height(), option->rect.width())*/;
     case PM_ScrollBarSliderMin: return 32;
     case PM_ToolTipLabelFrameWidth:
         return 8;

@@ -16,6 +16,7 @@
 
 #include "styleproject.h"
 #include "stylelib/progresshandler.h"
+#include "stylelib/ops.h"
 
 QRect
 StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
@@ -34,6 +35,65 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 {
     switch (r)
     {
+#if 0
+    case SE_TabBarTabLeftButton:
+    case SE_TabBarTabRightButton:
+    case SE_TabBarTabText:
+    {
+        castOpt(TabV3, tab, opt);
+        castObj(const QTabBar *, bar, widget);
+        if (!tab)
+            return QRect();
+        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+            return QCommonStyle::subElementRect(r, opt, widget);
+        const int overlap(pixelMetric(PM_TabBarTabOverlap));
+        const bool closable(bar&&bar->tabsClosable());
+        int index(bar->tabAt(opt->rect.center()));
+        QRect ret(tab->rect/*.adjusted(-overlap, 0, overlap, 0)*/);
+        switch (r)
+        {
+        case SE_TabBarTabLeftButton:
+        {
+            if (!(tab->cornerWidgets & QStyleOptionTab::LeftCornerWidget))
+                return QRect();
+            ret.setSize(tab->leftButtonSize);
+            ret.moveCenter(tab->rect.center());
+            ret.moveLeft(ret.left());
+            break;
+        }
+        case SE_TabBarTabRightButton:
+        {
+            const bool hasButton(tab->cornerWidgets & QStyleOptionTab::RightCornerWidget);
+            if (!hasButton && !closable)
+                return QRect();
+            const QSize closeSize(pixelMetric(PM_TabCloseIndicatorWidth), pixelMetric(PM_TabCloseIndicatorHeight));
+            ret.setSize(hasButton?tab->rightButtonSize:closeSize);
+            ret.moveCenter(tab->rect.center());
+            int d(8);
+            int right(tab->rect.right());
+            if (index < bar->currentIndex())
+                right -= d;
+            if (tab->position == QStyleOptionTab::End)
+                right -= pixelMetric(PM_TabBarTabOverlap);
+            ret.moveRight(right);
+            break;
+        }
+        case SE_TabBarTabText:
+        {
+            int d(8);
+            if (tab->cornerWidgets & QStyleOptionTab::LeftCornerWidget)
+                ret.setLeft(ret.left()+tab->leftButtonSize.width()+d);
+            if (tab->cornerWidgets & QStyleOptionTab::RightCornerWidget || closable)
+                ret.setRight(ret.right()-(tab->rightButtonSize.width()+d+d/2));
+            if (!tab->icon.isNull() || !bar->tabIcon(bar->tabAt(opt->rect.center())).isNull())
+                ret.setLeft(ret.left()+tab->iconSize.width()+((index > bar->currentIndex())*d)+d/2);
+            break;
+        }
+        default: return QRect();
+        }
+        return visualRect(tab->direction, opt->rect, ret);
+    }
+#endif
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove: return opt->rect;
     case SE_ProgressBarContents:

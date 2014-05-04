@@ -10,6 +10,7 @@
 #include <QMenuBar>
 #include <QCheckBox>
 #include <QLabel>
+#include <QApplication>
 
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
@@ -39,6 +40,37 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     return QCommonStyle::eventFilter(o, e);
 }
 
+static void paintTab(QTabBar *tb, const int i, QStyle *style, QPainter &p)
+{
+    if (!tb->tabRect(i).isValid())
+        return;
+    const bool isFirst(i==0), isLast(i==tb->count()-1), isSelected(i==tb->currentIndex());
+    const int ol(style->pixelMetric(QStyle::PM_TabBarTabOverlap));
+    QStyleOptionTabV3 tab;
+    tab.initFrom(tb);
+    if (isSelected)
+        tab.state |= QStyle::State_Selected;
+    tab.rect = tb->tabRect(i).adjusted(isFirst?0:-ol, 0, isLast?0:ol, 0);
+    tab.text = tb->tabText(i);
+    tab.icon = tb->tabIcon(i);
+    tab.iconSize = tb->iconSize();
+    if (QWidget *w = tb->tabButton(i, QTabBar::RightSide))
+    {
+        tab.rightButtonSize = w->size();
+        tab.cornerWidgets |= QStyleOptionTab::RightCornerWidget;
+    }
+    if (QWidget *w = tb->tabButton(i, QTabBar::LeftSide))
+    {
+        tab.leftButtonSize = w->size();
+        tab.cornerWidgets |= QStyleOptionTab::LeftCornerWidget;
+    }
+
+    if (!tb->isEnabled())
+        tab.palette.setCurrentColorGroup(QPalette::Disabled);
+
+    style->drawControl(QStyle::CE_TabBarTab, &tab, &p, tb);
+}
+
 bool
 StyleProject::paintEvent(QObject *o, QEvent *e)
 {
@@ -58,6 +90,32 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         drawTabWidget(&opt, &p, tabWidget);
         p.end();
         return true;
+    }
+    else if (castObj(QTabBar *, tb, o))
+    {
+#if 0
+        if (!Ops::isSafariTabBar(tb))
+            return false;
+
+        QPainter p(tb);
+        QStyleOptionTabBarBaseV2 optTabBase;
+        optTabBase.initFrom(tb);
+        optTabBase.tabBarRect = tb->rect();
+        if (QTabWidget *tbw = qobject_cast<QTabWidget *>(tb->parentWidget()))
+        {
+            optTabBase.tabBarRect.setWidth(tbw->width());
+            optTabBase.tabBarRect.moveTopLeft(tbw->rect().topLeft());
+        }
+        optTabBase.selectedTabRect = tb->tabRect(tb->currentIndex());
+        if (tb->drawBase())
+            drawPrimitive(PE_FrameTabBarBase, &optTabBase, &p, tb);
+        for (int i = 0; i < tb->currentIndex(); ++i)
+            paintTab(tb, i, this, p);
+        for (int i = tb->count(); i >= tb->currentIndex(); --i)
+            paintTab(tb, i, this, p);
+        p.end();
+        return true;
+#endif
     }
     return QCommonStyle::eventFilter(o, e);
 }
