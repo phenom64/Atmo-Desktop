@@ -27,6 +27,7 @@ public:
     { instance()->_renderTab(r, p, t, path); }
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
+    static QPixmap colorized(QPixmap pix, const QBrush &b);
 
 protected:
     void _generateData();

@@ -293,8 +293,9 @@ Render::initTabs()
         p.setRenderHint(QPainter::Antialiasing);
         p.setPen(Qt::NoPen);
         p.setBrush(Qt::black);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
         p.drawPath(path);
+        renderShadow(Sunken, img.rect(), &p, 16, Top|Bottom);
         p.end();
         --hsz-1;
         hsz/=2;
@@ -525,4 +526,11 @@ Render::colorizePixmap(QPixmap &pix, const QBrush &b)
         pixColors[i] = c.rgba();
     }
     pix = QPixmap::fromImage(img);
+}
+
+QPixmap
+Render::colorized(QPixmap pix, const QBrush &b)
+{
+    colorizePixmap(pix, b);
+    return pix;
 }
