@@ -10,12 +10,17 @@
 #include <QPainter>
 #include <QResizeEvent>
 #include <QApplication>
+#include <QAbstractScrollArea>
+#include <QToolButton>
+#include <QStyle>
+#include <QStyleOptionToolButton>
 
 #include "ops.h"
 #include "xhandler.h"
 #include "macros.h"
 #include "color.h"
 #include "../styleproject.h"
+#include "render.h"
 
 Q_DECL_EXPORT Ops *Ops::s_instance = 0;
 
@@ -203,4 +208,78 @@ Ops::updateGeoFromSender()
     QWidget *w = static_cast<QWidget *>(sender());
     QResizeEvent e(w->size(), w->size());
     qApp->sendEvent(w, &e);
+}
+
+QPalette::ColorRole
+Ops::bgRole(const QWidget *w)
+{
+    if (castObj(const QAbstractScrollArea *, area, w))
+        if (area->viewport()->autoFillBackground())
+            return area->viewport()->backgroundRole();
+    return w->backgroundRole();
+}
+
+QPalette::ColorRole
+Ops::fgRole(const QWidget *w)
+{
+    if (castObj(const QAbstractScrollArea *, area, w))
+        if (area->viewport()->autoFillBackground())
+            return area->viewport()->foregroundRole();
+    return w->foregroundRole();
+}
+
+ToolButtonData
+Ops::toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt)
+{
+    ToolButtonData data;
+    ok = false;
+    if (!tbtn)
+        return data;
+    castObj(const QToolBar *, bar, tbtn->parentWidget());
+    if (!bar)
+        return data;
+    const QRect geo = tbtn->geometry();
+    int x, y, r, b, h = tbtn->height(), hc = y+h/2, w = tbtn->width(), wc = x+w/2;
+    int margin = s->pixelMetric(QStyle::PM_ToolBarSeparatorExtent, opt, tbtn);
+    geo.getCoords(&x, &y, &r, &b);
+    Render::Sides sides = Render::All;
+    bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
+
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
+    {
+        sides &= ~Render::Right;
+        if (btn->isChecked())
+            nextSelected = true;
+    }
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc)))
+    {
+        sides &= ~Render::Left;
+        if (btn->isChecked())
+            prevSelected = true;
+    }
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin)))
+    {
+        sides &= ~Render::Bottom;
+        if (btn->isChecked())
+            nextSelected = true;
+    }
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin)))
+    {
+        sides &= ~Render::Top;
+        if (btn->isChecked())
+            prevSelected = true;
+    }
+//    if (const QToolButton *btn = qobject_cast<const QToolButton *>(widget))
+        if (tbtn->isChecked())
+            nextSelected = true;
+    if (const QMainWindow *win = qobject_cast<const QMainWindow *>(bar->parentWidget()))
+        if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
+            isInTopToolBar = true;
+
+    data.sides = sides;
+    data.isInTopToolBar = isInTopToolBar;
+    data.prevSelected = prevSelected;
+    data.nextSelected = nextSelected;
+    ok = true;
+    return data;
 }

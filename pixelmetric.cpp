@@ -19,11 +19,11 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         return 8;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
     case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
-        return 10;
+        return 8;
 //    case PM_TabBarBaseHeight:	//22	Height of the area between the tab bar and the tab pages.
 //    case PM_TabBarBaseOverlap:	//23	Number of pixels the tab bar overlaps the tab bar base.
 //    case PM_TabBarScrollButtonWidth:	//?
-    case PM_TabBarTabShiftHorizontal:	//?	Horizontal pixel shift when a tab is selected.
+    case PM_TabBarTabShiftHorizontal:	//?	Horizontal pixel shift w hen a tab is selected.
     case PM_TabBarTabShiftVertical:
         return 0;
     case PM_IndicatorHeight:

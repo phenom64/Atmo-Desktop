@@ -55,6 +55,11 @@ StyleProject::polish(QWidget *widget)
         installFilter(bar);
     }
 
+    if (castObj(QToolButton *, btn, widget))
+    {
+        installFilter(btn);
+    }
+
     if (castObj(QMainWindow *, win, widget))
     {
         installFilter(win);
@@ -136,13 +141,8 @@ StyleProject::polish(QWidget *widget)
     {
         installFilter(widget);
     }
-#if 0
     if (castObj(QTabBar *, tabBar, widget))
-    {
-        installFilter(tabBar);
-        connect(tabBar, SIGNAL(currentChanged(int)), Ops::instance(), SLOT(updateGeoFromSender()));
-    }
-#endif
+        tabBar->setFocusPolicy(Qt::NoFocus); //im lazy, free text on tabs w/o the nasty QCommonStyle focusrect :)
 
 #if !defined(QT_NO_DBUS)
     if (castObj(QMenuBar *, menuBar, widget))

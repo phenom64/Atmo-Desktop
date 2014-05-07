@@ -54,18 +54,32 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     if (!widget)
         return true;
 
-    castOpt(FrameV2, opt, option);
+    castOpt(FrameV3, opt, option);
     if (!opt)
         return true;
 
     castObj(const QFrame *, frame, widget);
-    if (frame && frame->frameShadow() != QFrame::Sunken)
-        return true;
+
     int roundNess(2);
     QRect r(option->rect);
 
+    if ((frame && frame->frameShadow() == QFrame::Sunken) || opt->state & State_Sunken)
     if (!frame->findChild<OverLay *>())
         Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, 0.25f);
+
+    if (opt->state & State_Raised)
+    {
+        QPixmap pix(frame->rect().size());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        Render::renderShadow(Render::Raised, pix.rect(), &p, 8);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        Render::renderMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
+        p.end();
+        painter->drawTiledPixmap(frame->rect(), pix);
+    }
+    if (frame && frame->frameShadow() == QFrame::Plain)
+        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, 0.25f);
     return true;
 }
 
@@ -183,7 +197,9 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 
     QRect frame(subControlRect(CC_SpinBox, opt, SC_SpinBoxFrame, widget));
     QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget));
+    up.setBottom(up.bottom()-1);
     QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget));
+    down.setTop(down.top()+1);
 //    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
 
     Render::renderMask(frame.adjusted(1, 1, -1, -1), painter, opt->palette.color(QPalette::Base), 3);

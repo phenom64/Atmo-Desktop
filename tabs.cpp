@@ -32,18 +32,20 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
     castObj(const QTabBar *, bar, widget);
-    const bool isFirst(opt->position == QStyleOptionTab::Beginning || opt->position == QStyleOptionTab::OnlyOneTab);
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
+    const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
     const bool isLast(opt->position == QStyleOptionTab::End);
+    const bool isRtl(opt->direction == Qt::RightToLeft);
     const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
     if (Ops::isSafariTabBar(bar))
     {
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
         const int o(pixelMetric(PM_TabBarTabOverlap));
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
-        r.setLeft(r.left()-(isFirst?o/2:o));
+        r.setLeft(r.left()-(isFirst||isOnly?o/2:o));
         r.setRight(r.right()+((painter->device() == widget)?o:o/2));
         QPainterPath p;
-        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p);
+        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.5f);
         if (isSelected)
         {
             painter->save();
@@ -80,15 +82,22 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
         lg = QLinearGradient(0, 0, 0, r.height());
-        sides &= ~((!isFirst*Render::Left)|(!isLast*Render::Right));
+        if (isOnly)
+            break;
+        if (isRtl)
+            sides &= ~((!isFirst*Render::Right)|(!isLast*Render::Left));
+        else
+            sides &= ~((!isFirst*Render::Left)|(!isLast*Render::Right));
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         lg = QLinearGradient(0, 0, r.width(), 0);
-        sides &= ~((!isLast*Render::Bottom)|(!isFirst*Render::Top));
         vert = true;
+        if (isOnly)
+            break;
+        sides &= ~((!isLast*Render::Bottom)|(!isFirst*Render::Top));
         break;
     default: break;
     }
@@ -112,7 +121,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     {
         const QPen pen(painter->pen());
         painter->setPen(Color::mid(bgc, fgc));
-        painter->drawLine(vert?mask.bottomLeft():mask.topRight(), vert?mask.bottomRight():mask.bottomRight());
+        painter->drawLine(vert?mask.bottomLeft():isRtl?mask.topLeft():mask.topRight(), vert?mask.bottomRight():isRtl?mask.bottomLeft():mask.bottomRight());
         painter->setPen(pen);
     }
     return true;
@@ -150,7 +159,8 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Re
     QRect r(rect.isValid()?rect:bar->rect());
     p->fillRect(r, c);
     r.setBottom(r.bottom()+1);
-    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top|Render::Bottom, 0.33f);
+    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
+    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top|Render::Bottom, 0.16f);
 }
 
 bool

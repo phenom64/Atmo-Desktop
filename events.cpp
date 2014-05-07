@@ -11,7 +11,7 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QApplication>
-
+#include <QToolButton>
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
@@ -152,6 +152,16 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         QList<QLabel *> children = w->findChildren<QLabel *>();
         for (int i = 0; i < children.size(); ++i)
             children.at(i)->setAlignment(Qt::AlignCenter);
+    }
+    if (castObj(QToolButton *, toolButton, o))
+    {
+        castObj(QToolBar *, toolBar, toolButton->parentWidget());
+        if ( !toolBar )
+            return false;
+        //below simply to trigger an event that forces the toolbar to call sizeFromContents again
+        const QSize &iconSize(toolBar->iconSize());
+        toolBar->setIconSize(iconSize - QSize(1, 1));
+        toolBar->setIconSize(iconSize);
     }
     return QCommonStyle::eventFilter(o, e);
 }

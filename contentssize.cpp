@@ -1,8 +1,14 @@
 #include <QMenu>
 #include <QStyleOptionMenuItem>
 #include <QDebug>
+#include <QToolBar>
+#include <QStyleOptionToolButton>
+#include <QToolButton>
+#include <QMainWindow>
 
 #include "styleproject.h"
+#include "stylelib/ops.h"
+#include "stylelib/render.h"
 
 /** enum ContentsType {
     CT_PushButton,
@@ -61,7 +67,59 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 {
     switch (ct)
     {
-    case CT_ToolButton: return contentsSize+QSize(10, 8);
+    case CT_TabBarTab:
+    {
+        castObj(const QTabBar *, bar, widget);
+        if (!Ops::isSafariTabBar(bar))
+            break;
+
+        QSize sz = QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
+        int margin(pixelMetric(PM_TabBarBaseOverlap)+pixelMetric(PM_TabBarTabHSpace));
+        castObj(const QTabWidget *, tw, bar->parentWidget());
+        if (!tw || !bar->expanding())
+            break;
+        for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
+            if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
+                margin+=cw->width();
+        sz.setWidth(qMax((bar->width()-margin)/bar->count(), sz.width()));
+        return sz;
+    }
+    case CT_ToolButton:
+    {
+        if (widget && !widget->parentWidget())
+            return contentsSize;
+
+        castOpt(ToolButton, optbtn, opt);
+        if (!optbtn)
+            return contentsSize;
+
+        const QRect geo = widget->geometry();
+        int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
+        int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
+        geo.getCoords(&x, &y, &r, &b);
+        castObj(const QToolBar *, bar, widget->parentWidget());
+        bool isFull(bar && !(qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc))
+                    || qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc))
+                    || qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin))
+                    || qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin))));
+
+        QSize sz(contentsSize);
+        bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
+        sz+=QSize(hor?8:4, hor?4:8);
+        if (hor && isFull)
+            sz.rwidth() += 8;
+        if (sz.height() < 23)
+            sz.setHeight(23);
+        return sz;
+    }
+    case CT_LineEdit:
+    {
+        QSize sz(contentsSize);
+        sz+=QSize(8, pixelMetric(PM_DefaultFrameWidth, opt, widget));
+        if (sz.height() < 23)
+            sz.setHeight(23);
+        return sz;
+    }
     case CT_MenuBarItem: return contentsSize;
     case CT_MenuItem: return menuItemSize(qstyleoption_cast<const QStyleOptionMenuItem *>(opt), qobject_cast<const QMenu *>(widget), contentsSize);
     case CT_Menu: return contentsSize;
@@ -69,22 +127,24 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_CheckBox:
     {
         castOpt(Button, btn, opt);
-        if (!btn || btn->text.isEmpty())
+        if (!btn)
             return contentsSize;
         int w(contentsSize.width());
+        int h(contentsSize.height());
 
         if (ct==CT_CheckBox)
         {
             w+=pixelMetric(PM_IndicatorWidth, opt, widget);
             w+=pixelMetric(PM_CheckBoxLabelSpacing, opt, widget);
+            h=qMax(h, pixelMetric(PM_IndicatorHeight, opt, widget));
         }
         else
         {
             w+=pixelMetric(PM_ExclusiveIndicatorWidth, opt, widget);
             w+=pixelMetric(PM_RadioButtonLabelSpacing, opt, widget);
+            h=qMax(h, pixelMetric(PM_ExclusiveIndicatorHeight, opt, widget));
         }
-
-        return QSize(w, contentsSize.height());
+        return QSize(w, h);
     }
     case CT_ComboBox:
     {
@@ -105,6 +165,5 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     default: break;
     }
-
     return QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
 }

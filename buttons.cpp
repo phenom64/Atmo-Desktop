@@ -7,6 +7,7 @@
 #include <QToolButton>
 #include <QStyleOptionToolButton>
 #include <QMainWindow>
+#include <QDebug>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -39,7 +40,7 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
         if (option->HOVER)
             bc = Color::mid(bc, Qt::white);
         if (option->SUNKEN || opt->features & QStyleOptionButton::DefaultButton)
-            bc = Color::mid(bc, Qt::black, 2, 1);
+            bc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
         Render::renderShadow(Render::Raised, option->rect, painter);
         int m(2);
@@ -86,6 +87,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
         bg = widget->backgroundRole();
         fg = widget->foregroundRole();
         checkRect.setBottom(qMin(checkRect.bottom(), widget->rect().bottom()));
+        checkRect.setWidth(checkRect.height());
     }
 
     QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
@@ -180,9 +182,8 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         return false;
 
     castOpt(ToolButton, opt, option);
-    if (!opt || !painter->isActive())
+    if (!opt)
         return false;
-
 
     const QRect geo = widget->geometry();
     int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
@@ -245,17 +246,21 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         start = Color::mid(bc, Qt::white, 1, 2);
         end = Color::mid(bc, Qt::black, 3, 1);
     }
-    lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
-    lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
-    Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
-    Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
-    if (!(sides&Render::Right) && !nextSelected)
+
+    if (bar)
     {
-        painter->setPen(QColor(0, 0, 0, 127));
-        painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
+        lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
+        lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
+        Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
+        Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
+        if (!(sides&Render::Right) && !nextSelected)
+        {
+            painter->setPen(QColor(0, 0, 0, 127));
+            painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
+        }
+        if (option->SUNKEN)
+            Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
     }
-    if (option->SUNKEN)
-        Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
     const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
     Qt::Alignment iAlign = Qt::AlignCenter, tAlign = Qt::AlignCenter;
 
@@ -271,6 +276,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         tAlign = Qt::AlignBottom|Qt::AlignHCenter;
         rect.setTop(rect.top()+opt->iconSize.height());
         break;
+    default: break;
     }
 
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)

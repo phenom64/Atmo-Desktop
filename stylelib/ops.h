@@ -11,7 +11,17 @@
  * that actually makes sense, for now, deal w/ it.
  */
 
+class ToolButtonData
+{
+public:
+    bool prevSelected, nextSelected, isInTopToolBar;
+    unsigned int sides;
+};
+
 class QTabBar;
+class QToolButton;
+class QStyle;
+class QStyleOption;
 class Q_DECL_EXPORT Ops : public QObject
 {
     Q_OBJECT
@@ -27,6 +37,9 @@ public:
     static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align = Qt::AlignCenter, int size = 0);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static void fixWindowTitleBar(QWidget *win);
+    static QPalette::ColorRole bgRole(const QWidget *w);
+    static QPalette::ColorRole fgRole(const QWidget *w);
+    static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {

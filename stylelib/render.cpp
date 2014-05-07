@@ -291,13 +291,16 @@ Render::initTabs()
         img = blurred(img, img.rect(), ts);
         p.begin(&img);
         p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(Qt::NoPen);
+        p.setPen(QPen(Qt::black, 2.0f));
         p.setBrush(Qt::black);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
         p.drawPath(path);
-        renderShadow(Sunken, img.rect(), &p, 16, Top|Bottom);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
+        p.setPen(Qt::NoPen);
+        p.drawPath(path);
+        renderShadow(Etched, img.rect(), &p, ts*4, Top);
+        renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.33f);
         p.end();
-        --hsz-1;
+        --hsz;
         hsz/=2;
         --vsz;
         vsz/=2;
@@ -314,7 +317,7 @@ Render::initTabs()
 }
 
 void
-Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path)
+Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o)
 {
     const QSize sz(m_tab[t][TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
@@ -324,6 +327,8 @@ Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path)
 //    x1-=tr;
 //    x2+=tr;
     int halfH(r.width()-(sz.width()*2)), halfV(r.height()-(sz.height()*2));
+    const float opacity(p->opacity());
+    p->setOpacity(o);
 
     if (t < AfterSelected)
     {
@@ -342,6 +347,7 @@ Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path)
         p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), m_tab[t][RightPart]);
         p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[t][BottomRightPart]);
     }
+    p->setOpacity(opacity);
     if (path)
         *path = tab(r.adjusted(tr, 0, -tr, 0), tr);
 }

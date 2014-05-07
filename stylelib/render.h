@@ -23,8 +23,8 @@ public:
     { instance()->_renderMask(rect, painter, brush, roundNess, sides); }
     static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All, const float opacity = 1.0f)
     { instance()->_renderShadow(shadow, rect, painter, roundNess, opacity, sides); }
-    static inline void renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path = 0)
-    { instance()->_renderTab(r, p, t, path); }
+    static inline void renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path = 0, const float o = 1.0f)
+    { instance()->_renderTab(r, p, t, path, o); }
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
     static QPixmap colorized(QPixmap pix, const QBrush &b);
@@ -33,7 +33,7 @@ protected:
     void _generateData();
     void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides);
     void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
-    void _renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path);
+    void _renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o);
     void initMaskParts();
     void initShadowParts();
     void initTabs();
