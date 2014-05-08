@@ -26,11 +26,12 @@ set (libMocHDRS
     widgets.h
     ops.h)
 
+set (LIBRARY_DIR /usr/lib)
 set (QT_USE_QTDBUS TRUE)
 find_package (Qt4 REQUIRED)
 include (${QT_USE_FILE})
 
-qt4_wrap_cpp(MOC_SRCS ${libMocHDRS})
+qt4_wrap_cpp (MOC_SRCS ${libMocHDRS})
 
 find_package (X11)
 
@@ -39,4 +40,4 @@ add_library (stylelib SHARED ${libSRCS} ${libHDRS} ${MOC_SRCS})
 target_link_libraries (stylelib ${QT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xrender_LIB})
 
 #${LIB_INSTALL_DIR}
-install (TARGETS stylelib LIBRARY DESTINATION /usr/lib)
+install (TARGETS stylelib LIBRARY DESTINATION ${LIBRARY_DIR})

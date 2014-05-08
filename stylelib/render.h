@@ -6,7 +6,7 @@
 
 #define MAXRND 32
 
-class Render
+class Q_DECL_EXPORT Render
 {
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };

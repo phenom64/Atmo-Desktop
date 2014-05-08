@@ -114,6 +114,8 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_LineEdit:
     {
+        if (widget && widget->objectName() == "qt_spinbox_lineedit")
+            break;
         QSize sz(contentsSize);
         sz+=QSize(8, pixelMetric(PM_DefaultFrameWidth, opt, widget));
         if (sz.height() < 23)
@@ -151,6 +153,15 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         castOpt(ComboBox, box, opt);
         if (!box)
             return contentsSize;
+        if (box->editable)
+        {
+            QSize sz(contentsSize);
+            sz+=QSize(16, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
+            if (sz.height() < 23)
+                sz.setHeight(23);
+            return sz;
+        }
+
         int w(contentsSize.width()), h(contentsSize.height());
 
         if (box->frame)

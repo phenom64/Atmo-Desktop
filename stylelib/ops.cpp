@@ -19,7 +19,6 @@
 #include "xhandler.h"
 #include "macros.h"
 #include "color.h"
-#include "../styleproject.h"
 #include "render.h"
 
 Q_DECL_EXPORT Ops *Ops::s_instance = 0;
@@ -167,13 +166,19 @@ static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
         return 0;
     unsigned int height(*h);
     win->setProperty("titleHeight", height);
-    QWidget *first(win->childAt(1, 1));
-    if (castObj(QToolBar *, tb, first))
+    castObj(QMainWindow *, mw, win);
+    if (!mw)
+        return height;
+    QWidget *first(win->childAt(mw->width()/2, 1));
+    if (castObj(QToolBar *, tb, mw->findChild<QToolBar *>()))
     {
-        height += tb->height();
-        needSeparator = 0;
+        if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
+        {
+            height += tb->height();
+            needSeparator = 0;
+        }
     }
-    else if (castObj(QTabBar *, bar, first))
+    if (castObj(QTabBar *, bar, first))
         needSeparator = 0;
     return height;
 }

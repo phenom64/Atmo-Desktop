@@ -7,7 +7,7 @@
 
 #define OPACITY 0.75f
 
-Render *Render::m_instance = 0;
+Q_DECL_EXPORT Render *Render::m_instance = 0;
 
 /* blurring function below from:
  * http://stackoverflow.com/questions/3903223/qt4-how-to-blur-qpixmap-image

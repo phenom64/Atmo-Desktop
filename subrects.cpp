@@ -35,6 +35,17 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 {
     switch (r)
     {
+//    case SE_TabBarTabText:
+//    {
+//        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+//            break;
+//        castOpt(TabV3, tab, opt);
+//        if (!tab || !(tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab))
+//            break;
+
+//        QRect sr(QCommonStyle::subElementRect(r, opt, widget));
+//        return visualRect(tab->direction, tab->rect, sr.adjusted(4, 0, 0, 0));
+//    }
 #if 0
     case SE_TabBarTabLeftButton:
     case SE_TabBarTabRightButton:
@@ -141,8 +152,9 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         const int pmInd(pixelMetric(PM_IndicatorWidth)), pmSpc(pixelMetric(PM_CheckBoxLabelSpacing)), w(opt->rect.width()-(pmInd+pmSpc));
         return visualRect(opt->direction, opt->rect, QRect(opt->rect.left()+pmInd+pmSpc, opt->rect.top(), w, opt->rect.height()));
     }
-    default: return QCommonStyle::subElementRect(r, opt, widget);
+    default: break;
     }
+    return QCommonStyle::subElementRect(r, opt, widget);
 }
 
 /**

@@ -26,7 +26,7 @@ public:
     QStringList keys() const { return QStringList() << "StyleProject"; }
     QStyle *create(const QString &key)
     {
-        if (key == "styleproject")
+        if (key.contains("styleproject", Qt::CaseInsensitive))
             return new StyleProject;
         return 0;
     }
@@ -40,11 +40,13 @@ StyleProject::StyleProject()
     init();
     assignMethods();
     Render::generateData();
-    QPalette p(qApp->palette());
-    QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
-    Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
-    Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
-//    QTimer::singleShot(0, this, SLOT(postOps()));
+    if (qApp)
+    {
+        QPalette p(qApp->palette());
+        QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
+        Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
+        Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
+    }
 }
 
 void

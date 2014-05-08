@@ -12,7 +12,6 @@ typedef struct _WindowData
 } WindowData;
 
 static int _n = 0;
-
 class Q_DECL_EXPORT XHandler
 {
 public:
@@ -35,6 +34,8 @@ public:
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);
+//private:
+//    static Atom atom[ValueCount];
 };
 
 #endif //XHANDLER_H

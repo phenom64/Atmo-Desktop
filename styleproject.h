@@ -9,7 +9,7 @@
 
 class QToolBar;
 class QProgressBar;
-class StyleProject : public QCommonStyle
+class Q_DECL_EXPORT StyleProject : public QCommonStyle
 {
     Q_OBJECT
     Q_CLASSINFO ("X-KDE-CustomElements", "true")

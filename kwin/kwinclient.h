@@ -9,8 +9,9 @@
 #include "factory.h"
 
 class KwinClient;
-class TitleBar : public QWidget
+class Q_DECL_EXPORT TitleBar : public QWidget
 {
+    Q_OBJECT
 public:
     explicit TitleBar(KwinClient *client, QWidget *parent = 0);
     void setBrush(const QBrush &brush);

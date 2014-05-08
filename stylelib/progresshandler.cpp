@@ -6,7 +6,7 @@
 
 #include "progresshandler.h"
 
-ProgressHandler *ProgressHandler::m_instance = 0;
+Q_DECL_EXPORT ProgressHandler *ProgressHandler::m_instance = 0;
 
 ProgressHandler::ProgressHandler(QObject *parent) :
     QObject(parent)

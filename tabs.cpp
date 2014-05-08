@@ -178,14 +178,15 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Re
         s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
     }
     p->fillRect(r, s_pix.value(r.height()));
-    r.setBottom(r.bottom()+1);
+//    r.setBottom(r.bottom()+1);
 //    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
     const float o(p->opacity());
     p->setPen(Qt::black);
     p->setOpacity(0.33f);
     p->drawLine(r.topLeft(), r.topRight());
+    p->drawLine(r.bottomLeft(), r.bottomRight());
     p->setOpacity(o);
-    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top|Render::Bottom, 0.16f);
+    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top, 0.16f);
 }
 
 bool

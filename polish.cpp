@@ -41,8 +41,6 @@ StyleProject::polish(QWidget *widget)
     if (!widget)
         return;
 
-    if (qobject_cast<QDesktopWidget *>(widget))
-        return;
     /* needed for mac os x lion like toolbuttons,
      * we need to repaint the toolbar when a action
      * has been triggered, otherwise we are painting

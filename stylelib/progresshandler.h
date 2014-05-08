@@ -11,7 +11,7 @@ struct TimerData
 };
 
 class QProgressBar;
-class ProgressHandler : public QObject
+class Q_DECL_EXPORT ProgressHandler : public QObject
 {
     Q_OBJECT
 public:

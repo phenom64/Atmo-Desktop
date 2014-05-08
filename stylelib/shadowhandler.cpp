@@ -7,23 +7,29 @@
 #include <fixx11h.h>
 
 #include "shadowhandler.h"
-#include "../styleproject.h"
+#include "xhandler.h"
 #include "ops.h"
 
-class ShowCatcher : public QObject
-{
-protected:
-    bool eventFilter(QObject *o, QEvent *e)
-    {
-        if (e->type() == QEvent::Show)
-            if (QWidget *w = qobject_cast<QWidget *>(o))
-                if (w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
-                    ShadowHandler::installShadows(w->winId());
-        return false;
-    }
-};
+Q_DECL_EXPORT ShadowHandler *ShadowHandler::m_instance = 0;
 
-static ShowCatcher *showCatcher = 0;
+ShadowHandler
+*ShadowHandler::instance()
+{
+    if (!m_instance)
+        m_instance = new ShadowHandler();
+    return m_instance;
+}
+
+bool
+ShadowHandler::eventFilter(QObject *o, QEvent *e)
+{
+    if (e->type() == QEvent::Show)
+        if (QWidget *w = qobject_cast<QWidget *>(o))
+            if (w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
+                ShadowHandler::installShadows(w->winId());
+    return false;
+}
+
 static QPixmap *pix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static QRect part(int part, int size)
@@ -108,19 +114,17 @@ ShadowHandler::installShadows(WId w)
 void
 ShadowHandler::manage(QWidget *w)
 {
-    if (!showCatcher)
-        showCatcher = new ShowCatcher();
-    w->removeEventFilter(showCatcher);
-    w->installEventFilter(showCatcher);
+    w->removeEventFilter(instance());
+    w->installEventFilter(instance());
 }
 
 void
 ShadowHandler::removeDelete()
 {
-    if (showCatcher)
+    if (m_instance)
     {
-        delete showCatcher;
-        showCatcher = 0;
+        delete m_instance;
+        m_instance = 0;
     }
     for (int i = 0; i < 8; ++i)
     {
