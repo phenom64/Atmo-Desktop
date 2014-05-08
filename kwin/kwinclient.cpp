@@ -319,7 +319,13 @@ KwinClient::reset(unsigned long changed)
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
     m_unoGradient.setColorAt(0.0f, m_titleColor[0]);
     m_unoGradient.setColorAt(1.0f, m_titleColor[1]);
-    m_titleBar->setBrush(m_unoGradient);
+    QPixmap p(Render::noise().size().width(), m_headHeight);
+    p.fill(Qt::transparent);
+    QPainter pt(&p);
+    pt.fillRect(p.rect(), m_unoGradient);
+    pt.end();
+
+    m_titleBar->setBrush(Render::mid(p, Render::noise(), 40, 1));
     m_titleBar->update();
     ShadowHandler::installShadows(windowId());
     widget()->update();

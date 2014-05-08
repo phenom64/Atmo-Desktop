@@ -48,9 +48,19 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.5f);
         if (isSelected)
         {
+            static QMap<int, QPixmap> s_pix;
+            if (!s_pix.contains(r.height()))
+            {
+                QPixmap pix(Render::noise().width(), r.height());
+                pix.fill(Qt::transparent);
+                QPainter pt(&pix);
+                pt.fillRect(pix.rect(), Color::titleBarColors[1]);
+                pt.end();
+                s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
+            }
             painter->save();
             painter->setRenderHint(QPainter::Antialiasing);
-            painter->setBrush(Color::titleBarColors[1]);
+            painter->setBrush(s_pix.value(r.height()));
             painter->setPen(Qt::NoPen);
             painter->drawPath(p);
             painter->restore();
@@ -157,9 +167,24 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
 static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Render::Sides sides, QRect rect = QRect())
 {
     QRect r(rect.isValid()?rect:bar->rect());
-    p->fillRect(r, c);
+    static QMap<int, QPixmap> s_pix;
+    if (!s_pix.contains(r.height()))
+    {
+        QPixmap pix(Render::noise().width(), r.height());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        pt.fillRect(pix.rect(), c);
+        pt.end();
+        s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
+    }
+    p->fillRect(r, s_pix.value(r.height()));
     r.setBottom(r.bottom()+1);
-    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
+//    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
+    const float o(p->opacity());
+    p->setPen(Qt::black);
+    p->setOpacity(0.33f);
+    p->drawLine(r.topLeft(), r.topRight());
+    p->setOpacity(o);
     Render::renderShadow(Render::Sunken, r, p, 16, Render::Top|Render::Bottom, 0.16f);
 }
 
@@ -174,7 +199,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
     {
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 10, 1), sides);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 15, 1), sides);
             return true;
         }
     }
@@ -237,7 +262,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 10, 1), sides, barRect);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 15, 1), sides, barRect);
             return true;
         }
     }

@@ -37,10 +37,10 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
             roundNess = MAXRND;
 
     if (roundNess == MAXRND)
-        drawSafariLineEdit(option->rect, painter, option->palette.color(QPalette::Base));
+        drawSafariLineEdit(option->rect, painter, option->palette.brush(QPalette::Base));
     else
     {
-        Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.color(QPalette::Base), roundNess);
+        Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.brush(QPalette::Base), roundNess);
         Render::renderShadow(Render::Sunken, option->rect, painter, roundNess, Render::All, 0.33f);
     }
     return true;
@@ -90,12 +90,9 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     if (!opt)
         return true;
 
-    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText), ar(QPalette::HighlightedText);
-    if (widget)
-    {
-        bg = widget->backgroundRole();
-        fg = widget->foregroundRole();
-    }
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button))
+            , fg(Ops::fgRole(widget, QPalette::ButtonText))
+            , ar(QPalette::HighlightedText);
 
     const bool ltr(opt->direction == Qt::LeftToRight);
 
@@ -152,7 +149,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     }
     else
     {
-        drawSafariLineEdit(opt->rect, painter, opt->palette.color(QPalette::Base));
+        drawSafariLineEdit(opt->rect, painter, opt->palette.brush(QPalette::Base));
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
@@ -167,12 +164,7 @@ StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, c
     castOpt(ComboBox, opt, option);
     if (!opt || opt->editable)
         return true;
-    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
-    if (widget)
-    {
-        bg = widget->backgroundRole();
-        fg = widget->foregroundRole();
-    }
+    QPalette::ColorRole /*bg(Ops::bgRole(widget, QPalette::Button)),*/ fg(Ops::fgRole(widget, QPalette::ButtonText));
     const int m(6);
     const bool ltr(opt->direction==Qt::LeftToRight);
     QRect rect(subControlRect(CC_ComboBox, opt, SC_ComboBoxEditField, widget).adjusted(m, 0, -m, 0));

@@ -239,23 +239,24 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     }
 
     QRect rect(opt->rect);
-    QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    QColor start = Color::mid(bc, Qt::white, 8, 1), end = Color::mid(bc, Qt::black, 8, 1);
-    if (isInTopToolBar)
-    {
-        start = Color::mid(bc, Qt::white, 1, 2);
-        end = Color::mid(bc, Qt::black, 3, 1);
-    }
-
     if (bar)
     {
+        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+        QColor start = Color::mid(bc, Qt::white, 8, 1), end = Color::mid(bc, Qt::black, 8, 1);
+        if (isInTopToolBar)
+        {
+//            start = Color::mid(bc, Qt::white, 2, 5);
+//            end = Color::mid(bc, Qt::black, 3, 1);
+            start = QColor(255, 255, 255, 192);
+            end = Qt::transparent;
+        }
         lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
-        lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
+        lg.setColorAt(0.7f, opt->SUNKEN ? Color::mid(bc, end) : end);
         Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
         Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
         if (!(sides&Render::Right) && !nextSelected)
         {
-            painter->setPen(QColor(0, 0, 0, 127));
+            painter->setPen(QColor(0, 0, 0, 92));
             painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
         }
         if (option->SUNKEN)

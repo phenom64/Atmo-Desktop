@@ -37,8 +37,8 @@ public:
     static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align = Qt::AlignCenter, int size = 0);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static void fixWindowTitleBar(QWidget *win);
-    static QPalette::ColorRole bgRole(const QWidget *w);
-    static QPalette::ColorRole fgRole(const QWidget *w);
+    static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
+    static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)

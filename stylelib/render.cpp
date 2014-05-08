@@ -3,6 +3,7 @@
 #include <QWidget>
 
 #include "render.h"
+#include "color.h"
 
 #define OPACITY 0.75f
 
@@ -101,6 +102,7 @@ Render::_generateData()
     initMaskParts();
     initShadowParts();
     initTabs();
+    makeNoise();
 }
 
 void
@@ -193,15 +195,31 @@ Render::initShadowParts()
         case Etched:
         {
             QRect rect(pix.rect());
-            p.setBrush(Qt::white);
-            p.setPen(Qt::NoPen);
-            p.drawRoundedRect(rect, r, r);
-            p.setBrush(Qt::black);
-            rect.setBottom(rect.bottom()-1);
-            p.drawRoundedRect(rect, r, r);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            rect.adjust(1, 1, -1, -1);
-            p.drawRoundedRect(rect, r-1, r-1);
+            QPixmap white(pix.size()-QSize(0, 1));
+            white.fill(Qt::transparent);
+            QPainter pt(&white);
+            pt.setRenderHint(QPainter::Antialiasing);
+            pt.setBrush(Qt::white);
+            pt.setPen(Qt::NoPen);
+            pt.drawRoundedRect(white.rect(), r, r);
+            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            pt.drawRoundedRect(white.rect().adjusted(1, 1, -1, -1), r-1, r-1);
+            pt.end();
+
+            QPixmap black(pix.size()-QSize(0, 1));
+            black.fill(Qt::transparent);
+            pt.begin(&black);
+            pt.setRenderHint(QPainter::Antialiasing);
+            pt.setPen(Qt::NoPen);
+            pt.setBrush(Qt::black);
+            pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
+            pt.drawRoundedRect(black.rect(), r, r);
+            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            pt.drawRoundedRect(black.rect().adjusted(1, 1, -1, -1), r-1, r-1);
+            pt.end();
+
+            p.drawTiledPixmap(white.rect().translated(0, 1), white);
+            p.drawTiledPixmap(black.rect(), black);
             break;
         }
         default: break;
@@ -297,7 +315,9 @@ Render::initTabs()
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
         p.setPen(Qt::NoPen);
         p.drawPath(path);
-        renderShadow(Etched, img.rect(), &p, ts*4, Top);
+//        renderShadow(Etched, img.rect(), &p, ts*4, Top);
+        p.setPen(Qt::black);
+        p.drawLine(img.rect().topLeft(), img.rect().topRight());
         renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.33f);
         p.end();
         --hsz;
@@ -539,4 +559,59 @@ Render::colorized(QPixmap pix, const QBrush &b)
 {
     colorizePixmap(pix, b);
     return pix;
+}
+
+static int randInt(int low, int high)
+{
+    // Random number between low and high
+    return qrand() % ((high + 1) - low) + low;
+}
+
+void
+Render::makeNoise()
+{
+    static int s(512);
+    QImage noise(s, s, QImage::Format_ARGB32);
+    noise.fill(Qt::transparent);
+    QRgb *rgb = reinterpret_cast<QRgb *>(noise.bits());
+    const int size(s*s);
+    for (int i = 0; i < size; ++i)
+    {
+        int v(randInt(0, 255));
+        rgb[i] = QColor(v, v, v).rgb();
+    }
+    m_noise = QPixmap::fromImage(noise);
+}
+
+QPixmap
+Render::mid(const QPixmap &p1, const QPixmap &p2, const int a1, const int a2)
+{
+    const int w(qMin(p1.width(), p2.width()));
+    const int h(qMin(p1.height(), p2.height()));
+    QImage i1 = p1.copy(0, 0, w, h).toImage().convertToFormat(QImage::Format_ARGB32);
+    QImage i2 = p2.copy(0, 0, w, h).toImage().convertToFormat(QImage::Format_ARGB32);
+    const int size(w*h);
+    QImage i3(w, h, QImage::Format_ARGB32); //the resulting image
+    i3.fill(Qt::transparent);
+    QRgb *rgb1 = reinterpret_cast<QRgb *>(i1.bits());
+    QRgb *rgb2 = reinterpret_cast<QRgb *>(i2.bits());
+    QRgb *rgb3 = reinterpret_cast<QRgb *>(i3.bits());
+
+    for (int i = 0; i < size; ++i)
+    {
+        const QColor c = Color::mid(QColor::fromRgba(rgb1[i]), QColor::fromRgba(rgb2[i]), a1, a2);
+        rgb3[i] = c.rgba();
+    }
+    return QPixmap::fromImage(i3);
+}
+
+QPixmap
+Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
+{
+    QPixmap p2(p1.size());
+    p2.fill(Qt::transparent);
+    QPainter p(&p2);
+    p.fillRect(p2.rect(), b);
+    p.end();
+    return mid(p1, p2, a1, a2);
 }

@@ -44,21 +44,17 @@ QWidget
 bool
 Ops::isSafariTabBar(const QTabBar *tabBar)
 {
-    if (!tabBar)
+    if (!tabBar || !(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth) || !tabBar->window())
         return false;
-    QMainWindow *mainWin = qobject_cast<QMainWindow *>(tabBar->window());
-    if (!mainWin)
-        return false;
-    const bool s(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth);
-    if (!s)
-        return false;
-    QPoint topLeft = tabBar->mapTo(mainWin, tabBar->rect().topLeft());
-    QRect winRect = mainWin->rect();
+//    QMainWindow *mainWin = qobject_cast<QMainWindow *>(tabBar->window()); // gnarffffff! rekonq tabbar isnt in a mainwin... sighs
+    QWidget *win = tabBar->window();
+    QPoint topLeft = tabBar->mapTo(win, tabBar->rect().topLeft());
+    QRect winRect = win->rect();
     QRect tabBarRect = QRect(topLeft, tabBar->size());
     if (tabBarRect.top() <= winRect.top())
         return true;
-    const QPoint &checkPoint(tabBar->mapTo(mainWin, tabBar->rect().translated(1, -6).topLeft()));
-    if (isOrInsideA<const QToolBar *>(mainWin->childAt(checkPoint)))
+    const QPoint &checkPoint(tabBar->mapTo(win, tabBar->rect().translated(1, -6).topLeft()));
+    if (isOrInsideA<const QToolBar *>(win->childAt(checkPoint)))
         return true;
     return false;
 }
@@ -211,8 +207,10 @@ Ops::updateGeoFromSender()
 }
 
 QPalette::ColorRole
-Ops::bgRole(const QWidget *w)
+Ops::bgRole(const QWidget *w, const QPalette::ColorRole fallBack)
 {
+    if (!w)
+        return fallBack;
     if (castObj(const QAbstractScrollArea *, area, w))
         if (area->viewport()->autoFillBackground())
             return area->viewport()->backgroundRole();
@@ -220,8 +218,10 @@ Ops::bgRole(const QWidget *w)
 }
 
 QPalette::ColorRole
-Ops::fgRole(const QWidget *w)
+Ops::fgRole(const QWidget *w, const QPalette::ColorRole fallBack)
 {
+    if (!w)
+        return fallBack;
     if (castObj(const QAbstractScrollArea *, area, w))
         if (area->viewport()->autoFillBackground())
             return area->viewport()->foregroundRole();

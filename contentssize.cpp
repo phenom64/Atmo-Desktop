@@ -76,12 +76,12 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         QSize sz = QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
         int margin(pixelMetric(PM_TabBarBaseOverlap)+pixelMetric(PM_TabBarTabHSpace));
         castObj(const QTabWidget *, tw, bar->parentWidget());
-        if (!tw || !bar->expanding())
-            break;
+        if (tw)
         for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
             if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
                 margin+=cw->width();
-        sz.setWidth(qMax((bar->width()-margin)/bar->count(), sz.width()));
+        if (bar->expanding())
+            sz.setWidth(qMax((bar->width()-margin)/bar->count(), sz.width()));
         return sz;
     }
     case CT_ToolButton:

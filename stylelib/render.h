@@ -28,6 +28,9 @@ public:
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
     static QPixmap colorized(QPixmap pix, const QBrush &b);
+    static QPixmap noise() { return instance()->m_noise; }
+    static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
+    static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1);
 
 protected:
     void _generateData();
@@ -37,6 +40,7 @@ protected:
     void initMaskParts();
     void initShadowParts();
     void initTabs();
+    void makeNoise();
     void splitShadowParts(const Shadow shadow, int roundNess, const int size, const QPixmap &source);
     bool isCornerPart(const Part part) const;
     bool needPart(const Part part, const Sides sides) const;
@@ -49,6 +53,7 @@ private:
     QPixmap m_mask[MAXRND+1][PartCount];
     QPixmap m_shadow[ShadowCount][MAXRND+1][PartCount];
     QPixmap m_tab[AfterSelected+1][PartCount]; //before selected, selected and after selected...
+    QPixmap m_noise;
 };
 
 #endif // RENDER_H

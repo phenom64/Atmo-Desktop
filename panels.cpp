@@ -6,6 +6,7 @@
 #include <QStyleOptionGroupBox>
 #include <QCheckBox>
 #include <QMenuBar>
+#include <QMap>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -32,11 +33,21 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
     //needless to check for top I think ;-)
 
     const QRect &rect(widget->rect());
-    QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-    lg.setColorAt(0.0f, Color::titleBarColors[0]);
-    lg.setColorAt(1.0f, Color::titleBarColors[1]);
+    static QMap<int, QPixmap> s_pix;
+    if (!s_pix.contains(rect.height()))
+    {
+        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+        lg.setColorAt(0.0f, Color::titleBarColors[0]);
+        lg.setColorAt(1.0f, Color::titleBarColors[1]);
+        QPixmap p(Render::noise().width(), rect.height());
+        p.fill(Qt::transparent);
+        QPainter pt(&p);
+        pt.fillRect(p.rect(), lg);
+        pt.end();
+        s_pix.insert(rect.height(), Render::mid(p, Render::noise(), 40, 1));
+    }
 
-    Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, lg, 3, sides);
+    Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, s_pix.value(rect.height()), 3, sides);
     Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
     return true;
 }
@@ -83,7 +94,33 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
             lg.setColorAt(0.0f, Color::titleBarColors[0]);
             lg.setColorAt(1.0f, Color::titleBarColors[1]);
             b = lg;
+            static QMap<int, QPixmap> s_pixTop;
+            if (!s_pixTop.contains(rect.height()))
+            {
+                QPixmap p(Render::noise().width(), rect.height());
+                p.fill(Qt::transparent);
+                QPainter pt(&p);
+                pt.fillRect(p.rect(), b);
+                pt.end();
+                s_pixTop.insert(rect.height(), Render::mid(p, Render::noise(), 40, 1));
+            }
+            b = s_pixTop.value(rect.height());
         }
+        else
+        {
+            static QMap<int, QPixmap> s_pix;
+            if (!s_pix.contains(rect.height()))
+            {
+                QPixmap p(Render::noise().width(), rect.height());
+                p.fill(Qt::transparent);
+                QPainter pt(&p);
+                pt.fillRect(p.rect(), b);
+                pt.end();
+                s_pix.insert(rect.height(), Render::mid(p, Render::noise(), 40, 1));
+            }
+            b = s_pix.value(rect.height());
+        }
+
         castObj(const QToolBar *, toolBar, widget);
         if (win->toolBarArea(const_cast<QToolBar *>(toolBar)) == Qt::TopToolBarArea)
             Render::renderMask(rect, painter, b, 3, sides);
