@@ -256,7 +256,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
         if (!(sides&Render::Right) && !nextSelected)
         {
-            painter->setPen(QColor(0, 0, 0, 92));
+            painter->setPen(QColor(0, 0, 0, 64));
             painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
         }
         if (option->SUNKEN)

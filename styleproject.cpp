@@ -40,13 +40,22 @@ StyleProject::StyleProject()
     init();
     assignMethods();
     Render::generateData();
-    QTimer::singleShot(0, this, SLOT(postOps()));
+    QPalette p(qApp->palette());
+    QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
+    Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
+    Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
+//    QTimer::singleShot(0, this, SLOT(postOps()));
 }
 
 void
 StyleProject::postOps()
 {
-    QPalette p(QApplication::palette());
+    if (!qApp)
+    {
+        qDebug() << "no instance of qApp found, shouldnt happen";
+        return;
+    }
+    QPalette p(qApp->palette());
     QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
     Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
     Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
