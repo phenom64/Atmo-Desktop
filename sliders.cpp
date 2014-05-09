@@ -13,6 +13,7 @@
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
+#include "stylelib/progresshandler.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -140,7 +141,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         lg.setColorAt(0.0f, top);
         lg.setColorAt(1.0f, bottom);
         p.fillRect(pix.rect(), lg);
-        QRadialGradient rg(pix.rect().center()+QPoint(0, pix.rect().height()*0.25), pix.rect().height());
+        QRadialGradient rg(pix.rect().center()+QPoint(0, pix.rect().height()*0.25f), pix.rect().height());
         QColor t(Color::mid(top, Qt::white));
         Color::shiftHue(t, -32);
         t.setAlpha(192);
@@ -176,8 +177,23 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         t.translate(-d, -d);
         pixmap = pixmap.transformed(t);
     }
+    int a(0);
+    if (opt->maximum != 0)
+    {
+        static QMap<const QWidget *, int> anim;
+        if (widget && anim.contains(widget))
+            a = anim.value(widget);
+        ++a;
+        if (a > pixmap.width())
+            a = 0;
+        if (widget)
+            anim.insert(widget, a);
+    }
+    painter->save();
+    const bool inv(hor?opt->invertedAppearance:!opt->bottomToTop);
+    painter->setBrushOrigin(hor?inv?a:-a:0, !hor?inv?a:-a:0);
     painter->fillRect(cont.adjusted(1, 1, -1, -2), pixmap);
-
+    painter->restore();
     return true;
 }
 
@@ -189,7 +205,7 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
         return true;
 
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
-    Render::renderMask(groove.adjusted(1, 1, -1, -2), painter, opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
+    painter->fillRect(groove.adjusted(1, 1, -1, -2), opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
     Render::renderShadow(Render::Sunken, groove, painter, 2, Render::All, 0.33f);
     return true;
 }

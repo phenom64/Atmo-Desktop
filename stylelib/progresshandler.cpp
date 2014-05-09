@@ -45,7 +45,7 @@ ProgressHandler::checkBar(QProgressBar *bar)
 void
 ProgressHandler::initBar(QProgressBar *bar)
 {
-    if (bar->minimum() == 0 && bar->maximum() == 0)
+    if (bar->minimum() == 0 && bar->maximum() == 0 /*|| bar->value() > 0*/)
     {
         TimerData *d = m_data.value(bar, 0);
         if (!d)
