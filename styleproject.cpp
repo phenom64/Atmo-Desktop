@@ -40,13 +40,10 @@ StyleProject::StyleProject()
     init();
     assignMethods();
     Render::generateData();
-    if (qApp)
-    {
-        QPalette p(qApp->palette());
-        QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
-        Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
-        Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
-    }
+    QPalette p(qApp->palette());
+    QColor c = Color::mid(p.color(QPalette::Window), p.color(QPalette::WindowText), 4, 1);
+    Color::titleBarColors[0] = Color::mid(c, Qt::white, 1, 2);
+    Color::titleBarColors[1] = Color::mid(c, Qt::black, 11, 1);
 }
 
 void

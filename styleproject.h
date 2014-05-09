@@ -67,6 +67,9 @@ public:
     bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawProgressBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;

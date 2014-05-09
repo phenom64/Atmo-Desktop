@@ -16,6 +16,7 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
     }
     case SH_ScrollBar_MiddleClickAbsolutePosition: return true;
     case SH_ScrollBar_ScrollWhenPointerLeavesControl: return true;
+    case SH_ItemView_PaintAlternatingRowColorsForEmptyArea: return true;
     default: break;
     }
     return QCommonStyle::styleHint(sh, opt, w, shret);

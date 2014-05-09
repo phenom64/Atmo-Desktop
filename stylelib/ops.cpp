@@ -169,18 +169,21 @@ static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
     castObj(QMainWindow *, mw, win);
     if (!mw)
         return height;
-    QWidget *first(win->childAt(mw->width()/2, 1));
-    if (castObj(QToolBar *, tb, mw->findChild<QToolBar *>()))
+    int tbheight(0);
+    if (QToolBar *tb = mw->findChild<QToolBar *>())
     {
         if (tb->isVisible())
-        if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
+        if (mw->toolBarArea(tb) == Qt::TopToolBarArea && tb->geometry().top() <= 0)
         {
-            height += tb->height();
+            tbheight = tb->height();
             needSeparator = 0;
         }
     }
-    if (castObj(QTabBar *, bar, first))
-        needSeparator = 0;
+    height += tbheight;
+    if (QTabBar *tb = mw->findChild<QTabBar *>())
+        if (tb->isVisible())
+        if (tb->geometry().top() <= 0)
+            needSeparator = 0;
     return height;
 }
 

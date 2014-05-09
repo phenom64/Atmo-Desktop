@@ -58,11 +58,9 @@ StyleProject::assignMethods()
     m_ce[CE_ItemViewItem] = method(drawViewItem); //draw item in views
     m_ce[CE_ComboBoxLabel] = method(drawComboBoxLabel);
     m_ce[CE_ProgressBar] = method(drawProgressBar);
-
-    //CE_ProgressBarGroove
-    //CE_ProgressBarContents
-    //CE_ProgressBarLabel
-
+    m_ce[CE_ProgressBarGroove] = method(drawProgressBarGroove);
+    m_ce[CE_ProgressBarContents] = method(drawProgressBarContents);
+    m_ce[CE_ProgressBarLabel] = method(drawProgressBarLabel);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -86,12 +84,13 @@ StyleProject::assignMethods()
     m_pe[PE_FrameTabBarBase] = method(drawTabBar);
     m_pe[PE_FrameTabWidget] = method(drawTabWidget);
     m_pe[PE_IndicatorTabClose] = method(drawTabCloser);
-    m_pe[PE_PanelItemViewItem] = method(drawViewItemBg); //drack BACKGROUND of item in views...
+    m_pe[PE_PanelItemViewItem] = method(drawViewItemBg); //draw BACKGROUND of item in views...
     m_pe[PE_PanelMenu] = method(drawMenu);
     m_pe[PE_FrameMenu] = method(drawMenu);
     m_pe[PE_PanelScrollAreaCorner] = method(drawScrollAreaCorner);
     m_pe[PE_PanelTipLabel] = method(drawToolTip);
     m_pe[PE_IndicatorBranch] = method(drawTree);
+    m_pe[PE_FrameFocusRect] = method(primitiveSkipper);
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);

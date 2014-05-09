@@ -51,7 +51,6 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
 
         Render::renderShadow(Render::Raised, option->rect, painter);
         int m(2);
-        const Render::Sides sides(Render::All);
         QRect r(option->rect.shrinked(m));
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));

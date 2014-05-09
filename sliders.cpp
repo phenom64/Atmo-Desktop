@@ -106,22 +106,104 @@ StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, con
     castOpt(ProgressBarV2, opt, option);
     if (!opt)
         return true;
+    drawProgressBarGroove(option, painter, widget);
+    drawProgressBarContents(option, painter, widget);
+    drawProgressBarLabel(option, painter, widget);
+    return true;
+}
 
-    const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText)), bg(Ops::bgRole(widget, QPalette::Window));
+bool
+StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ProgressBarV2, opt, option);
+    if (!opt)
+        return true;
+
+    QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
+    const QColor h(opt->palette.color(QPalette::Highlight));
+    const bool hor(opt->orientation == Qt::Horizontal);
+    const int s(hor?cont.height():cont.width());
+
+    quint64 thing = h.rgba();
+    thing |= ((quint64)s << 32);
+    static QMap<quint64, QPixmap > pixMap;
+    if (!pixMap.contains(thing))
+    {
+        QPixmap pix(s/2, s);
+        pix.fill(Qt::transparent);
+        QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
+        QColor top(Color::mid(h, Qt::white, 5, 1));
+        Color::shiftHue(top, -8);
+        QColor bottom(Color::mid(h, Qt::black, 5, 1));
+        Color::shiftHue(bottom, 8);
+        QPainter p(&pix);
+        lg.setColorAt(0.0f, top);
+        lg.setColorAt(1.0f, bottom);
+        p.fillRect(pix.rect(), lg);
+        QRadialGradient rg(pix.rect().center()+QPoint(0, pix.rect().height()*0.25), pix.rect().height());
+        QColor t(Color::mid(top, Qt::white));
+        Color::shiftHue(t, -32);
+        t.setAlpha(192);
+        rg.setColorAt(0.0f, t);
+        rg.setColorAt(1.0f, Qt::transparent);
+        p.fillRect(pix.rect(), rg);
+        QLinearGradient lg2(pix.rect().topLeft(), pix.rect().bottomLeft());
+        lg2.setColorAt(0.0f, QColor(0, 0, 0, 64));
+        lg2.setColorAt(0.15f, QColor(255, 255, 255, 127));
+        lg2.setColorAt(0.4f, QColor(255, 255, 255, 64));
+        lg2.setColorAt(0.5f, Qt::transparent);
+        p.fillRect(pix.rect(), lg2);
+        p.end();
+        pixMap.insert(thing, pix);
+    }
+    QPixmap pixmap = pixMap.value(thing);
+    if (!hor)
+    {
+        QTransform t;
+        int d(s/2);
+        t.translate(d, d);
+        t.rotate(90);
+        t.translate(-d, -d);
+        pixmap = pixmap.transformed(t);
+    }
+    painter->fillRect(cont.adjusted(1, 1, -1, -2), pixmap);
+
+    return true;
+}
+
+bool
+StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ProgressBarV2, opt, option);
+    if (!opt)
+        return true;
+
+    QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
+    Render::renderMask(groove.adjusted(1, 1, -1, -2), painter, opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
+    Render::renderShadow(Render::Sunken, groove, painter, 2, Render::All, 0.33f);
+    return true;
+}
+
+bool
+StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ProgressBarV2, opt, option);
+    if (!opt)
+        return true;
+
+    const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //he text label of a QProgressBar.
     const bool hor(opt->orientation == Qt::Horizontal);
     const float w_2(groove.width()/2.0f), h_2(groove.height()/2.0f);
-
 #define TRANSLATE(_BOOL_) if(!hor) {painter->translate(w_2, h_2);painter->rotate(_BOOL_?-90.0f:90.0f);painter->translate(-w_2, -h_2);}
+    painter->setClipRegion(QRegion(groove)-QRegion(cont));
     TRANSLATE(opt->bottomToTop);
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
     TRANSLATE(!opt->bottomToTop);
-    Render::renderMask(cont.adjusted(1, 1, -1, -2), painter, opt->palette.color(QPalette::Highlight), 1);
-    Render::renderShadow(Render::Sunken, groove, painter, 2, Render::All, 0.33f);
 
-    painter->setClipRect(cont);
+    painter->setClipRegion(QRegion(cont));
     TRANSLATE(opt->bottomToTop);
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::HighlightedText);
     TRANSLATE(!opt->bottomToTop);

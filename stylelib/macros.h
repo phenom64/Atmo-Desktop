@@ -15,7 +15,9 @@
 
 #define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
 #define sAdjust(_X1_, _Y1_, _X2_, _Y2_) adjust(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
-#define shrink(_S_) sAdjust(_S_, _S_, -_S_, -_S_)
-#define shrinked(_S_) sAdjusted(_S_, _S_, -_S_, -_S_)
+#define sShrink(_S_) sAdjust(_S_, _S_, -_S_, -_S_)
+#define sShrinked(_S_) sAdjusted(_S_, _S_, -_S_, -_S_)
+#define shrinked(_S_) adjusted(_S_, _S_, -_S_, -_S_)
+#define shrink(_S_) adjust(_S_, _S_, -_S_, -_S_)
 
 #endif // MACROS_H

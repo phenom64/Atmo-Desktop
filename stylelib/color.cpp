@@ -1,6 +1,6 @@
 #include "color.h"
 
-QColor Color::titleBarColors[2];
+Q_DECL_EXPORT QColor Color::titleBarColors[2];
 
 QColor
 Color::mid(const QColor &c1, const QColor c2, int i1, int i2)
@@ -62,6 +62,19 @@ Color::ensureContrast(QColor &c1, QColor &c2)
     }
     c1 = inv ? light : dark;
     c2 = inv ? dark : light;
+}
+
+void
+Color::shiftHue(QColor &c, int amount)
+{
+    int h, s, v, a;
+    c.getHsv(&h, &s, &v, &a);
+    h+=amount;
+    if (h > 359)
+        h-=359;
+    else if (h < 0)
+        h+=359;
+    c.setHsv(h, s, v, a);
 }
 
 

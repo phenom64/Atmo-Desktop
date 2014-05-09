@@ -142,10 +142,9 @@ StyleProject::polish(QWidget *widget)
     }
     if (castObj(QTabBar *, tabBar, widget))
     {
-        tabBar->setFocusPolicy(Qt::NoFocus); //im lazy, free text on tabs w/o the nasty QCommonStyle focusrect :)
-        QFont f(tabBar->font());
-        f.setBold(true);
-        tabBar->setFont(f);
+//        QFont f(tabBar->font());
+//        f.setBold(true);
+//        tabBar->setFont(f);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
             QWidget *p(tabBar->parentWidget());
