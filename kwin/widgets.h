@@ -2,7 +2,6 @@
 #define WIDGETS_H
 
 #include "kwinclient.h"
-#include <QSizeGrip>
 
 class SizeGrip : public QWidget
 {

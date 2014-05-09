@@ -91,31 +91,19 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         p.end();
         return true;
     }
-    else if (castObj(QTabBar *, tb, o))
+    else if (o->objectName() == "konsole_tabbar_parent")
     {
-#if 0
-        if (!Ops::isSafariTabBar(tb))
+        QWidget *w = static_cast<QWidget *>(o);
+        QStyleOptionTabBarBaseV2 opt;
+        opt.rect = w->rect();
+        QTabBar *tb = w->findChild<QTabBar *>();
+        if (!tb)
             return false;
-
-        QPainter p(tb);
-        QStyleOptionTabBarBaseV2 optTabBase;
-        optTabBase.initFrom(tb);
-        optTabBase.tabBarRect = tb->rect();
-        if (QTabWidget *tbw = qobject_cast<QTabWidget *>(tb->parentWidget()))
-        {
-            optTabBase.tabBarRect.setWidth(tbw->width());
-            optTabBase.tabBarRect.moveTopLeft(tbw->rect().topLeft());
-        }
-        optTabBase.selectedTabRect = tb->tabRect(tb->currentIndex());
-        if (tb->drawBase())
-            drawPrimitive(PE_FrameTabBarBase, &optTabBase, &p, tb);
-        for (int i = 0; i < tb->currentIndex(); ++i)
-            paintTab(tb, i, this, p);
-        for (int i = tb->count(); i >= tb->currentIndex(); --i)
-            paintTab(tb, i, this, p);
+        opt.rect.setHeight(tb->height());
+        QPainter p(w);
+        drawTabBar(&opt, &p, tb);
         p.end();
         return true;
-#endif
     }
     return QCommonStyle::eventFilter(o, e);
 }
@@ -131,6 +119,19 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
     if (castObj(QToolBar *, toolBar, o))
         if (castObj(QMainWindow *, win, toolBar->parentWidget()))
             updateToolBar(toolBar);
+    if (castObj(QTabBar *, tb, o))
+    {
+        QToolButton *addTab = tb->findChild<QToolButton *>("tab-new");
+        QToolButton *closeTab = tb->findChild<QToolButton *>("tab-close");
+        if (!addTab || !closeTab)
+            return false;
+
+        int x, y, w, h;
+        tb->rect().getRect(&x, &y, &w, &h);
+        int cy = y+(h/2-addTab->height()/2);
+        addTab->move(x, cy);
+        closeTab->move(w-closeTab->width(), cy);
+    }
     return QCommonStyle::eventFilter(o, e);
 }
 

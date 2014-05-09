@@ -207,12 +207,20 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
     if (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTabWidget"))
         return true;
 
+
+    castOpt(TabBarBaseV2, opt, option);
+    if (!opt)
+        return true;
+
     Render::Sides sides = Render::checkedForWindowEdges(widget);
     if (const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget))
     {
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 15, 1), sides);
+            QRect r(tabBar->rect());
+            if (opt->rect.width() > r.width())
+                r = opt->rect;
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 15, 1), sides, r);
             return true;
         }
     }

@@ -11,6 +11,7 @@
 #include <QDesktopWidget>
 #include <QLabel>
 #include <QProgressBar>
+#include <QApplication>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -145,6 +146,15 @@ StyleProject::polish(QWidget *widget)
         QFont f(tabBar->font());
         f.setBold(true);
         tabBar->setFont(f);
+        if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
+        {
+            QWidget *p(tabBar->parentWidget());
+            if (p)
+            {
+                p->setObjectName("konsole_tabbar_parent");
+                installFilter(p);
+            }
+        }
     }
 
 #if !defined(QT_NO_DBUS)
