@@ -27,13 +27,20 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
     if (!opt)
         return true;
 
-    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
-    if (widget)
-    {
-        bg = widget->backgroundRole();
-        fg = widget->foregroundRole();
-    }
+    drawPushButtonBevel(option, painter, widget);
+    drawPushButtonLabel(option, painter, widget);
+    return true;
+}
 
+/* not sure if these 2 are needed at all */
+
+bool
+StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(Button, opt, option);
+    if (!opt)
+        return true;
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
     if (!(opt->features & QStyleOptionButton::Flat))
     {
         QColor bc(option->palette.color(bg));
@@ -51,22 +58,20 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
         lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
         Render::renderMask(r, painter, lg);
     }
-
-    drawItemText(painter, opt->rect, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
-    return true;
-}
-
-/* not sure if these 2 are needed at all */
-
-bool
-StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
-{
     return true;
 }
 
 bool
 StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    castOpt(Button, opt, option);
+    if (!opt)
+        return true;
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
+    if (!opt->text.isEmpty())
+        drawItemText(painter, opt->rect, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    else
+        drawItemPixmap(painter, opt->rect, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize, opt->ENABLED?QIcon::Normal:QIcon::Disabled));
     return true;
 }
 

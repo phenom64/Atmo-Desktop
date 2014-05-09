@@ -172,6 +172,7 @@ static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
     QWidget *first(win->childAt(mw->width()/2, 1));
     if (castObj(QToolBar *, tb, mw->findChild<QToolBar *>()))
     {
+        if (tb->isVisible())
         if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
         {
             height += tb->height();

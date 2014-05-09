@@ -140,7 +140,12 @@ StyleProject::polish(QWidget *widget)
         installFilter(widget);
     }
     if (castObj(QTabBar *, tabBar, widget))
+    {
         tabBar->setFocusPolicy(Qt::NoFocus); //im lazy, free text on tabs w/o the nasty QCommonStyle focusrect :)
+        QFont f(tabBar->font());
+        f.setBold(true);
+        tabBar->setFont(f);
+    }
 
 #if !defined(QT_NO_DBUS)
     if (castObj(QMenuBar *, menuBar, widget))

@@ -42,7 +42,8 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
         const int o(pixelMetric(PM_TabBarTabOverlap));
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
-        r.setLeft(r.left()-(isFirst||isOnly?o/2:o));
+        if (!isFirst && !isOnly)
+            r.setLeft(r.left()-o);
         r.setRight(r.right()+((painter->device() == widget)?o:o/2));
         QPainterPath p;
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.5f);
@@ -140,28 +141,39 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-#if 0
+//#if 0
     castOpt(TabV3, opt, option);
     if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)) || !opt)
         return false;
 
-    const QRect tr(subElementRect(SE_TabBarTabText, option, widget));
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
+    const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
+    const bool isSelected(opt->state & State_Selected || isOnly);
+    QRect tr(subElementRect(SE_TabBarTabText, option, widget));
+    int m(pixelMetric(PM_TabBarTabOverlap));
+    if (isFirst || isOnly)
+        tr.setLeft(tr.left()+m);
+    QFont f(painter->font());
+    f.setBold(isSelected);
+    painter->setFont(f);
     drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+    f.setBold(!isSelected);
+    painter->setFont(f);
 //    castObj(const QTabBar *, bar, widget);
     const QTabBar *bar = static_cast<const QTabBar *>(widget); //tabbar guaranteed by qobject_cast above
     QRect ir(QPoint(), bar->iconSize());
     ir.moveCenter(opt->rect.center());
-    int d(8);
-    int index(bar->tabAt(opt->rect.center()));
-    int right(tr.left());
+//    int d(8);
+//    int index(bar->tabAt(opt->rect.center()));
+    int right(tr.left()-(m/2));
 //    if (index > bar->currentIndex())
 //        right+=d;
     ir.moveRight(right);
 
     drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(bar->iconSize()));
     return true;
-#endif
-    return false;
+//#endif
+//    return false;
 }
 
 static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Render::Sides sides, QRect rect = QRect())

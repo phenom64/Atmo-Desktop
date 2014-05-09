@@ -69,19 +69,25 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     {
     case CT_TabBarTab:
     {
+        castOpt(TabV3, tab, opt);
         castObj(const QTabBar *, bar, widget);
-        if (!Ops::isSafariTabBar(bar))
+        if (!Ops::isSafariTabBar(bar) || !tab)
             break;
 
         QSize sz = QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
-        int margin(pixelMetric(PM_TabBarBaseOverlap)+pixelMetric(PM_TabBarTabHSpace));
-        castObj(const QTabWidget *, tw, bar->parentWidget());
-        if (tw)
-        for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
-            if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
-                margin+=cw->width();
         if (bar->expanding())
-            sz.setWidth(qMax((bar->width()-margin)/bar->count(), sz.width()));
+        {
+            int margin(pixelMetric(PM_TabBarTabOverlap));
+            castObj(const QTabWidget *, tw, bar->parentWidget());
+            if (tw)
+                for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
+                    if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
+                        margin+=cw->width();
+            if (bar->expanding())
+                sz.setWidth(qMax((bar->width()-margin)/bar->count(), sz.width()));
+        }
+        else if (tab->position == QStyleOptionTab::Beginning)
+            sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
         return sz;
     }
     case CT_ToolButton:

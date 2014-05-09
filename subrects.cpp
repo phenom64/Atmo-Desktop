@@ -35,6 +35,15 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 {
     switch (r)
     {
+//    case SE_TabBarTabLeftButton:
+//    case SE_TabBarTabRightButton:
+//    case SE_TabBarTabText:
+//    {
+//        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+//            break;
+//        return visualRect(opt->direction, opt->rect, QCommonStyle::subElementRect(r, opt, widget).translated(8, 0));
+//    }
+
 //    case SE_TabBarTabText:
 //    {
 //        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
