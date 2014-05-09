@@ -36,6 +36,7 @@ ProgressHandler::checkBar(QProgressBar *bar)
     if (m_bars.contains(bar))
         return;
     m_bars << bar;
+    bar->setAttribute(Qt::WA_Hover);
     bar->installEventFilter(this);
     connect(bar, SIGNAL(valueChanged(int)), this, SLOT(valueChanged()));
     if (bar->isVisible())
@@ -45,7 +46,7 @@ ProgressHandler::checkBar(QProgressBar *bar)
 void
 ProgressHandler::initBar(QProgressBar *bar)
 {
-    if (bar->minimum() == 0 && bar->maximum() == 0 /*|| bar->value() > 0*/)
+    if ((bar->minimum() == 0 && bar->maximum() == 0) || (bar->value() > 0 && bar->underMouse()))
     {
         TimerData *d = m_data.value(bar, 0);
         if (!d)
@@ -72,11 +73,15 @@ ProgressHandler::valueChanged()
 bool
 ProgressHandler::eventFilter(QObject *o, QEvent *e)
 {
-    if (!(e->type() == QEvent::Timer || e->type() == QEvent::Show) || !qobject_cast<QProgressBar *>(o))
+    if (!(e->type() == QEvent::Timer
+          || e->type() == QEvent::Show
+          || e->type() == QEvent::HoverEnter
+          || e->type() == QEvent::HoverLeave)
+            || !qobject_cast<QProgressBar *>(o))
         return false;
 
     QProgressBar *bar = static_cast<QProgressBar *>(o);
-    if (e->type() == QEvent::Show)
+    if (e->type() == QEvent::Show || e->type() == QEvent::HoverEnter || e->type() == QEvent::HoverLeave)
     {
         initBar(bar);
         return false;
