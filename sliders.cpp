@@ -154,7 +154,17 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         lg2.setColorAt(0.5f, Qt::transparent);
         p.fillRect(pix.rect(), lg2);
         p.end();
-        pixMap.insert(thing, pix);
+
+        QPixmap pixs(s, s);
+        pixs.fill(Qt::transparent);
+        p.begin(&pixs);
+        p.fillRect(pixs.rect(), pix);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setPen(QPen(QPixmap::fromImage(pix.toImage().mirrored()), s/3));
+        QRect r(pixs.rect().adjusted(s/6, 0, -s/6, 0));
+        p.drawLine(r.topLeft(), r.bottomRight());
+        p.end();
+        pixMap.insert(thing, pixs);
     }
     QPixmap pixmap = pixMap.value(thing);
     if (!hor)
