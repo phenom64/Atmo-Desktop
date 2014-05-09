@@ -63,7 +63,7 @@ private:
     QHBoxLayout *m_titleLayout;
     TitleBar *m_titleBar;
     QLinearGradient m_unoGradient;
-    QColor m_titleColor[2];
+    QColor m_titleColor[2], m_textColor;
     Factory *m_factory;
     int m_headHeight;
     bool m_needSeparator;

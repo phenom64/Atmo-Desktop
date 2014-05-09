@@ -193,9 +193,10 @@ Ops::fixWindowTitleBar(QWidget *win)
     wd.separator = ns;
     wd.top = Color::titleBarColors[0].rgba();
     wd.bottom = Color::titleBarColors[1].rgba();
+    wd.text = win->palette().color(win->foregroundRole()).rgba();
     if (!wd.height)
         return;
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 4);
+    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 5);
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     updateWindow(win->winId());

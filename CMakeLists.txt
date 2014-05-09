@@ -42,8 +42,8 @@ find_package (Qt4 REQUIRED)
 include (${QT_USE_FILE})
 qt4_wrap_cpp (MOC_SRCS ${MOC_HDRS})
 
-find_package (KDE4)
-find_package (X11)
+find_package (KDE4 REQUIRED)
+find_package (X11 REQUIRED)
 
 add_library (styleproject SHARED ${SRCS} ${HDRS} ${MOC_SRCS})
 target_link_libraries (styleproject stylelib ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})

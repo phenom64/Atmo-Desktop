@@ -3,19 +3,22 @@ project (kwin3-styleproject)
 set (KWIN_SRCS
     kwinclient.cpp
     factory.cpp
-    button.cpp)
+    button.cpp
+    widgets.cpp)
     
 set (KWIN_HDRS
     kwinclient.h
     factory.h
     button.h
-    factorydbusadaptor.h)
+    factorydbusadaptor.h
+    widgets.h)
     
 set (KWIN_MOC_HDRS
     kwinclient.h
     factory.h
     button.h
-    factorydbusadaptor.h)
+    factorydbusadaptor.h
+    widgets.)
 
 set (QT_USE_DBUS TRUE)
 

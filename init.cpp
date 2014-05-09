@@ -59,6 +59,11 @@ StyleProject::assignMethods()
     m_ce[CE_ComboBoxLabel] = method(drawComboBoxLabel);
     m_ce[CE_ProgressBar] = method(drawProgressBar);
 
+    //CE_ProgressBarGroove
+    //CE_ProgressBarContents
+    //CE_ProgressBarLabel
+
+
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
     m_cc[CC_SpinBox] = method(drawSpinBox);

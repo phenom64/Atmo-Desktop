@@ -54,6 +54,19 @@ public:
         }
         return false;
     }
+    template<typename T> static inline T getAncestor(const QWidget *widget)
+    {
+        if (!widget)
+            return 0;
+        QWidget *w = const_cast<QWidget *>(widget);
+        while (w->parentWidget())
+        {
+            if (T t = qobject_cast<T>(w))
+                return t;
+            w = w->parentWidget();
+        }
+        return 0;
+    }
 public slots:
     void updateGeoFromSender();
 

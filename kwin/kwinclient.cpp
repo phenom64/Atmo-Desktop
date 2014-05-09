@@ -10,11 +10,11 @@
 
 #include "kwinclient.h"
 #include "button.h"
+#include "widgets.h"
 #include "../stylelib/ops.h"
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/render.h"
 #include "../stylelib/color.h"
-#include "../stylelib/widgets.h"
 
 #define TITLEHEIGHT 22
 
@@ -50,7 +50,10 @@ TitleBar::paintEvent(QPaintEvent *)
         p.setPen(QColor(255, 255, 255, 127));
         p.drawText(rect().translated(0, 1), Qt::AlignCenter, m_client->caption());
     }
-    p.setPen(m_client->options()->color(KwinClient::ColorFont, m_client->isActive()));
+    if (m_client->m_textColor.isValid())
+        p.setPen(m_client->m_textColor);
+    else
+        p.setPen(m_client->options()->color(KwinClient::ColorFont, m_client->isActive()));
     p.drawText(rect(), Qt::AlignCenter, m_client->caption());
 
     if (m_client->m_needSeparator)
@@ -307,6 +310,7 @@ KwinClient::reset(unsigned long changed)
         m_titleColor[1] = QColor::fromRgba(data->bottom);
         m_headHeight = data->height;
         m_needSeparator = data->separator;
+        m_textColor = QColor::fromRgba(data->text);
         XFree(data);
     }
     else

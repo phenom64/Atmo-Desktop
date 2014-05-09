@@ -20,21 +20,11 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     castOpt(Slider, opt, option);
     if (!opt)
         return true;
-    QPalette::ColorRole fg(QPalette::WindowText), bg(QPalette::Window);
-    if (widget)
-    {
-        fg = widget->foregroundRole();
-        bg = widget->backgroundRole();
-        if (widget->parentWidget() && widget->parentWidget()->parentWidget())
-        if (castObj(const QAbstractScrollArea *, view, widget->parentWidget()->parentWidget()))
-        {
-            fg = view->viewport()->foregroundRole();
-            bg = view->viewport()->backgroundRole();
-        }
-    }
+    const QWidget *w = Ops::getAncestor<const QAbstractScrollArea *>(widget);
+    QPalette::ColorRole fg(Ops::fgRole(w, QPalette::WindowText)), bg(Ops::bgRole(w, QPalette::Window));
     //not used atm
-//    QRect up(subControlRect(CC_ScrollBar, option, SC_ScrollBarSubLine, widget));
-//    QRect down(subControlRect(CC_ScrollBar, option, SC_ScrollBarAddLine, widget));
+    //QRect up(subControlRect(CC_ScrollBar, option, SC_ScrollBarSubLine, widget));
+    //QRect down(subControlRect(CC_ScrollBar, option, SC_ScrollBarAddLine, widget));
     QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget));
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
 
@@ -59,13 +49,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 bool
 StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    QPalette::ColorRole bg(QPalette::Window);
-    if (widget)
-    {
-        bg = widget->backgroundRole();
-        if (castObj(const QAbstractScrollArea *, view, widget))
-            bg = view->viewport()->backgroundRole();
-    }
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
     painter->fillRect(option->rect, option->palette.color(bg));
     return true;
 }
@@ -76,12 +60,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     castOpt(Slider, opt, option);
     if (!opt)
         return false;
-    QPalette::ColorRole fg(QPalette::WindowText), bg(QPalette::Window);
-    if (widget)
-    {
-        fg = widget->foregroundRole();
-        bg = widget->backgroundRole();
-    }
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText)), bg(Ops::bgRole(widget, QPalette::Window));
     QRect slider(subControlRect(CC_Slider, option, SC_SliderHandle, widget));
     QRect groove(subControlRect(CC_Slider, option, SC_SliderGroove, widget));
 
@@ -128,6 +107,7 @@ StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, con
     if (!opt)
         return true;
 
+    const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText)), bg(Ops::bgRole(widget, QPalette::Window));
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //he text label of a QProgressBar.
@@ -136,7 +116,7 @@ StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, con
 
 #define TRANSLATE(_BOOL_) if(!hor) {painter->translate(w_2, h_2);painter->rotate(_BOOL_?-90.0f:90.0f);painter->translate(-w_2, -h_2);}
     TRANSLATE(opt->bottomToTop);
-    drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+    drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
     TRANSLATE(!opt->bottomToTop);
     Render::renderMask(cont.adjusted(1, 1, -1, -2), painter, opt->palette.color(QPalette::Highlight), 1);
     Render::renderShadow(Render::Sunken, groove, painter, 2, Render::All, 0.33f);
