@@ -119,19 +119,19 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
     if (castObj(QToolBar *, toolBar, o))
         if (castObj(QMainWindow *, win, toolBar->parentWidget()))
             updateToolBar(toolBar);
-    if (castObj(QTabBar *, tb, o))
-    {
-        QToolButton *addTab = tb->findChild<QToolButton *>("tab-new");
-        QToolButton *closeTab = tb->findChild<QToolButton *>("tab-close");
-        if (!addTab || !closeTab)
-            return false;
+//    if (castObj(QTabBar *, tb, o))
+//    {
+//        QToolButton *addTab = tb->findChild<QToolButton *>("tab-new");
+//        QToolButton *closeTab = tb->findChild<QToolButton *>("tab-close");
+//        if (!addTab || !closeTab)
+//            return false;
 
-        int x, y, w, h;
-        tb->rect().getRect(&x, &y, &w, &h);
-        int cy = y+(h/2-addTab->height()/2);
-        addTab->move(x, cy);
-        closeTab->move(w-closeTab->width(), cy);
-    }
+//        int x, y, w, h;
+//        tb->rect().getRect(&x, &y, &w, &h);
+//        int cy = y+(h/2-addTab->height()/2);
+//        addTab->move(x, cy);
+//        closeTab->move(w-closeTab->width(), cy);
+//    }
     return QCommonStyle::eventFilter(o, e);
 }
 
@@ -164,5 +164,10 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         toolBar->setIconSize(iconSize - QSize(1, 1));
         toolBar->setIconSize(iconSize);
     }
+//    if (castObj(QTabBar *, bar, o))
+//    {
+//        if (Ops::isSafariTabBar(bar))
+//            bar->setStyleSheet("QTabBar::tab::first{ margin-left: 16px; }");
+//    }
     return QCommonStyle::eventFilter(o, e);
 }

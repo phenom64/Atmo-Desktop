@@ -6,6 +6,7 @@
 
 #include "styleproject.h"
 #include "overlay.h"
+#include "stylelib/ops.h"
 
 int
 StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
@@ -18,6 +19,13 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
         return 8;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
+//        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+//        {
+//            castOpt(TabV3, tab, option);
+//            if (tab && tab->position == QStyleOptionTab::Beginning)
+//                return 128;
+//        }
+        return 16;
     case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
         return 8;
 //    case PM_TabBarBaseHeight:	//22	Height of the area between the tab bar and the tab pages.

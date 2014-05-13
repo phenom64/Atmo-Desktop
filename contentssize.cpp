@@ -71,23 +71,41 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     {
         castOpt(TabV3, tab, opt);
         castObj(const QTabBar *, bar, widget);
-        if (!Ops::isSafariTabBar(bar) || !tab)
+        if (!tab)
             break;
 
-        QSize sz = QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
-        if (bar->expanding())
+        QSize sz = contentsSize;
+//        bool hor(tab->shape < QTabBar::RoundedWest || (tab->shape > QTabBar::RoundedEast && tab->shape < QTabBar::TriangularWest));
+        if (Ops::isSafariTabBar(bar))
         {
-            int margin(pixelMetric(PM_TabBarTabOverlap));
-            castObj(const QTabWidget *, tw, bar->parentWidget());
-            if (tw)
-                for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
-                    if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
-                        margin+=cw->width();
             if (bar->expanding())
-                sz.setWidth(qMax((bar->width()-margin)/bar->count(), sz.width()));
+            {
+                int margin(pixelMetric(PM_TabBarTabOverlap)/2);
+                if (castObj(const QTabWidget *, tw, bar->parentWidget()))
+                    for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
+                        if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
+//                            if (cw->isVisible())
+                                margin+=cw->width();
+                if (bar->expanding())
+                    sz.setWidth((bar->width()-margin)/bar->count());
+            }
+//            else if (tab->position == QStyleOptionTab::Beginning)
+//                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
         }
-        else if (tab->position == QStyleOptionTab::Beginning)
-            sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
+
+//        if (bar)
+//        {
+//            const QString s(tab->text);
+//            QFont f(bar->font());
+//            int nonBoldWidth(QFontMetrics(f).boundingRect(s).width());
+//            f.setBold(true);
+//            int boldWidth(QFontMetrics(f).boundingRect(s).width());
+//            int add(boldWidth-nonBoldWidth);
+//            if (hor)
+//                sz.rwidth() += add;
+//            else
+//                sz.rheight() += add;
+//        }
         return sz;
     }
     case CT_ToolButton:

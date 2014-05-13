@@ -120,6 +120,8 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     if (!opt)
         return true;
 
+    if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
+        return true;
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
     const QColor h(opt->palette.color(QPalette::Highlight));
     const bool hor(opt->orientation == Qt::Horizontal);
@@ -127,7 +129,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
 
     quint64 thing = h.rgba();
     thing |= ((quint64)s << 32);
-    static QMap<quint64, QPixmap > pixMap;
+    static QMap<quint64, QPixmap> pixMap;
     if (!pixMap.contains(thing))
     {
         QPixmap pix(s/2, s);
@@ -155,17 +157,19 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         lg2.setColorAt(0.5f, Qt::transparent);
         p.fillRect(pix.rect(), lg2);
         p.end();
+        pixMap.insert(thing, pix);
 
-        QPixmap pixs(s, s);
-        pixs.fill(Qt::transparent);
-        p.begin(&pixs);
-        p.fillRect(pixs.rect(), pix);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QPen(QPixmap::fromImage(pix.toImage().mirrored()), s/3));
-        QRect r(pixs.rect().adjusted(s/6, 0, -s/6, 0));
-        p.drawLine(r.topLeft(), r.bottomRight());
-        p.end();
-        pixMap.insert(thing, pixs);
+//        QPixmap pixs(s, s);
+//        pixs.fill(Qt::transparent);
+//        p.begin(&pixs);
+//        p.fillRect(pixs.rect(), pix);
+//        p.setRenderHint(QPainter::Antialiasing);
+//        p.setPen(QPen(Color::complementary(h), s/3));
+//        QRect r(pixs.rect().adjusted(s/6, 0, -s/6, 0));
+//        p.setCompositionMode(QPainter::CompositionMode_SoftLight);
+//        p.drawLine(r.topLeft(), r.bottomRight());
+//        p.end();
+//        pixMap.insert(thing, pixs);
     }
     QPixmap pixmap = pixMap.value(thing);
     if (!hor)

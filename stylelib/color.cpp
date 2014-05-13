@@ -77,4 +77,11 @@ Color::shiftHue(QColor &c, int amount)
     c.setHsv(h, s, v, a);
 }
 
+QColor
+Color::complementary(QColor c)
+{
+    shiftHue(c, 180);
+    return c;
+}
+
 

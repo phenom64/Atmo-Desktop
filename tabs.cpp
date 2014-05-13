@@ -23,6 +23,9 @@ bool
 StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     return false;
+//    drawTabShape(option, painter, widget);
+//    drawTabLabel(option, painter, widget);
+//    return true;
 }
 
 bool
@@ -40,11 +43,12 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     if (Ops::isSafariTabBar(bar))
     {
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
-        const int o(pixelMetric(PM_TabBarTabOverlap));
+        int o(pixelMetric(PM_TabBarTabOverlap));
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
-        if (!isFirst && !isOnly)
-            r.setLeft(r.left()-o);
+//        if (!isFirst && !isOnly)
+            r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
         r.setRight(r.right()+((painter->device() == widget)?o:o/2));
+
         QPainterPath p;
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.5f);
         if (isSelected)
@@ -69,18 +73,13 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         return true;
     }
     Render::Sides sides = Render::All;
-    QPalette::ColorRole fg(QPalette::ButtonText), bg(QPalette::Button);
-    if (widget)
-    {
-        fg = widget->foregroundRole();
-        bg = widget->backgroundRole();
-        if (castObj(const QTabWidget *, tw, widget))
-            if (const QTabBar *bar = tw->findChild<QTabBar *>())
-            {
-                fg = bar->foregroundRole();
-                bg = bar->backgroundRole();
-            }
-    }
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText)), bg(Ops::bgRole(widget, QPalette::Button));
+    if (castObj(const QTabWidget *, tw, widget))
+        if (const QTabBar *bar = tw->findChild<QTabBar *>())
+        {
+            fg = bar->foregroundRole();
+            bg = bar->backgroundRole();
+        }
     QColor bgc(opt->palette.color(bg));
     QColor fgc(opt->palette.color(fg));
     QLinearGradient lg;
@@ -102,9 +101,11 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
+        lg = QLinearGradient(0, 0, r.width(), 0);
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
-        lg = QLinearGradient(0, 0, r.width(), 0);
+        if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
+            lg = QLinearGradient(r.width(), 0, 0, 0);
         vert = true;
         if (isOnly)
             break;
@@ -141,39 +142,72 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-//#if 0
     castOpt(TabV3, opt, option);
-    if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)) || !opt)
+    castObj(const QTabBar *, bar, widget);
+    if (!opt)
         return false;
-
+    painter->save();
     const bool isFirst(opt->position == QStyleOptionTab::Beginning);
     const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
     const bool isSelected(opt->state & State_Selected || isOnly);
-    QRect tr(subElementRect(SE_TabBarTabText, option, widget));
-    int m(pixelMetric(PM_TabBarTabOverlap));
-    if (isFirst || isOnly)
-        tr.setLeft(tr.left()+m);
-    QFont f(painter->font());
-    f.setBold(isSelected);
-    painter->setFont(f);
-    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
-    f.setBold(!isSelected);
-    painter->setFont(f);
-//    castObj(const QTabBar *, bar, widget);
-    const QTabBar *bar = static_cast<const QTabBar *>(widget); //tabbar guaranteed by qobject_cast above
-    QRect ir(QPoint(), bar->iconSize());
-    ir.moveCenter(opt->rect.center());
-//    int d(8);
-//    int index(bar->tabAt(opt->rect.center()));
-    int right(tr.left()-(m/2));
-//    if (index > bar->currentIndex())
-//        right+=d;
-    ir.moveRight(right);
+    const QRect rect(opt->rect);
+    QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
+    QRect ir(tr);
+    int d(pixelMetric(PM_TabBarTabOverlap));
+    if (!opt->icon.isNull())
+    {
+        if (styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide)
+        {
+            tr.setRight(tr.right()-(opt->iconSize.width()+d));
+            ir.setLeft(tr.right());
+        }
+        else
+        {
+            tr.setLeft(tr.left()+(opt->iconSize.width()+d));
+            ir.setRight(tr.left());
+        }
+    }
+//    QRect lr(subElementRect(SE_TabBarTabLeftButton, opt, widget));
+//    QRect rr(subElementRect(SE_TabBarTabRightButton, opt, widget));
+    int trans(0);
+    switch (opt->shape)
+    {
+//    case QTabBar::RoundedNorth:
+//    case QTabBar::TriangularNorth:
+//    case QTabBar::RoundedSouth:
+//    case QTabBar::TriangularSouth:
+    case QTabBar::RoundedWest:
+    case QTabBar::TriangularWest:
+        trans = -90;
+        break;
+    case QTabBar::RoundedEast:
+    case QTabBar::TriangularEast:
+        trans = 90;
+        break;
+    default: break;
+    }
+    if (qAbs(trans))
+    {
+        painter->translate(tr.center());
+        painter->rotate(trans);
+        painter->translate(-tr.center());
+        const QRect tmp(tr);
+        tr.setHeight(tmp.width());
+        tr.setWidth(tmp.height());
+        tr.moveCenter(tmp.center());
+    }
 
-    drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(bar->iconSize()));
+    if (isSelected)
+    {
+        QFont f(painter->font());
+        f.setBold(true);
+        painter->setFont(f);
+    }
+    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+    if (!opt->icon.isNull())
+        drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
+    painter->restore();
     return true;
-//#endif
-//    return false;
 }
 
 static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Render::Sides sides, QRect rect = QRect())
@@ -342,6 +376,12 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
         p.drawTiledPixmap(closer[hover].rect(), tmp2);
         p.end();
     }
+    painter->save();
+    if (widget)
+        if (castObj(const QTabBar *, bar, widget->parentWidget()))
+            if (bar->tabAt(widget->geometry().center()) != bar->currentIndex())
+                painter->setOpacity(0.75f);
     painter->drawTiledPixmap(option->rect, closer[hover]);
+    painter->restore();
     return true;
 }

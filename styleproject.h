@@ -44,6 +44,8 @@ public:
     QRect itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const;
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
 
+    inline const QStyle *proxy() const { return this; }
+
     /* functions called for drawing */
     bool controlSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const { return true; }
     bool primitiveSkipper(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const { return true; }
@@ -117,7 +119,6 @@ protected:
 protected slots:
     void fixTitle();
     void fixMainWindowToolbar();
-    void postOps();
 
 private:
     StyleComplexControl m_cc[CCSize];

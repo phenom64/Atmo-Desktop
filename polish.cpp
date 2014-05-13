@@ -67,6 +67,19 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QProgressBar *, pBar, widget))
         ProgressHandler::manage(pBar);
 
+//    if (castObj(QMainWindow *, mwin, widget))
+//    {
+//        if (QWidget *c = mwin->centralWidget())
+//        {
+//            c->setContentsMargins(0, 0, 0, 0);
+//            if (QLayout *l = c->layout())
+//            {
+//                l->setContentsMargins(0, 0, 0, 0);
+//                l->setSpacing(0);
+//            }
+//        }
+//    }
+
     /** TODO:
      *  Now the shadowhandler handles *ALL*
      *  windows... that we dont want, we
@@ -142,9 +155,13 @@ StyleProject::polish(QWidget *widget)
     }
     if (castObj(QTabBar *, tabBar, widget))
     {
+//        tabBar->setTabsClosable(true);
 //        QFont f(tabBar->font());
 //        f.setBold(true);
 //        tabBar->setFont(f);
+//        installFilter(tabBar);
+//        if (tabBar->documentMode())
+//            tabBar->setExpanding(true);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
             QWidget *p(tabBar->parentWidget());

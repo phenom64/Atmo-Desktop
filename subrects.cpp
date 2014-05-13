@@ -35,27 +35,6 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 {
     switch (r)
     {
-//    case SE_TabBarTabLeftButton:
-//    case SE_TabBarTabRightButton:
-//    case SE_TabBarTabText:
-//    {
-//        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-//            break;
-//        return visualRect(opt->direction, opt->rect, QCommonStyle::subElementRect(r, opt, widget).translated(8, 0));
-//    }
-
-//    case SE_TabBarTabText:
-//    {
-//        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-//            break;
-//        castOpt(TabV3, tab, opt);
-//        if (!tab || !(tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab))
-//            break;
-
-//        QRect sr(QCommonStyle::subElementRect(r, opt, widget));
-//        return visualRect(tab->direction, tab->rect, sr.adjusted(4, 0, 0, 0));
-//    }
-#if 0
     case SE_TabBarTabLeftButton:
     case SE_TabBarTabRightButton:
     case SE_TabBarTabText:
@@ -64,56 +43,75 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         castObj(const QTabBar *, bar, widget);
         if (!tab)
             return QRect();
-        if (!Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-            return QCommonStyle::subElementRect(r, opt, widget);
+
         const int overlap(pixelMetric(PM_TabBarTabOverlap));
-        const bool closable(bar&&bar->tabsClosable());
-        int index(bar->tabAt(opt->rect.center()));
-        QRect ret(tab->rect/*.adjusted(-overlap, 0, overlap, 0)*/);
+        QRect textRect(tab->rect);
+        QRect leftRect;
+
+        const bool east(tab->shape == QTabBar::RoundedEast || tab->shape == QTabBar::TriangularEast);
+        const bool west(tab->shape == QTabBar::RoundedWest || tab->shape == QTabBar::TriangularWest);
+
+        if (tab->leftButtonSize.isValid())
+        {
+            const QSize sz(tab->leftButtonSize);
+            leftRect.setSize(sz);
+            leftRect.moveCenter(tab->rect.center());
+            if (west)
+                leftRect.moveBottom(tab->rect.bottom()-overlap);
+            else if (east)
+                leftRect.moveTop(tab->rect.top()+overlap);
+            else
+                leftRect.moveLeft(tab->rect.left()+overlap);
+        }
+
+        if (leftRect.isValid())
+        {
+            if (west)
+                textRect.setBottom(leftRect.top());
+            else if (east)
+                textRect.setTop(leftRect.bottom());
+            else
+                textRect.setLeft(leftRect.right());
+        }
+
+        QRect rightRect;
+        if (tab->rightButtonSize.isValid())
+        {
+            const QSize sz(tab->rightButtonSize);
+            rightRect.setSize(sz);
+            rightRect.moveCenter(tab->rect.center());
+            if (west)
+                rightRect.moveBottom(tab->rect.bottom()-overlap);
+            else if (east)
+                rightRect.moveTop(tab->rect.top()+overlap);
+            else
+                rightRect.moveRight(tab->rect.right()-overlap);
+        }
+
+        if (rightRect.isValid())
+        {
+            if (west)
+                textRect.setBottom(rightRect.top());
+            else if (east)
+                textRect.setTop(rightRect.bottom());
+            else
+                textRect.setRight(rightRect.left());
+        }
+
+        if (tab->text.isEmpty())
+            textRect = QRect();
+
         switch (r)
         {
         case SE_TabBarTabLeftButton:
-        {
-            if (!(tab->cornerWidgets & QStyleOptionTab::LeftCornerWidget))
-                return QRect();
-            ret.setSize(tab->leftButtonSize);
-            ret.moveCenter(tab->rect.center());
-            ret.moveLeft(ret.left());
-            break;
-        }
+            return visualRect(tab->direction, tab->rect, leftRect);
         case SE_TabBarTabRightButton:
-        {
-            const bool hasButton(tab->cornerWidgets & QStyleOptionTab::RightCornerWidget);
-            if (!hasButton && !closable)
-                return QRect();
-            const QSize closeSize(pixelMetric(PM_TabCloseIndicatorWidth), pixelMetric(PM_TabCloseIndicatorHeight));
-            ret.setSize(hasButton?tab->rightButtonSize:closeSize);
-            ret.moveCenter(tab->rect.center());
-            int d(8);
-            int right(tab->rect.right());
-            if (index < bar->currentIndex())
-                right -= d;
-            if (tab->position == QStyleOptionTab::End)
-                right -= pixelMetric(PM_TabBarTabOverlap);
-            ret.moveRight(right);
-            break;
-        }
+            return visualRect(tab->direction, tab->rect, rightRect);
         case SE_TabBarTabText:
-        {
-            int d(8);
-            if (tab->cornerWidgets & QStyleOptionTab::LeftCornerWidget)
-                ret.setLeft(ret.left()+tab->leftButtonSize.width()+d);
-            if (tab->cornerWidgets & QStyleOptionTab::RightCornerWidget || closable)
-                ret.setRight(ret.right()-(tab->rightButtonSize.width()+d+d/2));
-            if (!tab->icon.isNull() || !bar->tabIcon(bar->tabAt(opt->rect.center())).isNull())
-                ret.setLeft(ret.left()+tab->iconSize.width()+((index > bar->currentIndex())*d)+d/2);
-            break;
+            return visualRect(tab->direction, tab->rect, textRect);
+        default: return QCommonStyle::subElementRect(r, opt, widget);
         }
-        default: return QRect();
-        }
-        return visualRect(tab->direction, opt->rect, ret);
     }
-#endif
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove: return opt->rect;
     case SE_ProgressBarContents:

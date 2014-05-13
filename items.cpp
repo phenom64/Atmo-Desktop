@@ -23,12 +23,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
-    QPalette::ColorRole fg(QPalette::Text), bg(QPalette::Base);
-    if (widget)
-    {
-        fg = widget->foregroundRole();
-        bg = widget->backgroundRole();
-    }
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
     const bool isMenu(qobject_cast<const QMenu *>(widget));
     const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);

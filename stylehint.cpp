@@ -14,6 +14,8 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
             return Qt::AlignLeft;
         return Qt::AlignCenter;
     }
+//    case SH_TabBar_PreferNoArrows: return true;
+    case SH_TabBar_CloseButtonPosition: return QTabBar::LeftSide;
     case SH_ScrollBar_MiddleClickAbsolutePosition: return true;
     case SH_ScrollBar_ScrollWhenPointerLeavesControl: return true;
     case SH_ItemView_PaintAlternatingRowColorsForEmptyArea: return true;
