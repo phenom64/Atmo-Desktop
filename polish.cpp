@@ -12,6 +12,8 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QApplication>
+#include <QComboBox>
+#include <QLineEdit>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -132,6 +134,9 @@ StyleProject::polish(QWidget *widget)
         view->setAttribute(Qt::WA_MouseTracking);
         installFilter(view);
     }
+    if (castObj(QComboBox *, box, widget))
+        if (QLineEdit *l = box->findChild<QLineEdit *>())
+            connect(l, SIGNAL(textChanged(QString)), box, SLOT(update()));
     if (qobject_cast<QMenu *>(widget)||qobject_cast<QMenuBar *>(widget))
     {
         widget->setAttribute(Qt::WA_TranslucentBackground);
@@ -162,6 +167,8 @@ StyleProject::polish(QWidget *widget)
 //        installFilter(tabBar);
 //        if (tabBar->documentMode())
 //            tabBar->setExpanding(true);
+        tabBar->setAttribute(Qt::WA_Hover);
+        tabBar->setAttribute(Qt::WA_MouseTracking);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
             QWidget *p(tabBar->parentWidget());

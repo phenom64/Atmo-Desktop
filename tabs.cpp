@@ -45,7 +45,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
         int o(pixelMetric(PM_TabBarTabOverlap));
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
-//        if (!isFirst && !isOnly)
+        if (!isFirst && !isOnly)
             r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
         r.setRight(r.right()+((painter->device() == widget)?o:o/2));
 
@@ -147,16 +147,16 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return false;
     painter->save();
-    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
+//    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
     const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
     const bool isSelected(opt->state & State_Selected || isOnly);
-    const QRect rect(opt->rect);
+//    const QRect rect(opt->rect);
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
-    QRect ir(tr);
-    int d(pixelMetric(PM_TabBarTabOverlap));
+    const int d(pixelMetric(PM_TabBarTabOverlap));
+    QRect ir(tr.adjusted(d, 0, -d, 0));
     if (!opt->icon.isNull())
     {
-        if (styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide)
+        if (styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide) //icon on right...
         {
             tr.setRight(tr.right()-(opt->iconSize.width()+d));
             ir.setLeft(tr.right());
@@ -203,7 +203,10 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         f.setBold(true);
         painter->setFont(f);
     }
-    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
+    if (opt->state & State_MouseOver && !isSelected)
+        fg = QPalette::Highlight;
+    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
     painter->restore();

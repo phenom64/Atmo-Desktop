@@ -89,8 +89,8 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
                 if (bar->expanding())
                     sz.setWidth((bar->width()-margin)/bar->count());
             }
-//            else if (tab->position == QStyleOptionTab::Beginning)
-//                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
+            else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
         }
 
 //        if (bar)

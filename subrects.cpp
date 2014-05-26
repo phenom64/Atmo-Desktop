@@ -44,7 +44,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         if (!tab)
             return QRect();
 
-        const int overlap(pixelMetric(PM_TabBarTabOverlap));
+        int overlap(pixelMetric(PM_TabBarTabOverlap));
         QRect textRect(tab->rect);
         QRect leftRect;
 
@@ -53,6 +53,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 
         if (tab->leftButtonSize.isValid())
         {
+            if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+                overlap *= 2;
             const QSize sz(tab->leftButtonSize);
             leftRect.setSize(sz);
             leftRect.moveCenter(tab->rect.center());

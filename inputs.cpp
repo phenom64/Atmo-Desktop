@@ -149,12 +149,16 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     }
     else
     {
-        drawSafariLineEdit(opt->rect, painter, opt->palette.brush(QPalette::Base));
+        QBrush brush = opt->palette.brush(bg);
+        if (widget)
+            if (QLineEdit *l = widget->findChild<QLineEdit *>())
+                brush = l->palette().brush(l->backgroundRole());
+        drawSafariLineEdit(opt->rect, painter, brush);
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
     m*=2;
-    Ops::drawArrow(painter, opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText), arrowRect.adjusted(m*1.25f, m, -m, -m), Ops::Down);
+    Ops::drawArrow(painter, opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText), arrowRect.adjusted(m*1.25f, m, -m, -m), Ops::Down, Qt::AlignCenter, 7);
     return true;
 }
 
