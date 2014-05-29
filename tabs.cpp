@@ -47,7 +47,8 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
         if (!isFirst && !isOnly)
             r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
-        r.setRight(r.right()+((painter->device() == widget)?o:o/2));
+        if (!isLast && !isOnly)
+            r.setRight(r.right()+((painter->device() == widget)?o:o/2));
 
         QPainterPath p;
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.5f);
@@ -152,8 +153,11 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     const bool isSelected(opt->state & State_Selected || isOnly);
 //    const QRect rect(opt->rect);
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
-    const int d(pixelMetric(PM_TabBarTabOverlap));
+    int d(pixelMetric(PM_TabBarTabOverlap));
+    if ((isOnly || opt->position == QStyleOptionTab::End) && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide)
+        d *= 2;
     QRect ir(tr.adjusted(d, 0, -d, 0));
+
     if (!opt->icon.isNull())
     {
         if (styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide) //icon on right...
@@ -197,16 +201,23 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         tr.moveCenter(tmp.center());
     }
 
+    QFont f(painter->font());
     if (isSelected)
     {
-        QFont f(painter->font());
         f.setBold(true);
         painter->setFont(f);
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
     if (opt->state & State_MouseOver && !isSelected)
         fg = QPalette::Highlight;
-    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, opt->text, fg);
+
+    Qt::Alignment align = Qt::AlignCenter;
+    QFontMetrics fm(f);
+    QString text(opt->text);
+    if (fm.boundingRect(text).width() > tr.width())
+        text = fm.elidedText(text, bar?bar->elideMode():Qt::ElideRight, tr.width());
+//        align &= ~Qt::AlignHCenter;
+    drawItemText(painter, tr, align, option->palette, option->ENABLED, text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
     painter->restore();

@@ -14,6 +14,7 @@
 #include <QApplication>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QHeaderView>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -64,6 +65,12 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QMainWindow *, win, widget))
     {
         installFilter(win);
+    }
+
+    if (castObj(QHeaderView *, hw, widget))
+    {
+        hw->viewport()->setBackgroundRole(QPalette::Base);
+        hw->viewport()->setForegroundRole(QPalette::Text);
     }
 
     if (castObj(QProgressBar *, pBar, widget))

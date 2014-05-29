@@ -61,6 +61,9 @@ StyleProject::assignMethods()
     m_ce[CE_ProgressBarGroove] = method(drawProgressBarGroove);
     m_ce[CE_ProgressBarContents] = method(drawProgressBarContents);
     m_ce[CE_ProgressBarLabel] = method(drawProgressBarLabel);
+    m_ce[CE_Header] = method(drawHeader);
+    m_ce[CE_HeaderSection] = method(drawHeaderSection);
+    m_ce[CE_HeaderLabel] = method(drawHeaderLabel);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);

@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QToolButton>
+#include <QTimer>
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
@@ -160,9 +161,8 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         if ( !toolBar )
             return false;
         //below simply to trigger an event that forces the toolbar to call sizeFromContents again
-        const QSize &iconSize(toolBar->iconSize());
-        toolBar->setIconSize(iconSize - QSize(1, 1));
-        toolBar->setIconSize(iconSize);
+        Ops::queToolBar(toolBar);
+        QTimer::singleShot(0, Ops::instance(), SLOT(updateToolBar()));
     }
 //    if (castObj(QTabBar *, bar, o))
 //    {

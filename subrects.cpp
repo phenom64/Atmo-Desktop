@@ -53,7 +53,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 
         if (tab->leftButtonSize.isValid())
         {
-            if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+            if ((tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab) && Ops::isSafariTabBar(bar))
                 overlap *= 2;
             const QSize sz(tab->leftButtonSize);
             leftRect.setSize(sz);

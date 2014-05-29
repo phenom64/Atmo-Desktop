@@ -18,6 +18,7 @@ public:
     unsigned int sides;
 };
 
+class QToolBar;
 class QTabBar;
 class QToolButton;
 class QStyle;
@@ -40,6 +41,7 @@ public:
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
+    static void queToolBar(QToolBar *bar) { instance()->_queToolBar(bar); }
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {
@@ -69,9 +71,14 @@ public:
     }
 public slots:
     void updateGeoFromSender();
+    void updateToolBar();
+
+protected:
+    void _queToolBar(QToolBar *bar) { if (!m_toolBars.contains(bar)) m_toolBars << bar; }
 
 private:
     static Ops *s_instance;
+    QList<QToolBar *> m_toolBars;
 };
 
 #endif // OPS_H

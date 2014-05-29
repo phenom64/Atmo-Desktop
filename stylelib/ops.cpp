@@ -14,6 +14,7 @@
 #include <QToolButton>
 #include <QStyle>
 #include <QStyleOptionToolButton>
+#include <QTimer>
 
 #include "ops.h"
 #include "xhandler.h"
@@ -214,6 +215,18 @@ Ops::updateGeoFromSender()
     QWidget *w = static_cast<QWidget *>(sender());
     QResizeEvent e(w->size(), w->size());
     qApp->sendEvent(w, &e);
+}
+
+void
+Ops::updateToolBar()
+{
+    while (!m_toolBars.isEmpty())
+    {
+        QToolBar *toolBar = m_toolBars.takeFirst();
+        const QSize &iconSize(toolBar->iconSize());
+        toolBar->setIconSize(iconSize - QSize(1, 1));
+        toolBar->setIconSize(iconSize);
+    }
 }
 
 QPalette::ColorRole

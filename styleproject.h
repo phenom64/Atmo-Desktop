@@ -72,6 +72,9 @@ public:
     bool drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawHeader(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawHeaderSection(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;

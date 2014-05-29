@@ -5,6 +5,7 @@
 #include <QStyleOptionToolButton>
 #include <QToolButton>
 #include <QMainWindow>
+#include <QMenuBar>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -89,7 +90,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
                 if (bar->expanding())
                     sz.setWidth((bar->width()-margin)/bar->count());
             }
-            else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+            else if (tab->position != QStyleOptionTab::Middle)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
         }
 
@@ -121,17 +122,35 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
         int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
         geo.getCoords(&x, &y, &r, &b);
+        castObj(const QToolButton *, btn, widget);
         castObj(const QToolBar *, bar, widget->parentWidget());
-        bool isFull(bar && !(qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc))
-                    || qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc))
-                    || qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin))
-                    || qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin))));
+        Render::Sides sides = Render::All;
+        if (bar&&qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
+            sides &= ~Render::Right;
+        if (bar&&qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc)))
+            sides &= ~Render::Left;
+//        if (qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin)))
+//            sides &= ~Render::Bottom;
+//        if (qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin)))
+//            sides &= ~Render::Top;
+
+        const bool isFull(sides == Render::All);
 
         QSize sz(contentsSize);
         bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
         sz+=QSize(hor?8:4, hor?4:8);
-        if (hor && isFull)
-            sz.rwidth() += 8;
+        if (bar && hor)
+        {
+            if (isFull)
+                sz.rwidth() += 16;
+            else if (sides & (Render::Left|Render::Right))
+                sz.rwidth() += 2;
+            if (btn && btn->group())
+                sz.rwidth() += 8;
+            if (btn && btn->isCheckable() && !isFull)
+                sz.rwidth() += 2;
+
+        }
         if (sz.height() < 23)
             sz.setHeight(23);
         return sz;
@@ -146,7 +165,29 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             sz.setHeight(23);
         return sz;
     }
-    case CT_MenuBarItem: return contentsSize;
+//        case CT_MenuItem:
+    case CT_MenuBarItem:
+    {
+        castOpt(MenuItem, item, opt);
+        if (!item)
+            return contentsSize;
+        QSize sz(contentsSize);
+        if (castObj(const QMenuBar *, bar, widget))
+        {
+            const QList<QAction *> actions = bar->actions();
+            for (int i = 0; i < actions.size(); ++i)
+            {
+                const QAction *a(actions.at(i));
+                if (a->text() == item->text && a->font().bold())
+                {
+                    QFontMetrics f(a->font());
+                    QFontMetrics ff(item->font);
+                    sz.rwidth() += (f.boundingRect(item->text).width() - ff.boundingRect(item->text).width());
+                }
+            }
+        }
+        return sz;
+    }
     case CT_MenuItem: return menuItemSize(qstyleoption_cast<const QStyleOptionMenuItem *>(opt), qobject_cast<const QMenu *>(widget), contentsSize);
     case CT_Menu: return contentsSize;
     case CT_RadioButton:

@@ -10,9 +10,11 @@
 #include <QAbstractItemView>
 #include <QMenu>
 #include <QTreeView>
+#include <QTableView>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
+#include "stylelib/color.h"
 
 bool
 StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -22,6 +24,15 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     painter->save();
+    QFont f(opt->font);
+    bool isMenuBar(false);
+    if (castObj(const QMenuBar *, bar, widget))
+    {
+        isMenuBar = true;
+        if (QAction *a = bar->actionAt(opt->rect.center()))
+            f.setBold(a->font().bold());
+    }
+    painter->setFont(f);
     painter->setRenderHint(QPainter::Antialiasing);
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
@@ -114,7 +125,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 
     for (int i = 0; i < 2 && i < text.count(); ++i)
-        drawItemText(painter, textRect, align[i], opt->palette, enabled[i], text.at(i), fg);
+        drawItemText(painter, textRect, isMenuBar?Qt::AlignCenter:align[i], opt->palette, enabled[i], text.at(i), fg);
     painter->restore();
     return true;
 }
@@ -173,5 +184,88 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    return !qobject_cast<const QTreeView *>(widget);
+    if (qMin(option->rect.width(), option->rect.height()) < 8)
+        return true;
+    painter->save();
+    QPalette::ColorRole fg(option->state & State_Selected ? QPalette::HighlightedText : QPalette::Text),
+            bg(option->state & State_Selected ? QPalette::Highlight : QPalette::Base);
+
+    painter->setPen(Color::mid(option->palette.color(fg), option->palette.color(bg)));
+    int mid_h = option->rect.center().x();
+    int mid_v = option->rect.center().y();
+
+    if (option->state & State_Item)
+    {
+        if (option->direction == Qt::RightToLeft)
+            painter->drawLine(option->rect.left(), mid_v, mid_h, mid_v);
+        else
+            painter->drawLine(mid_h, mid_v, option->rect.right(), mid_v);
+    }
+    if (option->state & State_Sibling)
+        painter->drawLine(mid_h, mid_v, mid_h, option->rect.bottom());
+    if (option->state & (State_Open | State_Children | State_Item | State_Sibling))
+        painter->drawLine(mid_h, option->rect.y(), mid_h, mid_v);
+
+    if (option->state & State_Children)
+    {
+        if (option->state & State_MouseOver && !(option->state & State_Selected))
+            fg = QPalette::Highlight;
+        painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
+        Ops::drawArrow(painter, option->palette.color(fg), option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, 9);
+    }
+
+    painter->restore();
+    return true;
+}
+
+bool
+StyleProject::drawHeader(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    drawHeaderSection(option, painter, widget);
+    drawHeaderLabel(option, painter, widget);
+    return true;
+}
+
+bool
+StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(Header, opt, option);
+    if (!opt)
+        return true;
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
+    if (opt->sortIndicator)
+        bg = QPalette::Highlight;
+    painter->fillRect(opt->rect, opt->palette.color(bg));
+    const QPen pen(painter->pen());
+    painter->setPen(QColor(0, 0, 0, 127));
+    painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
+    if (!(widget && opt->rect.right() == widget->rect().right()) || opt->orientation == Qt::Vertical)
+        painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
+
+    if (widget && qobject_cast<const QTableView *>(widget->parentWidget()))
+        if (opt->position == QStyleOptionHeader::Beginning && opt->orientation == Qt::Horizontal)
+            painter->drawLine(opt->rect.topLeft(), opt->rect.bottomLeft());
+
+    painter->setPen(pen);
+    return true;
+}
+
+bool
+StyleProject::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(Header, opt, option);
+    if (!opt)
+        return true;
+
+
+    const QRect tr(subElementRect(SE_HeaderLabel, opt, widget));
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text));
+    if (opt->sortIndicator)
+    {
+        const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
+        fg = QPalette::HighlightedText;
+        Ops::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down);
+    }
+    drawItemText(painter, tr, opt->textAlignment, opt->palette, opt->state & State_Enabled, opt->text, fg);
+    return true;
 }
