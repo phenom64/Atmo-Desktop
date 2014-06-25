@@ -137,13 +137,36 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!opt)
         return true;
 
+    const bool multiSelection(qobject_cast<const QAbstractItemView *>(widget)&&static_cast<const QAbstractItemView *>(widget)->selectionMode()>QAbstractItemView::SingleSelection);
     if (opt->SUNKEN || opt->HOVER)
     {
         QColor h(opt->palette.color(QPalette::Highlight));
+
         if (!(opt->SUNKEN))
             h.setAlpha(64);
 
-        painter->fillRect(opt->rect, h);
+        QBrush brush(h);
+
+        if (!multiSelection)
+        {
+            QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+            lg.setColorAt(0.0f, Color::mid(h, QColor(255, 255, 255, h.alpha()), 3, 1));
+            lg.setColorAt(1.0f, Color::mid(h, QColor(0, 0, 0, h.alpha()), 3, 1));
+            brush = lg;
+        }
+
+        painter->fillRect(opt->rect, brush);
+
+        if (opt->SUNKEN && !multiSelection)
+        {
+            painter->save();
+            painter->setPen(QColor(0, 0, 0, 64));
+            painter->translate(0.0f, 0.5f);
+            painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
+//            painter->translate(0.0f, -1.0f);
+            painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
+            painter->restore();
+        }
     }
     return true;
 }
@@ -190,7 +213,8 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
     QPalette::ColorRole fg(option->state & State_Selected ? QPalette::HighlightedText : QPalette::Text),
             bg(option->state & State_Selected ? QPalette::Highlight : QPalette::Base);
 
-    painter->setPen(Color::mid(option->palette.color(fg), option->palette.color(bg)));
+    QColor fgc(Color::mid(option->palette.color(fg), option->palette.color(bg)));
+    painter->setPen(fgc);
     int mid_h = option->rect.center().x();
     int mid_v = option->rect.center().y();
 
@@ -209,9 +233,9 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
     if (option->state & State_Children)
     {
         if (option->state & State_MouseOver && !(option->state & State_Selected))
-            fg = QPalette::Highlight;
+            fgc = option->palette.color(QPalette::Highlight);
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
-        Ops::drawArrow(painter, option->palette.color(fg), option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, 9);
+        Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, 9);
     }
 
     painter->restore();
@@ -235,8 +259,15 @@ StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, c
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
     if (opt->sortIndicator)
         bg = QPalette::Highlight;
-    painter->fillRect(opt->rect, opt->palette.color(bg));
+
+    QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+    const QColor b(opt->palette.color(bg));
+    lg.setColorAt(0.0f, Color::mid(b, QColor(255, 255, 255, b.alpha()), 4, 1));
+    lg.setColorAt(1.0f, Color::mid(b, QColor(0, 0, 0, b.alpha()), 4, 1));
+    painter->fillRect(opt->rect, lg);
+
     const QPen pen(painter->pen());
+
     painter->setPen(QColor(0, 0, 0, 127));
     painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
     if (!(widget && opt->rect.right() == widget->rect().right()) || opt->orientation == Qt::Vertical)

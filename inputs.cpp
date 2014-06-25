@@ -16,11 +16,18 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 
-static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b)
+static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, const QStyleOption *opt = 0)
 {
     Render::renderMask(r.adjusted(1, 1, -1, -2), p, b);
-    Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.25f);
-    Render::renderShadow(Render::Sunken, r, p, 32, Render::All, 0.25f);
+    QColor *c = 0;
+    bool focus(false);
+    if (opt && opt->state & QStyle::State_HasFocus)
+    {
+        c = new QColor(opt->palette.color(QPalette::Highlight));
+        focus = true;
+    }
+    Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.25f, c);
+    Render::renderShadow(Render::Sunken, r, p, 32, Render::All, focus?0.6f:0.2f, c);
 }
 
 bool
@@ -37,7 +44,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
             roundNess = MAXRND;
 
     if (roundNess == MAXRND)
-        drawSafariLineEdit(option->rect, painter, option->palette.brush(QPalette::Base));
+        drawSafariLineEdit(option->rect, painter, option->palette.brush(QPalette::Base), option);
     else
     {
         Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.brush(QPalette::Base), roundNess);

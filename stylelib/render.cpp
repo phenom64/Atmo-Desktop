@@ -496,7 +496,7 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
 }
 
 void
-Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides)
+Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides, const QColor *color)
 {
     if (!rect.isValid())
         return;
@@ -508,7 +508,12 @@ Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter,
     for (int i = 0; i < PartCount; ++i)
         if (i == CenterPart || roundNess)
             if (needPart((Part)i, sides))
-                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), m_shadow[shadow][roundNess][i]);
+            {
+                QPixmap pix = m_shadow[shadow][roundNess][i];
+                if (color)
+                    colorizePixmap(pix, *color);
+                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), pix);
+            }
     painter->setOpacity(o);
 }
 

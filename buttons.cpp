@@ -231,6 +231,8 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     }
     Render::Shadow shadow = Render::Etched;
     QColor bc(option->palette.color(QPalette::Button));
+    if (opt->SUNKEN)
+        bc = Color::mid(bc, option->palette.color(QPalette::Highlight));
     if (option->ENABLED)
     {
         if (option->HOVER)
@@ -243,19 +245,21 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     }
 
     QRect rect(opt->rect);
+
+//    if (opt->toolButtonStyle == )
     if (bar)
     {
         QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
         QColor start = Color::mid(bc, Qt::white, 8, 1), end = Color::mid(bc, Qt::black, 8, 1);
-        if (isInTopToolBar)
+        if (isInTopToolBar && !(opt->SUNKEN))
         {
 //            start = Color::mid(bc, Qt::white, 2, 5);
 //            end = Color::mid(bc, Qt::black, 3, 1);
-            start = QColor(255, 255, 255, 192);
+            start = QColor(255, 255, 255, (option->HOVER)?127:63);
             end = Qt::transparent;
         }
         lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
-        lg.setColorAt(0.7f, opt->SUNKEN ? Color::mid(bc, end) : end);
+        lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
         Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
         Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
         if (!(sides&Render::Right) && !nextSelected)
