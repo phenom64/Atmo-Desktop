@@ -255,13 +255,13 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         {
 //            start = Color::mid(bc, Qt::white, 2, 5);
 //            end = Color::mid(bc, Qt::black, 3, 1);
-            start = QColor(255, 255, 255, (option->HOVER)?127:63);
+            start = QColor(255, 255, 255, (option->HOVER)?127:95);
             end = Qt::transparent;
         }
         lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
         lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
         Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
-        Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.4f);
+        Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.33f);
         if (!(sides&Render::Right) && !nextSelected)
         {
             painter->setPen(QColor(0, 0, 0, 64));

@@ -26,7 +26,7 @@ static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, con
         c = new QColor(opt->palette.color(QPalette::Highlight));
         focus = true;
     }
-    Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.25f, c);
+    Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.1f, c);
     Render::renderShadow(Render::Sunken, r, p, 32, Render::All, focus?0.6f:0.2f, c);
 }
 

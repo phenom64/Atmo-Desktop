@@ -318,7 +318,7 @@ Render::initTabs()
 //        renderShadow(Etched, img.rect(), &p, ts*4, Top);
         p.setPen(Qt::black);
         p.drawLine(img.rect().topLeft(), img.rect().topRight());
-        renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.33f);
+        renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.2f);
         p.end();
         --hsz;
         hsz/=2;

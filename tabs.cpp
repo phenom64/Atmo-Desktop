@@ -51,7 +51,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             r.setRight(r.right()+((painter->device() == widget)?o:o/2));
 
         QPainterPath p;
-        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.5f);
+        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.25f);
         if (isSelected)
         {
             static QMap<int, QPixmap> s_pix;
@@ -242,11 +242,11 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Re
 //    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
     const float o(p->opacity());
     p->setPen(Qt::black);
-    p->setOpacity(0.33f);
+    p->setOpacity(0.2f);
     p->drawLine(r.topLeft(), r.topRight());
     p->drawLine(r.bottomLeft(), r.bottomRight());
     p->setOpacity(o);
-    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top, 0.16f);
+    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top, 0.1f);
 }
 
 bool
