@@ -60,7 +60,11 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
                 QPixmap pix(Render::noise().width(), r.height());
                 pix.fill(Qt::transparent);
                 QPainter pt(&pix);
-                pt.fillRect(pix.rect(), Color::titleBarColors[1]);
+//                pt.fillRect(pix.rect(), Color::titleBarColors[1]);
+                QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
+                lg.setColorAt(0.0f, Color::titleBarColors[1]);
+                lg.setColorAt(1.0f, Color::mid(Color::titleBarColors[1], Qt::black, 8, 1));
+                pt.fillRect(pix.rect(), lg);
                 pt.end();
                 s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
             }

@@ -43,6 +43,7 @@ public:
     QRect subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget = 0) const;
     QRect itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const;
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
+    QPixmap standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const;
 
     inline const QStyle *proxy() const { return this; }
 
@@ -75,6 +76,7 @@ public:
     bool drawHeader(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawHeaderSection(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;

@@ -4,6 +4,8 @@
 #include <QToolBar>
 #include <QMainWindow>
 #include <QStyleOptionGroupBox>
+#include <QStyleOptionDockWidget>
+#include <QStyleOptionDockWidgetV2>
 #include <QCheckBox>
 #include <QMenuBar>
 #include <QMap>
@@ -197,5 +199,32 @@ StyleProject::drawToolTip(const QStyleOption *option, QPainter *painter, const Q
     lg.setColorAt(0.0f, Color::mid(option->palette.color(QPalette::ToolTipBase), Qt::white, 5, 1));
     lg.setColorAt(1.0f, Color::mid(option->palette.color(QPalette::ToolTipBase), Qt::black, 5, 1));
     Render::renderMask(option->rect, painter, lg, 4);
+    return true;
+}
+
+bool
+StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(DockWidgetV2, opt, option);
+    if (!opt)
+        return true;
+
+    const QRect tr(subElementRect(SE_DockWidgetTitleBarText, opt, widget));
+//    const QRect cr(subElementRect(SE_DockWidgetCloseButton, opt, widget));
+//    const QRect fr(subElementRect(SE_DockWidgetFloatButton, opt, widget));
+//    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
+
+//    if (opt->closable)
+//        painter->drawTiledPixmap(cr, standardPixmap(SP_DockWidgetCloseButton, opt, widget));
+//    if (opt->floatable)
+//        painter->drawTiledPixmap(fr, standardPixmap(SP_TitleBarUnshadeButton, opt, widget));
+
+    const QFont f(painter->font());
+    QFont bold(f);
+    bold.setBold(true);
+    const QString title(QFontMetrics(bold).elidedText(opt->title, Qt::ElideRight, tr.width()));
+    painter->setFont(bold);
+    drawItemText(painter, tr, Qt::AlignCenter, opt->palette, opt->ENABLED, title, widget?widget->foregroundRole():QPalette::WindowText);
+    painter->setFont(f);
     return true;
 }

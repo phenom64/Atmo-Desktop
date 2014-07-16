@@ -26,7 +26,8 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     //not used atm
     //QRect up(subControlRect(CC_ScrollBar, option, SC_ScrollBarSubLine, widget));
     //QRect down(subControlRect(CC_ScrollBar, option, SC_ScrollBarAddLine, widget));
-    QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget));
+    const int m(2);
+    QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget).adjusted(m, m, -m, -m));
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
 
     castObj(const QScrollBar *, bar, widget);
@@ -36,6 +37,21 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
     Color::ensureContrast(bgc, fgc);
     painter->fillRect(groove, bgc);
+    if (bg == QPalette::Base)
+    {
+        QLine l(groove.topLeft(), groove.bottomLeft());
+        if (opt->orientation == Qt::Horizontal)
+        {
+            l.setPoints(groove.topLeft(), groove.topRight());
+            slider.setBottom(slider.bottom()+1);
+        }
+        else
+            slider.setRight(slider.right()+1);
+        const QPen saved(painter->pen());
+        painter->setPen(QColor(0, 0, 0, 127));
+        painter->drawLine(l);
+        painter->setPen(saved);
+    }
 //    const bool hor(opt->orientation==Qt::Horizontal);
 //    const int m(1); //margin
 //    slider.adjust(!hor*m, hor*m, -!hor*m, hor*m);
@@ -50,7 +66,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 bool
 StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
+    const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
     painter->fillRect(option->rect, option->palette.color(bg));
     return true;
 }

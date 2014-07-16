@@ -11,7 +11,7 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
     case SH_TabBar_Alignment:
     {
         castObj(const QTabBar *, bar, w);
-        if (Ops::isSafariTabBar(bar) && !bar->expanding())
+        if (Ops::isSafariTabBar(bar))
             return Qt::AlignLeft;
         return Qt::AlignCenter;
     }

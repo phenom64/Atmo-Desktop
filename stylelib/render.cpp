@@ -158,7 +158,7 @@ Render::initShadowParts()
             const int rnd(bool(r>2)?r:1);
             if (r > 1)
             {
-                p.setBrush(QColor(255, 255, 255, 255));
+                p.setBrush(QColor(255, 255, 255, 192));
                 p.drawRoundedRect(rect, rnd, rnd);
             }
             p.setBrush(Qt::black);
@@ -194,12 +194,12 @@ Render::initShadowParts()
         }
         case Etched:
         {
-            QRect rect(pix.rect());
+//            QRect rect(pix.rect());
             QPixmap white(pix.size()-QSize(0, 1));
             white.fill(Qt::transparent);
             QPainter pt(&white);
             pt.setRenderHint(QPainter::Antialiasing);
-            pt.setBrush(Qt::white);
+            pt.setBrush(QColor(255, 255, 255, 192));
             pt.setPen(Qt::NoPen);
             pt.drawRoundedRect(white.rect(), r, r);
             pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);

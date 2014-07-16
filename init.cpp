@@ -64,6 +64,7 @@ StyleProject::assignMethods()
     m_ce[CE_Header] = method(drawHeader);
     m_ce[CE_HeaderSection] = method(drawHeaderSection);
     m_ce[CE_HeaderLabel] = method(drawHeaderLabel);
+    m_ce[CE_DockWidgetTitle] = method(drawDockTitle);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -72,8 +73,10 @@ StyleProject::assignMethods()
     m_cc[CC_Slider] = method(drawSlider);
     m_cc[CC_ComboBox] = method(drawComboBox);
     m_cc[CC_GroupBox] = method(drawGroupBox);
+//    m_cc[CC_MdiControls] = method(complexSkipper);
 
     /* primitive elements */
+    m_pe[PE_FrameStatusBarItem] = method(primitiveSkipper);
     m_pe[PE_IndicatorToolBarSeparator] = method(primitiveSkipper);
     m_pe[PE_PanelLineEdit] = method(drawLineEdit);
     m_pe[PE_Frame] = method(drawFrame);

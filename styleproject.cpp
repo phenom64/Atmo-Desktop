@@ -109,6 +109,26 @@ StyleProject::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, c
     return QCommonStyle::generatedIconPixmap(iconMode, pixmap, opt);
 }
 
+QPixmap
+StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const
+{
+    switch (sp)
+    {
+    case SP_DockWidgetCloseButton:
+    {
+        QPixmap pix(16, 16);
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.drawEllipse(pix.rect());
+        p.end();
+        return pix;
+    }
+
+    default: return QCommonStyle::standardPixmap(sp, opt, widget);
+    }
+}
+
 QRect
 StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
 {

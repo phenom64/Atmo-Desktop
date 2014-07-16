@@ -81,14 +81,35 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         {
             if (bar->expanding())
             {
-                int margin(pixelMetric(PM_TabBarTabOverlap)/2);
+//                int margin(pixelMetric(PM_TabBarTabOverlap)/2);
+                int w(bar->width());
+
                 if (castObj(const QTabWidget *, tw, bar->parentWidget()))
+                {
                     for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
                         if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
-//                            if (cw->isVisible())
-                                margin+=cw->width();
-                if (bar->expanding())
-                    sz.setWidth((bar->width()-margin)/bar->count());
+                            w-=cw->width();
+                }
+                else
+                {
+                    QList<const QWidget *> children = bar->findChildren<const QWidget *>();
+                    for (int i = 0; i < bar->count(); ++i)
+                        children.removeOne(bar->tabButton(i, (QTabBar::ButtonPosition)styleHint(SH_TabBar_CloseButtonPosition, opt, widget)));
+
+                    for (int i = 0; i < children.count(); ++i)
+                    {
+                        const QWidget *wi(children.at(i));
+                        if (wi->isVisible() && wi->parentWidget() == bar)
+                        {
+                            w-=wi->width();
+//                            if (w > wi->geometry().x())
+//                                w = wi->geometry().x();
+                        }
+
+                    }
+                }
+
+                sz.setWidth(w/bar->count());
             }
             else if (tab->position != QStyleOptionTab::Middle)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);

@@ -12,6 +12,8 @@
 #include <QMainWindow>
 #include <QGroupBox>
 #include <QStyleOptionProgressBarV2>
+#include <QStyleOptionDockWidget>
+#include <QStyleOptionDockWidgetV2>
 #include <QProgressBar>
 
 #include "styleproject.h"
@@ -160,6 +162,46 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     {
         const int pmInd(pixelMetric(PM_IndicatorWidth)), pmSpc(pixelMetric(PM_CheckBoxLabelSpacing)), w(opt->rect.width()-(pmInd+pmSpc));
         return visualRect(opt->direction, opt->rect, QRect(opt->rect.left()+pmInd+pmSpc, opt->rect.top(), w, opt->rect.height()));
+    }
+    case SE_DockWidgetCloseButton:
+    case SE_DockWidgetFloatButton:
+    case SE_DockWidgetTitleBarText:
+    case SE_DockWidgetIcon:
+    {
+        castOpt(DockWidgetV2, dw, opt);
+        if (!dw)
+            return QRect();
+
+        QRect rect(dw->rect);
+
+        QRect cr, fr;
+        int left(rect.left());
+        if (dw->closable)
+        {
+            cr = rect;
+            cr.setWidth(cr.height());
+            cr.moveLeft(left);
+            left += cr.width();
+        }
+        if (dw->floatable)
+        {
+            fr = rect;
+            fr.setWidth(fr.height());
+            fr.moveLeft(left);
+            left += cr.width();
+        }
+        switch (r)
+        {
+        case SE_DockWidgetCloseButton:
+            return visualRect(dw->direction, rect, cr);
+        case SE_DockWidgetFloatButton:
+            return visualRect(dw->direction, rect, fr);
+        case SE_DockWidgetTitleBarText:
+            return visualRect(dw->direction, rect, QRect(left, rect.top(), qMax(0, rect.width()-left), rect.height()));
+        case SE_DockWidgetIcon:
+            return QRect(); // ever needed?
+        default: return QRect();
+        }
     }
     default: break;
     }
