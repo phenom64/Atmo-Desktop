@@ -76,6 +76,13 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QProgressBar *, pBar, widget))
         ProgressHandler::manage(pBar);
 
+    if (castObj(QComboBox *, cBox, widget))
+        if (!cBox->isEditable())
+    {
+        cBox->setForegroundRole(QPalette::ButtonText);
+        cBox->setBackgroundRole(QPalette::Button);
+    }
+
 //    if (castObj(QMainWindow *, mwin, widget))
 //    {
 //        if (QWidget *c = mwin->centralWidget())

@@ -19,11 +19,11 @@
 static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, const QStyleOption *opt = 0)
 {
     Render::renderMask(r.adjusted(1, 1, -1, -2), p, b);
-    QColor *c = 0;
+    QBrush *c = 0;
     bool focus(false);
     if (opt && opt->state & QStyle::State_HasFocus)
     {
-        c = new QColor(opt->palette.color(QPalette::Highlight));
+        c = new QBrush(opt->palette.color(QPalette::Highlight));
         focus = true;
     }
     Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.1f, c);
@@ -38,18 +38,19 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     if (widget && widget->objectName() == "qt_spinbox_lineedit")
         return true;
 
-    int roundNess = 2;
+    bool inToolBar(false);
     if (const QLineEdit *lineEdit = qobject_cast<const QLineEdit *>(widget))
         if (qobject_cast<const QToolBar *>(lineEdit->parentWidget()))
-            roundNess = MAXRND;
+            inToolBar = true;
 
-    if (roundNess == MAXRND)
-        drawSafariLineEdit(option->rect, painter, option->palette.brush(QPalette::Base), option);
-    else
-    {
-        Render::renderMask(option->rect.adjusted(1, 1, -1, -2), painter, option->palette.brush(QPalette::Base), roundNess);
-        Render::renderShadow(Render::Sunken, option->rect, painter, roundNess, Render::All, 0.33f);
-    }
+    QLinearGradient shadow(0, 0, 0, option->rect.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+    Render::renderShadow(Render::Simple, option->rect, painter, 5, Render::All, 1.0f, &b);
+    Render::renderMask(option->rect.adjusted(!inToolBar, !inToolBar, -!inToolBar, -1), painter, option->palette.brush(QPalette::Base), 4+inToolBar);
+
     return true;
 }
 
@@ -129,29 +130,35 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 
     if (!opt->editable)
     {
-        Render::renderShadow(Render::Raised, frameRect, painter, 5);
+//        Render::renderShadow(Render::Raised, frameRect, painter, 5);
 
         const QColor bgc(opt->palette.color(bg));
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
 
         lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
-        lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
+        lg.setColorAt(1.0f, bgc/*Color::mid(bc, Qt::black, 7, 1)*/);
 
-        frameRect.adjust(m, m, -m, -m);
-        Render::renderMask(frameRect, painter, lg, 2);
+        Render::renderMask(frameRect, painter, lg, 5);
+        QLinearGradient shadow(0, 0, 0, frameRect.height());
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        QBrush b(shadow);
+
 
         const QColor hc(opt->palette.color(QPalette::Highlight));
         lg.setColorAt(0.0f, Color::mid(hc, Qt::white, 5, 1));
         lg.setColorAt(1.0f, Color::mid(hc, Qt::black, 7, 1));
-        arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
-        Render::renderMask(arrowRect, painter, lg, 2, Render::All & ~(ltr?Render::Left:Render::Right));
-        painter->setPen(opt->palette.color(fg));
+//        arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
+        Render::renderMask(arrowRect, painter, lg, 5, Render::All & ~(ltr?Render::Left:Render::Right));
+        Render::renderShadow(Render::Simple, frameRect, painter, 5, Render::All, 1.0f, &b);
+        painter->setPen(QColor(0, 0, 0, 32));
         const float o(painter->opacity());
         painter->setOpacity(0.5f);
         if (ltr)
-            painter->drawLine(arrowRect.topLeft()-QPoint(1, 0), arrowRect.bottomLeft()-QPoint(1, 0));
+            painter->drawLine(arrowRect.topLeft()/*-QPoint(1, 0)*/, arrowRect.bottomLeft()-QPoint(1, 0));
         else
-            painter->drawLine(arrowRect.topRight()+QPoint(1, 0), arrowRect.bottomRight()+QPoint(1, 0));
+            painter->drawLine(arrowRect.topRight()/*+QPoint(1, 0)*/, arrowRect.bottomRight()+QPoint(1, 0));
         painter->setOpacity(o);
     }
     else
@@ -160,7 +167,14 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         if (widget)
             if (QLineEdit *l = widget->findChild<QLineEdit *>())
                 brush = l->palette().brush(l->backgroundRole());
-        drawSafariLineEdit(opt->rect, painter, brush);
+//        drawSafariLineEdit(opt->rect, painter, brush);
+        Render::renderMask(option->rect.adjusted(1, 1, -1, -1), painter, brush, 4);
+        QLinearGradient shadow(0, 0, 0, option->rect.height());
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        QBrush b(shadow);
+        Render::renderShadow(Render::Simple, option->rect, painter, 5, Render::All, 1.0f, &b);
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
@@ -199,14 +213,20 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
         return true;
 
     QRect frame(subControlRect(CC_SpinBox, opt, SC_SpinBoxFrame, widget));
-    QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget));
-    up.setBottom(up.bottom()-1);
-    QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget));
-    down.setTop(down.top()+1);
+    QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget).shrinked(2));
+//    up.setBottom(up.bottom()-1);
+    QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget).shrinked(2));
+//    down.setTop(down.top()+1);
 //    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
 
-    Render::renderMask(frame.adjusted(1, 1, -1, -1), painter, opt->palette.color(QPalette::Base), 3);
-    Render::renderShadow(Render::Sunken, frame, painter, 2, Render::All, 0.33f);
+    Render::renderMask(option->rect, painter, option->palette.brush(QPalette::Base), 5);
+    QLinearGradient shadow(0, 0, 0, option->rect.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+    Render::renderShadow(Render::Simple, option->rect, painter, 5, Render::All, 1.0f, &b);
+
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down);
     return true;

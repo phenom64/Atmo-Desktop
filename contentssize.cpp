@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QToolBar>
 #include <QStyleOptionToolButton>
+#include <QStyleOptionButton>
 #include <QToolButton>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -68,6 +69,18 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 {
     switch (ct)
     {
+    case CT_PushButton:
+    {
+        QSize sz(contentsSize);
+        sz+=QSize(8, pixelMetric(PM_ButtonMargin, opt, widget));
+        if (sz.height() < 23)
+            sz.setHeight(23);
+        castOpt(Button, btn, opt);
+        if (btn && !btn->text.isEmpty())
+            if (sz.width() < 75)
+                sz.setWidth(75);
+        return sz;
+    }
     case CT_TabBarTab:
     {
         castOpt(TabV3, tab, opt);
@@ -178,8 +191,8 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_LineEdit:
     {
-        if (widget && widget->objectName() == "qt_spinbox_lineedit")
-            break;
+//        if (widget && widget->objectName() == "qt_spinbox_lineedit")
+//            break;
         QSize sz(contentsSize);
         sz+=QSize(8, pixelMetric(PM_DefaultFrameWidth, opt, widget));
         if (sz.height() < 23)
@@ -258,6 +271,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 
         w+=12; //margins left/right for text...
         w+=h;
+        h = qMax(23, h);
         return QSize(w, h);
     }
     default: break;

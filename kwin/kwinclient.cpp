@@ -60,6 +60,7 @@ TitleBar::paintEvent(QPaintEvent *)
     {
         QRectF r(rect());
         r.translate(-0.5f, -0.5f);
+        p.setPen(QColor(0, 0, 0, 32));
         p.drawLine(r.bottomLeft(), r.bottomRight());
     }
     p.end();

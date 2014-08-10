@@ -26,7 +26,7 @@ OverLay::paintEvent(QPaintEvent *)
     raise();
     QPainter p(this);
 
-#define FOCUS 1
+#define FOCUS 0
 #if FOCUS
     if (m_hasFocus)
     {

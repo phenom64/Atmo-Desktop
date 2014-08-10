@@ -80,6 +80,16 @@ Button::mouseReleaseEvent(QMouseEvent *e)
 void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
+    p.save();
+    p.setPen(Qt::NoPen);
+    r.adjust(2, 2, -2, -2);
+    p.setBrush(Color::mid(c, Qt::black, 4, 1));
+    p.drawEllipse(r);
+    p.setBrush(c);
+    r.adjust(1, 1, -1, -1);
+    p.drawEllipse(r);
+    p.restore();
+#if 0
     c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
     const QColor low(Color::mid(c, Qt::black, 5, 3));
     const QColor high(QColor(255, 255, 255, 127));
@@ -108,6 +118,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     lg.setColorAt(1.0f, QColor(255, 255, 255, 64));
     p.setBrush(lg);
     p.drawEllipse(rr);
+#endif
 }
 
 /** Stolen colors from bespin....
@@ -123,9 +134,11 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 // Aqua
 // static uint fcolors[3] = { 0xFFD86F6B, 0xFFD8CA6B, 0xFF76D86B };
 
- static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFFB1DE96 };
+// static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFFB1DE96 }; <<<-best from bespin
 // Aqua2
 // static uint fcolors[3] = { 0xFFBF2929, 0xFF29BF29, 0xFFBFBF29 };
+
+static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFF37CC40 };
 
 bool
 Button::paintClose(QPainter &p)

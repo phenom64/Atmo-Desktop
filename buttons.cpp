@@ -8,6 +8,7 @@
 #include <QStyleOptionToolButton>
 #include <QMainWindow>
 #include <QDebug>
+#include <QBrush>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -49,13 +50,20 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
         if (option->SUNKEN || opt->features & QStyleOptionButton::DefaultButton)
             bc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
-        Render::renderShadow(Render::Raised, option->rect, painter);
-        int m(2);
-        QRect r(option->rect.shrinked(m));
+//        Render::renderShadow(Render::Raised, option->rect, painter);
+//        int m(2);
+//        QRect r(option->rect.shrinked(m));
+        const QRect r(opt->rect);
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
-        lg.setColorAt(1.0f, Color::mid(bc, Qt::black, 7, 1));
-        Render::renderMask(r, painter, lg);
+        lg.setColorAt(1.0f, bc/*Color::mid(bc, Qt::black, 7, 1)*/);
+        Render::renderMask(r, painter, lg, 5);
+        QLinearGradient shadow(0, 0, 0, r.height());
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        QBrush b(shadow);
+        Render::renderShadow(Render::Simple, r, painter, 5, Render::All, 1.0f, &b);
     }
     return true;
 }
@@ -95,25 +103,38 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
     }
 
     QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
+    int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+
+    if (opt->state & (State_On|State_NoChange))
+    {
+        bg = QPalette::Highlight;
+        fg = QPalette::HighlightedText;
+    }
+
+
 //    const float o(painter->opacity());
 //    painter->setOpacity(0.5f*o);
-    Render::renderShadow(Render::Raised, checkRect, painter, 5);
+//    Render::renderShadow(Render::Raised, checkRect, painter, 5);
 //    painter->setOpacity(o);
 
 
     const QColor bgc(opt->palette.color(bg));
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
+    lg.setColorAt(1.0f, bgc/*Color::mid(bc, Qt::black, 7, 1)*/);
 
-    int m(2);
-    Render::renderMask(checkRect.adjusted(m, m, -m, -m), painter, lg, 2);
+    Render::renderMask(checkRect, painter, lg, 3);
+    QLinearGradient shadow(0, 0, 0, checkRect.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+    Render::renderShadow(Render::Simple, checkRect, painter, 3, Render::All, 1.0f, &b);
 
     if (opt->state & (State_On|State_NoChange))
         Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect, opt->state & State_NoChange);
 
-    int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
 }
 
@@ -148,10 +169,15 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     const QColor bgc(opt->palette.color(bg));
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 7, 1));
+    lg.setColorAt(1.0f, bgc/*Color::mid(bc, Qt::black, 7, 1)*/);
 
-    int m(2);
-    Render::renderMask(checkRect.adjusted(m, m, -m, -m), painter, lg);
+    Render::renderMask(checkRect, painter, lg);
+    QLinearGradient shadow(0, 0, 0, checkRect.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+    Render::renderShadow(Render::Simple, checkRect, painter, 32, Render::All, 1.0f, &b);
 
     if (opt->state & State_On)
     {
@@ -229,46 +255,38 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
                 isInTopToolBar = true;
     }
-    Render::Shadow shadow = Render::Etched;
-    QColor bc(option->palette.color(QPalette::Button));
-    if (opt->SUNKEN)
-        bc = Color::mid(bc, option->palette.color(QPalette::Highlight));
-    if (option->ENABLED)
-    {
-        if (option->HOVER)
-            bc = bc.lighter(110);
-        if (option->SUNKEN)
-        {
-            bc = bc.darker(110);
-            shadow = Render::Sunken;
-        }
-    }
 
     QRect rect(opt->rect);
 
 //    if (opt->toolButtonStyle == )
     if (bar)
     {
+        QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
+        QColor bc(option->palette.color(bg));
+        if (option->HOVER)
+            bc = Color::mid(bc, Qt::white);
+        if (option->SUNKEN)
+            bc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
         QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-        QColor start = Color::mid(bc, Qt::white, 8, 1), end = Color::mid(bc, Qt::black, 8, 1);
-        if (isInTopToolBar && !(opt->SUNKEN))
-        {
-//            start = Color::mid(bc, Qt::white, 2, 5);
-//            end = Color::mid(bc, Qt::black, 3, 1);
-            start = QColor(255, 255, 255, (option->HOVER)?127:95);
-            end = Qt::transparent;
-        }
-        lg.setColorAt(0.0f, opt->SUNKEN ? end : start);
-        lg.setColorAt(1.0f, opt->SUNKEN ? Color::mid(bc, end) : end);
-        Render::renderMask(rect.sAdjusted(1, 1, -1, -2), painter, lg, 3, sides);
-        Render::renderShadow(shadow, opt->rect, painter, 4, sides, 0.33f);
+        lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
+        lg.setColorAt(1.0f, bc/*Color::mid(bc, Qt::black, 7, 1)*/);
+
+        QLinearGradient shadow(0, 0, 0, option->rect.height());
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        QBrush b(shadow);
+        Render::renderShadow(Render::Simple, rect, painter, 4, sides, 1.0f, &b);
+
+        Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, 4, sides);
+
         if (!(sides&Render::Right) && !nextSelected)
         {
-            painter->setPen(QColor(0, 0, 0, 64));
-            painter->drawLine(rect.adjusted(0, 3, 0, -4).topRight(), rect.adjusted(0, 3, 0, -4).bottomRight());
+            painter->setPen(QColor(0, 0, 0, 32));
+            painter->drawLine(rect.adjusted(0, 0, 0, -1).topRight(), rect.adjusted(0, 1, 0, -1).bottomRight());
         }
-        if (option->SUNKEN)
-            Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
+//        if (option->SUNKEN)
+//            Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
     }
     const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
     Qt::Alignment iAlign = Qt::AlignCenter, tAlign = Qt::AlignCenter;

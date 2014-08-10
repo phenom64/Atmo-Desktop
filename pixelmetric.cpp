@@ -13,6 +13,10 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 {
     switch (metric)
     {
+    case PM_ButtonMargin:
+        return 2;
+    case PM_SpinBoxFrameWidth:
+        return 0;
     case PM_TabCloseIndicatorHeight:
     case PM_TabCloseIndicatorWidth:
         return 16;
@@ -27,7 +31,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 //        }
         return 16;
     case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
-        return 8;
+        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?8:4;
 //    case PM_TabBarBaseHeight:	//22	Height of the area between the tab bar and the tab pages.
 //    case PM_TabBarBaseOverlap:	//23	Number of pixels the tab bar overlaps the tab bar base.
 //    case PM_TabBarScrollButtonWidth:	//?
@@ -53,8 +57,8 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     {
         if (!widget)
             return 2;
-        if (qobject_cast<const QLineEdit *>(widget)||qobject_cast<const QComboBox *>(widget))
-            return 3;
+//        if (qobject_cast<const QLineEdit *>(widget)||qobject_cast<const QComboBox *>(widget))
+//            return 2;
         if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
             if (frame->frameShadow() == QFrame::Sunken && frame->findChild<OverLay *>())
                 return 0;

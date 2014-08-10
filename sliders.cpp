@@ -48,7 +48,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         else
             slider.setRight(slider.right()+1);
         const QPen saved(painter->pen());
-        painter->setPen(QColor(0, 0, 0, 127));
+        painter->setPen(QColor(0, 0, 0, 32));
         painter->drawLine(l);
         painter->setPen(saved);
     }
@@ -83,7 +83,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 
 
     const bool hor(opt->orientation==Qt::Horizontal);
-    int d(3); //shadow size for slider and groove 'extent'
+    int d(2); //shadow size for slider and groove 'extent'
 //    const int m(qMin(groove.height(), groove.width())/3); //margin
     const QPoint c(groove.center());
     if (hor)
@@ -95,15 +95,27 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     groove.adjust(hor*d, !hor*d, -(hor*d), -(!hor*d)); //set the proper inset for the groove in order to account for the slider shadow
     --d;
 
-    Render::renderShadow(Render::Sunken, groove.adjusted(-1, -1, 1, 2), painter, 32, Render::All, 0.5f);
-    Render::renderShadow(Render::Raised, slider, painter);
+    Render::renderMask(groove, painter, Color::mid(opt->palette.color(bg), opt->palette.color(fg)));
+//    Render::renderShadow(Render::Sunken, groove.adjusted(-1, -1, 1, 2), painter, 32, Render::All, 0.5f);
+//    Render::renderShadow(Render::Raised, slider, painter);
 
     --d;
     slider.adjust(d, d, -d, -d);
     QLinearGradient lg(0, d, 0, slider.height()); //buahahaha just noticed a bug in rendermask.
-    lg.setColorAt(0.0f, Color::mid(option->palette.color(bg), Qt::white, 2, 1));
-    lg.setColorAt(1.0f, Color::mid(option->palette.color(bg), Qt::black, 2, 1));
-    Render::renderMask(slider, painter, lg);
+
+    lg.setColorAt(0.0f, Color::mid(option->palette.color(bg), Qt::white, 5, 1));
+    lg.setColorAt(1.0f, option->palette.color(bg));
+
+    Render::renderMask(slider.adjusted(1, 1, -1, -1), painter, lg);
+
+//    QLinearGradient shadow(0, 0, 0, option->rect.height());
+//    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+//    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+//    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(QColor(0, 0, 0, 48));
+
+    Render::renderShadow(Render::Simple, slider, painter, 32, Render::All, 1.0f, &b);
+#if 0
     int ds(slider.height()/2);
     ds &= ~1;
     QRect dot(0, 0, ds, ds);
@@ -114,6 +126,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     painter->setBrush(option->palette.color(fg));
     painter->drawEllipse(dot);
     painter->restore();
+#endif
     return true;
 }
 

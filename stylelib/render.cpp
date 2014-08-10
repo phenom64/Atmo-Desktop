@@ -222,6 +222,18 @@ Render::initShadowParts()
             p.drawTiledPixmap(black.rect(), black);
             break;
         }
+        case Simple:
+        {
+            p.setPen(Qt::NoPen);
+            p.setBrush(Qt::black);
+            p.drawRoundedRect(pix.rect(), r, r);
+
+            if (r > 1)
+            {
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
+            }
+        }
         default: break;
         }
         p.end();
@@ -496,13 +508,14 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
 }
 
 void
-Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides, const QColor *color)
+Render::_renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides)
 {
     if (!rect.isValid())
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
     if (!roundNess)
         roundNess = 1;
+
     const float o(painter->opacity());
     painter->setOpacity(opacity);
     for (int i = 0; i < PartCount; ++i)
@@ -510,11 +523,26 @@ Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter,
             if (needPart((Part)i, sides))
             {
                 QPixmap pix = m_shadow[shadow][roundNess][i];
-                if (color)
-                    colorizePixmap(pix, *color);
                 painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), pix);
             }
     painter->setOpacity(o);
+}
+
+void
+Render::_renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush)
+{
+    if (!brush)
+    {
+        _renderShadowPrivate(shadow, rect, painter, roundNess, opacity, sides);
+        return;
+    }
+    QPixmap pix(rect.size());
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    _renderShadowPrivate(shadow, pix.rect(), &p, roundNess, 1.0f, sides);
+    p.end();
+    colorizePixmap(pix, *brush);
+    painter->drawTiledPixmap(rect, pix);
 }
 
 Render::Sides
@@ -544,7 +572,10 @@ Render::colorizePixmap(QPixmap &pix, const QBrush &b)
     tmp.fill(Qt::transparent);
     QPainter p(&tmp);
     p.fillRect(tmp.rect(), b);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    p.fillRect(tmp.rect(), pix);
     p.end();
+    pix = QPixmap::fromImage(tmp);
 
     QImage img = pix.toImage().convertToFormat(QImage::Format_ARGB32);
     QRgb *tmpColors = reinterpret_cast<QRgb *>(tmp.bits());
@@ -553,7 +584,7 @@ Render::colorizePixmap(QPixmap &pix, const QBrush &b)
     for (int i = 0; i < s; ++i)
     {
         QColor c(tmpColors[i]);
-        c.setAlpha(qMin(qAlpha(pixColors[i]), qAlpha(tmpColors[i])));
+        c.setAlpha(qAlpha(pixColors[i]));
         pixColors[i] = c.rgba();
     }
     pix = QPixmap::fromImage(img);

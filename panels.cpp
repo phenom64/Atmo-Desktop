@@ -172,7 +172,7 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
-    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, 0.33f);
+    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, 0.2f);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;

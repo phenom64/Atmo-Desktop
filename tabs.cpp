@@ -85,9 +85,14 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             fg = bar->foregroundRole();
             bg = bar->backgroundRole();
         }
+    if (isSelected)
+    {
+        fg = QPalette::HighlightedText;
+        bg = QPalette::Highlight;
+    }
     QColor bgc(opt->palette.color(bg));
     QColor fgc(opt->palette.color(fg));
-    QLinearGradient lg;
+    QLinearGradient lg, shadow;
     QRect r(opt->rect);
     bool vert(false);
     switch (opt->shape)
@@ -97,6 +102,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
         lg = QLinearGradient(0, 0, 0, r.height());
+        shadow = QLinearGradient(0, 0, 0, r.height());
         if (isOnly)
             break;
         if (isRtl)
@@ -107,10 +113,14 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
         lg = QLinearGradient(0, 0, r.width(), 0);
+        shadow = QLinearGradient(0, 0, r.width(), 0);
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
+        {
             lg = QLinearGradient(r.width(), 0, 0, 0);
+            shadow = QLinearGradient(r.width(), 0, 0, 0);
+        }
         vert = true;
         if (isOnly)
             break;
@@ -118,26 +128,42 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         break;
     default: break;
     }
-    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 2, 1));
-    lg.setColorAt(1.0f, Color::mid(bgc, Qt::black, 5, 1));
-    const QRect mask(r.sAdjusted(1, 1, -1, -2));
-    Render::renderMask(mask, painter, lg, 32, sides);
-    Render::renderShadow(isSelected?Render::Sunken:Render::Etched, r, painter, 32, sides, 0.66f);
-    if (isSelected)
+    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white));
+    lg.setColorAt(1.0f, bgc/*Color::mid(bgc, Qt::white, 4, 1)*/);
+//    const QRect mask(r.sAdjusted(1, 1, -1, -2));
+//    Render::renderMask(mask, painter, lg, 32, sides);
+//    Render::renderShadow(isSelected?Render::Sunken:Render::Etched, r, painter, 32, sides, 0.66f);
+    Render::renderMask(r, painter, lg, 5, sides);
+
+//    QLinearGradient shadow(0, vert&&isRtl?r.width():0, vert&&isRtl?0:vert?r.width():0, vert?0:r.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+    Render::renderShadow(Render::Simple, r, painter, 5, sides, 1.0f, &b);
+    QRect mask(r.sAdjusted(1, 1, -1, -1));
+    if (isSelected && !isOnly)
     {
-        QPixmap shadow(mask.size());
-        shadow.fill(Qt::transparent);
-        QPainter p(&shadow);
-        Render::renderShadow(Render::Sunken, shadow.rect(), &p, 32, Render::All-sides, 0.33);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        Render::renderShadow(Render::Sunken, shadow.rect(), &p, 32, sides);
-        p.end();
-        painter->drawTiledPixmap(mask, shadow);
+//        QPixmap shadow(mask.size());
+//        shadow.fill(Qt::transparent);
+//        QPainter p(&shadow);
+//        Render::renderShadow(Render::Sunken, shadow.rect(), &p, 32, Render::All-sides, 0.33f);
+//        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        Render::renderShadow(Render::Sunken, shadow.rect(), &p, 32, sides);
+//        p.end();
+//        painter->drawTiledPixmap(mask, shadow);
+        const QPen pen(painter->pen());
+        painter->setPen(QColor(0, 0, 0, 32)/*Color::mid(bgc, fgc)*/);
+        if (!isFirst)
+            painter->drawLine(vert?mask.topLeft():isRtl?mask.topRight():mask.topLeft(), vert?mask.topRight():isRtl?mask.bottomRight():mask.bottomLeft());
+        if (!isLast)
+            painter->drawLine(vert?mask.bottomLeft():isRtl?mask.topLeft():mask.topRight(), vert?mask.bottomRight():isRtl?mask.bottomLeft():mask.bottomRight());
+        painter->setPen(pen);
     }
     else if (opt->selectedPosition != QStyleOptionTab::NextIsSelected && opt->position != QStyleOptionTab::End)
     {
         const QPen pen(painter->pen());
-        painter->setPen(Color::mid(bgc, fgc));
+        painter->setPen(QColor(0, 0, 0, 32)/*Color::mid(bgc, fgc)*/);
         painter->drawLine(vert?mask.bottomLeft():isRtl?mask.topLeft():mask.topRight(), vert?mask.bottomRight():isRtl?mask.bottomLeft():mask.bottomRight());
         painter->setPen(pen);
     }
@@ -214,6 +240,8 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
     if (opt->state & State_MouseOver && !isSelected)
         fg = QPalette::Highlight;
+    if (isSelected && !Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+        fg = QPalette::HighlightedText;
 
     Qt::Alignment align = Qt::AlignCenter;
     QFontMetrics fm(f);
@@ -339,7 +367,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
             return true;
         }
     }
-    Render::renderShadow(Render::Sunken, rect, painter, 7, sides, 0.33f);
+    Render::renderShadow(Render::Sunken, rect, painter, 7, sides, 0.2f);
 //    Render::renderMask(r, painter, opt->palette.color(QPalette::Window), 4, sides);
     return true;
 }

@@ -150,8 +150,8 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
         if (!multiSelection)
         {
             QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-            lg.setColorAt(0.0f, Color::mid(h, QColor(255, 255, 255, h.alpha()), 3, 1));
-            lg.setColorAt(1.0f, Color::mid(h, QColor(0, 0, 0, h.alpha()), 3, 1));
+            lg.setColorAt(0.0f, Color::mid(h, QColor(255, 255, 255, h.alpha()), 5, 1));
+            lg.setColorAt(1.0f, h);
             brush = lg;
         }
 
@@ -262,13 +262,13 @@ StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, c
 
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(bg));
-    lg.setColorAt(0.0f, Color::mid(b, QColor(255, 255, 255, b.alpha()), 4, 1));
-    lg.setColorAt(1.0f, Color::mid(b, QColor(0, 0, 0, b.alpha()), 4, 1));
+    lg.setColorAt(0.0f, Color::mid(b, QColor(255, 255, 255, b.alpha()), 5, 1));
+    lg.setColorAt(1.0f, b);
     painter->fillRect(opt->rect, lg);
 
     const QPen pen(painter->pen());
 
-    painter->setPen(QColor(0, 0, 0, 127));
+    painter->setPen(QColor(0, 0, 0, 32));
     painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
     if (!(widget && opt->rect.right() == widget->rect().right()) || opt->orientation == Qt::Vertical)
         painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());

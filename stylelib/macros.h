@@ -20,4 +20,6 @@
 #define shrinked(_S_) adjusted(_S_, _S_, -_S_, -_S_)
 #define shrink(_S_) adjust(_S_, _S_, -_S_, -_S_)
 
+#define isA(_TYPE_) inherits("##_TYPE_##")
+
 #endif // MACROS_H

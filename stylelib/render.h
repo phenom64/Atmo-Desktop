@@ -11,7 +11,7 @@ class Q_DECL_EXPORT Render
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
     enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
-    enum Shadow { Sunken = 0, Etched, Raised, ShadowCount };
+    enum Shadow { Sunken = 0, Etched, Raised, Simple, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     Render();
     ~Render(){}
@@ -21,8 +21,8 @@ public:
     static inline void generateData() { instance()->_generateData(); }
     static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides sides = All)
     { instance()->_renderMask(rect, painter, brush, roundNess, sides); }
-    static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All, const float opacity = 1.0f, const QColor *color = 0)
-    { instance()->_renderShadow(shadow, rect, painter, roundNess, opacity, sides, color); }
+    static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All, const float opacity = 1.0f, const QBrush *brush = 0)
+    { instance()->_renderShadow(shadow, rect, painter, roundNess, sides, opacity, brush); }
     static inline void renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path = 0, const float o = 1.0f)
     { instance()->_renderTab(r, p, t, path, o); }
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
@@ -35,7 +35,8 @@ public:
 protected:
     void _generateData();
     void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides);
-    void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides, const QColor *color);
+    void _renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
+    void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush);
     void _renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o);
     void initMaskParts();
     void initShadowParts();
