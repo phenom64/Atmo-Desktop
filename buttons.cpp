@@ -164,7 +164,15 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     }
 
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
-    Render::renderShadow(Render::Raised, checkRect, painter);
+    int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+//    Render::renderShadow(Render::Raised, checkRect, painter);
+
+    if (opt->state & State_On)
+    {
+        fg = QPalette::HighlightedText;
+        bg = QPalette::Highlight;
+    }
 
     const QColor bgc(opt->palette.color(bg));
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
@@ -188,8 +196,6 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
         painter->drawEllipse(checkRect.adjusted(6, 6, -6, -6));
         painter->restore();
     }
-    int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
 }
 

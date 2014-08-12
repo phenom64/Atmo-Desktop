@@ -128,8 +128,8 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
             Render::renderMask(rect, painter, b, 3, sides);
     }
 
-    if (sides & Render::Top)
-        Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
+//    if (sides & Render::Top)
+//        Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
     painter->restore();
     return true;
 }
