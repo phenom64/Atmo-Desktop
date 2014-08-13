@@ -152,55 +152,37 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
         return true;
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
+    QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
     const bool hor(opt->orientation == Qt::Horizontal);
     const int s(hor?cont.height():cont.width());
 
+    const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
+
+
     quint64 thing = h.rgba();
     thing |= ((quint64)s << 32);
-    static QMap<quint64, QPixmap> pixMap;
-    if (!pixMap.contains(thing))
+    static QMap<quint64, QPixmap> s_pixMap;
+    if (!s_pixMap.contains(thing))
     {
-        QPixmap pix(s/2, s);
+        QPixmap pix(32, s);
         pix.fill(Qt::transparent);
-        QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
-        QColor top(Color::mid(h, Qt::white, 5, 1));
-        Color::shiftHue(top, -8);
-        QColor bottom(Color::mid(h, Qt::black, 5, 1));
-        Color::shiftHue(bottom, 8);
         QPainter p(&pix);
-        lg.setColorAt(0.0f, top);
-        lg.setColorAt(1.0f, bottom);
+        QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
+        lg.setColorAt(0.0f, Color::mid(opt->palette.color(QPalette::Highlight), Qt::white, 5, 1));
+        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
         p.fillRect(pix.rect(), lg);
-        QRadialGradient rg(pix.rect().center()+QPoint(0, pix.rect().height()*0.25f), pix.rect().height());
-        QColor t(Color::mid(top, Qt::white));
-        Color::shiftHue(t, -32);
-        t.setAlpha(192);
-        rg.setColorAt(0.0f, t);
-        rg.setColorAt(1.0f, Qt::transparent);
-        p.fillRect(pix.rect(), rg);
-        QLinearGradient lg2(pix.rect().topLeft(), pix.rect().bottomLeft());
-        lg2.setColorAt(0.0f, QColor(0, 0, 0, 64));
-        lg2.setColorAt(0.15f, QColor(255, 255, 255, 127));
-        lg2.setColorAt(0.4f, QColor(255, 255, 255, 64));
-        lg2.setColorAt(0.5f, Qt::transparent);
-        p.fillRect(pix.rect(), lg2);
+        const int penWidth(12);
+        lg.setColorAt(0.0f, Color::mid(opt->palette.color(bg), Qt::white, 5, 1));
+        lg.setColorAt(1.0f, opt->palette.color(bg)/*Color::mid(bc, Qt::black, 7, 1)*/);
+        p.setPen(QPen(lg, penWidth));
+        p.setRenderHint(QPainter::Antialiasing);
+        QRect penRect(pix.rect().adjusted(penWidth/2, -1, -(penWidth/2), 1));
+        p.drawLine(penRect.topLeft(), penRect.bottomRight());
         p.end();
-        pixMap.insert(thing, pix);
-
-//        QPixmap pixs(s, s);
-//        pixs.fill(Qt::transparent);
-//        p.begin(&pixs);
-//        p.fillRect(pixs.rect(), pix);
-//        p.setRenderHint(QPainter::Antialiasing);
-//        p.setPen(QPen(Color::complementary(h), s/3));
-//        QRect r(pixs.rect().adjusted(s/6, 0, -s/6, 0));
-//        p.setCompositionMode(QPainter::CompositionMode_SoftLight);
-//        p.drawLine(r.topLeft(), r.bottomRight());
-//        p.end();
-//        pixMap.insert(thing, pixs);
+        s_pixMap.insert(thing, pix);
     }
-    QPixmap pixmap = pixMap.value(thing);
+    QPixmap pixmap = s_pixMap.value(thing);
     if (!hor)
     {
         QTransform t;
@@ -217,16 +199,23 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         if (widget && anim.contains(widget))
             a = anim.value(widget);
         ++a;
-        if (a > pixmap.width())
+        if (a > 32)
             a = 0;
         if (widget)
             anim.insert(widget, a);
     }
-    painter->save();
     const bool inv(hor?opt->invertedAppearance:!opt->bottomToTop);
-    painter->setBrushOrigin(hor?inv?a:-a:0, !hor?inv?a:-a:0);
-    painter->fillRect(cont.adjusted(1, 1, -1, -2), pixmap);
-    painter->restore();
+    QPoint offSet(hor?inv?a:-a:0, !hor?inv?a:-a:0);
+    painter->setClipRect(cont);
+    Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
+    QLinearGradient shadow(0, 0, 0, opt->rect.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+
+    Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
+    painter->setClipping(false);
     return true;
 }
 
@@ -238,8 +227,15 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
         return true;
 
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
-    painter->fillRect(groove.adjusted(1, 1, -1, -2), opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
-    Render::renderShadow(Render::Sunken, groove, painter, 2, Render::All, 0.33f);
+    Render::renderMask(groove, painter, opt->palette.color(Ops::bgRole(widget, QPalette::Base)), 4);
+
+    QLinearGradient shadow(0, 0, 0, opt->rect.height());
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    QBrush b(shadow);
+
+    Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
     return true;
 }
 
@@ -247,7 +243,7 @@ bool
 StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ProgressBarV2, opt, option);
-    if (!opt)
+    if (!opt || opt->text.isEmpty())
         return true;
 
     const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
@@ -264,6 +260,14 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
 
     painter->setClipRegion(QRegion(cont));
     TRANSLATE(opt->bottomToTop);
+    QRect tr(opt->fontMetrics.boundingRect(label, Qt::AlignCenter, opt->text));
+    int rnd(qMin(tr.height(), tr.width())/2);
+    painter->save();
+    painter->setBrush(opt->palette.color(QPalette::Highlight));
+    painter->setPen(Qt::NoPen);
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->drawRoundedRect(tr, rnd, rnd);
+    painter->restore();
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::HighlightedText);
     TRANSLATE(!opt->bottomToTop);
     painter->setClipping(false);

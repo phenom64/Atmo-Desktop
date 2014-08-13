@@ -482,19 +482,32 @@ Render::needPart(const Part part, const Sides sides) const
 }
 
 void
-Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
+Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet)
 {
     if (!rect.isValid())
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
     if (!roundNess)
         roundNess = 1;
+
     QPixmap pix(rect.size());
     pix.fill(Qt::transparent);
     QPainter p(&pix);
-    if (!p.isActive())
-        return;
-    p.fillRect(pix.rect(), brush);
+    QRect r(pix.rect());
+    if (!offSet.isNull())
+    {
+        const int x(offSet.x()), y(offSet.y());
+        if (x < 0)
+            r.setRight(r.right()+qAbs(x));
+        else
+            r.setLeft(r.left()-qAbs(x));
+        if (y < 0)
+            r.setBottom(r.bottom()+qAbs(y));
+        else
+            r.setTop(r.top()-qAbs(y));
+        p.translate(x, y);
+    }
+    p.fillRect(r, brush);
     p.end();
 
     for (int i = 0; i < PartCount; ++i)

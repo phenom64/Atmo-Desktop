@@ -300,7 +300,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
             QRect r(tabBar->rect());
             if (opt->rect.width() > r.width())
                 r = opt->rect;
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 15, 1), sides, r);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, r);
             return true;
         }
     }
@@ -363,7 +363,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 15, 1), sides, barRect);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, barRect);
             return true;
         }
     }

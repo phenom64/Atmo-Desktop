@@ -19,8 +19,8 @@ public:
     static Render *instance();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
     static inline void generateData() { instance()->_generateData(); }
-    static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides sides = All)
-    { instance()->_renderMask(rect, painter, brush, roundNess, sides); }
+    static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides sides = All, const QPoint &offSet = QPoint())
+    { instance()->_renderMask(rect, painter, brush, roundNess, sides, offSet); }
     static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All, const float opacity = 1.0f, const QBrush *brush = 0)
     { instance()->_renderShadow(shadow, rect, painter, roundNess, sides, opacity, brush); }
     static inline void renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path = 0, const float o = 1.0f)
@@ -34,7 +34,7 @@ public:
 
 protected:
     void _generateData();
-    void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides);
+    void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet);
     void _renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
     void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush);
     void _renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o);
