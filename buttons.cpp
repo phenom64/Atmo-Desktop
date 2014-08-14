@@ -14,6 +14,7 @@
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
+#include "stylelib/animhandler.h"
 
 /*
  * This here paints the button, in order to override
@@ -45,10 +46,15 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
     if (!(opt->features & QStyleOptionButton::Flat))
     {
         QColor bc(option->palette.color(bg));
-        if (option->HOVER)
-            bc = Color::mid(bc, Qt::white);
+        QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+
         if (option->SUNKEN || opt->features & QStyleOptionButton::DefaultButton)
-            bc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+            bc = sc;
+        else if (option->ENABLED)
+        {
+            int hl(Anim::Basic::level(widget));
+            bc = Color::mid(bc, sc, STEPS-hl, hl);
+        }
 
 //        Render::renderShadow(Render::Raised, option->rect, painter);
 //        int m(2);
@@ -269,10 +275,18 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     {
         QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
         QColor bc(option->palette.color(bg));
-        if (option->HOVER)
-            bc = Color::mid(bc, Qt::white);
+
+
+        QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+
         if (option->SUNKEN)
-            bc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+            bc = sc;
+        else if (option->ENABLED)
+        {
+            int hl(Anim::Basic::level(widget));
+            bc = Color::mid(bc, sc, STEPS-hl, hl);
+        }
+
         QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
         lg.setColorAt(1.0f, bc/*Color::mid(bc, Qt::black, 7, 1)*/);

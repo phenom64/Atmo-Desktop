@@ -15,12 +15,14 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QHeaderView>
+#include <QPushButton>
 
 #include "styleproject.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/shadowhandler.h"
 #include "stylelib/progresshandler.h"
+#include "stylelib/animhandler.h"
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
@@ -56,9 +58,11 @@ StyleProject::polish(QWidget *widget)
             connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
         installFilter(bar);
     }
-
+    if (qobject_cast<QPushButton *>(widget))
+        Anim::Basic::manage(widget);
     if (castObj(QToolButton *, btn, widget))
     {
+        Anim::Basic::manage(btn);
         installFilter(btn);
     }
 

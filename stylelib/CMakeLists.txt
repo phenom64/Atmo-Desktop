@@ -8,7 +8,8 @@ set (libSRCS
     shadowhandler.cpp
     render.cpp
     color.cpp
-    progresshandler.cpp)
+    progresshandler.cpp
+    animhandler.cpp)
     
 set (libHDRS
     xhandler.h
@@ -17,10 +18,12 @@ set (libHDRS
     render.h
     macros.h
     color.h
-    progresshandler.h)
+    progresshandler.h
+    animhandler.h)
 
 set (libMocHDRS
     progresshandler.h
+    animhandler.h
     ops.h)
 
 set (LIBRARY_DIR /usr/lib)
