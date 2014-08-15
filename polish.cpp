@@ -16,6 +16,7 @@
 #include <QLineEdit>
 #include <QHeaderView>
 #include <QPushButton>
+#include <QRadioButton>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -58,7 +59,10 @@ StyleProject::polish(QWidget *widget)
             connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
         installFilter(bar);
     }
-    if (qobject_cast<QPushButton *>(widget))
+
+    if (qobject_cast<QPushButton *>(widget) ||
+            qobject_cast<QCheckBox *>(widget) ||
+            qobject_cast<QRadioButton *>(widget))
         Anim::Basic::manage(widget);
     if (castObj(QToolButton *, btn, widget))
     {
@@ -82,10 +86,11 @@ StyleProject::polish(QWidget *widget)
 
     if (castObj(QComboBox *, cBox, widget))
         if (!cBox->isEditable())
-    {
-        cBox->setForegroundRole(QPalette::ButtonText);
-        cBox->setBackgroundRole(QPalette::Button);
-    }
+        {
+            Anim::Basic::manage(cBox);
+            cBox->setForegroundRole(QPalette::ButtonText);
+            cBox->setBackgroundRole(QPalette::Button);
+        }
 
 //    if (castObj(QMainWindow *, mwin, widget))
 //    {

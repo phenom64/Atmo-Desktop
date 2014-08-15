@@ -15,6 +15,7 @@
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
+#include "stylelib/animhandler.h"
 
 static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, const QStyleOption *opt = 0)
 {
@@ -132,7 +133,14 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     {
 //        Render::renderShadow(Render::Raised, frameRect, painter, 5);
 
-        const QColor bgc(opt->palette.color(bg));
+        QColor bgc(opt->palette.color(bg));
+        QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+        if (option->ENABLED && !(option->state & State_On))
+        {
+            int hl(Anim::Basic::level(widget));
+            bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+        }
+
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
 
         lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));

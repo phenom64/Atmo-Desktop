@@ -125,7 +125,14 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
 //    painter->setOpacity(o);
 
 
-    const QColor bgc(opt->palette.color(bg));
+    QColor bgc(opt->palette.color(bg));
+    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    if (option->ENABLED && !(option->state & (State_On|State_NoChange)))
+    {
+        int hl(Anim::Basic::level(widget));
+        bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+    }
+
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, bgc/*Color::mid(bc, Qt::black, 7, 1)*/);
@@ -180,7 +187,14 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
         bg = QPalette::Highlight;
     }
 
-    const QColor bgc(opt->palette.color(bg));
+    QColor bgc(opt->palette.color(bg));
+    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    if (option->ENABLED && !(option->state & State_On))
+    {
+        int hl(Anim::Basic::level(widget));
+        bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+    }
+
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
     lg.setColorAt(1.0f, bgc/*Color::mid(bc, Qt::black, 7, 1)*/);

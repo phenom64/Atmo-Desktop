@@ -22,7 +22,6 @@ Basic::manage(QWidget *w)
         return;
     w->installEventFilter(instance());
     w->setAttribute(Qt::WA_Hover);
-    instance()->add(w);
     connect(w, SIGNAL(destroyed()), instance(), SLOT(removeSender()));
 }
 
@@ -36,7 +35,8 @@ Basic::Basic(QObject *parent)
 void
 Basic::removeSender()
 {
-    static_cast<QWidget *>(sender())->removeEventFilter(this); //superfluos?
+    //superfluos?
+    static_cast<QWidget *>(sender())->removeEventFilter(this);
     m_vals.remove(static_cast<QWidget *>(sender()));
 }
 
@@ -59,18 +59,21 @@ Basic::animate()
             m_vals.remove(w);
             continue;
         }
-        if (w->underMouse() && it.value() < STEPS)
+        const bool mouse(w->underMouse());
+        const int val(it.value());
+        if (mouse && val < STEPS) //hovering...
         {
             needRunning = true;
-            w->update();
-            m_vals.insert(it.key(), it.value()+1);
+            m_vals.insert(w, val+1);
         }
-        else if (!w->underMouse() && it.value() > 0)
+        else if (!mouse && val > 0) //left widget and animate out
         {
             needRunning = true;
-            w->update();
-            m_vals.insert(it.key(), it.value()-1);
+            m_vals.insert(w, val-1);
         }
+        else if (!mouse && val == 0) //animation done for this widget
+            m_vals.remove(w);
+        w->update();
     }
     if (!needRunning)
         m_timer->stop();
@@ -82,6 +85,10 @@ Basic::eventFilter(QObject *o, QEvent *e)
     if (!o->isWidgetType())
         return false;
     if (e->type() == QEvent::Enter || e->type() == QEvent::Leave)
+    {
+        if (e->type() == QEvent::Enter)
+            m_vals.insert(static_cast<QWidget *>(o), 0);
         m_timer->start(25);
+    }
     return false;
 }

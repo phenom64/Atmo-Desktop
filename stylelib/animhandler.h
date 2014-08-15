@@ -22,7 +22,6 @@ public:
 protected:
     bool eventFilter(QObject *, QEvent *);
     int hoverLevel(const QWidget *widget);
-    void add(QWidget *w) { m_vals.insert(w, 0); }
 
 protected slots:
     void removeSender();
