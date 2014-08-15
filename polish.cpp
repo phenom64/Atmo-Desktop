@@ -190,6 +190,7 @@ StyleProject::polish(QWidget *widget)
 //        installFilter(tabBar);
 //        if (tabBar->documentMode())
 //            tabBar->setExpanding(true);
+        Anim::Tabs::manage(tabBar);
         tabBar->setAttribute(Qt::WA_Hover);
         tabBar->setAttribute(Qt::WA_MouseTracking);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))

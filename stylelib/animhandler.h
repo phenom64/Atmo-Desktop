@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMap>
 #include <QTimer>
+#include <QTabBar>
 
 namespace Anim
 {
@@ -30,6 +31,30 @@ protected slots:
 private:
     static Basic *s_instance;
     QMap<QWidget *, int> m_vals;
+    QTimer *m_timer;
+};
+
+class Q_DECL_EXPORT Tabs : public QObject
+{
+    Q_OBJECT
+public:
+    typedef int Tab, Level; //for readability only...
+    explicit Tabs(QObject *parent = 0);
+    static Tabs *instance();
+    static void manage(QTabBar *tb);
+    static int level(const QTabBar *tb, Tab tab) { return instance()->hoverLevel(tb, tab); }
+
+protected:
+    bool eventFilter(QObject *, QEvent *);
+    int hoverLevel(const QTabBar *tb, Tab tab);
+
+protected slots:
+    void removeSender();
+    void animate();
+
+private:
+    static Tabs *s_instance;
+    QMap<QTabBar *, QMap<Tab, Level> > m_vals;
     QTimer *m_timer;
 };
 

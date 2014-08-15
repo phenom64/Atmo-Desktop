@@ -18,6 +18,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
 #include "stylelib/color.h"
+#include "stylelib/animhandler.h"
 
 bool
 StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -40,6 +41,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     const bool isLast(opt->position == QStyleOptionTab::End);
     const bool isRtl(opt->direction == Qt::RightToLeft);
     const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
+
     if (Ops::isSafariTabBar(bar))
     {
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
@@ -90,7 +92,15 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         fg = QPalette::HighlightedText;
         bg = QPalette::Highlight;
     }
+
     QColor bgc(opt->palette.color(bg));
+    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    if (option->ENABLED && !(option->state & State_On) && bar)
+    {
+        int hl(Anim::Tabs::level(bar, bar->tabAt(opt->rect.center())));
+        bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+    }
+
     QColor fgc(opt->palette.color(fg));
     QLinearGradient lg, shadow;
     QRect r(opt->rect);
@@ -238,8 +248,8 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         painter->setFont(f);
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
-    if (opt->state & State_MouseOver && !isSelected)
-        fg = QPalette::Highlight;
+//    if (opt->state & State_MouseOver && !isSelected)
+//        fg = QPalette::Highlight;
     if (isSelected && !Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
         fg = QPalette::HighlightedText;
 
