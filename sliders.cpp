@@ -14,6 +14,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/progresshandler.h"
+#include "stylelib/animhandler.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -31,9 +32,9 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
 
     castObj(const QScrollBar *, bar, widget);
-    if (widget && (hitTestComplexControl(CC_ScrollBar, opt, widget->mapFromGlobal(QCursor::pos()), widget) == SC_ScrollBarSlider
-                   || (bar && bar->isSliderDown())))
-        fg = QPalette::Highlight;
+//    if (widget && (hitTestComplexControl(CC_ScrollBar, opt, widget->mapFromGlobal(QCursor::pos()), widget) == SC_ScrollBarSlider
+//                   || (bar && bar->isSliderDown())))
+//        fg = QPalette::Highlight;
     QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
     Color::ensureContrast(bgc, fgc);
     painter->fillRect(groove, bgc);
@@ -56,8 +57,10 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 //    const int m(1); //margin
 //    slider.adjust(!hor*m, hor*m, -!hor*m, hor*m);
     const int o(painter->opacity());
-    if (!(widget && widget->underMouse()))
-        painter->setOpacity(0.5f);
+    const int level(Anim::Basic::level(widget));
+    const float add(0.5f/(float)STEPS);
+    if (bar && !bar->isSliderDown())
+        painter->setOpacity(0.5f+add*level);
     Render::renderMask(slider, painter, fgc);
     painter->setOpacity(o);
     return true;
@@ -101,10 +104,19 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 
     --d;
     slider.adjust(d, d, -d, -d);
+
+    QColor bgc(opt->palette.color(bg));
+    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    if (option->ENABLED)
+    {
+        int hl(Anim::Basic::level(widget));
+        bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+    }
+
     QLinearGradient lg(0, d, 0, slider.height()); //buahahaha just noticed a bug in rendermask.
 
-    lg.setColorAt(0.0f, Color::mid(option->palette.color(bg), Qt::white, 5, 1));
-    lg.setColorAt(1.0f, option->palette.color(bg));
+    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
+    lg.setColorAt(1.0f, bgc);
 
     Render::renderMask(slider.adjusted(1, 1, -1, -1), painter, lg);
 

@@ -19,6 +19,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/color.h"
+#include "stylelib/animhandler.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -37,6 +38,7 @@ Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 StyleProject::StyleProject()
     : QCommonStyle()
 {
+    Anim::setStyle(this);
     init();
     assignMethods();
     Render::generateData();

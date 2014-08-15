@@ -17,6 +17,7 @@
 #include <QHeaderView>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSlider>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -62,7 +63,9 @@ StyleProject::polish(QWidget *widget)
 
     if (qobject_cast<QPushButton *>(widget) ||
             qobject_cast<QCheckBox *>(widget) ||
-            qobject_cast<QRadioButton *>(widget))
+            qobject_cast<QRadioButton *>(widget) ||
+            qobject_cast<QSlider *>(widget) ||
+            qobject_cast<QScrollBar *>(widget))
         Anim::Basic::manage(widget);
     if (castObj(QToolButton *, btn, widget))
     {

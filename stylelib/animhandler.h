@@ -5,11 +5,14 @@
 #include <QMap>
 #include <QTimer>
 #include <QTabBar>
+#include <QStyle>
 
 namespace Anim
 {
 
 #define STEPS 16
+
+Q_DECL_EXPORT void setStyle(QStyle *style);
 
 class Q_DECL_EXPORT Basic : public QObject
 {
