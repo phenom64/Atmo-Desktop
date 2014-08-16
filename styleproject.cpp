@@ -83,7 +83,7 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     if (textRole != QPalette::NoRole)
     {
         const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
-        if (bgRole != QPalette::NoRole && enabled)
+        if (bgRole != QPalette::NoRole && enabled && Color::contrast(pal.color(textRole), pal.color(bgRole)))
         {
             const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
             const int rgb(isDark?0:255);

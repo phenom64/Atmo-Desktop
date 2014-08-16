@@ -126,7 +126,7 @@ Basic::animate()
     }
     if (!needRunning)
         m_timer->stop();
-//    s_block = false;
+    s_block = false;
 }
 
 bool
@@ -142,12 +142,12 @@ Basic::eventFilter(QObject *o, QEvent *e)
         return false;
     }
     if (qobject_cast<QSlider *>(o) || qobject_cast<QScrollBar *>(o))
-        if (e->type() == QEvent::HoverMove /*&& !(s_block && m_timer->isActive())*/)
+        if (e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()))
         {
             if (!m_vals.contains(static_cast<QWidget *>(o)))
                 m_vals.insert(static_cast<QWidget *>(o), 0);
             m_timer->start(25);
-//            s_block = true;
+            s_block = true;
             return false;
         }
     return false;
