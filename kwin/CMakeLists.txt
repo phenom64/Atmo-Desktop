@@ -1,37 +1,39 @@
-project (kwin3-styleproject)
+project(kwin3-styleproject)
 
 find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
+if (KDECORATION_H)
+    message(STATUS "kwin deco header found: " ${KDECORATION_H})
+else ()
+    message(WARNING "kwin deco header not found, build will likely fail")
+endif ()
 
-set (KWIN_SRCS
+set(KWIN_SRCS
     kwinclient.cpp
     factory.cpp
     button.cpp
     widgets.cpp)
     
-set (KWIN_HDRS
+set(KWIN_HDRS
     kwinclient.h
     factory.h
     button.h
     factorydbusadaptor.h
     widgets.h)
     
-set (KWIN_MOC_HDRS
+set(KWIN_MOC_HDRS
     kwinclient.h
     factory.h
     button.h
     factorydbusadaptor.h
     widgets.)
 
-set (QT_USE_DBUS TRUE)
-
-#message (${QT_LIBRARIES})
+set(QT_USE_DBUS TRUE)
     
 #kde4_add_plugin mocs, so no need to moc the moc headers,
 #however, factorydbusadaptor has no source file, so needs
 #separate handling
-qt4_wrap_cpp (KWIN_MOC_DBUS factorydbusadaptor.h)
-
-kde4_add_plugin (kwin3_styleproject ${KWIN_SRCS} ${KWIN_MOC_DBUS})
-target_link_libraries (kwin3_styleproject stylelib ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} kdecorations ${X11_LIBRARIES} ${X11_Xrender_LIB})
-install (TARGETS kwin3_styleproject DESTINATION ${PLUGIN_INSTALL_DIR})
-install (FILES styleproject.desktop DESTINATION ${DATA_INSTALL_DIR}/kwin)
+qt4_wrap_cpp(KWIN_MOC_DBUS factorydbusadaptor.h)
+kde4_add_plugin(kwin3_styleproject ${KWIN_SRCS} ${KWIN_MOC_DBUS})
+target_link_libraries(kwin3_styleproject stylelib ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} kdecorations ${X11_LIBRARIES} ${X11_Xrender_LIB})
+install(TARGETS kwin3_styleproject DESTINATION ${PLUGIN_INSTALL_DIR})
+install(FILES styleproject.desktop DESTINATION ${DATA_INSTALL_DIR}/kwin)

@@ -1,8 +1,8 @@
-project (stylelib)
+project(stylelib)
 
-add_definitions (${QT_DEFINITIONS})
+add_definitions(${QT_DEFINITIONS})
 
-set (libSRCS
+set(libSRCS
     xhandler.cpp
     ops.cpp
     shadowhandler.cpp
@@ -11,7 +11,7 @@ set (libSRCS
     progresshandler.cpp
     animhandler.cpp)
     
-set (libHDRS
+set(libHDRS
     xhandler.h
     ops.h
     shadowhandler.h
@@ -21,25 +21,23 @@ set (libHDRS
     progresshandler.h
     animhandler.h)
 
-set (libMocHDRS
+set(libMocHDRS
     progresshandler.h
     animhandler.h
     ops.h)
 
-set (LIBRARY_DIR /usr/lib)
-set (QT_USE_QTDBUS TRUE)
-find_package (Qt4 REQUIRED)
-include (${QT_USE_FILE})
+set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+set(QT_USE_QTDBUS TRUE)
+find_package(Qt4 REQUIRED)
+include(${QT_USE_FILE})
 
-MESSAGE (${CMAKE_INSTALL_PREFIX})
+qt4_wrap_cpp(MOC_SRCS ${libMocHDRS})
 
-qt4_wrap_cpp (MOC_SRCS ${libMocHDRS})
+find_package(X11)
 
-find_package (X11)
+add_library(stylelib SHARED ${libSRCS} ${libHDRS} ${MOC_SRCS})
 
-add_library (stylelib SHARED ${libSRCS} ${libHDRS} ${MOC_SRCS})
-
-target_link_libraries (stylelib ${QT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xrender_LIB})
+target_link_libraries(stylelib ${QT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xrender_LIB})
 
 #${LIB_INSTALL_DIR}
-install (TARGETS stylelib LIBRARY DESTINATION ${LIBRARY_DIR})
+install(TARGETS stylelib LIBRARY DESTINATION ${LIBRARY_DIR})
