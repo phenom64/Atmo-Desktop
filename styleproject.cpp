@@ -20,6 +20,9 @@
 #include "stylelib/xhandler.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/shadowhandler.h"
+#include "stylelib/progresshandler.h"
+#include "stylelib/animhandler.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -28,7 +31,7 @@ public:
     QStyle *create(const QString &key)
     {
         if (!key.compare("styleproject", Qt::CaseInsensitive))
-            return new StyleProject;
+            return new StyleProject();
         return 0;
     }
 };
@@ -38,7 +41,7 @@ Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 StyleProject::StyleProject()
     : QCommonStyle()
 {
-    Anim::setStyle(this);
+//    Anim::setStyle(this);
     init();
     assignMethods();
     Render::generateData();
@@ -46,6 +49,16 @@ StyleProject::StyleProject()
     QColor c = p.color(QPalette::Window);
     Color::titleBarColors[0] = Color::mid(c, Qt::white, 10, 1);
     Color::titleBarColors[1] = Color::mid(c, Qt::black, 10, 1);
+}
+
+StyleProject::~StyleProject()
+{
+    ShadowHandler::deleteInstance();
+    ProgressHandler::deleteInstance();
+    Anim::Basic::deleteInstance();
+    Anim::Tabs::deleteInstance();
+    Render::deleteInstance();
+    Ops::deleteInstance();
 }
 
 void
@@ -83,7 +96,7 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     if (textRole != QPalette::NoRole)
     {
         const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
-        if (bgRole != QPalette::NoRole && enabled && Color::contrast(pal.color(textRole), pal.color(bgRole)))
+        if (bgRole != QPalette::NoRole && enabled && (bgRole != QPalette::Highlight && Color::contrast(pal.color(textRole), pal.color(bgRole))))
         {
             const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
             const int rgb(isDark?0:255);

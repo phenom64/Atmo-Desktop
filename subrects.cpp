@@ -120,17 +120,18 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     case SE_ProgressBarGroove: return opt->rect;
     case SE_ProgressBarContents:
     {
-        castOpt(ProgressBarV2, bar, opt);
+        castOpt(ProgressBar, bar, opt);
+        castOpt(ProgressBarV2, barv2, opt);
         if (!bar)
             return QRect();
-        const bool hor(bar->orientation == Qt::Horizontal);
-        float d((hor?opt->rect.width():opt->rect.height())/100.0f);
+        const bool hor(!barv2 || barv2->orientation == Qt::Horizontal);
+        qreal d((qreal)(hor?opt->rect.width():opt->rect.height())/(qreal)bar->maximum);
         int progress(d*bar->progress);
         int w(hor?progress:bar->rect.width());
         int h(hor?bar->rect.height():progress);
         int x(bar->rect.x()), y(bar->rect.y());
         QRect r(x, hor?y:(y+bar->rect.height())-progress, w, h);
-        if (bar->invertedAppearance)
+        if (barv2 && barv2->invertedAppearance)
         {
             if (hor)
                 r.moveRight(opt->rect.right());

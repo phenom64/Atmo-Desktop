@@ -17,6 +17,7 @@ public:
     ~Render(){}
     typedef uint Sides;
     static Render *instance();
+    static void deleteInstance();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
     static inline void generateData() { instance()->_generateData(); }
     static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides sides = All, const QPoint &offSet = QPoint())

@@ -15,7 +15,7 @@ class Q_DECL_EXPORT StyleProject : public QCommonStyle
     Q_CLASSINFO ("X-KDE-CustomElements", "true")
 public:
     StyleProject();
-    ~StyleProject(){}
+    ~StyleProject();
     void init();
     void assignMethods();
 

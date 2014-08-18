@@ -21,11 +21,14 @@ public:
     explicit Basic(QObject *parent = 0);
     static Basic *instance();
     static void manage(QWidget *w);
+    static void release(QWidget *w);
+    static void deleteInstance();
     static int level(const QWidget *widget) { return instance()->hoverLevel(widget); }
 
 protected:
     bool eventFilter(QObject *, QEvent *);
     int hoverLevel(const QWidget *widget);
+    void remove(QWidget *w);
 
 protected slots:
     void removeSender();
@@ -45,11 +48,14 @@ public:
     explicit Tabs(QObject *parent = 0);
     static Tabs *instance();
     static void manage(QTabBar *tb);
+    static void release(QTabBar *tb);
+    static void deleteInstance();
     static int level(const QTabBar *tb, Tab tab) { return instance()->hoverLevel(tb, tab); }
 
 protected:
     bool eventFilter(QObject *, QEvent *);
     int hoverLevel(const QTabBar *tb, Tab tab);
+    void remove(QTabBar *tb);
 
 protected slots:
     void removeSender();

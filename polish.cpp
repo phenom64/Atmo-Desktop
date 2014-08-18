@@ -217,6 +217,17 @@ StyleProject::polish(QWidget *widget)
 void
 StyleProject::unpolish(QWidget *widget)
 {
+    widget->disconnect(this);
+    widget->removeEventFilter(this);
+    ShadowHandler::release(widget);
+    Anim::Basic::release(widget);
+    if (castObj(QProgressBar *, pb, widget))
+        ProgressHandler::release(pb);
+    if (castObj(QTabBar *, tb, widget))
+        Anim::Tabs::release(tb);
+    if (castObj(QFrame *, f, widget))
+        OverLay::release(f);
+
 #if !defined(QT_NO_DBUS)
     if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         Bespin::MacMenu::release(menuBar);

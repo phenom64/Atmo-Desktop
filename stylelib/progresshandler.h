@@ -18,6 +18,8 @@ public:
     explicit ProgressHandler(QObject *parent = 0);
     static ProgressHandler *instance();
     static void manage(QProgressBar *bar);
+    static void release(QProgressBar *bar);
+    static void deleteInstance();
     static int busyValue(const QProgressBar *bar);
 
 protected slots:

@@ -145,7 +145,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 bool
 StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBarV2, opt, option);
+    castOpt(ProgressBar, opt, option);
     if (!opt)
         return true;
     drawProgressBarGroove(option, painter, widget);
@@ -157,20 +157,22 @@ StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, con
 bool
 StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBarV2, opt, option);
+    castOpt(ProgressBar, opt, option);
     if (!opt)
         return true;
 
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
         return true;
+
+    qDebug() << opt->progress << opt->minimum << opt->maximum;
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
-    const bool hor(opt->orientation == Qt::Horizontal);
+    castOpt(ProgressBarV2, optv2, option);
+    const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
     const int s(hor?cont.height():cont.width());
 
     const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
-
 
     quint64 thing = h.rgba();
     thing |= ((quint64)s << 32);
@@ -216,7 +218,9 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         if (widget)
             anim.insert(widget, a);
     }
-    const bool inv(hor?opt->invertedAppearance:!opt->bottomToTop);
+    bool inv(false);
+    if (optv2)
+        inv = hor?optv2->invertedAppearance:!optv2->bottomToTop;
     QPoint offSet(hor?inv?a:-a:0, !hor?inv?a:-a:0);
     painter->setClipRect(cont);
     Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
@@ -234,7 +238,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
 bool
 StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBarV2, opt, option);
+    castOpt(ProgressBar, opt, option);
     if (!opt)
         return true;
 
@@ -254,7 +258,8 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
 bool
 StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBarV2, opt, option);
+    castOpt(ProgressBar, opt, option);
+    castOpt(ProgressBarV2, optv2, option);
     if (!opt || opt->text.isEmpty())
         return true;
 
@@ -262,16 +267,17 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //he text label of a QProgressBar.
-    const bool hor(opt->orientation == Qt::Horizontal);
+    const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
     const float w_2(groove.width()/2.0f), h_2(groove.height()/2.0f);
 #define TRANSLATE(_BOOL_) if(!hor) {painter->translate(w_2, h_2);painter->rotate(_BOOL_?-90.0f:90.0f);painter->translate(-w_2, -h_2);}
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
-    TRANSLATE(opt->bottomToTop);
+    const bool btt(optv2 && optv2->bottomToTop);
+    TRANSLATE(btt);
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
-    TRANSLATE(!opt->bottomToTop);
+    TRANSLATE(!btt);
 
     painter->setClipRegion(QRegion(cont));
-    TRANSLATE(opt->bottomToTop);
+    TRANSLATE(btt);
     QRect tr(opt->fontMetrics.boundingRect(label, Qt::AlignCenter, opt->text));
     int rnd(qMin(tr.height(), tr.width())/2);
     painter->save();
@@ -281,7 +287,7 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
     painter->drawRoundedRect(tr, rnd, rnd);
     painter->restore();
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::HighlightedText);
-    TRANSLATE(!opt->bottomToTop);
+    TRANSLATE(!btt);
     painter->setClipping(false);
     return true;
 }

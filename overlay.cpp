@@ -212,6 +212,18 @@ OverLay::manage(QFrame *frame, int opacity)
     return false;
 }
 
+bool
+OverLay::release(QFrame *frame)
+{
+    if (OverLay *o = frame->findChild<OverLay*>())
+        if (o->parent() == frame)
+        {
+            o->deleteLater();
+            return true;
+        }
+    return false;
+}
+
 QRegion
 OverLay::mask() const
 {

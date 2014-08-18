@@ -31,6 +31,23 @@ ProgressHandler::manage(QProgressBar *bar)
 }
 
 void
+ProgressHandler::release(QProgressBar *bar)
+{
+    bar->disconnect(instance());
+    bar->removeEventFilter(instance());
+}
+
+void
+ProgressHandler::deleteInstance()
+{
+    if (m_instance)
+    {
+        delete m_instance;
+        m_instance = 0;
+    }
+}
+
+void
 ProgressHandler::checkBar(QProgressBar *bar)
 {
     if (m_bars.contains(bar))

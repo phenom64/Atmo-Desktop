@@ -1,5 +1,7 @@
 project (kwin3-styleproject)
 
+find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
+
 set (KWIN_SRCS
     kwinclient.cpp
     factory.cpp

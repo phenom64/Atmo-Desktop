@@ -24,8 +24,18 @@ Basic
 *Basic::instance()
 {
     if (!s_instance)
-        s_instance = new Basic(s_style);
+        s_instance = new Basic();
     return s_instance;
+}
+
+void
+Basic::deleteInstance()
+{
+    if (s_instance)
+    {
+        delete s_instance;
+        s_instance = 0;
+    }
 }
 
 
@@ -34,11 +44,23 @@ Basic::manage(QWidget *w)
 {
     if (!w)
         return;
+    w->removeEventFilter(instance());
     w->installEventFilter(instance());
     w->setAttribute(Qt::WA_Hover);
     if (qobject_cast<QSlider *>(w) || qobject_cast<QScrollBar *>(w))
         w->setAttribute(Qt::WA_MouseTracking);
+    w->disconnect(instance());
     connect(w, SIGNAL(destroyed()), instance(), SLOT(removeSender()));
+}
+
+void
+Basic::release(QWidget *w)
+{
+    if (!w)
+        return;
+    w->removeEventFilter(instance());
+    w->disconnect(instance());
+    instance()->remove(w);
 }
 
 Basic::Basic(QObject *parent)
@@ -46,6 +68,12 @@ Basic::Basic(QObject *parent)
     , m_timer(new QTimer(this))
 {
     connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
+}
+
+void
+Basic::remove(QWidget *w)
+{
+    m_vals.remove(w);
 }
 
 void
@@ -90,7 +118,7 @@ Basic::animate()
                 sopt.pageStep = slider->pageStep();
                 sopt.singleStep = slider->singleStep();
                 sopt.upsideDown = slider->invertedAppearance();
-                QRect r = s_style->subControlRect(QStyle::CC_Slider, &sopt, QStyle::SC_SliderHandle, slider);
+                QRect r = slider->style()->subControlRect(QStyle::CC_Slider, &sopt, QStyle::SC_SliderHandle, slider);
                 mouse = r.contains(slider->mapFromGlobal(QCursor::pos()));
             }
             else if (castObj(QScrollBar *, scroller, w))
@@ -105,7 +133,7 @@ Basic::animate()
                 sopt.pageStep = scroller->pageStep();
                 sopt.singleStep = scroller->singleStep();
                 sopt.upsideDown = scroller->invertedAppearance();
-                QRect r = s_style->subControlRect(QStyle::CC_ScrollBar, &sopt, QStyle::SC_ScrollBarSlider, scroller);
+                QRect r = scroller->style()->subControlRect(QStyle::CC_ScrollBar, &sopt, QStyle::SC_ScrollBarSlider, scroller);
                 mouse = r.contains(scroller->mapFromGlobal(QCursor::pos()));
             }
         }
@@ -162,20 +190,41 @@ Tabs
 *Tabs::instance()
 {
     if (!s_instance)
-        s_instance = new Tabs(s_style);
+        s_instance = new Tabs();
     return s_instance;
 }
 
+void
+Tabs::deleteInstance()
+{
+    if (s_instance)
+    {
+        delete s_instance;
+        s_instance = 0;
+    }
+}
 
 void
 Tabs::manage(QTabBar *tb)
 {
     if (!tb)
         return;
+    tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
     tb->setAttribute(Qt::WA_Hover);
     tb->setAttribute(Qt::WA_MouseTracking);
+    tb->disconnect(instance());
     connect(tb, SIGNAL(destroyed()), instance(), SLOT(removeSender()));
+}
+
+void
+Tabs::release(QTabBar *tb)
+{
+    if (!tb)
+        return;
+    tb->removeEventFilter(instance());
+    tb->disconnect(instance());
+    instance()->remove(tb);
 }
 
 Tabs::Tabs(QObject *parent)
@@ -183,6 +232,12 @@ Tabs::Tabs(QObject *parent)
     , m_timer(new QTimer(this))
 {
     connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
+}
+
+void
+Tabs::remove(QTabBar *tb)
+{
+    m_vals.remove(tb);
 }
 
 void
@@ -196,8 +251,9 @@ Tabs::removeSender()
 int
 Tabs::hoverLevel(const QTabBar *tb, Tab tab)
 {
-    QMap<Tab, Level> levels(m_vals.value(const_cast<QTabBar *>(tb)));
-    return levels.value(tab);
+    if (m_vals.contains(const_cast<QTabBar *>(tb)))
+        return m_vals.value(const_cast<QTabBar *>(tb)).value(tab);
+    return 0;
 }
 
 void

@@ -30,6 +30,7 @@ public:
     enum Dir{ Left, Up, Right, Down };
     typedef unsigned int Direction;
     static Ops *instance();
+    static void deleteInstance();
 
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);

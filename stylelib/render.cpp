@@ -92,6 +92,16 @@ Render
     return m_instance;
 }
 
+void
+Render::deleteInstance()
+{
+    if (m_instance)
+    {
+        delete m_instance;
+        m_instance = 0;
+    }
+}
+
 Render::Render()
 {
 }

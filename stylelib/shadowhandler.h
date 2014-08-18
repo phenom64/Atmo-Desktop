@@ -9,7 +9,9 @@ public:
     static unsigned long *shadows(const int size = 32);
     static void installShadows(WId w);
     static void manage(QWidget *w);
+    static void release(QWidget *w);
     static void removeDelete();
+    static void deleteInstance();
     static ShadowHandler *instance();
 protected:
     bool eventFilter(QObject *, QEvent *);

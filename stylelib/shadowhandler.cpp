@@ -119,13 +119,15 @@ ShadowHandler::manage(QWidget *w)
 }
 
 void
+ShadowHandler::release(QWidget *w)
+{
+    w->removeEventFilter(instance());
+}
+
+void
 ShadowHandler::removeDelete()
 {
-    if (m_instance)
-    {
-        delete m_instance;
-        m_instance = 0;
-    }
+    deleteInstance();
     for (int i = 0; i < 8; ++i)
     {
         if (pix[i])
@@ -136,6 +138,16 @@ ShadowHandler::removeDelete()
         }
     }
     XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
+}
+
+void
+ShadowHandler::deleteInstance()
+{
+    if (m_instance)
+    {
+        delete m_instance;
+        m_instance = 0;
+    }
 }
 
 

@@ -32,6 +32,16 @@ Ops
     return s_instance;
 }
 
+void
+Ops::deleteInstance()
+{
+    if (s_instance)
+    {
+        delete s_instance;
+        s_instance = 0;
+    }
+}
+
 QWidget
 *Ops::window(QWidget *w)
 {

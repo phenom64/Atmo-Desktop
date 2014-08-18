@@ -31,6 +31,8 @@ set (QT_USE_QTDBUS TRUE)
 find_package (Qt4 REQUIRED)
 include (${QT_USE_FILE})
 
+MESSAGE (${CMAKE_INSTALL_PREFIX})
+
 qt4_wrap_cpp (MOC_SRCS ${libMocHDRS})
 
 find_package (X11)

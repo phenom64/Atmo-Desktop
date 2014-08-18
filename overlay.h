@@ -27,6 +27,7 @@ public:
     typedef uint Sides;
     OverLay(QFrame *parent = 0, int opacity = 0);
     static bool manage(QFrame *frame, int opacity);
+    static bool release(QFrame *frame);
     inline Sides lines() { return m_lines; }
 
 protected:
