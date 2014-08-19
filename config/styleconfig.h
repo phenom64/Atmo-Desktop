@@ -1,16 +1,15 @@
 #ifndef STYLECONFIG_H
 #define STYLECONFIG_H
 
-#include <QDialog>
 #include "ui_config.h"
 
-class StyleConfig : public QDialog
+class StyleConfig : public QWidget
 {
     Q_OBJECT
 public:
     explicit StyleConfig(QWidget *parent = 0);
 private:
-    Ui::Dialog ui;
+    Ui::Config ui;
 };
 
 #endif //STYLECONFIG_H

@@ -1,4 +1,6 @@
 #include "styleconfig.h"
+#include "../settings.h"
+#include <QSettings>
 
 /** This function declares the kstyle config plugin, you may need to adjust it
 for other plugins or won't need it at all, if you're not interested in a plugin */
@@ -13,8 +15,9 @@ extern "C"
     }
 }
 
-StyleConfig::StyleConfig(QWidget *parent) : QDialog(parent)
+StyleConfig::StyleConfig(QWidget *parent) : QWidget(parent)
 {
+    QSettings s("dsp", "dsp");
     ui.setupUi(this);
-    ui.pbRoundness->setValue(0);
+    ui.pbRoundness->setValue(s.value(PUSHBTNRND).toInt());
 }

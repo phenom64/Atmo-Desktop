@@ -6,6 +6,7 @@
 #define PUSHBTNRND "pushbtn.rnd", 8
 #define TOOLBTNRND "toolbtn.rnd", 8
 #define INPUTRND "input.rnd", 8
+#define SLIDERSIZE "siders.size", 16
 
 typedef struct Settings
 {
@@ -21,6 +22,10 @@ typedef struct Settings
     {
         int rnd;
     } input;
+    struct sliders
+    {
+        int size;
+    } sliders;
 } Settings;
 
 #endif //SETTINGS_H
