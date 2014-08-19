@@ -49,8 +49,8 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
     shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
     QBrush b(shadow);
-    Render::renderShadow(Render::Simple, option->rect, painter, 5, Render::All, 1.0f, &b);
-    Render::renderMask(option->rect.adjusted(!inToolBar, !inToolBar, -!inToolBar, -1), painter, option->palette.brush(QPalette::Base), 4+inToolBar);
+    Render::renderShadow(Render::Simple, option->rect, painter, m_s.input.rnd, Render::All, 1.0f, &b);
+    Render::renderMask(option->rect.adjusted(!inToolBar, !inToolBar, -!inToolBar, -1), painter, option->palette.brush(QPalette::Base), m_s.input.rnd-1+inToolBar);
 
     return true;
 }
@@ -227,13 +227,13 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 //    down.setTop(down.top()+1);
 //    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
 
-    Render::renderMask(option->rect, painter, option->palette.brush(QPalette::Base), 5);
+    Render::renderMask(option->rect, painter, option->palette.brush(QPalette::Base), m_s.input.rnd);
     QLinearGradient shadow(0, 0, 0, option->rect.height());
     shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
     shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
     shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
     QBrush b(shadow);
-    Render::renderShadow(Render::Simple, option->rect, painter, 5, Render::All, 1.0f, &b);
+    Render::renderShadow(Render::Simple, option->rect, painter, m_s.input.rnd, Render::All, 1.0f, &b);
 
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down);

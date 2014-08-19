@@ -38,12 +38,15 @@ public:
 
 Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 
+Settings Q_DECL_EXPORT StyleProject::m_s;
+
 StyleProject::StyleProject()
     : QCommonStyle()
 {
 //    Anim::setStyle(this);
     init();
     assignMethods();
+    readSettings();
     Render::generateData();
     QPalette p(qApp->palette());
     QColor c = p.color(QPalette::Window);

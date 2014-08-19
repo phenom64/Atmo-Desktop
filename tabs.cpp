@@ -248,18 +248,14 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         painter->setFont(f);
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
-//    if (opt->state & State_MouseOver && !isSelected)
-//        fg = QPalette::Highlight;
-    if (isSelected && !Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+    if (isSelected && !Ops::isSafariTabBar(bar))
         fg = QPalette::HighlightedText;
 
-    Qt::Alignment align = Qt::AlignCenter;
-    QFontMetrics fm(f);
+    QFontMetrics fm(painter->fontMetrics());
     QString text(opt->text);
-    if (fm.boundingRect(text).width() > tr.width())
+    if (fm.width(text) > tr.width())
         text = fm.elidedText(text, bar?bar->elideMode():Qt::ElideRight, tr.width());
-//        align &= ~Qt::AlignHCenter;
-    drawItemText(painter, tr, align, option->palette, option->ENABLED, text, fg);
+    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
     painter->restore();

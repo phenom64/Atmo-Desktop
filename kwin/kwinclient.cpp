@@ -45,16 +45,23 @@ TitleBar::paintEvent(QPaintEvent *)
     QFont f(p.font());
     f.setBold(m_client->isActive());
     p.setFont(f);
+
+    QString text(m_client->caption());
+    const int maxW(rect().width()-(qMax(m_client->buttonCornerWidth(true), m_client->buttonCornerWidth(false))*2));
+    if (p.fontMetrics().width(text) > maxW)
+        text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+
     if (m_client->isActive())
     {
         p.setPen(QColor(255, 255, 255, 127));
-        p.drawText(rect().translated(0, 1), Qt::AlignCenter, m_client->caption());
+        p.drawText(rect().translated(0, 1), Qt::AlignCenter, text);
     }
     if (m_client->m_textColor.isValid())
         p.setPen(m_client->m_textColor);
     else
         p.setPen(m_client->options()->color(KwinClient::ColorFont, m_client->isActive()));
-    p.drawText(rect(), Qt::AlignCenter, m_client->caption());
+
+    p.drawText(rect(), Qt::AlignCenter, text);
 
     if (m_client->m_needSeparator)
     {
@@ -138,8 +145,9 @@ KwinClient::compositingActive() const
 }
 
 void
-KwinClient::populate(const QString &buttons)
+KwinClient::populate(const QString &buttons, bool left)
 {
+    int size(0);
     for (int i = 0; i < buttons.size(); ++i)
     {
         Button::Type t;
@@ -163,12 +171,20 @@ KwinClient::populate(const QString &buttons)
         case 'X': t = Button::Close; break;
         case 'I': t = Button::Min; break;
         case 'A': t = Button::Max; break;
-        case '_': m_titleLayout->addSpacing(2); supported = false; break;
+        case '_': m_titleLayout->addSpacing(2); supported = false; size += 2; break;
         default: supported = false; break;
         }
         if (supported)
-            m_titleLayout->addWidget(new Button(t, this));
+        {
+            Button *b = new Button(t, this);
+            size += b->width();
+            m_titleLayout->addWidget(b);
+        }
     }
+    if (left)
+        m_leftButtons = size;
+    else
+        m_rightButtons = size;
 }
 
 void
@@ -298,9 +314,9 @@ KwinClient::reset(unsigned long changed)
             else
                 delete item;
         }
-        populate(options()->titleButtonsLeft());
+        populate(options()->titleButtonsLeft(), true);
         m_titleLayout->addStretch();
-        populate(options()->titleButtonsRight());
+        populate(options()->titleButtonsRight(), false);
     }
     if (isPreview())
         return;

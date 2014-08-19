@@ -63,13 +63,13 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
         lg.setColorAt(1.0f, bc/*Color::mid(bc, Qt::black, 7, 1)*/);
-        Render::renderMask(r, painter, lg, 5);
+        Render::renderMask(r, painter, lg, m_s.pushbtn.rnd);
         QLinearGradient shadow(0, 0, 0, r.height());
         shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
         shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
         shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
         QBrush b(shadow);
-        Render::renderShadow(Render::Simple, r, painter, 5, Render::All, 1.0f, &b);
+        Render::renderShadow(Render::Simple, r, painter, m_s.pushbtn.rnd, Render::All, 1.0f, &b);
     }
     return true;
 }
@@ -310,9 +310,9 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
         shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
         QBrush b(shadow);
-        Render::renderShadow(Render::Simple, rect, painter, 4, sides, 1.0f, &b);
+        Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, 1.0f, &b);
 
-        Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, 4, sides);
+        Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, m_s.toolbtn.rnd, sides);
 
         if (!(sides&Render::Right) && !nextSelected)
         {

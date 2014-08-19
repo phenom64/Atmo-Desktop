@@ -164,7 +164,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
         return true;
 
-    qDebug() << opt->progress << opt->minimum << opt->maximum;
+//    qDebug() << opt->progress << opt->minimum << opt->maximum;
     QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));

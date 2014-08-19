@@ -8,6 +8,10 @@ class StyleConfig : public QWidget
     Q_OBJECT
 public:
     explicit StyleConfig(QWidget *parent = 0);
+
+public slots:
+    void save();
+
 private:
     Ui::Config ui;
 };

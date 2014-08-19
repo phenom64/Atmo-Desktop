@@ -19,6 +19,7 @@ public:
     ~StyleProject();
     void init();
     void assignMethods();
+    void readSettings();
 
     /* reimplemented functions
      * for now only some, we will
@@ -132,7 +133,7 @@ private:
     StylePrimitive m_pe[PESize];
     EventFilter m_ev[EVSize];
     SubControlRect m_sc[CCSize];
-    Settings m_s;
+    static Settings m_s;
 };
 
 #endif // STYLEPROJECT_H

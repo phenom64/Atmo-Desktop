@@ -50,11 +50,12 @@ public:
 
     inline TitleBar *titleBar() const { return m_titleBar; }
     bool compositingActive() const;
+    int buttonCornerWidth(bool left) { return left ? m_leftButtons : m_rightButtons; }
 
 protected:
     bool eventFilter(QObject *, QEvent *);
     void paint(QPainter &p);
-    void populate(const QString &buttons);
+    void populate(const QString &buttons, bool left);
 
 protected slots:
     void postInit();
@@ -65,7 +66,7 @@ private:
     QLinearGradient m_unoGradient;
     QColor m_titleColor[2], m_textColor;
     Factory *m_factory;
-    int m_headHeight;
+    int m_headHeight, m_leftButtons, m_rightButtons;
     bool m_needSeparator;
     friend class TitleBar;
     SizeGrip *m_sizeGrip;

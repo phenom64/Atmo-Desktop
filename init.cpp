@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QDebug>
+#include <QSettings>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -107,4 +108,20 @@ StyleProject::assignMethods()
     m_sc[CC_ScrollBar] = method(scrollBarRect);
     m_sc[CC_ComboBox] = method(comboBoxRect);
     m_sc[CC_GroupBox] = method(groupBoxRect);
+}
+
+void
+StyleProject::readSettings()
+{
+    QSettings s("dsp", "dsp");
+    //pushbuttons
+    m_s.pushbtn.rnd = s.value(DEFPUSHBTNRND).toInt();
+    //toolbuttons
+    m_s.toolbtn.rnd = s.value(DEFTOOLBTNRND).toInt();
+    //inputs
+    m_s.input.rnd = s.value(DEFINPUTRND).toInt();
+    //sliders
+    m_s.sliders.size = s.value(DEFSLIDERSIZE).toInt();
+    //scrollers
+    m_s.scroller.size = s.value(DEFSCROLLERSIZE).toInt();
 }
