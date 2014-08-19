@@ -1,6 +1,5 @@
+message(STATUS "preparing stylelib")
 project(stylelib)
-
-add_definitions(${QT_DEFINITIONS})
 
 set(libSRCS
     xhandler.cpp

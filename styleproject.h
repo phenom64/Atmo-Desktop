@@ -4,6 +4,7 @@
 #include <QCommonStyle>
 #include <QEvent>
 #include "stylelib/macros.h"
+#include "settings.h"
 
 #define DEBUG 1
 
@@ -131,6 +132,7 @@ private:
     StylePrimitive m_pe[PESize];
     EventFilter m_ev[EVSize];
     SubControlRect m_sc[CCSize];
+    Settings m_s;
 };
 
 #endif // STYLEPROJECT_H

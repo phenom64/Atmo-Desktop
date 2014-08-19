@@ -343,7 +343,13 @@ StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const
     bool hor(slider->orientation == Qt::Horizontal);
     int grooveSize(hor ? r.width() : r.height());
     unsigned int range(slider->maximum-slider->minimum);
-    int sliderSize(qMax(pixelMetric(PM_ScrollBarSliderMin, opt, w), (int)((slider->pageStep*grooveSize) / (range+slider->pageStep))));
+    int gs((int)((slider->pageStep*grooveSize)));
+    int ss((range+slider->pageStep));
+    int sliderSize(0);
+    if (ss && gs)
+        sliderSize = gs/ss;
+    if (sliderSize < pixelMetric(PM_ScrollBarSliderMin, opt, w))
+        sliderSize = pixelMetric(PM_ScrollBarSliderMin, opt, w);
     int pos = sliderPositionFromValue(slider->minimum, slider->maximum, slider->sliderPosition, grooveSize-sliderSize, slider->upsideDown);
 
     switch (sc)

@@ -1,3 +1,4 @@
+message(STATUS "preparing kwin deco")
 project(kwin3-styleproject)
 
 find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
