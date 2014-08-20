@@ -169,7 +169,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     case SE_DockWidgetTitleBarText:
     case SE_DockWidgetIcon:
     {
-        castOpt(DockWidgetV2, dw, opt);
+        castOpt(DockWidget, dw, opt);
         if (!dw)
             return QRect();
 

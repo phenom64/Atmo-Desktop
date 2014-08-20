@@ -77,7 +77,7 @@ SizeGrip::restack()
 void
 SizeGrip::repos()
 {
-    move(m_client->width()-SZ, m_client->height()-(m_client->titleBar()->height()+SZ));
+    move(m_client->width()-SZ, m_client->height()-(m_client->m_titleLayout->geometry().height()+SZ));
 }
 
 bool

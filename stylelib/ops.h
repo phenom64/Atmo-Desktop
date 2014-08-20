@@ -3,6 +3,7 @@
 
 #include <QColor>
 #include <QWidget>
+#include <QQueue>
 
 /**
  * This class is a mess atm, I just add stuff here
@@ -18,6 +19,13 @@ public:
     unsigned int sides;
 };
 
+typedef void (QWidget::*Function)();
+typedef struct QueueItem
+{
+    QWidget *w;
+    Function func;
+} QueueItem;
+
 class QToolBar;
 class QTabBar;
 class QToolButton;
@@ -29,6 +37,7 @@ class Q_DECL_EXPORT Ops : public QObject
 public:
     enum Dir{ Left, Up, Right, Down };
     typedef unsigned int Direction;
+
     static Ops *instance();
     static void deleteInstance();
 
@@ -43,6 +52,7 @@ public:
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
     static void queToolBar(QToolBar *bar) { instance()->_queToolBar(bar); }
+    static void callLater(QWidget *w, Function func, int time = 500);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {
@@ -73,12 +83,14 @@ public:
 public slots:
     void updateGeoFromSender();
     void updateToolBar();
+    void later();
 
 protected:
     void _queToolBar(QToolBar *bar) { if (!m_toolBars.contains(bar)) m_toolBars << bar; }
 
 private:
     static Ops *s_instance;
+    static QQueue<QueueItem> m_laterQueue;
     QList<QToolBar *> m_toolBars;
 };
 

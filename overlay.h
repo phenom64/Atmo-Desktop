@@ -28,6 +28,7 @@ public:
     OverLay(QFrame *parent = 0, int opacity = 0);
     static bool manage(QFrame *frame, int opacity);
     static bool release(QFrame *frame);
+    static bool hasOverLay(const QFrame *frame);
     inline Sides lines() { return m_lines; }
 
 protected:

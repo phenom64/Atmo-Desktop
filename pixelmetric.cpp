@@ -52,6 +52,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_MenuPanelWidth: return 0;
     case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent: return 1;
+    case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_SplitterWidth: return 1;
     case PM_DefaultFrameWidth:
     {
@@ -60,7 +61,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 //        if (qobject_cast<const QLineEdit *>(widget)||qobject_cast<const QComboBox *>(widget))
 //            return 2;
         if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
-            if (frame->frameShadow() == QFrame::Sunken && frame->findChild<OverLay *>())
+            if (frame->frameShadow() == QFrame::Sunken && OverLay::hasOverLay(frame))
                 return 0;
         return 2;
     }

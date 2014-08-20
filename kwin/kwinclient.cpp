@@ -18,73 +18,11 @@
 
 #define TITLEHEIGHT 22
 
-TitleBar::TitleBar(KwinClient *client, QWidget *parent)
-    : QWidget(parent)
-    , m_brush(QBrush())
-    , m_client(client)
-{
-    setFixedHeight(TITLEHEIGHT);
-    setAttribute(Qt::WA_NoSystemBackground);
-//    setAttribute(Qt::WA_TranslucentBackground);
-}
-
-void
-TitleBar::paintEvent(QPaintEvent *)
-{
-    QPainter p(this);
-    p.setPen(Qt::NoPen);
-    p.setBrush(Qt::NoBrush);
-    Render::renderMask(rect(), &p, m_brush, 4, Render::All & ~Render::Bottom);
-    QLinearGradient lg(rect().topLeft(), rect().bottomLeft()+QPoint(0, height()));
-    lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
-    lg.setColorAt(0.5f, Qt::transparent);
-    p.setBrush(Qt::NoBrush);
-    p.setPen(QPen(lg, 1.0f));
-    p.setRenderHint(QPainter::Antialiasing);
-    p.drawRoundedRect(QRectF(rect()).translated(0.5f, 0.5f), 5, 5);
-    QFont f(p.font());
-    f.setBold(m_client->isActive());
-    p.setFont(f);
-
-    QString text(m_client->caption());
-    const int maxW(rect().width()-(qMax(m_client->buttonCornerWidth(true), m_client->buttonCornerWidth(false))*2));
-    if (p.fontMetrics().width(text) > maxW)
-        text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
-
-    if (m_client->isActive())
-    {
-        p.setPen(QColor(255, 255, 255, 127));
-        p.drawText(rect().translated(0, 1), Qt::AlignCenter, text);
-    }
-    if (m_client->m_textColor.isValid())
-        p.setPen(m_client->m_textColor);
-    else
-        p.setPen(m_client->options()->color(KwinClient::ColorFont, m_client->isActive()));
-
-    p.drawText(rect(), Qt::AlignCenter, text);
-
-    if (m_client->m_needSeparator)
-    {
-        QRectF r(rect());
-        r.translate(-0.5f, -0.5f);
-        p.setPen(QColor(0, 0, 0, 32));
-        p.drawLine(r.bottomLeft(), r.bottomRight());
-    }
-    p.end();
-}
-
-void
-TitleBar::setBrush(const QBrush &brush)
-{
-    m_brush = brush;
-}
-
 ///-------------------------------------------------------------------
 
 KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
-    , m_titleBar(0)
     , m_headHeight(TITLEHEIGHT)
     , m_needSeparator(true)
     , m_factory(factory)
@@ -114,16 +52,14 @@ KwinClient::init()
     widget()->installEventFilter(this);
     widget()->setAttribute(Qt::WA_NoSystemBackground);
     widget()->setAutoFillBackground(false);
-    m_titleBar = new TitleBar(this);
+
     m_titleLayout = new QHBoxLayout();
     m_titleLayout->setSpacing(0);
-    m_titleLayout->setContentsMargins(0, 0, 0, 0);
-    m_titleBar->setLayout(m_titleLayout);
+    m_titleLayout->setContentsMargins(0, 3, 0, 3);
     QVBoxLayout *l = new QVBoxLayout(widget());
     l->setSpacing(0);
     l->setContentsMargins(0, 0, 0, 0);
-//    l->addLayout(m_titleLayout);
-    l->addWidget(m_titleBar);
+    l->addLayout(m_titleLayout);
     l->addStretch();
     widget()->setLayout(l);
     m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
@@ -176,7 +112,7 @@ KwinClient::populate(const QString &buttons, bool left)
         }
         if (supported)
         {
-            Button *b = new Button(t, this);
+            Button *b = new Button(t, this, widget());
             size += b->width();
             m_titleLayout->addWidget(b);
         }
@@ -233,10 +169,10 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::Paint:
     {
-//        QPainter p(widget());
-//        p.setRenderHint(QPainter::Antialiasing);
-//        paint(p);
-//        p.end();
+        QPainter p(widget());
+        p.setRenderHint(QPainter::Antialiasing);
+        paint(p);
+        p.end();
         return true;
     }
     case QEvent::MouseButtonDblClick:
@@ -260,16 +196,47 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
 void
 KwinClient::paint(QPainter &p)
 {
-//    p.fillRect(m_titleLayout->geometry(), Qt::white);
-//    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-//    p.setPen(Qt::NoPen);
-//    p.setBrush(Qt::black);
-//    p.drawRoundedRect(m_titleLayout->geometry(), 8, 8);
-//    QFont f(p.font());
-//    f.setBold(isActive());
-//    p.setFont(f);
-//    p.setPen(options()->color(ColorFont, isActive()));
-//    p.drawText(m_titleBar->geometry(), Qt::AlignCenter, caption());
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::NoBrush);
+    const QRect tr(m_titleLayout->geometry());
+    p.setClipRect(tr);
+    Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
+    QLinearGradient lg(tr.topLeft(), tr.bottomLeft()+QPoint(0, height()));
+    lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
+    lg.setColorAt(0.5f, Qt::transparent);
+    p.setBrush(Qt::NoBrush);
+    p.setPen(QPen(lg, 1.0f));
+    p.setRenderHint(QPainter::Antialiasing);
+    p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
+    QFont f(p.font());
+    f.setBold(isActive());
+    p.setFont(f);
+
+    QString text(caption());
+    const int maxW(tr.width()-(qMax(buttonCornerWidth(true), buttonCornerWidth(false))*2));
+    if (p.fontMetrics().width(text) > maxW)
+        text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+
+    if (isActive())
+    {
+        p.setPen(QColor(255, 255, 255, 127));
+        p.drawText(tr.translated(0, 1), Qt::AlignCenter, text);
+    }
+    if (m_textColor.isValid())
+        p.setPen(m_textColor);
+    else
+        p.setPen(options()->color(KwinClient::ColorFont, isActive()));
+
+    p.drawText(tr, Qt::AlignCenter, text);
+
+    if (m_needSeparator)
+    {
+        QRectF r(tr);
+        r.translate(-0.5f, -0.5f);
+        p.setPen(QColor(0, 0, 0, 32));
+        p.drawLine(r.bottomLeft(), r.bottomRight());
+    }
+    p.setClipping(false);
 }
 
 QSize
@@ -303,7 +270,7 @@ KwinClient::activeChange()
 void
 KwinClient::reset(unsigned long changed)
 {
-    if (changed & SettingButtons)
+    if ((changed & SettingButtons) || isPreview())
     {
         while (QLayoutItem *item = m_titleLayout->takeAt(0))
         {
@@ -318,10 +285,9 @@ KwinClient::reset(unsigned long changed)
         m_titleLayout->addStretch();
         populate(options()->titleButtonsRight(), false);
     }
-    if (isPreview())
-        return;
     int n(0);
-    if (WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n)))
+    WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
+    if (data && !isPreview())
     {
         m_titleColor[0] = QColor::fromRgba(data->top);
         m_titleColor[1] = QColor::fromRgba(data->bottom);
@@ -345,11 +311,12 @@ KwinClient::reset(unsigned long changed)
     QPainter pt(&p);
     pt.fillRect(p.rect(), m_unoGradient);
     pt.end();
-
-    m_titleBar->setBrush(Render::mid(p, Render::noise(), 40, 1));
-    m_titleBar->update();
-    ShadowHandler::installShadows(windowId());
+    m_brush = QBrush(Render::mid(p, Render::noise(), 40, 1));
     widget()->update();
+    if (isPreview())
+        return;
+
+    ShadowHandler::installShadows(windowId());
     if (!m_sizeGrip)
         m_sizeGrip = new SizeGrip(this);
 }

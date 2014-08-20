@@ -8,23 +8,6 @@
 
 #include "factory.h"
 
-class KwinClient;
-class Q_DECL_EXPORT TitleBar : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit TitleBar(KwinClient *client, QWidget *parent = 0);
-    void setBrush(const QBrush &brush);
-    inline QBrush brush() const { return m_brush; }
-
-protected:
-    void paintEvent(QPaintEvent *);
-
-private:
-    QBrush m_brush;
-    KwinClient *m_client;
-};
-
 class Factory;
 class SizeGrip;
 class KwinClient : public KDecoration
@@ -48,7 +31,6 @@ public:
     void shadeChange() {}
     void reset(unsigned long changed);
 
-    inline TitleBar *titleBar() const { return m_titleBar; }
     bool compositingActive() const;
     int buttonCornerWidth(bool left) { return left ? m_leftButtons : m_rightButtons; }
 
@@ -62,13 +44,13 @@ protected slots:
 
 private:
     QHBoxLayout *m_titleLayout;
-    TitleBar *m_titleBar;
     QLinearGradient m_unoGradient;
     QColor m_titleColor[2], m_textColor;
     Factory *m_factory;
+    QBrush m_brush;
     int m_headHeight, m_leftButtons, m_rightButtons;
     bool m_needSeparator;
-    friend class TitleBar;
+    friend class SizeGrip;
     SizeGrip *m_sizeGrip;
 };
 

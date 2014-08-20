@@ -23,6 +23,7 @@
 #include "render.h"
 
 Q_DECL_EXPORT Ops *Ops::s_instance = 0;
+Q_DECL_EXPORT QQueue<QueueItem> Ops::m_laterQueue;
 
 Ops
 *Ops::instance()
@@ -195,6 +196,7 @@ static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
         if (tb->isVisible())
         if (tb->geometry().top() <= 0)
             needSeparator = 0;
+    win->setProperty("DSP_headHeight", tbheight);
     return height;
 }
 
@@ -259,6 +261,25 @@ Ops::fgRole(const QWidget *w, const QPalette::ColorRole fallBack)
         if (area->viewport()->autoFillBackground())
             return area->viewport()->foregroundRole();
     return w->foregroundRole();
+}
+
+void
+Ops::callLater(QWidget *w, Function func, int time)
+{
+    QueueItem i;
+    i.w = w;
+    i.func = func;
+    m_laterQueue.enqueue(i);
+    QTimer::singleShot(time, instance(), SLOT(later()));
+}
+
+void
+Ops::later()
+{
+    QueueItem i = m_laterQueue.dequeue();
+    QWidget *w = i.w;
+    Function func = i.func;
+    (w->*func)();
 }
 
 ToolButtonData

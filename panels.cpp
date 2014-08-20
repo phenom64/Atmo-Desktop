@@ -205,7 +205,7 @@ StyleProject::drawToolTip(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(DockWidgetV2, opt, option);
+    castOpt(DockWidget, opt, option);
     if (!opt)
         return true;
 
@@ -214,10 +214,14 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 //    const QRect fr(subElementRect(SE_DockWidgetFloatButton, opt, widget));
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
 
-//    if (opt->closable)
-//        painter->drawTiledPixmap(cr, standardPixmap(SP_DockWidgetCloseButton, opt, widget));
-//    if (opt->floatable)
-//        painter->drawTiledPixmap(fr, standardPixmap(SP_TitleBarUnshadeButton, opt, widget));
+    painter->save();
+    painter->setOpacity(0.33f);
+    painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));
+    QRect l(tr);
+    l.setLeft(0);
+    l.setBottom(l.bottom()+1);
+    painter->drawLine(l.bottomLeft(), l.bottomRight());
+    painter->restore();
 
     const QFont f(painter->font());
     QFont bold(f);

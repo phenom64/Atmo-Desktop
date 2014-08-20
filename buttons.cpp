@@ -9,6 +9,7 @@
 #include <QMainWindow>
 #include <QDebug>
 #include <QBrush>
+#include <QDockWidget>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -228,28 +229,29 @@ StyleProject::drawRadioButtonLabel(const QStyleOption *option, QPainter *painter
 bool
 StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    return false;
+    return true;
 }
 
 bool
 StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    if (widget && !widget->parentWidget())
-        return false;
-
     castOpt(ToolButton, opt, option);
     if (!opt)
         return false;
 
-    const QRect geo = widget->geometry();
-    int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
-    int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
-    geo.getCoords(&x, &y, &r, &b);
-    const QToolBar *bar = qobject_cast<const QToolBar *>(widget->parentWidget());
+    const QToolBar *bar(0);
+
+    if (widget)
+        bar = qobject_cast<const QToolBar *>(widget->parentWidget());
+
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     if (bar)
     {
+        const QRect geo = widget->geometry();
+        int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
+        int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
+        geo.getCoords(&x, &y, &r, &b);
         if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
         {
             sides &= ~Render::Right;
@@ -283,14 +285,10 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     }
 
     QRect rect(opt->rect);
-
-//    if (opt->toolButtonStyle == )
     if (bar)
     {
         QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
         QColor bc(option->palette.color(bg));
-
-
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
         if (option->SUNKEN)
@@ -311,7 +309,6 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
         QBrush b(shadow);
         Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, 1.0f, &b);
-
         Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, m_s.toolbtn.rnd, sides);
 
         if (!(sides&Render::Right) && !nextSelected)

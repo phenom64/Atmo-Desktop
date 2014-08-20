@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QLayout>
 #include <QProgressBar>
+#include <QRect>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -56,12 +57,12 @@ StyleProject::StyleProject()
 
 StyleProject::~StyleProject()
 {
-    ShadowHandler::deleteInstance();
-    ProgressHandler::deleteInstance();
-    Anim::Basic::deleteInstance();
-    Anim::Tabs::deleteInstance();
-    Render::deleteInstance();
-    Ops::deleteInstance();
+//    ShadowHandler::deleteInstance();
+//    ProgressHandler::deleteInstance();
+//    Anim::Basic::deleteInstance();
+//    Anim::Tabs::deleteInstance();
+//    Render::deleteInstance();
+//    Ops::deleteInstance();
 }
 
 void
@@ -96,10 +97,11 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
 //    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
 //        flags &= ~Qt::AlignHCenter;
+    const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
+    if (pal.color(textRole).isValid() && pal.color(bgRole).isValid())
     if (textRole != QPalette::NoRole)
     {
-        const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
-        if (bgRole != QPalette::NoRole && enabled && (bgRole != QPalette::Highlight && Color::contrast(pal.color(textRole), pal.color(bgRole))))
+        if (bgRole != QPalette::NoRole && enabled)
         {
             const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
             const int rgb(isDark?0:255);
@@ -118,6 +120,8 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
 void
 StyleProject::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const QPixmap &pixmap) const
 {
+//    QRect r(itemPixmapRect(rect, alignment, pixmap));
+//    painter->drawTiledPixmap(r, pixmap);
     QCommonStyle::drawItemPixmap(painter, rect, alignment, pixmap);
 }
 
@@ -130,38 +134,76 @@ StyleProject::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, c
 QPixmap
 StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const
 {
+    const int size(16);
+    QImage img(size, size, QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setBrush(Qt::NoBrush);
+    p.setPen(Qt::NoPen);
+    const QRect r(img.rect());
+    const QColor fg(widget&&opt?opt->palette.color(widget->foregroundRole()):Qt::black);
+    const QColor bg(widget&&opt?opt->palette.color(widget->backgroundRole()):Qt::white);
+    const int _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     switch (sp)
     {
     case SP_DockWidgetCloseButton:
+    case SP_TitleBarCloseButton:
     {
-        QPixmap pix(16, 16);
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
+        const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
+        p.setBrush(fg);
         p.setRenderHint(QPainter::Antialiasing);
-        p.drawEllipse(pix.rect());
+        QRect l(r.adjusted(_16_, _16_, -_16_, -_16_));
+        p.drawEllipse(l);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        const int rot[2] = { 45, 90 };
+        for (int i = 0; i < 2; ++i)
+        {
+            p.translate(_2_, _2_);
+            p.rotate(rot[i]);
+            p.translate(-_2_, -_2_);
+            p.drawRect(line);
+        }
         p.end();
-        return pix;
+        return QPixmap::fromImage(img);
+    }
+    case SP_TitleBarMaxButton:
+    case SP_TitleBarNormalButton:
+    {
+        p.setBrush(fg);
+        p.setRenderHint(QPainter::Antialiasing);
+        QRect l(r.adjusted(_16_, _16_, -_16_, -_16_));
+        p.drawEllipse(l);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        QRect pl(r.adjusted(_4_+_16_, _4_+_16_, -(_2_-_8_), -(_2_-_8_)));
+        QPolygon pol;
+        pol << pl.topLeft() << pl.topRight() << pl.bottomLeft();
+        p.drawPolygon(pol);
+        p.translate(_2_, _2_);
+        p.rotate(180);
+        p.translate(-_2_, -_2_);
+        p.drawPolygon(pol);
+        p.end();
+        return QPixmap::fromImage(img);
+    }
+    default: p.end(); return QCommonStyle::standardPixmap(sp, opt, widget);
     }
 
-    default: return QCommonStyle::standardPixmap(sp, opt, widget);
-    }
 }
 
 QRect
 StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
 {
-    if (flags == Qt::AlignCenter)
-        flags = Qt::AlignLeft|Qt::AlignVCenter;
     QRect ret(pixmap.rect());
     if (flags & (Qt::AlignHCenter|Qt::AlignVCenter))
         ret.moveCenter(r.center());
     if (flags & Qt::AlignLeft)
         ret.moveLeft(r.left());
-    if (flags & Qt::AlignRight)
+    else if (flags & Qt::AlignRight)
         ret.moveRight(r.right());
     if (flags & Qt::AlignTop)
         ret.moveTop(r.top());
-    if (flags & Qt::AlignBottom)
+    else if (flags & Qt::AlignBottom)
         ret.moveBottom(r.bottom());
     return ret;
 }

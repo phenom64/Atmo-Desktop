@@ -115,13 +115,13 @@ StyleProject::readSettings()
 {
     QSettings s("dsp", "dsp");
     //pushbuttons
-    m_s.pushbtn.rnd = s.value(DEFPUSHBTNRND).toInt();
+    m_s.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     //toolbuttons
-    m_s.toolbtn.rnd = s.value(DEFTOOLBTNRND).toInt();
+    m_s.toolbtn.rnd = s.value(READTOOLBTNRND).toInt();
     //inputs
-    m_s.input.rnd = s.value(DEFINPUTRND).toInt();
+    m_s.input.rnd = s.value(READINPUTRND).toInt();
     //sliders
-    m_s.sliders.size = s.value(DEFSLIDERSIZE).toInt();
+    m_s.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers
-    m_s.scroller.size = s.value(DEFSCROLLERSIZE).toInt();
+    m_s.scroller.size = s.value(READSCROLLERSIZE).toInt();
 }

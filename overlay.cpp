@@ -200,9 +200,7 @@ OverLay::updateOverlay()
 bool
 OverLay::manage(QFrame *frame, int opacity)
 {
-    if (!frame)
-        return false;
-    if (frame->findChild<OverLay*>())
+    if (!frame || hasOverLay(frame))
         return false;
     if (frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
     {
@@ -277,4 +275,15 @@ OverLay::parentChanged()
 //        m_frame->window() = m_frame->window();
 //    else
 //        m_frame->window() = 0;
+}
+
+bool
+OverLay::hasOverLay(const QFrame *frame)
+{
+    if (!frame)
+        return false;
+    if (OverLay *o = frame->findChild<OverLay *>())
+        if (o->parentWidget() == frame)
+            return true;
+    return false;
 }

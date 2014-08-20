@@ -1,8 +1,6 @@
 #include "styleconfig.h"
 #include "../settings.h"
 #include <QSettings>
-#include <QDebug>
-#include <QDialog>
 
 /** This function declares the kstyle config plugin, you may need to adjust it
 for other plugins or won't need it at all, if you're not interested in a plugin */
@@ -19,13 +17,8 @@ extern "C"
 
 StyleConfig::StyleConfig(QWidget *parent) : QWidget(parent)
 {
-    QSettings s("dsp", "dsp");
     ui.setupUi(this);
-    ui.pbRoundness->setValue(s.value(DEFPUSHBTNRND).toInt());
-    ui.tbRoundness->setValue(s.value(DEFTOOLBTNRND).toInt());
-    ui.inputRoundness->setValue(s.value(DEFINPUTRND).toInt());
-    ui.scrollerSize->setValue(s.value(DEFSCROLLERSIZE).toInt());
-    ui.sliderSize->setValue(s.value(DEFSLIDERSIZE).toInt());
+    readSettings();
 }
 
 void
@@ -37,4 +30,26 @@ StyleConfig::save()
     s.setValue(INPUTRND, ui.inputRoundness->value());
     s.setValue(SCROLLERSIZE, ui.scrollerSize->value());
     s.setValue(SLIDERSIZE, ui.sliderSize->value());
+    emit changed(true);
+}
+
+void
+StyleConfig::defaults()
+{
+    ui.pbRoundness->setValue(DEFPUSHBTNRND);
+    ui.tbRoundness->setValue(DEFTOOLBTNRND);
+    ui.inputRoundness->setValue(DEFINPUTRND);
+    ui.scrollerSize->setValue(DEFSCROLLERSIZE);
+    ui.sliderSize->setValue(DEFSLIDERSIZE);
+}
+
+void
+StyleConfig::readSettings()
+{
+    QSettings s("dsp", "dsp");
+    ui.pbRoundness->setValue(s.value(READPUSHBTNRND).toInt());
+    ui.tbRoundness->setValue(s.value(READTOOLBTNRND).toInt());
+    ui.inputRoundness->setValue(s.value(READINPUTRND).toInt());
+    ui.scrollerSize->setValue(s.value(READSCROLLERSIZE).toInt());
+    ui.sliderSize->setValue(s.value(READSLIDERSIZE).toInt());
 }

@@ -106,6 +106,19 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         p.end();
         return true;
     }
+    else if (qobject_cast<QMainWindow *>(o))
+    {
+        QWidget *win = static_cast<QWidget *>(o);
+        if (int th = win->property("DSP_headHeight").toInt())
+        {
+            QPainter p(win);
+            p.setPen(Qt::black);
+            p.setOpacity(0.33f);
+            p.drawLine(0, th, win->width(), th);
+            p.end();
+            return false;
+        }
+    }
     return QCommonStyle::eventFilter(o, e);
 }
 
@@ -164,6 +177,8 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         Ops::queToolBar(toolBar);
         QTimer::singleShot(0, Ops::instance(), SLOT(updateToolBar()));
     }
+    if (qobject_cast<QMainWindow *>(o))
+        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
 //    if (castObj(QTabBar *, bar, o))
 //    {
 //        if (Ops::isSafariTabBar(bar))

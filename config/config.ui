@@ -47,7 +47,7 @@
            <bool>false</bool>
           </property>
           <property name="maximum">
-           <number>25</number>
+           <number>32</number>
           </property>
           <property name="value">
            <number>8</number>
@@ -80,7 +80,7 @@
            </size>
           </property>
           <property name="maximum">
-           <number>25</number>
+           <number>32</number>
           </property>
           <property name="value">
            <number>8</number>
@@ -113,7 +113,7 @@
            </size>
           </property>
           <property name="maximum">
-           <number>25</number>
+           <number>32</number>
           </property>
           <property name="value">
            <number>8</number>

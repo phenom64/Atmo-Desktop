@@ -10,7 +10,16 @@ public:
     explicit StyleConfig(QWidget *parent = 0);
 
 public slots:
+    //slots that the systemsettings tries and connect to
     void save();
+    void defaults();
+
+signals:
+    //signals used by the systemsettings
+    void changed(bool changed);
+
+protected:
+    void readSettings();
 
 private:
     Ui::Config ui;
