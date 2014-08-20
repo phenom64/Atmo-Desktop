@@ -4,6 +4,7 @@
 #include <QColor>
 #include <QWidget>
 #include <QQueue>
+#include <QTimer>
 
 /**
  * This class is a mess atm, I just add stuff here
@@ -20,11 +21,13 @@ public:
 };
 
 typedef void (QWidget::*Function)();
-typedef struct QueueItem
+class QueueItem
 {
+public:
     QWidget *w;
     Function func;
-} QueueItem;
+};
+
 
 class QToolBar;
 class QTabBar;
@@ -52,7 +55,6 @@ public:
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
     static void queToolBar(QToolBar *bar) { instance()->_queToolBar(bar); }
-    static void callLater(QWidget *w, Function func, int time = 500);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {
@@ -80,6 +82,9 @@ public:
         }
         return 0;
     }
+    //convenience delayer... you can call other functions then slots later....
+    static void callLater(QWidget *w, Function func, int time = 500);
+
 public slots:
     void updateGeoFromSender();
     void updateToolBar();

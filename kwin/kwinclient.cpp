@@ -65,7 +65,10 @@ KwinClient::init()
     m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
     m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
     m_needSeparator = true;
-    QTimer::singleShot(1, this, SLOT(postInit()));
+    if (isPreview())
+        reset(63);
+    else
+        QTimer::singleShot(1, this, SLOT(postInit()));
 }
 
 void
@@ -201,7 +204,7 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setClipRect(tr);
     Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
-    QLinearGradient lg(tr.topLeft(), tr.bottomLeft()+QPoint(0, height()));
+    QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
     lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
     lg.setColorAt(0.5f, Qt::transparent);
     p.setBrush(Qt::NoBrush);
@@ -237,6 +240,14 @@ KwinClient::paint(QPainter &p)
         p.drawLine(r.bottomLeft(), r.bottomRight());
     }
     p.setClipping(false);
+    if (isPreview())
+    {
+        p.setClipRegion(QRegion(widget()->rect())-QRegion(tr));
+        p.fillRect(widget()->rect(), widget()->palette().color(QPalette::Window));
+        p.setPen(widget()->palette().color(QPalette::WindowText));
+        p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
+        p.setClipping(false);
+    }
 }
 
 QSize
