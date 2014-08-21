@@ -113,7 +113,6 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     }
 
     painter->drawText(rect, flags, text);
-//    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
     painter->restore();
 }
 
@@ -135,13 +134,13 @@ QPixmap
 StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const
 {
     const int size(16);
-    QImage img(size, size, QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
-    QPainter p(&img);
+    QPixmap pix(size, size);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
     p.setRenderHint(QPainter::Antialiasing);
     p.setBrush(Qt::NoBrush);
     p.setPen(Qt::NoPen);
-    const QRect r(img.rect());
+    const QRect r(pix.rect());
     const QColor fg(widget&&opt?opt->palette.color(widget->foregroundRole()):Qt::black);
     const QColor bg(widget&&opt?opt->palette.color(widget->backgroundRole()):Qt::white);
     const int _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
@@ -165,7 +164,7 @@ StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const Q
             p.drawRect(line);
         }
         p.end();
-        return QPixmap::fromImage(img);
+        break;
     }
     case SP_TitleBarMaxButton:
     case SP_TitleBarNormalButton:
@@ -184,11 +183,11 @@ StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const Q
         p.translate(-_2_, -_2_);
         p.drawPolygon(pol);
         p.end();
-        return QPixmap::fromImage(img);
+        break;
     }
-    default: p.end(); return QCommonStyle::standardPixmap(sp, opt, widget);
+    default: p.end(); pix = QCommonStyle::standardPixmap(sp, opt, widget); break;
     }
-
+    return pix;
 }
 
 QRect

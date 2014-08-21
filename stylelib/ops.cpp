@@ -282,6 +282,18 @@ Ops::later()
     (w->*func)();
 }
 
+bool
+Ops::hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb)
+{
+#define QSTB QStyleOptionToolButton
+    if (stb && stb->features & (/*QSTB::Menu|QSTB::HasMenu*/QSTB::MenuButtonPopup))
+        return true;
+#undef QSTB
+    if (tb && (/*tb->menu()||*/tb->popupMode()==QToolButton::MenuButtonPopup))
+        return true;
+    return false;
+}
+
 ToolButtonData
 Ops::toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt)
 {

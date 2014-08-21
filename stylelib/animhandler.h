@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QTabBar>
 #include <QStyle>
+#include <QToolButton>
 
 namespace Anim
 {
@@ -64,6 +65,33 @@ protected slots:
 private:
     static Tabs *s_instance;
     QMap<QTabBar *, QMap<Tab, Level> > m_vals;
+    QTimer *m_timer;
+};
+
+class Q_DECL_EXPORT ToolBtns : public QObject
+{
+    Q_OBJECT
+public:
+    typedef int Level, ArrowLevel; //for readability only...
+    explicit ToolBtns(QObject *parent = 0);
+    static ToolBtns *instance();
+    static void manage(QToolButton *tb);
+    static void release(QToolButton *tb);
+    static void deleteInstance();
+    static int level(const QToolButton *tb, bool arrow) { return instance()->hoverLevel(tb, arrow); }
+
+protected:
+    bool eventFilter(QObject *, QEvent *);
+    int hoverLevel(const QToolButton *tb, bool arrow);
+    void remove(QToolButton *tb);
+
+protected slots:
+    void removeSender();
+    void animate();
+
+private:
+    static ToolBtns *s_instance;
+    QMap<QToolButton *, QPair<Level, ArrowLevel> > m_vals;
     QTimer *m_timer;
 };
 

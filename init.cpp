@@ -108,6 +108,7 @@ StyleProject::assignMethods()
     m_sc[CC_ScrollBar] = method(scrollBarRect);
     m_sc[CC_ComboBox] = method(comboBoxRect);
     m_sc[CC_GroupBox] = method(groupBoxRect);
+    m_sc[CC_ToolButton] = method(toolButtonRect);
 }
 
 void

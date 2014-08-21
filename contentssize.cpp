@@ -173,7 +173,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         QSize sz(contentsSize);
         bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
         sz+=QSize(hor?8:4, hor?4:8);
-        if (bar && hor)
+        if (bar && hor && bar->toolButtonStyle() == Qt::ToolButtonIconOnly)
         {
             if (isFull)
                 sz.rwidth() += 16;
@@ -187,6 +187,9 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         }
         if (sz.height() < 23)
             sz.setHeight(23);
+
+        if (Ops::hasMenu(btn, optbtn))
+            sz.rwidth()+=16;
         return sz;
     }
     case CT_LineEdit:

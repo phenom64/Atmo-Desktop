@@ -69,7 +69,7 @@ StyleProject::polish(QWidget *widget)
         Anim::Basic::manage(widget);
     if (castObj(QToolButton *, btn, widget))
     {
-        Anim::Basic::manage(btn);
+        Anim::ToolBtns::manage(btn);
         installFilter(btn);
     }
 
@@ -227,6 +227,8 @@ StyleProject::unpolish(QWidget *widget)
         Anim::Tabs::release(tb);
     if (castObj(QFrame *, f, widget))
         OverLay::release(f);
+    if (castObj(QToolButton *, tb, widget))
+        Anim::ToolBtns::release(tb);
 
 #if !defined(QT_NO_DBUS)
     if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))

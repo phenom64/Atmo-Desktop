@@ -34,6 +34,7 @@ class QTabBar;
 class QToolButton;
 class QStyle;
 class QStyleOption;
+class QStyleOptionToolButton;
 class Q_DECL_EXPORT Ops : public QObject
 {
     Q_OBJECT
@@ -55,6 +56,7 @@ public:
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
     static void queToolBar(QToolBar *bar) { instance()->_queToolBar(bar); }
+    static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {

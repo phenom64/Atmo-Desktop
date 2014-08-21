@@ -15,6 +15,7 @@
 #include <QStyleOptionDockWidget>
 #include <QStyleOptionDockWidgetV2>
 #include <QProgressBar>
+#include <QStyleOptionToolButton>
 
 #include "styleproject.h"
 #include "stylelib/progresshandler.h"
@@ -410,5 +411,26 @@ StyleProject::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
     default: return QCommonStyle::subControlRect(CC_GroupBox, opt, sc, w);
     }
     return visualRect(box->direction, opt->rect, ret);
+}
+
+QRect
+StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+{
+    QRect ret;
+    castOpt(ToolButton, tb, opt);
+    if (!tb)
+        return ret;
+    switch (sc)
+    {
+    case SC_ToolButton: ret = tb->rect; break;
+    case SC_ToolButtonMenu:
+    {
+        ret = tb->rect;
+        ret.setLeft(ret.right()-16);
+        break;
+    }
+    default: break;
+    }
+    return visualRect(tb->direction, tb->rect, ret);
 }
 
