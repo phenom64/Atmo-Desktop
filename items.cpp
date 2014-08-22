@@ -10,6 +10,7 @@
 #include <QAbstractItemView>
 #include <QMenu>
 #include <QTreeView>
+#include <QListView>
 #include <QTableView>
 
 #include "styleproject.h"
@@ -133,15 +134,17 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ViewItemV4, opt, option);
+    castOpt(ViewItem, opt, option);
     if (!opt)
         return true;
 
-    const bool multiSelection(qobject_cast<const QAbstractItemView *>(widget)&&static_cast<const QAbstractItemView *>(widget)->selectionMode()>QAbstractItemView::SingleSelection);
+    castObj(const QAbstractItemView *, abstractView, widget);
+    castObj(const QTreeView *, treeView, widget);
+    castObj(const QListView *, listView, widget);
+    const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
     if (opt->SUNKEN || opt->HOVER)
     {
         QColor h(opt->palette.color(QPalette::Highlight));
-
         if (!(opt->SUNKEN))
             h.setAlpha(64);
 
@@ -157,13 +160,12 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
 
         painter->fillRect(opt->rect, brush);
 
-        if (opt->SUNKEN && !multiSelection)
+        if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
         {
             painter->save();
             painter->setPen(QColor(0, 0, 0, 64));
             painter->translate(0.0f, 0.5f);
             painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
-//            painter->translate(0.0f, -1.0f);
             painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
             painter->restore();
         }
@@ -178,6 +180,12 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
     castObj(const QAbstractItemView *, view, widget);
+    QPoint pos;
+    if (view->viewport())
+        pos = view->viewport()->mapFromGlobal(QCursor::pos());
+    if (!pos.isNull())
+        if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
+            const_cast<QStyleOption *>(option)->state |= State_MouseOver;
     drawViewItemBg(option, painter, widget);
 
     QPixmap pix(opt->icon.pixmap(opt->decorationSize));
@@ -192,8 +200,10 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
         drawCheckBox(&btn, painter, 0);
     }
 
+    int m(3);
     QRect iconRect(subElementRect(SE_ItemViewItemDecoration, opt, widget));
-    QRect textRect(subElementRect(SE_ItemViewItemText, opt, widget));
+    m = m*!iconRect.isValid();
+    QRect textRect(subElementRect(SE_ItemViewItemText, opt, widget).adjusted(m, 0, -m, 0));
 
     QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
     drawItemPixmap(painter, iconRect, opt->decorationAlignment, pix);
@@ -207,8 +217,20 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (!option)
+        return true;
     if (qMin(option->rect.width(), option->rect.height()) < 8)
         return true;
+//    if (option->SUNKEN)
+
+    castObj(const QAbstractItemView *, view, widget);
+    QPoint pos;
+    if (view->viewport())
+        pos = view->viewport()->mapFromGlobal(QCursor::pos());
+    if (!pos.isNull())
+        if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
+            const_cast<QStyleOption *>(option)->state |= State_MouseOver;
+    drawViewItemBg(option, painter, widget);
     painter->save();
     QPalette::ColorRole fg(option->state & State_Selected ? QPalette::HighlightedText : QPalette::Text),
             bg(option->state & State_Selected ? QPalette::Highlight : QPalette::Base);
@@ -234,6 +256,8 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
     {
         if (option->state & State_MouseOver && !(option->state & State_Selected))
             fgc = option->palette.color(QPalette::Highlight);
+        else
+            fgc = option->palette.color(fg);
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
         Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, 9);
     }

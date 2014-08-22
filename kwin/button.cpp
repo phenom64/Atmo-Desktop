@@ -31,8 +31,6 @@ void
 Button::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    p.setBrushOrigin(-mapToParent(rect().topLeft()));
-    p.setBrushOrigin(rect().topLeft());
     if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])(p))
         return;
     p.end();

@@ -437,7 +437,6 @@ ToolBtns::animate()
             option.features |= QStyleOptionToolButton::HasMenu;
         QRect r = tb->style()->subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
         QPoint pos(tb->mapFromGlobal(QCursor::pos()));
-        static int asdf(0);
         const bool arrowMouse(Ops::hasMenu(tb, &option) && r.contains(pos));
         const bool btnMouse(tb->underMouse() && !arrowMouse);
 

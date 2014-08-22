@@ -45,13 +45,13 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
             inToolBar = true;
 
     QLinearGradient shadow(0, 0, 0, option->rect.height());
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    int o(m_s.shadows.opacity*255.0f);
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
     QBrush b(shadow);
     Render::renderShadow(Render::Simple, option->rect, painter, m_s.input.rnd, Render::All, 1.0f, &b);
     Render::renderMask(option->rect.adjusted(!inToolBar, !inToolBar, -!inToolBar, -1), painter, option->palette.brush(QPalette::Base), m_s.input.rnd-1+inToolBar);
-
     return true;
 }
 

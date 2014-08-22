@@ -215,7 +215,7 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
 
     painter->save();
-    painter->setOpacity(0.33f);
+    painter->setOpacity(m_s.shadows.opacity);
     painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));
     QRect l(tr);
     l.setLeft(0);

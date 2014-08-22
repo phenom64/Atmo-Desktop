@@ -124,5 +124,7 @@ StyleProject::readSettings()
     //sliders
     m_s.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers
-    m_s.scroller.size = s.value(READSCROLLERSIZE).toInt();
+    m_s.scrollers.size = s.value(READSCROLLERSIZE).toInt();
+    //shadows
+    m_s.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
 }

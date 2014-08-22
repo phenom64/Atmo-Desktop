@@ -52,6 +52,7 @@ private:
     bool m_needSeparator;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
+    friend class Button;
 };
 
 #endif //KWINCLIENT_H

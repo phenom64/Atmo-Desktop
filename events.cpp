@@ -113,7 +113,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         {
             QPainter p(win);
             p.setPen(Qt::black);
-            p.setOpacity(0.33f);
+            p.setOpacity(m_s.shadows.opacity);
             p.drawLine(0, th, win->width(), th);
             p.end();
             return false;

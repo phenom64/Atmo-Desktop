@@ -8,6 +8,7 @@
 #define INPUTRND "input.rnd"
 #define SLIDERSIZE "sliders.size"
 #define SCROLLERSIZE "scrollers.size"
+#define SHADOWOPACITY "shadows.opacity"
 
 //defaults
 
@@ -16,12 +17,14 @@
 #define DEFINPUTRND 8
 #define DEFSLIDERSIZE 16
 #define DEFSCROLLERSIZE 12
+#define DEFSHADOWOPACITY 33
 
 #define READPUSHBTNRND PUSHBTNRND, DEFPUSHBTNRND
 #define READTOOLBTNRND TOOLBTNRND, DEFTOOLBTNRND
 #define READINPUTRND INPUTRND, DEFINPUTRND
 #define READSLIDERSIZE SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE SCROLLERSIZE, DEFSCROLLERSIZE
+#define READSHADOWOPACITY SHADOWOPACITY, DEFSHADOWOPACITY
 
 
 typedef struct Settings
@@ -42,10 +45,14 @@ typedef struct Settings
     {
         int size;
     } sliders;
-    struct scroller
+    struct scrollers
     {
         int size;
-    } scroller;
+    } scrollers;
+    struct shadows
+    {
+        float opacity;
+    } shadows;
 } Settings;
 
 #endif //SETTINGS_H

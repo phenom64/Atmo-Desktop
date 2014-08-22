@@ -250,11 +250,12 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     const bool hasMenu(Ops::hasMenu(toolBtn, opt));
-    if (hasMenu && arrow.isValid())
-        painter->setClipRegion(QRegion(rect)-QRegion(arrow));
 
     if (bar)
     {
+
+        if (hasMenu && arrow.isValid())
+            painter->setClipRegion(QRegion(rect)-QRegion(arrow));
         const QRect geo = widget->geometry();
         int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
         int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
@@ -310,18 +311,14 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         lg.setColorAt(1.0f, bc/*Color::mid(bc, Qt::black, 10, 1)*/);
 
         QLinearGradient shadow(0, 0, 0, option->rect.height());
-        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, 0));
+        const int o(m_s.shadows.opacity*255);
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
         QBrush brush(shadow);
         Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, 1.0f, &brush);
         Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, m_s.toolbtn.rnd, sides);
 
-        if (!(sides&Render::Right) && !nextSelected)
-        {
-            painter->setPen(QColor(0, 0, 0, 32));
-            painter->drawLine(rect.adjusted(0, 0, 0, -1).topRight(), rect.adjusted(0, 1, 0, -1).bottomRight());
-        }
 //        if (option->SUNKEN)
 //            Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
 
@@ -332,8 +329,16 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             QLinearGradient lga(rect.topLeft(), rect.bottomLeft());
             lga.setColorAt(0.0f, Color::mid(bca, Qt::white, 5, 1));
             lga.setColorAt(1.0f, bca/*Color::mid(bc, Qt::black, 7, 1)*/);
-            Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, 1.0f, &brush);
+            Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, m_s.shadows.opacity/*, &brush*/);
             Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lga, m_s.toolbtn.rnd, sides);
+        }
+
+        painter->setClipping(false);
+
+        if (!(sides&Render::Right) && !nextSelected)
+        {
+            painter->setPen(QColor(0, 0, 0, 32));
+            painter->drawLine(rect.adjusted(0, 0, 0, -1).topRight(), rect.adjusted(0, 1, 0, -1).bottomRight());
         }
     }
     const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
@@ -346,8 +351,9 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         painter->drawLine(rect.adjusted(0, 0, 0, -1).topRight(), rect.adjusted(0, 1, 0, -1).bottomRight());
         Ops::drawArrow(painter, opt->palette.color(QPalette::ButtonText), arrow, Ops::Down, Qt::AlignCenter, 7);
     }
-    painter->setClipping(false);
-    rect.shrink(3);
+
+    if (rect.height() > opt->iconSize.height() && rect.width() > opt->iconSize.width())
+        rect.shrink(3);
     QRect ir(rect);
     switch (opt->toolButtonStyle)
     {

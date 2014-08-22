@@ -70,7 +70,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_ToolBarFrameWidth: return 2;
     case PM_ToolBarHandleExtent: return 8;
 //    case PM_SliderThickness: return 12;
-    case PM_ScrollBarExtent: return m_s.scroller.size;
+    case PM_ScrollBarExtent: return m_s.scrollers.size;
     case PM_SliderThickness:
     case PM_SliderLength:
     case PM_SliderControlThickness: return m_s.sliders.size/*qMin(option->rect.height(), option->rect.width())*/;
