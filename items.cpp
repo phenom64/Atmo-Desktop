@@ -181,7 +181,7 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
         return true;
     castObj(const QAbstractItemView *, view, widget);
     QPoint pos;
-    if (view->viewport())
+    if (view && view->viewport())
         pos = view->viewport()->mapFromGlobal(QCursor::pos());
     if (!pos.isNull())
         if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
@@ -225,7 +225,7 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
 
     castObj(const QAbstractItemView *, view, widget);
     QPoint pos;
-    if (view->viewport())
+    if (view && view->viewport())
         pos = view->viewport()->mapFromGlobal(QCursor::pos());
     if (!pos.isNull())
         if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
