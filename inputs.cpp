@@ -75,7 +75,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     QRect r(option->rect);
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, 0.25f);
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, m_s.shadows.opacity);
 
     if (opt->state & State_Raised)
     {
@@ -149,9 +149,10 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 
         Render::renderMask(frameRect, painter, lg, m_s.input.rnd);
         QLinearGradient shadow(0, 0, 0, frameRect.height());
-        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        const int o(m_s.shadows.opacity*255.0f);
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
         QBrush b(shadow);
 
 
@@ -161,14 +162,14 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 //        arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
         Render::renderMask(arrowRect, painter, lg, m_s.input.rnd, Render::All & ~(ltr?Render::Left:Render::Right));
         Render::renderShadow(Render::Simple, frameRect, painter, m_s.input.rnd, Render::All, 1.0f, &b);
-        painter->setPen(QColor(0, 0, 0, 32));
-        const float o(painter->opacity());
-        painter->setOpacity(0.5f);
+        painter->setPen(QColor(0, 0, 0, o/3));
+        const float op(painter->opacity());
+        painter->setOpacity(m_s.shadows.opacity);
         if (ltr)
             painter->drawLine(arrowRect.topLeft()/*-QPoint(1, 0)*/, arrowRect.bottomLeft()-QPoint(1, 0));
         else
             painter->drawLine(arrowRect.topRight()/*+QPoint(1, 0)*/, arrowRect.bottomRight()+QPoint(1, 0));
-        painter->setOpacity(o);
+        painter->setOpacity(op);
     }
     else
     {
@@ -179,9 +180,10 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 //        drawSafariLineEdit(opt->rect, painter, brush);
         Render::renderMask(option->rect.adjusted(1, 1, -1, -1), painter, brush, qMax(0, m_s.input.rnd-1));
         QLinearGradient shadow(0, 0, 0, option->rect.height());
-        shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-        shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-        shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+        const int o(m_s.shadows.opacity*255.0f);
+        shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+        shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+        shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
         QBrush b(shadow);
         Render::renderShadow(Render::Simple, option->rect, painter, m_s.input.rnd, Render::All, 1.0f, &b);
     }

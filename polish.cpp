@@ -220,10 +220,13 @@ StyleProject::polish(QWidget *widget)
 void
 StyleProject::unpolish(QWidget *widget)
 {
+    if (!widget)
+        return;
     widget->disconnect(this);
     widget->removeEventFilter(this);
     ShadowHandler::release(widget);
     Anim::Basic::release(widget);
+    UNOHandler::release(widget);
     if (castObj(QProgressBar *, pb, widget))
         ProgressHandler::release(pb);
     if (castObj(QTabBar *, tb, widget))

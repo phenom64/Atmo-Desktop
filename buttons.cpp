@@ -202,9 +202,10 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
 
     Render::renderMask(checkRect, painter, lg);
     QLinearGradient shadow(0, 0, 0, checkRect.height());
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    const int o(m_s.shadows.opacity*255.0f);
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
     QBrush b(shadow);
     Render::renderShadow(Render::Simple, checkRect, painter, 32, Render::All, 1.0f, &b);
 

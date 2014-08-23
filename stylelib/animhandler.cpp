@@ -162,6 +162,8 @@ Basic::animate()
 bool
 Basic::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e)
+        return false;
     if (!o->isWidgetType())
         return false;
     if (e->type() == QEvent::Enter || e->type() == QEvent::Leave)
@@ -302,6 +304,8 @@ Tabs::animate()
 bool
 Tabs::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e)
+        return false;
     if (e->type() == QEvent::Leave)
     {
         m_timer->start(25);
@@ -469,6 +473,8 @@ ToolBtns::animate()
 bool
 ToolBtns::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e)
+        return false;
     if (e->type() == QEvent::Leave)
     {
         m_timer->start(25);

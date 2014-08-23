@@ -21,6 +21,8 @@
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
 {
+    if (!e || !o)
+        return false;
     if (e->type() < EVSize && m_ev[e->type()])
         return (this->*m_ev[e->type()])(o, e);
 

@@ -86,9 +86,20 @@ UNOHandler::manage(QWidget *mw)
     }
 }
 
+void
+UNOHandler::release(QWidget *mw)
+{
+    mw->removeEventFilter(instance());
+    QList<QToolBar *> toolBars = mw->findChildren<QToolBar *>();
+    for (int i = 0; i < toolBars.count(); ++i)
+        toolBars.at(i)->removeEventFilter(instance());
+}
+
 bool
 UNOHandler::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e)
+        return false;
     if (!o->isWidgetType())
         return false;
     QWidget *w = static_cast<QWidget *>(o);

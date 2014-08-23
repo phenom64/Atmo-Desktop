@@ -90,6 +90,8 @@ ProgressHandler::valueChanged()
 bool
 ProgressHandler::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e)
+        return false;
     if (!(e->type() == QEvent::Timer
           || e->type() == QEvent::Show
           || e->type() == QEvent::HoverEnter

@@ -14,6 +14,7 @@ public:
     ~UNOHandler(){}
     static UNOHandler *instance();
     static void manage(QWidget *mw);
+    static void release(QWidget *mw);
     static void fixWindowTitleBar(QWidget *win);
     static void updateWindow(WId window);
     static void updateToolBar(QToolBar *toolBar);

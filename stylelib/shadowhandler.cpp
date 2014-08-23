@@ -23,6 +23,8 @@ ShadowHandler
 bool
 ShadowHandler::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e)
+        return false;
     if (e->type() == QEvent::Show)
         if (QWidget *w = qobject_cast<QWidget *>(o))
             if (w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
