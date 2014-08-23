@@ -24,6 +24,7 @@
 #include "stylelib/shadowhandler.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/unohandler.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -98,7 +99,7 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
 //    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
 //        flags &= ~Qt::AlignHCenter;
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
-    if (pal.color(textRole).isValid() && pal.color(bgRole).isValid())
+    if (pal.color(textRole).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
     if (textRole != QPalette::NoRole)
     {
         if (bgRole != QPalette::NoRole && enabled)
@@ -208,56 +209,8 @@ StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) c
 }
 
 void
-StyleProject::fixTitleLater(QWidget *win)
-{
-    QTimer *t = new QTimer(win);
-    connect(t, SIGNAL(timeout()), this, SLOT(fixTitle()));
-    t->start(250);
-}
-
-void
-StyleProject::fixTitle()
-{
-    if (castObj(QTimer *, t, sender()))
-    {
-        if (castObj(QWidget *, w, t->parent()))
-            Ops::fixWindowTitleBar(w);
-        t->stop();
-        t->deleteLater();
-    }
-}
-
-void
-StyleProject::updateToolBar(QToolBar *toolBar)
-{
-    QMainWindow *win = static_cast<QMainWindow *>(toolBar->parentWidget());
-    if (toolBar->isWindow() && toolBar->isFloating())
-    {
-        toolBar->setContentsMargins(0, 0, 0, 0);
-        if (toolBar->layout())
-            toolBar->layout()->setContentsMargins(4, 4, 4, 4);
-    }
-    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea && toolBar->layout())
-    {
-        if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
-        {
-            toolBar->setMovable(true);
-            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            toolBar->setContentsMargins(0, 0, pixelMetric(PM_ToolBarHandleExtent), 6);
-        }
-        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
-        {
-            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            toolBar->setMovable(false);
-        }
-        else
-            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
-    }
-}
-
-void
 StyleProject::fixMainWindowToolbar()
 {
-    updateToolBar(static_cast<QToolBar *>(sender()));
+    UNOHandler::updateToolBar(static_cast<QToolBar *>(sender()));
 }
 

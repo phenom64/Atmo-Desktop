@@ -8,7 +8,8 @@ set(libSRCS
     render.cpp
     color.cpp
     progresshandler.cpp
-    animhandler.cpp)
+    animhandler.cpp
+    unohandler.cpp)
     
 set(libHDRS
     xhandler.h
@@ -18,11 +19,13 @@ set(libHDRS
     macros.h
     color.h
     progresshandler.h
-    animhandler.h)
+    animhandler.h
+    unohandler.h)
 
 set(libMocHDRS
     progresshandler.h
     animhandler.h
+    unohandler.h
     ops.h)
 
 set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)

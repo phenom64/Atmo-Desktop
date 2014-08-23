@@ -30,6 +30,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     if (castObj(const QMenuBar *, bar, widget))
     {
         isMenuBar = true;
+        drawMenuBar(option, painter, widget);
         if (QAction *a = bar->actionAt(opt->rect.center()))
             f.setBold(a->font().bold());
     }
@@ -210,6 +211,10 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     int align(opt->displayAlignment);
     if (opt->fontMetrics.boundingRect(opt->text).width() > opt->rect.width())
         align &= ~Qt::AlignHCenter;
+
+    QString text(opt->text);
+    if (opt->fontMetrics.width(opt->text) > textRect.width())
+        text = opt->fontMetrics.elidedText(text, opt->textElideMode, textRect.width());
     drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, opt->text, fg);
     return true;
 }

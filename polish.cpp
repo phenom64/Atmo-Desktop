@@ -25,6 +25,7 @@
 #include "stylelib/shadowhandler.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/unohandler.h"
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
@@ -72,6 +73,8 @@ StyleProject::polish(QWidget *widget)
         Anim::ToolBtns::manage(btn);
         installFilter(btn);
     }
+    if (widget->isWindow())
+        UNOHandler::manage(widget);
 
     if (castObj(QMainWindow *, win, widget))
     {
@@ -152,7 +155,7 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QFrame *, frame, widget))
         if (frame->frameShadow() == QFrame::Sunken
                 && qobject_cast<QMainWindow *>(frame->window()))
-            OverLay::manage(frame, 100);
+            OverLay::manage(frame, m_s.shadows.opacity*255.0f);
 
     if (castObj(QAbstractItemView *, view, widget))
     {

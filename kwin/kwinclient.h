@@ -48,6 +48,7 @@ private:
     QColor m_titleColor[2], m_textColor;
     Factory *m_factory;
     QBrush m_brush;
+    QPixmap m_pix;
     int m_headHeight, m_leftButtons, m_rightButtons;
     bool m_needSeparator;
     friend class SizeGrip;

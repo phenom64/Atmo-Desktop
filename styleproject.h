@@ -15,6 +15,7 @@ class Q_DECL_EXPORT StyleProject : public QCommonStyle
     Q_OBJECT
     Q_CLASSINFO ("X-KDE-CustomElements", "true")
 public:
+    static Settings m_s;
     StyleProject();
     ~StyleProject();
     void init();
@@ -101,6 +102,7 @@ public:
     bool drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolTip(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);
@@ -120,12 +122,7 @@ public:
     typedef bool (StyleProject::*EventFilter)(QObject *o, QEvent *e);
     typedef QRect (StyleProject::*SubControlRect)(const QStyleOptionComplex *, SubControl, const QWidget *) const;
 
-protected:
-    void fixTitleLater(QWidget *win);
-    void updateToolBar(QToolBar *toolBar);
-
 protected slots:
-    void fixTitle();
     void fixMainWindowToolbar();
 
 private:
@@ -134,7 +131,6 @@ private:
     StylePrimitive m_pe[PESize];
     EventFilter m_ev[EVSize];
     SubControlRect m_sc[CCSize];
-    static Settings m_s;
 };
 
 #endif // STYLEPROJECT_H

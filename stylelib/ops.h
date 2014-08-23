@@ -47,11 +47,9 @@ public:
 
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
-    static void updateWindow(WId window);
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);
     static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align = Qt::AlignCenter, int size = 0);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
-    static void fixWindowTitleBar(QWidget *win);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);

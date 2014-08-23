@@ -16,6 +16,7 @@
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
+#include "stylelib/unohandler.h"
 
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
@@ -126,13 +127,6 @@ bool
 StyleProject::resizeEvent(QObject *o, QEvent *e)
 {
 //    QResizeEvent *re = static_cast<QResizeEvent *>(e);
-    if (castObj(QWidget *, w, o))
-        if (w->isWindow())
-            Ops::fixWindowTitleBar(w);
-//            fixTitleLater(w);
-    if (castObj(QToolBar *, toolBar, o))
-        if (castObj(QMainWindow *, win, toolBar->parentWidget()))
-            updateToolBar(toolBar);
 //    if (castObj(QTabBar *, tb, o))
 //    {
 //        QToolButton *addTab = tb->findChild<QToolButton *>("tab-new");
@@ -152,11 +146,9 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
 bool
 StyleProject::showEvent(QObject *o, QEvent *e)
 {
-    castObj(QWidget *, w, o);
-    if (!w)
+    if (!o->isWidgetType())
         return QCommonStyle::eventFilter(o, e);
-    if (w->isWindow())
-        fixTitleLater(w);
+    QWidget *w = static_cast<QWidget *>(o);
     if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
     {
         static_cast<QWidget *>(o)->setMouseTracking(true);

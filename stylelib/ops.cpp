@@ -15,6 +15,7 @@
 #include <QStyle>
 #include <QStyleOptionToolButton>
 #include <QTimer>
+#include <QMenuBar>
 
 #include "ops.h"
 #include "xhandler.h"
@@ -70,18 +71,7 @@ Ops::isSafariTabBar(const QTabBar *tabBar)
     return false;
 }
 
-static QDBusMessage methodCall(const QString &method)
-{
-    return QDBusMessage::createMethodCall("org.kde.kwin", "/StyleProjectFactory", "org.kde.DBus.StyleProjectFactory", method);
-}
 
-void
-Ops::updateWindow(WId window)
-{
-    QDBusMessage msg = methodCall("update");
-    msg << QVariant::fromValue((unsigned int)window);
-    QDBusConnection::sessionBus().send(msg);
-}
 
 void
 Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
@@ -169,56 +159,6 @@ Ops::opposingRole(const QPalette::ColorRole &role)
     case QPalette::HighlightedText: return QPalette::Highlight;
     default: return QPalette::NoRole;
     }
-}
-
-static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
-{
-    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
-    if (!h)
-        return 0;
-    unsigned int height(*h);
-    win->setProperty("titleHeight", height);
-    castObj(QMainWindow *, mw, win);
-    if (!mw)
-        return height;
-    int tbheight(0);
-    if (QToolBar *tb = mw->findChild<QToolBar *>())
-    {
-        if (tb->isVisible())
-        if (mw->toolBarArea(tb) == Qt::TopToolBarArea && tb->geometry().top() <= 0)
-        {
-            tbheight = tb->height();
-            needSeparator = 0;
-        }
-    }
-    height += tbheight;
-    if (QTabBar *tb = mw->findChild<QTabBar *>())
-        if (tb->isVisible())
-        if (tb->geometry().top() <= 0)
-            needSeparator = 0;
-    win->setProperty("DSP_headHeight", tbheight);
-    return height;
-}
-
-void
-Ops::fixWindowTitleBar(QWidget *win)
-{
-    unsigned int ns(1);
-    WindowData wd;
-    wd.height = getHeadHeight(win, ns);
-    wd.separator = ns;
-    wd.top = Color::titleBarColors[0].rgba();
-    wd.bottom = Color::titleBarColors[1].rgba();
-    wd.text = win->palette().color(win->foregroundRole()).rgba();
-    if (!wd.height)
-        return;
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 5);
-//    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
-//    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
-    updateWindow(win->winId());
-    const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
-    for (int i = 0; i < toolBars.size(); ++i)
-        toolBars.at(i)->update();
 }
 
 void

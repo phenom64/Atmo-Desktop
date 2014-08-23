@@ -14,6 +14,7 @@
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
+#include "stylelib/unohandler.h"
 
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -50,94 +51,46 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
     }
 
     Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, s_pix.value(rect.height()), 3, sides);
-    Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
+    Render::renderShadow(Render::Etched, rect, painter, 4, sides, m_s.shadows.opacity);
     return true;
 }
 
 bool
 StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!painter->isActive())
-        return false;
-    painter->fillRect(option->rect, QColor(0, 0, 0, 128));
+    if (option->rect.width() == 1 || option->rect.height() == 1)
+        painter->fillRect(option->rect, QColor(0, 0, 0, m_s.shadows.opacity*255.0f));
     return true;
 }
 
 bool
 StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || !widget->parentWidget() || !widget->window() || !painter->isActive())
-        return true;
-
-    painter->save();
-    uint sides = Render::All;
-    QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
-    QRect winRect = widget->window()->rect();
-    QRect widgetRect = QRect(topLeft, widget->size());
-
-    if (widgetRect.left() <= winRect.left())
-        sides &= ~Render::Left;
-    if (widgetRect.right() >= winRect.right())
-        sides &= ~Render::Right;
-    if (widgetRect.top() <= winRect.top())
-        sides &= ~Render::Top;
-
-    QRect rect(widget->rect());
+    if (widget)
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
-        QBrush b(Color::titleBarColors[1]);
-        sides = 0;
-        if (widget->geometry().top() <= win->rect().top())
-        {
-            int th(win->property("titleHeight").toInt());
-            rect.setTop(rect.top()-th);
-            painter->translate(0, th);
-            QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-            lg.setColorAt(0.0f, Color::titleBarColors[0]);
-            lg.setColorAt(1.0f, Color::titleBarColors[1]);
-            b = lg;
-            static QMap<int, QPixmap> s_pixTop;
-            if (!s_pixTop.contains(rect.height()))
-            {
-                QPixmap p(Render::noise().width(), rect.height());
-                p.fill(Qt::transparent);
-                QPainter pt(&p);
-                pt.fillRect(p.rect(), b);
-                pt.end();
-                s_pixTop.insert(rect.height(), Render::mid(p, Render::noise(), 40, 1));
-            }
-            b = s_pixTop.value(rect.height());
-        }
-        else
-        {
-            static QMap<int, QPixmap> s_pix;
-            if (!s_pix.contains(rect.height()))
-            {
-                QPixmap p(Render::noise().width(), rect.height());
-                p.fill(Qt::transparent);
-                QPainter pt(&p);
-                pt.fillRect(p.rect(), b);
-                pt.end();
-                s_pix.insert(rect.height(), Render::mid(p, Render::noise(), 40, 1));
-            }
-            b = s_pix.value(rect.height());
-        }
-
-        castObj(const QToolBar *, toolBar, widget);
-        if (win->toolBarArea(const_cast<QToolBar *>(toolBar)) == Qt::TopToolBarArea)
-            Render::renderMask(rect, painter, b, 3, sides);
+        int th(win->property("titleHeight").toInt());
+        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top());
     }
+    return true;
+}
 
-//    if (sides & Render::Top)
-//        Render::renderShadow(Render::Etched, rect, painter, 4, sides, 0.5f);
-    painter->restore();
+bool
+StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (widget)
+    if (castObj(const QMainWindow *, win, widget->parentWidget()))
+    {
+        int th(win->property("titleHeight").toInt());
+        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top());
+    }
     return true;
 }
 
 bool
 StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!(widget && widget->isWindow()) || !painter->isActive())
+    if (!(widget && widget->isWindow()))
         return true;
 
     Render::renderShadow(Render::Sunken, option->rect, painter, 32, Render::Top);

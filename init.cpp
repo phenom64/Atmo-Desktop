@@ -55,7 +55,7 @@ StyleProject::assignMethods()
     m_ce[CE_TabBarTab] = method(drawTab);
     m_ce[CE_TabBarTabShape] = method(drawTabShape);
     m_ce[CE_TabBarTabLabel] = method(drawTabLabel);
-    m_ce[CE_MenuBarEmptyArea] = method(controlSkipper);
+    m_ce[CE_MenuBarEmptyArea] = method(drawMenuBar);
     m_ce[CE_ItemViewItem] = method(drawViewItem); //draw item in views
     m_ce[CE_ComboBoxLabel] = method(drawComboBoxLabel);
     m_ce[CE_ProgressBar] = method(drawProgressBar);
@@ -81,7 +81,7 @@ StyleProject::assignMethods()
     m_pe[PE_IndicatorToolBarSeparator] = method(primitiveSkipper);
     m_pe[PE_PanelLineEdit] = method(drawLineEdit);
     m_pe[PE_Frame] = method(drawFrame);
-    m_pe[PE_PanelMenuBar] = method(primitiveSkipper);
+    m_pe[PE_PanelMenuBar] = method(drawMenuBar);
     m_pe[PE_IndicatorDockWidgetResizeHandle] = method(drawSplitter);
     m_pe[PE_FrameStatusBarItem] = method(primitiveSkipper);
     m_pe[PE_PanelStatusBar] = method(drawStatusBar);
