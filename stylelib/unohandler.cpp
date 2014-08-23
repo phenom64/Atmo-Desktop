@@ -226,7 +226,8 @@ UNOHandler::fixTitleLater(QWidget *win)
 void
 UNOHandler::fixTitle()
 {
-    fixWindowTitleBar(m_fix.dequeue());
+    if (!m_fix.isEmpty())
+        fixWindowTitleBar(m_fix.dequeue());
     if (m_fix.isEmpty())
         m_fixer->stop();
 }
