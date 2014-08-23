@@ -22,6 +22,8 @@ Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
 
 static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
 {
+    if (!win)
+        return 0;
     unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
     if (!h)
         return 0;
@@ -155,6 +157,8 @@ UNOHandler::updateWindow(WId window)
 void
 UNOHandler::fixWindowTitleBar(QWidget *win)
 {
+    if (!win)
+        return;
     unsigned int ns(1);
     WindowData wd;
     wd.height = getHeadHeight(win, ns);

@@ -180,16 +180,7 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     castOpt(ViewItemV4, opt, option);
     if (!opt)
         return true;
-    castObj(const QAbstractItemView *, view, widget);
-//    QPoint pos;
-//    if (view && view->viewport())
-//        pos = view->viewport()->mapFromGlobal(QCursor::pos());
-//    if (!pos.isNull())
-//        if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
-//            const_cast<QStyleOption *>(option)->state |= State_MouseOver;
     drawViewItemBg(option, painter, widget);
-
-    QPixmap pix(opt->icon.pixmap(opt->decorationSize));
 
     if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
     {
@@ -206,16 +197,15 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     m = m*!iconRect.isValid();
     QRect textRect(subElementRect(SE_ItemViewItemText, opt, widget).adjusted(m, 0, -m, 0));
 
-    QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
+    const QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
+    const QPixmap pix(opt->icon.pixmap(opt->decorationSize));
     drawItemPixmap(painter, iconRect, opt->decorationAlignment, pix);
-    int align(opt->displayAlignment);
-    if (opt->fontMetrics.boundingRect(opt->text).width() > opt->rect.width())
-        align &= ~Qt::AlignHCenter;
-
-    QString text(opt->text);
-    if (opt->fontMetrics.width(opt->text) > textRect.width())
-        text = opt->fontMetrics.elidedText(text, opt->textElideMode, textRect.width());
-    drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, opt->text, fg);
+    if (!opt->text.isEmpty())
+    {
+        const int align(opt->displayAlignment);
+        const QString text(opt->fontMetrics.elidedText(opt->text, opt->textElideMode, textRect.width()));
+        drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, text, fg);
+    }
     return true;
 }
 
