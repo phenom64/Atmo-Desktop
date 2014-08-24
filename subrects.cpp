@@ -47,7 +47,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         if (!tab)
             return QRect();
 
-        int overlap(pixelMetric(PM_TabBarTabOverlap));
+        const bool safBar(Ops::isSafariTabBar(bar));
+        int overlap(safBar?pixelMetric(PM_TabBarTabOverlap):4);
         QRect textRect(tab->rect);
         QRect leftRect;
 
@@ -56,7 +57,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 
         if (tab->leftButtonSize.isValid())
         {
-            if ((tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab) && Ops::isSafariTabBar(bar))
+            if (safBar)
+            if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
                 overlap *= 2;
             const QSize sz(tab->leftButtonSize);
             leftRect.setSize(sz);

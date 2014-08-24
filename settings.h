@@ -9,6 +9,7 @@
 #define SLIDERSIZE "sliders.size"
 #define SCROLLERSIZE "scrollers.size"
 #define SHADOWOPACITY "shadows.opacity"
+#define TABRND "tabs.rnd"
 
 //defaults
 
@@ -18,6 +19,7 @@
 #define DEFSLIDERSIZE 16
 #define DEFSCROLLERSIZE 12
 #define DEFSHADOWOPACITY 33
+#define DEFTABRND 5
 
 #define READPUSHBTNRND PUSHBTNRND, DEFPUSHBTNRND
 #define READTOOLBTNRND TOOLBTNRND, DEFTOOLBTNRND
@@ -25,6 +27,7 @@
 #define READSLIDERSIZE SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSHADOWOPACITY SHADOWOPACITY, DEFSHADOWOPACITY
+#define READTABRND TABRND, DEFTABRND
 
 
 typedef struct Settings
@@ -53,6 +56,10 @@ typedef struct Settings
     {
         float opacity;
     } shadows;
+    struct tabs
+    {
+        int rnd;
+    } tabs;
 } Settings;
 
 #endif //SETTINGS_H

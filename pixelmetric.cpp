@@ -21,7 +21,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_TabCloseIndicatorWidth:
         return 16;
     case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
-        return 8;
+        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?8:0;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
 //        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
 //        {

@@ -127,4 +127,6 @@ StyleProject::readSettings()
     m_s.scrollers.size = s.value(READSCROLLERSIZE).toInt();
     //shadows
     m_s.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
+    //tabs
+    m_s.tabs.rnd = s.value(READTABRND).toInt();
 }
