@@ -45,7 +45,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     if (Ops::isSafariTabBar(bar))
     {
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
-        int o(pixelMetric(PM_TabBarTabOverlap));
+        int o(pixelMetric(PM_TabBarTabOverlap, option, widget));
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
         if (!isFirst && !isOnly)
             r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
@@ -198,7 +198,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     const bool safTabs(Ops::isSafariTabBar(bar));
     if (safTabs)
     {
-        d = pixelMetric(PM_TabBarTabOverlap);
+        d = pixelMetric(PM_TabBarTabOverlap, option, widget);
         if ((isOnly || opt->position == QStyleOptionTab::End) && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide)
             d *= 2;
     }

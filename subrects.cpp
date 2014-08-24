@@ -48,7 +48,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
             return QRect();
 
         const bool safBar(Ops::isSafariTabBar(bar));
-        int overlap(safBar?pixelMetric(PM_TabBarTabOverlap):4);
+        int overlap(safBar?pixelMetric(PM_TabBarTabOverlap, opt, widget):4);
         QRect textRect(tab->rect);
         QRect leftRect;
 

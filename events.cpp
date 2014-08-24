@@ -49,7 +49,7 @@ static void paintTab(QTabBar *tb, const int i, QStyle *style, QPainter &p)
     if (!tb->tabRect(i).isValid())
         return;
     const bool isFirst(i==0), isLast(i==tb->count()-1), isSelected(i==tb->currentIndex());
-    const int ol(style->pixelMetric(QStyle::PM_TabBarTabOverlap));
+    const int ol(style->pixelMetric(QStyle::PM_TabBarTabOverlap, 0, tb));
     QStyleOptionTabV3 tab;
     tab.initFrom(tb);
     if (isSelected)
