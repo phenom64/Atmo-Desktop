@@ -29,8 +29,6 @@ protected:
 
 private:
     static UNOHandler *s_instance;
-    QTimer *m_fixer;
-    QQueue<QWidget *> m_fix;
     static QMap<int, QPixmap> s_pix;
 };
 

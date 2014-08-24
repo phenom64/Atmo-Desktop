@@ -130,6 +130,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     }
     int m(2);
 
+    const bool inToolBar(widget&&qobject_cast<const QToolBar *>(widget->parentWidget()));
     if (!opt->editable)
     {
 //        Render::renderShadow(Render::Raised, frameRect, painter, 5);
@@ -232,9 +233,10 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 
     Render::renderMask(option->rect, painter, option->palette.brush(QPalette::Base), m_s.input.rnd);
     QLinearGradient shadow(0, 0, 0, option->rect.height());
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    const int o(m_s.shadows.opacity*255.0f);
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
     QBrush b(shadow);
     Render::renderShadow(Render::Simple, option->rect, painter, m_s.input.rnd, Render::All, 1.0f, &b);
 

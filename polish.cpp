@@ -73,7 +73,9 @@ StyleProject::polish(QWidget *widget)
         Anim::ToolBtns::manage(btn);
         installFilter(btn);
     }
-    if (widget->isWindow())
+    if (qobject_cast<QMainWindow *>(widget) ||
+            widget->findChild<QToolBar *>() ||
+            widget->findChild<QTabBar *>())
         UNOHandler::manage(widget);
 
     if (castObj(QMainWindow *, win, widget))

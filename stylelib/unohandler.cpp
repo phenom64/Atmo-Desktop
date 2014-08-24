@@ -3,6 +3,7 @@
 #include "macros.h"
 #include "color.h"
 #include "render.h"
+#include "ops.h"
 
 #include <QMainWindow>
 #include <QTabBar>
@@ -20,50 +21,9 @@
 Q_DECL_EXPORT UNOHandler *UNOHandler::s_instance = 0;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
 
-static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
-{
-    if (!win)
-        return 0;
-    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
-    if (!h)
-        return 0;
-    unsigned int totheight(*h);
-    win->setProperty("titleHeight", totheight);
-    castObj(QMainWindow *, mw, win);
-    if (!mw)
-        return totheight;
-    int tbheight(0);
-    if (mw->menuBar() && mw->menuBar()->isVisible())
-        totheight += mw->menuBar()->height();
-    QList<QToolBar *> tbs(mw->findChildren<QToolBar *>());
-    for (int i = 0; i<tbs.count(); ++i)
-    {
-        QToolBar *tb(tbs.at(i));
-        if (tb->isVisible())
-        if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
-        {
-            if (tb->geometry().bottom() > tbheight)
-                tbheight = tb->height();
-            needSeparator = 0;
-        }
-    }
-    totheight += tbheight;
-    if (QTabBar *tb = mw->findChild<QTabBar *>())
-        if (tb->parentWidget() == mw)
-        if (tb->isVisible())
-        if (tb->geometry().top() <= 0)
-            needSeparator = 0;
-    win->setProperty("DSP_headHeight", tbheight);
-    win->setProperty("DSP_UNOheight", totheight);
-//    qDebug() << totheight;
-    return totheight;
-}
-
 UNOHandler::UNOHandler(QObject *parent)
     : QObject(parent)
-    , m_fixer(new QTimer(this))
 {
-    connect(m_fixer, SIGNAL(timeout()), this, SLOT(fixTitle()));
 }
 
 UNOHandler
@@ -86,6 +46,7 @@ UNOHandler::manage(QWidget *mw)
         bar->removeEventFilter(instance());
         bar->installEventFilter(instance());
     }
+    fixTitleLater(mw);
 }
 
 void
@@ -118,7 +79,7 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::Show:
     {
-        fixTitleLater(w);
+        fixWindowTitleBar(w);
         return false;
     }
     default: break;
@@ -154,10 +115,45 @@ UNOHandler::updateWindow(WId window)
     QDBusConnection::sessionBus().send(msg);
 }
 
+
+static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
+{
+    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
+    if (!h)
+        return 0;
+    unsigned int totheight(*h);
+    win->setProperty("titleHeight", totheight);
+    castObj(QMainWindow *, mw, win);
+    if (!mw)
+        return totheight;
+    int tbheight(0);
+    if (mw->menuBar() && mw->menuBar()->isVisible())
+        totheight += mw->menuBar()->height();
+    QList<QToolBar *> tbs(mw->findChildren<QToolBar *>());
+    for (int i = 0; i<tbs.count(); ++i)
+    {
+        QToolBar *tb(tbs.at(i));
+        if (tb->isVisible())
+        if (!tb->findChild<QTabBar *>())
+        if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
+        {
+            if (tb->geometry().bottom() > tbheight)
+                tbheight = tb->height();
+            needSeparator = 0;
+        }
+    }
+    totheight += tbheight;
+    if (Ops::isSafariTabBar(mw->findChild<QTabBar *>()))
+        needSeparator = 0;
+    win->setProperty("DSP_headHeight", tbheight);
+    win->setProperty("DSP_UNOheight", totheight);
+    return totheight;
+}
+
 void
 UNOHandler::fixWindowTitleBar(QWidget *win)
 {
-    if (!win)
+    if (!win || !win->isWindow())
         return;
     unsigned int ns(1);
     WindowData wd;
@@ -169,6 +165,7 @@ UNOHandler::fixWindowTitleBar(QWidget *win)
     if (!wd.height)
         return;
     XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 5);
+    updateWindow(win->winId());
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     if (!s_pix.contains(wd.height))
@@ -184,7 +181,6 @@ UNOHandler::fixWindowTitleBar(QWidget *win)
         s_pix.insert(wd.height, Render::mid(p, Render::noise(), 40, 1));
     }
 
-    updateWindow(win->winId());
     const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
     for (int i = 0; i < toolBars.size(); ++i)
         toolBars.at(i)->update();
@@ -223,15 +219,23 @@ UNOHandler::updateToolBar(QToolBar *toolBar)
 void
 UNOHandler::fixTitleLater(QWidget *win)
 {
-    instance()->m_fix.enqueue(win);
-    instance()->m_fixer->start(250);
+    if (!win)
+        return;
+    QTimer *t = new QTimer(win);
+    connect(t, SIGNAL(timeout()), instance(), SLOT(fixTitle()));
+    t->start(250);
 }
 
 void
 UNOHandler::fixTitle()
 {
-    if (!m_fix.isEmpty())
-        fixWindowTitleBar(m_fix.dequeue());
-    if (m_fix.isEmpty())
-        m_fixer->stop();
+    if (QTimer *t = qobject_cast<QTimer *>(sender()))
+    if (t->parent()->isWidgetType())
+    if (QWidget *w = static_cast<QWidget *>(t->parent()))
+    if (w->isWindow())
+    {
+        fixWindowTitleBar(w);
+        t->stop();
+        t->deleteLater();
+    }
 }
