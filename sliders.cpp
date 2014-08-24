@@ -195,11 +195,10 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     castOpt(ProgressBar, opt, option);
     if (!opt)
         return true;
-
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
         return true;
 
-//    qDebug() << opt->progress << opt->minimum << opt->maximum;
+    painter->save();
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
@@ -222,8 +221,8 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
         p.fillRect(pix.rect(), lg);
         const int penWidth(12);
-        lg.setColorAt(0.0f, Color::mid(opt->palette.color(bg), Qt::white, 5, 1));
-        lg.setColorAt(1.0f, opt->palette.color(bg)/*Color::mid(bc, Qt::black, 7, 1)*/);
+        lg.setColorAt(0.0f, Color::mid(opt->palette.color(bg), opt->palette.color(QPalette::Highlight)));
+        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
         p.setPen(QPen(lg, penWidth));
         p.setRenderHint(QPainter::Antialiasing);
         QRect penRect(pix.rect().adjusted(penWidth/2, -1, -(penWidth/2), 1));
@@ -260,13 +259,14 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     painter->setClipRect(cont);
     Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
     QLinearGradient shadow(0, 0, 0, opt->rect.height());
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
+    const int o(m_s.shadows.opacity*255.0f);
+    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
     QBrush b(shadow);
 
     Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
-    painter->setClipping(false);
+    painter->restore();
     return true;
 }
 
@@ -298,6 +298,8 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
     if (!opt || opt->text.isEmpty())
         return true;
 
+    painter->save();
+
     const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
@@ -313,16 +315,16 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
 
     painter->setClipRegion(QRegion(cont));
     TRANSLATE(btt);
-    QRect tr(opt->fontMetrics.boundingRect(label, Qt::AlignCenter, opt->text));
-    int rnd(qMin(tr.height(), tr.width())/2);
-    painter->save();
-    painter->setBrush(opt->palette.color(QPalette::Highlight));
-    painter->setPen(Qt::NoPen);
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->drawRoundedRect(tr, rnd, rnd);
-    painter->restore();
+//    QRect tr(opt->fontMetrics.boundingRect(label, Qt::AlignCenter, opt->text));
+//    int rnd(qMin(tr.height(), tr.width())/2);
+
+//    painter->setBrush(opt->palette.color(QPalette::Highlight));
+//    painter->setPen(Qt::NoPen);
+//    painter->setRenderHint(QPainter::Antialiasing);
+//    painter->drawRoundedRect(tr, rnd, rnd);
+
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::HighlightedText);
     TRANSLATE(!btt);
-    painter->setClipping(false);
+    painter->restore();
     return true;
 }
