@@ -118,40 +118,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         }
     }
     case SE_ProgressBarLabel:
-    case SE_ProgressBarGroove: return opt->rect;
-    case SE_ProgressBarContents:
-    {
-        castOpt(ProgressBar, bar, opt);
-        castOpt(ProgressBarV2, barv2, opt);
-        if (!bar)
-            return QRect();
-        const bool hor(!barv2 || barv2->orientation == Qt::Horizontal);
-        qreal d((qreal)(hor?opt->rect.width():opt->rect.height())/(qreal)bar->maximum);
-        int progress(d*bar->progress);
-        int w(hor?progress:bar->rect.width());
-        int h(hor?bar->rect.height():progress);
-        int x(bar->rect.x()), y(bar->rect.y());
-        QRect r(x, hor?y:(y+bar->rect.height())-progress, w, h);
-        if (barv2 && barv2->invertedAppearance)
-        {
-            if (hor)
-                r.moveRight(opt->rect.right());
-            else
-                r.moveTop(opt->rect.top());
-        }
-        if (bar->minimum == bar->maximum)
-            if (castObj(const QProgressBar *, pBar, widget))
-            {
-                int s(qMin(bar->rect.height(), bar->rect.width()));
-                r.setSize(QSize(s, s));
-
-                if (hor)
-                    r.moveLeft(ProgressHandler::busyValue(pBar));
-                else
-                    r.moveBottom(pBar->height()-ProgressHandler::busyValue(pBar));
-            }
-        return visualRect(opt->direction, opt->rect, r);
-    }
+    case SE_ProgressBarGroove:
+    case SE_ProgressBarContents: return opt->rect;
     case SE_ViewItemCheckIndicator:
     case SE_RadioButtonIndicator:
     case SE_CheckBoxIndicator:

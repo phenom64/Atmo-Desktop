@@ -114,6 +114,7 @@ public:
     QRect comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
+    QRect progressContents(const QStyleOption *opt, const QWidget *widget = 0) const;
 
     /* pointers to these functions */
     typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;

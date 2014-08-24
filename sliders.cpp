@@ -142,6 +142,41 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     return true;
 }
 
+QRect
+StyleProject::progressContents(const QStyleOption *opt, const QWidget *widget) const
+{
+    castOpt(ProgressBar, bar, opt);
+    castOpt(ProgressBarV2, barv2, opt);
+    if (!bar)
+        return QRect();
+    const bool hor(!barv2 || barv2->orientation == Qt::Horizontal);
+    qreal d((qreal)(hor?opt->rect.width():opt->rect.height())/(qreal)bar->maximum);
+    int progress(d*bar->progress);
+    int w(hor?progress:bar->rect.width());
+    int h(hor?bar->rect.height():progress);
+    int x(bar->rect.x()), y(bar->rect.y());
+    QRect r(x, hor?y:(y+bar->rect.height())-progress, w, h);
+    if (barv2 && barv2->invertedAppearance)
+    {
+        if (hor)
+            r.moveRight(opt->rect.right());
+        else
+            r.moveTop(opt->rect.top());
+    }
+    if (bar->minimum == bar->maximum)
+        if (castObj(const QProgressBar *, pBar, widget))
+        {
+            int s(qMin(bar->rect.height(), bar->rect.width()));
+            r.setSize(QSize(s, s));
+
+            if (hor)
+                r.moveLeft(ProgressHandler::busyValue(pBar));
+            else
+                r.moveBottom(pBar->height()-ProgressHandler::busyValue(pBar));
+        }
+    return visualRect(opt->direction, opt->rect, r);
+}
+
 bool
 StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
@@ -165,7 +200,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         return true;
 
 //    qDebug() << opt->progress << opt->minimum << opt->maximum;
-    QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
+    QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
     castOpt(ProgressBarV2, optv2, option);
@@ -265,7 +300,7 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
 
     const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
-    QRect cont(subElementRect(SE_ProgressBarContents, opt, widget)); //The progress indicator of a QProgressBar.
+    QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //he text label of a QProgressBar.
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
     const float w_2(groove.width()/2.0f), h_2(groove.height()/2.0f);
