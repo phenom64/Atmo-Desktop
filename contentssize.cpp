@@ -94,7 +94,6 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         {
             if (bar->expanding())
             {
-//                int margin(pixelMetric(PM_TabBarTabOverlap)/2);
                 int w(bar->width());
 
                 if (castObj(const QTabWidget *, tw, bar->parentWidget()))

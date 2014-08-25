@@ -31,6 +31,7 @@ public:
         return reinterpret_cast<T *>(fetchProperty(w, v, n));
     }
     static void deleteXProperty(const WId w, const Value v);
+    static void move(QMouseEvent *e, QWidget *w);
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);

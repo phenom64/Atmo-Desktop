@@ -17,6 +17,7 @@
 #include <QPainter>
 #include <QMenuBar>
 #include <QDebug>
+#include <QMouseEvent>
 
 Q_DECL_EXPORT UNOHandler *UNOHandler::s_instance = 0;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
@@ -80,6 +81,12 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     case QEvent::Show:
     {
         fixWindowTitleBar(w);
+        return false;
+    }
+    case QEvent::MouseButtonPress:
+    {
+        if (QToolBar *tb = qobject_cast<QToolBar *>(w))
+            XHandler::move(static_cast<QMouseEvent *>(e), tb->window());
         return false;
     }
     default: break;

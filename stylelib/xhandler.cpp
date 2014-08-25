@@ -3,6 +3,7 @@
 #include <X11/Xatom.h>
 #include "fixx11h.h"
 #include <QX11Info>
+#include <QMouseEvent>
 
 static Atom atom[XHandler::ValueCount] =
 {
@@ -40,4 +41,39 @@ void
 XHandler::deleteXProperty(const WId w, const Value v)
 {
     XDeleteProperty(QX11Info::display(), w, atom[v]);
+}
+
+void
+XHandler::move(QMouseEvent *e, QWidget *w)
+{
+    if (!w || e->button() != Qt::LeftButton)
+        return;
+    static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
+    //this is stole.... errrhmm copied from qsizegrip.cpp
+    XEvent xev;
+    xev.xclient.type = ClientMessage;
+    xev.xclient.message_type = netWmMoveResize;
+    xev.xclient.display = QX11Info::display();
+    xev.xclient.window = w->winId();
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = e->globalPos().x();
+    xev.xclient.data.l[1] = e->globalPos().y();
+//#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
+//#define _NET_WM_MOVERESIZE_SIZE_TOP          1
+//#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
+//#define _NET_WM_MOVERESIZE_SIZE_RIGHT        3
+//#define _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
+//#define _NET_WM_MOVERESIZE_SIZE_BOTTOM       5
+//#define _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
+//#define _NET_WM_MOVERESIZE_SIZE_LEFT         7
+//#define _NET_WM_MOVERESIZE_MOVE              8   /* movement only */
+//#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
+//#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
+//#define _NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
+    xev.xclient.data.l[2] = 8;
+    xev.xclient.data.l[3] = Button1;
+    xev.xclient.data.l[4] = 0;
+    XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False,
+               SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 }

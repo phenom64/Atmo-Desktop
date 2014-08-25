@@ -13,6 +13,7 @@
 #include <QToolBar>
 #include <QPaintDevice>
 #include <QPainter>
+#include <QApplication>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -51,6 +52,9 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
         if (!isLast && !isOnly)
             r.setRight(r.right()+((painter->device() == widget)?o:o/2));
+
+        if (isLast && qApp->applicationName() == "konversation")
+            r.setRight(r.right()+o);
 
         QPainterPath p;
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.25f);
@@ -258,7 +262,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         fg = QPalette::HighlightedText;
 
     QFontMetrics fm(painter->fontMetrics());
-    const QString text(fm.elidedText(opt->text, bar?bar->elideMode():Qt::ElideRight, tr.width()));
+    const QString text(fm.elidedText(opt->text, (Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget), tr.width()));
     drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));

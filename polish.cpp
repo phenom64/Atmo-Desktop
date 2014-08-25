@@ -61,6 +61,38 @@ StyleProject::polish(QWidget *widget)
             connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
         installFilter(bar);
     }
+    if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
+        widget->layout()->setContentsMargins(0, 0, 0, 0);
+#if 0
+    if (castObj(QMainWindow *, win, widget))
+    {
+//        qDebug() << "we are a mainwindow... w/ the centralwidget" << win->centralWidget();
+        if (QWidget *cw = win->centralWidget())
+        {
+//            qDebug() << "setting margins on cw..." << cw->contentsMargins();
+            cw->setContentsMargins(0, 0, 0, 0);
+            if (QLayout *l = cw->layout())
+            {
+//                qDebug() << "cw has layout" << l->contentsMargins();
+                l->setContentsMargins(0, 0, 0, 0);
+            }
+            QList<QWidget *> children = cw->findChildren<QWidget *>();
+            for (int i = 0; i < children.count(); ++i)
+            {
+                QWidget *w(children.at(i));
+                QLayout *l(w->layout());
+                if (w->parentWidget() == cw)
+                {
+                    w->setContentsMargins(0, 0, 0, 0);
+                    if (l)
+                        l->setContentsMargins(0, 0, 0, 0);
+                }
+            }
+        }
+    }
+#endif
+
+//    qDebug() << widget << widget->parentWidget() << widget->contentsMargins() << (widget->layout()?widget->layout()->contentsMargins():QMargins());
 
     if (qobject_cast<QPushButton *>(widget) ||
             qobject_cast<QCheckBox *>(widget) ||
@@ -153,11 +185,12 @@ StyleProject::polish(QWidget *widget)
                 l->setAlignment(Qt::AlignCenter);
         }
     }
-
     if (castObj(QFrame *, frame, widget))
+    {
         if (frame->frameShadow() == QFrame::Sunken
                 && qobject_cast<QMainWindow *>(frame->window()))
             OverLay::manage(frame, m_s.shadows.opacity*255.0f);
+    }
 
     if (castObj(QAbstractItemView *, view, widget))
     {

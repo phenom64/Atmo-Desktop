@@ -10,7 +10,6 @@ class Q_DECL_EXPORT UNOHandler : public QObject
 {
     Q_OBJECT
 public:
-    UNOHandler(QObject *parent = 0);
     ~UNOHandler(){}
     static UNOHandler *instance();
     static void manage(QWidget *mw);
@@ -25,6 +24,7 @@ public slots:
     void fixTitle();
 
 protected:
+    UNOHandler(QObject *parent = 0);
     bool eventFilter(QObject *, QEvent *);
 
 private:

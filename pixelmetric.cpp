@@ -3,6 +3,7 @@
 #include <QStyleOption>
 #include <QMainWindow>
 #include <QComboBox>
+#include <QAbstractButton>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -60,9 +61,15 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
             return 2;
 //        if (qobject_cast<const QLineEdit *>(widget)||qobject_cast<const QComboBox *>(widget))
 //            return 2;
-        if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
-            if (frame->frameShadow() == QFrame::Sunken && OverLay::hasOverLay(frame))
-                return 0;
+        const QFrame *frame = qobject_cast<const QFrame *>(widget);
+        if (frame && frame->frameShadow() == QFrame::Sunken && OverLay::hasOverLay(frame))
+            return 0;
+
+//        if (!qobject_cast<const QAbstractButton *>(frame) && !qstyleoption_cast<const QStyleOptionButton *>(option))
+        if (frame && frame->frameShadow() == QFrame::Raised)
+            return 8;
+        if (option && option->state & State_Raised) //the buttons in qtcreator....
+            return 0;
         return 2;
     }
     case PM_ToolBarItemSpacing: return 0;

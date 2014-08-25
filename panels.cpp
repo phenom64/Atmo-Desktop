@@ -15,6 +15,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/unohandler.h"
+#include "overlay.h"
 
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -183,5 +184,41 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
     painter->setFont(bold);
     drawItemText(painter, tr, Qt::AlignCenter, opt->palette, opt->ENABLED, title, widget?widget->foregroundRole():QPalette::WindowText);
     painter->setFont(f);
+    return true;
+}
+
+bool
+StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (!widget)
+        return true;
+
+    castOpt(FrameV3, opt, option);
+    if (!opt)
+        return true;
+
+    castObj(const QFrame *, frame, widget);
+    if (OverLay::hasOverLay(frame))
+        return true;
+
+    int roundNess(2);
+    QRect r(option->rect);
+
+    if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, m_s.shadows.opacity);
+
+    if (opt->state & State_Raised)
+    {
+        QPixmap pix(frame->rect().size());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        Render::renderShadow(Render::Raised, pix.rect(), &p, 8);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        Render::renderMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
+        p.end();
+        painter->drawTiledPixmap(frame->rect(), pix);
+    }
+    if (frame && frame->frameShadow() == QFrame::Plain)
+        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, 0.25f);
     return true;
 }
