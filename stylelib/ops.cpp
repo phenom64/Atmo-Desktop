@@ -98,6 +98,25 @@ Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
 }
 
 void
+Ops::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, const Qt::Alignment align, int size)
+{
+    const QPalette::ColorRole bgRole(Ops::opposingRole(role));
+    if (pal.color(role).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
+    if (role != QPalette::NoRole)
+    {
+        if (bgRole != QPalette::NoRole && enabled)
+        {
+            const bool isDark(Color::luminosity(pal.color(role)) > Color::luminosity(pal.color(bgRole)));
+            const int rgb(isDark?0:255);
+            const QColor bevel(rgb, rgb, rgb, 127);
+            drawArrow(p, bevel, r.translated(0, 1), d, align, size);
+        }
+        const QColor c(pal.color(enabled ? QPalette::Active : QPalette::Disabled, role));
+        drawArrow(p, c, r, d, align, size);
+    }
+}
+
+void
 Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align, int size)
 {
     p->save();

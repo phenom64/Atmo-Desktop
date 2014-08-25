@@ -153,7 +153,11 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
     m*=2;
-    Ops::drawArrow(painter, opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText), arrowRect.adjusted(m*1.25f, m, -m, -m), Ops::Down, Qt::AlignCenter, 7);
+    const QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText));
+    QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2));
+    QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0));
+    Ops::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Up, Qt::AlignCenter, 5);
+    Ops::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Down, Qt::AlignCenter, 5);
     return true;
 }
 

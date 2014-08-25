@@ -14,6 +14,8 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 {
     switch (metric)
     {
+    case PM_HeaderMarkSize:
+        return 9;
     case PM_ButtonMargin:
         return 2;
     case PM_SpinBoxFrameWidth:

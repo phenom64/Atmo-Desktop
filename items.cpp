@@ -307,15 +307,21 @@ StyleProject::drawHeaderLabel(const QStyleOption *option, QPainter *painter, con
     if (!opt)
         return true;
 
-
+    painter->save();
     const QRect tr(subElementRect(SE_HeaderLabel, opt, widget));
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text));
+
     if (opt->sortIndicator)
     {
+        BOLD;
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
-        Ops::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down);
+//        Ops::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, 7);
+        Ops::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, pixelMetric(PM_HeaderMarkSize));
     }
-    drawItemText(painter, tr, opt->textAlignment, opt->palette, opt->state & State_Enabled, opt->text, fg);
+    const QFontMetrics fm(painter->fontMetrics());
+    const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));
+    drawItemText(painter, tr, opt->textAlignment, opt->palette, opt->state & State_Enabled, text, fg);
+    painter->restore();
     return true;
 }
