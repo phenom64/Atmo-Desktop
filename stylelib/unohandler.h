@@ -29,6 +29,9 @@ protected:
 
 private:
     static UNOHandler *s_instance;
+    bool m_hasDrag;
+    QWidget *m_hasPress;
+    QPoint m_presPos;
     static QMap<int, QPixmap> s_pix;
 };
 

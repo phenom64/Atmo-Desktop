@@ -18,12 +18,15 @@
 #include <QMenuBar>
 #include <QDebug>
 #include <QMouseEvent>
+#include <QCoreApplication>
 
 Q_DECL_EXPORT UNOHandler *UNOHandler::s_instance = 0;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
 
 UNOHandler::UNOHandler(QObject *parent)
     : QObject(parent)
+    , m_hasPress(0)
+    , m_hasDrag(false)
 {
 }
 
@@ -83,10 +86,27 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
         fixWindowTitleBar(w);
         return false;
     }
+    case QEvent::MouseButtonRelease:
+        m_hasPress = false;
+        return false;
     case QEvent::MouseButtonPress:
     {
         if (castObj(QMainWindow *, win, w))
-            XHandler::move(static_cast<QMouseEvent *>(e), win);
+        {
+            QMouseEvent *me(static_cast<QMouseEvent *>(e));
+            m_hasPress = w;
+            m_presPos = me->pos();
+        }
+        return false;
+    }
+    case QEvent::MouseMove:
+    {
+        if (castObj(QMainWindow *, win, w))
+        {
+            QMouseEvent *me(static_cast<QMouseEvent *>(e));
+            if (w == m_hasPress && (qAbs(me->pos().x()-m_presPos.x())>5 ||  qAbs(me->pos().y()-m_presPos.y())>5))
+                XHandler::move(me, win);
+        }
         return false;
     }
     default: break;

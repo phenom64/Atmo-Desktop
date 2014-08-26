@@ -46,7 +46,7 @@ XHandler::deleteXProperty(const WId w, const Value v)
 void
 XHandler::move(QMouseEvent *e, QWidget *w)
 {
-    if (!w || e->button() != Qt::LeftButton)
+    if (!w || !e)
         return;
     static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
     //this is stole.... errrhmm copied from qsizegrip.cpp
