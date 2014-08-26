@@ -22,8 +22,8 @@
 
 #define ISA(_TYPE_) inherits("##_TYPE_##")
 
-#define BOLD QFont f(painter->font());\
+#define BOLD { QFont f(painter->font());\
     f.setBold(true); \
-    painter->setFont(f)
+    painter->setFont(f); }
 
 #endif // MACROS_H

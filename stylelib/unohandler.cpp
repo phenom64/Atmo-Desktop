@@ -85,8 +85,8 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::MouseButtonPress:
     {
-        if (QToolBar *tb = qobject_cast<QToolBar *>(w))
-            XHandler::move(static_cast<QMouseEvent *>(e), tb->window());
+        if (castObj(QMainWindow *, win, w))
+            XHandler::move(static_cast<QMouseEvent *>(e), win);
         return false;
     }
     default: break;

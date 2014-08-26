@@ -181,6 +181,7 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
     drawViewItemBg(option, painter, widget);
+    painter->save();
 
     if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
     {
@@ -202,10 +203,14 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     drawItemPixmap(painter, iconRect, opt->decorationAlignment, pix);
     if (!opt->text.isEmpty())
     {
+        if (fg == QPalette::HighlightedText)
+            BOLD;
         const int align(opt->displayAlignment);
-        const QString text(opt->fontMetrics.elidedText(opt->text, opt->textElideMode, textRect.width()));
+        const QFontMetrics &fm(painter->fontMetrics());
+        const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width()));
         drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, text, fg);
     }
+    painter->restore();
     return true;
 }
 
