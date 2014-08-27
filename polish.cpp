@@ -110,6 +110,9 @@ StyleProject::polish(QWidget *widget)
             widget->findChild<QTabBar *>())
         UNOHandler::manage(widget);
 
+    if (widget->isWindow())
+        WinHandler::manage(widget);
+
     if (castObj(QMainWindow *, win, widget))
     {
         installFilter(win);
@@ -262,6 +265,7 @@ StyleProject::unpolish(QWidget *widget)
     ShadowHandler::release(widget);
     Anim::Basic::release(widget);
     UNOHandler::release(widget);
+    WinHandler::release(widget);
     if (castObj(QProgressBar *, pb, widget))
         ProgressHandler::release(pb);
     if (castObj(QTabBar *, tb, widget))

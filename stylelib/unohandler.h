@@ -2,8 +2,6 @@
 #define UNOHANDLER_H
 
 #include <QWidget>
-#include <QTimer>
-#include <QQueue>
 
 class QToolBar;
 class Q_DECL_EXPORT UNOHandler : public QObject
@@ -29,10 +27,27 @@ protected:
 
 private:
     static UNOHandler *s_instance;
+    static QMap<int, QPixmap> s_pix;
+};
+
+class Q_DECL_EXPORT WinHandler : public QObject
+{
+    Q_OBJECT
+public:
+    ~WinHandler(){}
+    static WinHandler *instance();
+    static void manage(QWidget *win);
+    static void release(QWidget *win);
+
+protected:
+    WinHandler(QObject *parent = 0);
+    bool eventFilter(QObject *, QEvent *);
+
+private:
+    static WinHandler *s_instance;
     bool m_hasDrag;
     QWidget *m_hasPress;
     QPoint m_presPos;
-    static QMap<int, QPixmap> s_pix;
 };
 
 #endif //UNOHANDLER_H

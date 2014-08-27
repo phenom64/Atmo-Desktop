@@ -139,6 +139,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!opt)
         return true;
 
+    painter->save();
     castObj(const QAbstractItemView *, abstractView, widget);
     castObj(const QTreeView *, treeView, widget);
     castObj(const QListView *, listView, widget);
@@ -159,18 +160,27 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
             brush = lg;
         }
 
-        painter->fillRect(opt->rect, brush);
-
-        if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
+        if (listView && listView->viewMode() == QListView::IconMode)
         {
-            painter->save();
-            painter->setPen(QColor(0, 0, 0, 64));
-            painter->translate(0.0f, 0.5f);
-            painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
-            painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
-            painter->restore();
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(brush);
+            painter->drawRoundedRect(opt->rect, m_s.input.rnd, m_s.input.rnd);
+        }
+        else
+        {
+            painter->fillRect(opt->rect, brush);
+            if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
+            {
+                painter->save();
+                painter->setPen(QColor(0, 0, 0, 64));
+                painter->translate(0.0f, 0.5f);
+                painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
+                painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
+                painter->restore();
+            }
         }
     }
+    painter->restore();
     return true;
 }
 

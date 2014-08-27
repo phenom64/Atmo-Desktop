@@ -20,7 +20,7 @@
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || !widget->window() || !painter->isActive())
+    if (!widget || !widget->window() || !painter->isActive() || widget->palette().color(widget->backgroundRole()) != widget->window()->palette().color(QPalette::Window))
         return true;
 
     Render::Sides sides = Render::All;
@@ -59,6 +59,7 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
 bool
 StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (widget && !qobject_cast<const QToolBar *>(widget->parentWidget()))
     if (option->rect.width() == 1 || option->rect.height() == 1)
         painter->fillRect(option->rect, QColor(0, 0, 0, m_s.shadows.opacity*255.0f));
     return true;

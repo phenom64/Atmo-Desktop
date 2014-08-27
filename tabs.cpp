@@ -175,7 +175,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             painter->drawLine(vert?mask.bottomLeft():isRtl?mask.topLeft():mask.topRight(), vert?mask.bottomRight():isRtl?mask.bottomLeft():mask.bottomRight());
         painter->setPen(pen);
     }
-    else if (opt->selectedPosition != QStyleOptionTab::NextIsSelected && opt->position != QStyleOptionTab::End)
+    else if (opt->selectedPosition != QStyleOptionTab::NextIsSelected && opt->position != QStyleOptionTab::End && !isOnly)
     {
         const QPen pen(painter->pen());
         painter->setPen(QColor(0, 0, 0, 32)/*Color::mid(bgc, fgc)*/);

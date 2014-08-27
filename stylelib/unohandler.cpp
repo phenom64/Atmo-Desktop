@@ -25,8 +25,6 @@ Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
 
 UNOHandler::UNOHandler(QObject *parent)
     : QObject(parent)
-    , m_hasPress(0)
-    , m_hasDrag(false)
 {
 }
 
@@ -84,29 +82,6 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     case QEvent::Show:
     {
         fixWindowTitleBar(w);
-        return false;
-    }
-    case QEvent::MouseButtonRelease:
-        m_hasPress = false;
-        return false;
-    case QEvent::MouseButtonPress:
-    {
-        if (castObj(QMainWindow *, win, w))
-        {
-            QMouseEvent *me(static_cast<QMouseEvent *>(e));
-            m_hasPress = w;
-            m_presPos = me->pos();
-        }
-        return false;
-    }
-    case QEvent::MouseMove:
-    {
-        if (castObj(QMainWindow *, win, w))
-        {
-            QMouseEvent *me(static_cast<QMouseEvent *>(e));
-            if (w == m_hasPress && (qAbs(me->pos().x()-m_presPos.x())>5 ||  qAbs(me->pos().y()-m_presPos.y())>5))
-                XHandler::move(me, win);
-        }
         return false;
     }
     default: break;
@@ -265,4 +240,76 @@ UNOHandler::fixTitle()
         t->stop();
         t->deleteLater();
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+Q_DECL_EXPORT WinHandler *WinHandler::s_instance = 0;
+
+WinHandler::WinHandler(QObject *parent)
+    : QObject(parent)
+    , m_hasPress(0)
+    , m_hasDrag(false)
+{
+}
+
+void
+WinHandler::manage(QWidget *win)
+{
+    if (!win)
+        return;
+    win->removeEventFilter(instance());
+    win->installEventFilter(instance());
+}
+
+void
+WinHandler::release(QWidget *win)
+{
+    if (!win)
+        return;
+    win->removeEventFilter(instance());
+}
+
+WinHandler
+*WinHandler::instance()
+{
+    if (!s_instance)
+        s_instance = new WinHandler();
+    return s_instance;
+}
+
+bool
+WinHandler::eventFilter(QObject *o, QEvent *e)
+{
+    if (!o || !e)
+        return false;
+    if (!o->isWidgetType())
+        return false;
+    QWidget *w = static_cast<QWidget *>(o);
+    if (!w->isWindow())
+        return false;
+    switch (e->type())
+    {
+    case QEvent::MouseButtonRelease:
+    {
+        m_hasPress = 0;
+        return false;
+    }
+    case QEvent::MouseButtonPress:
+    {
+        QMouseEvent *me(static_cast<QMouseEvent *>(e));
+        m_hasPress = w;
+        m_presPos = me->pos();
+        return false;
+    }
+    case QEvent::MouseMove:
+    {
+        QMouseEvent *me(static_cast<QMouseEvent *>(e));
+        if (w == m_hasPress && (qAbs(me->pos().x()-m_presPos.x())>5 || qAbs(me->pos().y()-m_presPos.y())>5))
+            XHandler::move(me, w);
+        return false;
+    }
+    default: break;
+    }
+    return false;
 }
