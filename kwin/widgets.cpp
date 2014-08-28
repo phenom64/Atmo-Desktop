@@ -6,6 +6,7 @@
 #include <QPainter>
 
 #include "../stylelib/color.h"
+#include "../stylelib/xhandler.h"
 
 #define SZ 16
 SizeGrip::SizeGrip(KwinClient *parent) : QWidget(0), m_client(parent)
@@ -83,6 +84,8 @@ SizeGrip::repos()
 bool
 SizeGrip::eventFilter(QObject *o, QEvent *e)
 {
+    if (e->type() == QEvent::ZOrderChange)
+        restack();
     if (o == m_client->widget() && e->type() == QEvent::Resize || e->type() == QEvent::Show)
         repos();
     return QWidget::eventFilter(o, e);
@@ -91,8 +94,9 @@ SizeGrip::eventFilter(QObject *o, QEvent *e)
 void
 SizeGrip::mousePressEvent(QMouseEvent *e)
 {
-    QWidget::mousePressEvent(e);
-    m_client->performWindowOperation(KDecorationDefines::ResizeOp);
+    e->accept();
+//    m_client->performWindowOperation(KDecorationDefines::ResizeOp);
+    XHandler::mwRes(e->globalPos(), m_client->windowId(), true);
 }
 
 void

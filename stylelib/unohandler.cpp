@@ -305,8 +305,8 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
     case QEvent::MouseMove:
     {
         QMouseEvent *me(static_cast<QMouseEvent *>(e));
-        if (w == m_hasPress && (qAbs(me->pos().x()-m_presPos.x())>5 || qAbs(me->pos().y()-m_presPos.y())>5))
-            XHandler::move(me, w);
+        if (w == m_hasPress && (qAbs(me->pos().x()-m_presPos.x())>5 || qAbs(me->pos().y()-m_presPos.y())>5) && !w->mouseGrabber())
+            XHandler::mwRes(me->globalPos(), w->window()->winId());
         return false;
     }
     default: break;

@@ -43,21 +43,21 @@ XHandler::deleteXProperty(const WId w, const Value v)
     XDeleteProperty(QX11Info::display(), w, atom[v]);
 }
 
+
+
 void
-XHandler::move(QMouseEvent *e, QWidget *w)
+XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
 {
-    if (!w || !e)
-        return;
     static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
     //this is stole.... errrhmm copied from qsizegrip.cpp
     XEvent xev;
     xev.xclient.type = ClientMessage;
     xev.xclient.message_type = netWmMoveResize;
     xev.xclient.display = QX11Info::display();
-    xev.xclient.window = w->winId();
+    xev.xclient.window = win;
     xev.xclient.format = 32;
-    xev.xclient.data.l[0] = e->globalPos().x();
-    xev.xclient.data.l[1] = e->globalPos().y();
+    xev.xclient.data.l[0] = globalPoint.x();
+    xev.xclient.data.l[1] = globalPoint.y();
 //#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
 //#define _NET_WM_MOVERESIZE_SIZE_TOP          1
 //#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
@@ -70,10 +70,10 @@ XHandler::move(QMouseEvent *e, QWidget *w)
 //#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
 //#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
 //#define _NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
-    xev.xclient.data.l[2] = 8;
+    xev.xclient.data.l[2] = resize?4:8;
     xev.xclient.data.l[3] = Button1;
     xev.xclient.data.l[4] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False,
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(QX11Info().screen()), False,
                SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 }
