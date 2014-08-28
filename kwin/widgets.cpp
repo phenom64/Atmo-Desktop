@@ -4,6 +4,7 @@
 #include "fixx11h.h"
 #include <QEvent>
 #include <QPainter>
+#include <QTimer>
 
 #include "../stylelib/color.h"
 #include "../stylelib/xhandler.h"
@@ -26,6 +27,7 @@ SizeGrip::SizeGrip(KwinClient *parent) : QWidget(0), m_client(parent)
     restack();
     repos();
     show();
+    QTimer::singleShot(250, this, SLOT(restack()));
 }
 
 /**
@@ -73,6 +75,7 @@ SizeGrip::restack()
                 w = parent_return;
 
     XReparentWindow(QX11Info::display(), winId(), w, 0, 0);
+    repos();
 }
 
 void

@@ -43,8 +43,6 @@ XHandler::deleteXProperty(const WId w, const Value v)
     XDeleteProperty(QX11Info::display(), w, atom[v]);
 }
 
-
-
 void
 XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
 {

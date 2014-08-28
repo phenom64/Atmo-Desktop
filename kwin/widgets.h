@@ -14,9 +14,10 @@ protected:
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
     void paintEvent(QPaintEvent *);
-
-    void restack();
     void repos();
+
+protected slots:
+    void restack();
 
 private:
     KwinClient *m_client;
