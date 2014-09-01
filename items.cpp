@@ -44,12 +44,13 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool hasRadioButton(opt->checkType == QStyleOptionMenuItem::Exclusive);
     const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
+    const QPalette pal(widget?widget->palette():opt->palette);
 
     const int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?(hasMenu||isSeparator?32:6):0), square(opt->rect.height());
 
     if (isSeparator)
     {
-        painter->setPen(opt->palette.color(QPalette::Disabled, fg));
+        painter->setPen(pal.color(QPalette::Disabled, fg));
         painter->translate(0, 0.5f);
         const int top(opt->rect.top()), height(opt->rect.height()), width(opt->rect.width());
         const int y(top+(height/2));
@@ -80,7 +81,10 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     {
         fg = QPalette::HighlightedText;
         bg = QPalette::Highlight;
-        painter->fillRect(opt->rect, opt->palette.color(bg));
+        painter->setBrush(pal.color(bg));
+        painter->setPen(Qt::NoPen);
+        const int rnd(isMenuBar*m_s.pushbtn.rnd);
+        painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
 
     QRect button(leftMargin/2 - square/2, opt->rect.top(), square, square);
@@ -90,15 +94,15 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     if (hasRadioButton)
     {
         QRect copy(button.adjusted(2, 2, -2, -2));
-        painter->setBrush(opt->palette.color(fg));
+        painter->setBrush(pal.color(fg));
         painter->setPen(Qt::NoPen);
         painter->drawEllipse(copy);
         copy.adjust(2, 2, -2, -2);
-        painter->setBrush(opt->palette.color(bg));
+        painter->setBrush(pal.color(bg));
         painter->drawEllipse(copy);
         if (opt->checked)
         {
-            painter->setBrush(opt->palette.color(fg));
+            painter->setBrush(pal.color(fg));
             copy.adjust(2, 2, -2, -2);
             painter->drawEllipse(copy);
         }
@@ -106,28 +110,28 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     else if (hasCheckBox)
     {
         QRect copy(button.adjusted(2, 2, -2, -2));
-        painter->setBrush(opt->palette.color(fg));
+        painter->setBrush(pal.color(fg));
         painter->setPen(Qt::NoPen);
         painter->drawRoundedRect(copy, 3, 3);
         copy.adjust(2, 2, -2, -2);
-        painter->setBrush(opt->palette.color(bg));
+        painter->setBrush(pal.color(bg));
         painter->drawRoundedRect(copy, 1, 1);
         if (opt->checked)
         {
             copy.adjust(1, 1, -1, -1);
-            Ops::drawCheckMark(painter, opt->palette.color(fg), copy);
+            Ops::drawCheckMark(painter, pal.color(fg), copy);
         }
     }
 
     if (hasMenu)
-        Ops::drawArrow(painter, opt->palette.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right);
+        Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
     const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 
     for (int i = 0; i < 2 && i < text.count(); ++i)
-        drawItemText(painter, textRect, isMenuBar?Qt::AlignCenter:align[i], opt->palette, enabled[i], text.at(i), fg);
+        drawItemText(painter, textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
     painter->restore();
     return true;
 }

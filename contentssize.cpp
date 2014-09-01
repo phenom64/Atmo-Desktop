@@ -69,6 +69,14 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 {
     switch (ct)
     {
+    case CT_HeaderSection:
+    {
+        QSize sz(contentsSize);
+        if (sz.height() < opt->fontMetrics.height())
+            sz.rheight() = opt->fontMetrics.height();
+        sz.rheight()+=2;
+        return sz;
+    }
     case CT_PushButton:
     {
         QSize sz(contentsSize);
@@ -88,7 +96,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         if (!tab)
             break;
 
-        QSize sz = contentsSize;
+        QSize sz(contentsSize);
 //        bool hor(tab->shape < QTabBar::RoundedWest || (tab->shape > QTabBar::RoundedEast && tab->shape < QTabBar::TriangularWest));
         if (Ops::isSafariTabBar(bar))
         {
@@ -126,7 +134,6 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             else if (tab->position != QStyleOptionTab::Middle)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
         }
-
 //        if (bar)
 //        {
 //            const QString s(tab->text);
@@ -207,7 +214,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         castOpt(MenuItem, item, opt);
         if (!item)
             return contentsSize;
-        QSize sz(contentsSize);
+        QSize sz(contentsSize+QSize(8, 0));
         if (castObj(const QMenuBar *, bar, widget))
         {
             const QList<QAction *> actions = bar->actions();

@@ -9,7 +9,9 @@
 #define DEBUG 1
 
 class QToolBar;
+class QTabBar;
 class QProgressBar;
+class QStyleOptionTabV3;
 class Q_DECL_EXPORT StyleProject : public QCommonStyle
 {
     Q_OBJECT
@@ -122,6 +124,9 @@ public:
     typedef bool (StyleProject::*StylePrimitive)(const QStyleOption *, QPainter *, const QWidget *) const;
     typedef bool (StyleProject::*EventFilter)(QObject *o, QEvent *e);
     typedef QRect (StyleProject::*SubControlRect)(const QStyleOptionComplex *, SubControl, const QWidget *) const;
+
+protected:
+    static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
 
 protected slots:
     void fixMainWindowToolbar();

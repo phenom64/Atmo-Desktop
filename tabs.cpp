@@ -186,38 +186,57 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 }
 
 bool
+StyleProject::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
+{
+    if (!tab)
+        return false;
+    QTabBar::Shape tabShape(bar ? bar->shape() : tab ? tab->shape : QTabBar::RoundedNorth);
+    switch (tabShape)
+    {
+    case QTabBar::RoundedWest:
+    case QTabBar::TriangularWest:
+    case QTabBar::RoundedEast:
+    case QTabBar::TriangularEast:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool
 StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(TabV3, opt, option);
-    castObj(const QTabBar *, bar, widget);
     if (!opt)
         return true;
+    castObj(const QTabBar *, bar, widget);
     painter->save();
 //    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
     const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
     const bool isSelected(opt->state & State_Selected || isOnly);
 //    const QRect rect(opt->rect);
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
-    int d(4);
+    int h(4);
     const bool safTabs(Ops::isSafariTabBar(bar));
     if (safTabs)
     {
-        d = pixelMetric(PM_TabBarTabOverlap, option, widget);
+        h = pixelMetric(PM_TabBarTabOverlap, option, widget);
         if ((isOnly || opt->position == QStyleOptionTab::End) && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide)
-            d *= 2;
+            h *= 2;
     }
-    QRect ir(tr.adjusted(d, 0, -d, 0));
+    QRect ir(tr.adjusted(h, 0, -h, 0));
+
 
     if (!opt->icon.isNull())
     {
         if (styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide) //icon on right...
         {
-            tr.setRight(tr.right()-(opt->iconSize.width()+d));
+            tr.setRight(tr.right()-(opt->iconSize.width()+h));
             ir.setLeft(tr.right());
         }
         else
         {
-            tr.setLeft(tr.left()+(opt->iconSize.width()+d));
+            tr.setLeft(tr.left()+(opt->iconSize.width()+h));
             ir.setRight(tr.left());
         }
     }
@@ -261,8 +280,11 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     if (isSelected && !safTabs)
         fg = QPalette::HighlightedText;
 
-    QFontMetrics fm(painter->fontMetrics());
-    const QString text(fm.elidedText(opt->text, (Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget), tr.width()));
+    const QFontMetrics fm(painter->fontMetrics());
+    Qt::TextElideMode elide((Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget));
+    if (isVertical(opt, bar))
+        elide = Qt::ElideRight;
+    const QString text(fm.elidedText(opt->text, elide, tr.width()));
     drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
@@ -394,8 +416,12 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     const int size(qMin(option->rect.width(), option->rect.height())), _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
 
-
+    bool safTabs(false);
+    if (widget)
+        safTabs = Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget->parentWidget()));
     const bool hover(option->HOVER);
+
+    const bool isSelected(option->state & State_Selected);
     if (closer[hover].isNull())
     {
         QPixmap pix = QPixmap(option->rect.size());
@@ -427,6 +453,8 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
         QPalette::ColorRole role(widget?widget->foregroundRole():QPalette::WindowText);
         if (hover)
             role = QPalette::Highlight;
+        if (!safTabs && isSelected)
+            role = QPalette::HighlightedText;
         Render::colorizePixmap(tmp2, option->palette.color(role));
 
         closer[hover] = QPixmap(option->rect.size());

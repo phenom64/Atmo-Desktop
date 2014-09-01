@@ -1,4 +1,5 @@
 #include <QTabBar>
+#include <QStyleOptionTabV3>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -16,7 +17,11 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
     }
 //    case SH_TabBar_PreferNoArrows: return true;
     case SH_TabBar_CloseButtonPosition: return QTabBar::LeftSide;
-    case SH_TabBar_ElideMode: return Qt::ElideRight;
+    case SH_TabBar_ElideMode: //WHAT THE FUCK?!!?!?!?!?!?!?!?! how the fuck does qt calculate the vertical tabbars?!?!?!?!?!?!?!?!?!
+        //vertical tabs elided text gets somewhy calculated from the HORIZONTAL FKN SIZE??!?!?!? REALLY?!?!?!?!?!?!?!
+        if (!opt || !w)
+            return Qt::ElideNone;
+        return isVertical(qstyleoption_cast<const QStyleOptionTabV3 *>(opt), qobject_cast<const QTabBar *>(w))?Qt::ElideNone:Qt::ElideRight;
     case SH_ScrollBar_MiddleClickAbsolutePosition: return true;
     case SH_ScrollBar_ScrollWhenPointerLeavesControl: return true;
     case SH_ItemView_PaintAlternatingRowColorsForEmptyArea: return true;

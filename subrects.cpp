@@ -36,8 +36,39 @@ StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, 
 QRect
 StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget) const
 {
+    if (!opt)
+        return QRect();
     switch (r)
     {
+    case SE_HeaderArrow:
+    {
+        castOpt(Header, hdr, opt);
+        QRect r(opt->rect);
+        const int extraMargin(16); // some space for good measure...
+        const int margin(pixelMetric(PM_HeaderMarkSize)+extraMargin);
+        if (hdr->textAlignment & Qt::AlignRight)
+            r.setRight(r.left()+margin);
+        else
+            r.setLeft(r.right()-margin);
+        return r;
+    }
+    case SE_HeaderLabel:
+    {
+        castOpt(Header, hdr, opt);
+        QRect r(opt->rect);
+        int space(0);
+        if (opt->state & State_Sunken)
+            space = pixelMetric(PM_HeaderMarkSize);
+
+        if (hdr->textAlignment & Qt::AlignRight)
+            r.setLeft(r.left()+space);
+        else
+            r.setRight(r.right()-space);
+
+        int m(4);
+        r.adjust(m, 0, -m, 0);
+        return r;
+    }
     case SE_TabBarTabLeftButton:
     case SE_TabBarTabRightButton:
     case SE_TabBarTabText:
