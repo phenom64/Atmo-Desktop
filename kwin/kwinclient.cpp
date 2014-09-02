@@ -17,6 +17,8 @@
 #include "../stylelib/color.h"
 
 #define TITLEHEIGHT 22
+#define MARGIN 6
+#define SPACING 4
 
 ///-------------------------------------------------------------------
 
@@ -54,8 +56,8 @@ KwinClient::init()
     widget()->setAutoFillBackground(false);
 
     m_titleLayout = new QHBoxLayout();
-    m_titleLayout->setSpacing(0);
-    m_titleLayout->setContentsMargins(0, 3, 0, 3);
+    m_titleLayout->setSpacing(SPACING);
+    m_titleLayout->setContentsMargins(MARGIN, 3, MARGIN, 3);
     QVBoxLayout *l = new QVBoxLayout(widget());
     l->setSpacing(0);
     l->setContentsMargins(0, 0, 0, 0);
@@ -110,20 +112,20 @@ KwinClient::populate(const QString &buttons, bool left)
         case 'X': t = Button::Close; break;
         case 'I': t = Button::Min; break;
         case 'A': t = Button::Max; break;
-        case '_': m_titleLayout->addSpacing(2); supported = false; size += 2; break;
+        case '_': m_titleLayout->addSpacing(SPACING); supported = false; size += SPACING; break;
         default: supported = false; break;
         }
         if (supported)
         {
             Button *b = new Button(t, this, widget());
-            size += b->width();
+            size += b->width()+SPACING;
             m_titleLayout->addWidget(b);
         }
     }
     if (left)
-        m_leftButtons = size;
+        m_leftButtons = size+MARGIN;
     else
-        m_rightButtons = size;
+        m_rightButtons = size+MARGIN;
 }
 
 void

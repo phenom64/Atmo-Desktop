@@ -18,6 +18,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSlider>
+#include <QScrollBar>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -191,7 +192,7 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QFrame *, frame, widget))
     {
         if (frame->frameShadow() == QFrame::Sunken
-                && qobject_cast<QMainWindow *>(frame->window()))
+                && qobject_cast<QMainWindow *>(Ops::window(frame)))
             OverLay::manage(frame, m_s.shadows.opacity*255.0f);
     }
 

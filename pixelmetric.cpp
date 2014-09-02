@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QComboBox>
 #include <QAbstractButton>
+#include <QLayout>
+#include <QDockWidget>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -55,8 +57,20 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_MenuPanelWidth: return 0;
     case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent: return 1;
+    case PM_SplitterWidth:
+    {
+        if (!widget)
+            return 1;
+        const QWidget *parent = widget->parentWidget();
+        if (!parent)
+            return 1;
+
+        const QMargins m(parent->layout()?parent->layout()->contentsMargins():parent->contentsMargins());
+        if (m.left() || m.right() || m.top() || m.bottom())
+            return 8;
+        return 1;
+    }
     case PM_DockWidgetTitleBarButtonMargin: return 0;
-    case PM_SplitterWidth: return 1;
     case PM_DefaultFrameWidth:
     {
         if (!widget)
@@ -64,7 +78,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 //        if (qobject_cast<const QLineEdit *>(widget)||qobject_cast<const QComboBox *>(widget))
 //            return 2;
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
-        if (frame && frame->frameShadow() == QFrame::Sunken && OverLay::hasOverLay(frame))
+        if (OverLay::hasOverLay(frame))
             return 0;
 
 //        if (!qobject_cast<const QAbstractButton *>(frame) && !qstyleoption_cast<const QStyleOptionButton *>(option))

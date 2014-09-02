@@ -1,22 +1,10 @@
-
 #ifndef OVERLAY_H
 #define OVERLAY_H
 
 #include <QWidget>
-#include <QPainter>
-#include <QDebug>
-#include <QTimer>
-#include <QResizeEvent>
-#include <QTabBar>
-#include <QToolBar>
-#include <QStatusBar>
-#include <QSplitter>
-#include <qmath.h>
-#include <QAbstractScrollArea>
-#include <QScrollBar>
-#include <QMap>
-#include <QStackedWidget>
-#include <QMainWindow>
+
+class QFrame;
+class QScrollBar;
 
 class OverLay : public QWidget
 {
@@ -25,20 +13,21 @@ public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
     enum Position { West = 0, North = 1, East = 2, South = 3, PosCount = 4 };
     typedef uint Sides;
-    OverLay(QFrame *parent = 0, int opacity = 0);
+    ~OverLay();
     static bool manage(QFrame *frame, int opacity);
     static bool release(QFrame *frame);
     static bool hasOverLay(const QFrame *frame);
     inline Sides lines() { return m_lines; }
 
 protected:
+    OverLay(QFrame *parent = 0, int opacity = 0);
     void paintEvent(QPaintEvent *);
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);
     void parentChanged();
     static QRect mappedRect(const QWidget *widget);
-    bool frameIsInteresting(const QFrame *frame, const Position &pos) const;
-    QFrame *getFrameForWidget(QWidget *w, const Position &pos) const;
+    bool frameIsInteresting(const QFrame *frame, const Position pos) const;
+    QFrame *getFrameForWidget(QWidget *w, const Position pos) const;
 
 private slots:
     void updateOverlay();

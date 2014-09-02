@@ -102,15 +102,10 @@ StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QW
 bool
 StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    QPalette::ColorRole fg(QPalette::Text), bg(QPalette::Base);
-    if (widget)
-    {
-        fg = widget->foregroundRole();
-        bg = widget->backgroundRole();
-    }
+    QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
     Render::Sides sides = Render::All;
-    if (widget && qobject_cast<QMenuBar *>(widget->parentWidget()))
-        sides &= ~Render::Top;
+//    if (widget && qobject_cast<QMenuBar *>(widget->parentWidget()))
+//        sides &= ~Render::Top;
     Render::renderMask(option->rect, painter, option->palette.color(bg), 4, sides);
     return true;
 }

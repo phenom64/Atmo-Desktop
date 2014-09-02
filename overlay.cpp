@@ -1,6 +1,23 @@
 #include "overlay.h"
 #include "stylelib/ops.h"
 
+#include <QSplitterHandle>
+#include <QStyle>
+#include <QPainter>
+#include <QDebug>
+#include <QTimer>
+#include <QResizeEvent>
+#include <QTabBar>
+#include <QToolBar>
+#include <QStatusBar>
+#include <QSplitter>
+#include <qmath.h>
+#include <QAbstractScrollArea>
+#include <QScrollBar>
+#include <QMap>
+#include <QStackedWidget>
+#include <QMainWindow>
+
 OverLay::OverLay(QFrame *parent, int opacity)
     : QWidget(parent)
     , m_alpha(opacity)
@@ -15,6 +32,11 @@ OverLay::OverLay(QFrame *parent, int opacity)
     m_timer->setInterval(50);
     foreach (QStackedWidget *stack, m_frame->window()->findChildren<QStackedWidget *>())
         stack->installEventFilter(this);
+}
+
+OverLay::~OverLay()
+{
+    m_frame = 0;
 }
 
 void
@@ -162,10 +184,12 @@ OverLay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
+        const bool isSplitter(qobject_cast<QSplitterHandle *>(w) && qMin(w->width(), w->height()) < 8);
+
         if (w->objectName() == "qt_qmainwindow_extended_splitter"
                 || Ops::isOrInsideA<QStatusBar *>(w)
                 || (l[i] == Top && qobject_cast<QTabBar *>(w))
-                || qobject_cast<QSplitterHandle *>(w)
+                || isSplitter
                 )
         {
             sides &= ~l[i];
@@ -239,7 +263,7 @@ OverLay::mappedRect(const QWidget *widget)
 }
 
 bool
-OverLay::frameIsInteresting(const QFrame *frame, const Position &pos) const
+OverLay::frameIsInteresting(const QFrame *frame, const Position pos) const
 {
     if (frame && frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
         if (mappedRect(frame).contains(m_position[pos]))
@@ -248,7 +272,7 @@ OverLay::frameIsInteresting(const QFrame *frame, const Position &pos) const
 }
 
 QFrame
-*OverLay::getFrameForWidget(QWidget *w, const Position &pos) const
+*OverLay::getFrameForWidget(QWidget *w, const Position pos) const
 {
     QFrame *frame = 0;
     while (w->parentWidget())
