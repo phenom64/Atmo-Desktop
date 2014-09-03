@@ -1,5 +1,5 @@
 #include "styleconfig.h"
-#include "../settings.h"
+#include "../stylelib/settings.h"
 #include <QSettings>
 
 /** This function declares the kstyle config plugin, you may need to adjust it

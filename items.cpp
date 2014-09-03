@@ -16,6 +16,7 @@
 #include "styleproject.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
+#include "stylelib/settings.h"
 
 bool
 StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -83,7 +84,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         bg = QPalette::Highlight;
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
-        const int rnd(isMenuBar*m_s.pushbtn.rnd);
+        const int rnd(isMenuBar*Settings::conf.pushbtn.rnd);
         painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
 
@@ -168,7 +169,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
         {
             painter->setPen(Qt::NoPen);
             painter->setBrush(brush);
-            painter->drawRoundedRect(opt->rect, m_s.input.rnd, m_s.input.rnd);
+            painter->drawRoundedRect(opt->rect, Settings::conf.input.rnd, Settings::conf.input.rnd);
         }
         else
         {

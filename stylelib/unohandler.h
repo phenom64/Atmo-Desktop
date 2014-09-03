@@ -2,6 +2,7 @@
 #define UNOHANDLER_H
 
 #include <QWidget>
+#include "render.h"
 
 class QToolBar;
 class Q_DECL_EXPORT UNOHandler : public QObject
@@ -16,7 +17,7 @@ public:
     static void updateWindow(WId window);
     static void updateToolBar(QToolBar *toolBar);
     static void fixTitleLater(QWidget *win);
-    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset = 0);
+    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset = 0, float opacity = 1.0f);
 
 public slots:
     void fixTitle();

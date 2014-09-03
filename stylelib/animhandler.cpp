@@ -363,7 +363,8 @@ ToolBtns::manage(QToolButton *tb)
     tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
     tb->setAttribute(Qt::WA_Hover);
-    tb->setAttribute(Qt::WA_MouseTracking);
+    if (Ops::hasMenu(tb))
+        tb->setAttribute(Qt::WA_MouseTracking);
     tb->disconnect(instance());
     connect(tb, SIGNAL(destroyed()), instance(), SLOT(removeSender()));
 }
@@ -426,23 +427,32 @@ ToolBtns::animate()
             continue;
         }
         QPair<Level, ArrowLevel> levels(it.value());
-        QStyleOptionToolButton option;
-        option.initFrom(tb);
-        option.features = QStyleOptionToolButton::None;
-        if (tb->popupMode() == QToolButton::MenuButtonPopup) {
-            option.subControls |= QStyle::SC_ToolButtonMenu;
-            option.features |= QStyleOptionToolButton::MenuButtonPopup;
+        bool arrowMouse(false);
+        bool btnMouse(false);
+        if (Ops::hasMenu(tb))
+        {
+            QStyleOptionToolButton option;
+            option.initFrom(tb);
+            option.features = QStyleOptionToolButton::None;
+            if (tb->popupMode() == QToolButton::MenuButtonPopup) {
+                option.subControls |= QStyle::SC_ToolButtonMenu;
+                option.features |= QStyleOptionToolButton::MenuButtonPopup;
+            }
+            if (tb->arrowType() != Qt::NoArrow)
+                option.features |= QStyleOptionToolButton::Arrow;
+            if (tb->popupMode() == QToolButton::DelayedPopup)
+                option.features |= QStyleOptionToolButton::PopupDelay;
+            if (tb->menu())
+                option.features |= QStyleOptionToolButton::HasMenu;
+            QRect r = tb->style()->subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
+            QPoint pos(tb->mapFromGlobal(QCursor::pos()));
+            arrowMouse = bool(Ops::hasMenu(tb, &option) && r.contains(pos));
+            btnMouse = bool(tb->underMouse() && !arrowMouse);
         }
-        if (tb->arrowType() != Qt::NoArrow)
-            option.features |= QStyleOptionToolButton::Arrow;
-        if (tb->popupMode() == QToolButton::DelayedPopup)
-            option.features |= QStyleOptionToolButton::PopupDelay;
-        if (tb->menu())
-            option.features |= QStyleOptionToolButton::HasMenu;
-        QRect r = tb->style()->subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
-        QPoint pos(tb->mapFromGlobal(QCursor::pos()));
-        const bool arrowMouse(Ops::hasMenu(tb, &option) && r.contains(pos));
-        const bool btnMouse(tb->underMouse() && !arrowMouse);
+        else
+        {
+            btnMouse = tb->underMouse();
+        }
 
         Level lvl(levels.first);
         ArrowLevel arLvl(levels.second);
@@ -482,8 +492,9 @@ ToolBtns::eventFilter(QObject *o, QEvent *e)
     }
     if (!o->isWidgetType())
         return false;
+
     if ((e->type() == QEvent::Enter || e->type() == QEvent::Leave) ||
-            e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()))
+            (e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()) && Ops::hasMenu(static_cast<const QToolButton *>(o))))
     {
         QToolButton *tb = static_cast<QToolButton *>(o);
         if (!m_vals.contains(tb))

@@ -4,11 +4,13 @@
 #include "fixx11h.h"
 #include <QX11Info>
 #include <QMouseEvent>
+#include "settings.h"
 
 static Atom atom[XHandler::ValueCount] =
 {
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_MAINWINDOWDATA", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_SHADOW", False),
+    XInternAtom(QX11Info::display(), "_KDE_NET_WM_BLUR_BEHIND_REGION", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STORESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False)
 };
@@ -74,4 +76,27 @@ XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
     XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
     XSendEvent(QX11Info::display(), QX11Info::appRootWindow(QX11Info().screen()), False,
                SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+}
+
+bool
+XHandler::compositingActive()
+{
+    static Atom *net_wm_cm = 0;
+    if (!net_wm_cm)
+    {
+        char net_wm_cm_name[ 100 ];
+        sprintf(net_wm_cm_name, "_NET_WM_CM_S%d", DefaultScreen(QX11Info::display()));
+        net_wm_cm = new Atom();
+        *net_wm_cm = XInternAtom(QX11Info::display(), net_wm_cm_name, False);
+    }
+    return XGetSelectionOwner(QX11Info::display(), *net_wm_cm) != None;
+}
+
+float
+XHandler::opacity()
+{
+    if (compositingActive())
+        return Settings::conf.opacity;
+    else
+        return 1.0f;
 }

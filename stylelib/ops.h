@@ -55,7 +55,7 @@ public:
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
     static void queToolBar(QToolBar *bar) { instance()->_queToolBar(bar); }
-    static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb);
+    static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {

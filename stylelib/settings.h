@@ -1,8 +1,10 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
-
+#include <QStringList>
 //settings vars...
 
+#define OPACITY "opacity"
+#define BLACKLIST "blacklist"
 #define PUSHBTNRND "pushbtn.rnd"
 #define TOOLBTNRND "toolbtn.rnd"
 #define INPUTRND "input.rnd"
@@ -13,6 +15,8 @@
 
 //defaults
 
+#define DEFOPACITY 100
+#define DEFBLACKLIST "smplayer"
 #define DEFPUSHBTNRND 8
 #define DEFTOOLBTNRND 8
 #define DEFINPUTRND 8
@@ -21,6 +25,8 @@
 #define DEFSHADOWOPACITY 33
 #define DEFTABRND 5
 
+#define READOPACITY OPACITY, DEFOPACITY
+#define READBLACKLIST BLACKLIST, DEFBLACKLIST
 #define READPUSHBTNRND PUSHBTNRND, DEFPUSHBTNRND
 #define READTOOLBTNRND TOOLBTNRND, DEFTOOLBTNRND
 #define READINPUTRND INPUTRND, DEFINPUTRND
@@ -29,9 +35,11 @@
 #define READSHADOWOPACITY SHADOWOPACITY, DEFSHADOWOPACITY
 #define READTABRND TABRND, DEFTABRND
 
-
-typedef struct Settings
+class Settings
 {
+public:
+    float opacity;
+    QStringList blackList;
     struct pushbtn
     {
         int rnd;
@@ -60,6 +68,8 @@ typedef struct Settings
     {
         int rnd;
     } tabs;
-} Settings;
+
+    static Settings conf;
+};
 
 #endif //SETTINGS_H

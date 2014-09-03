@@ -16,6 +16,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/settings.h"
 
 /*
  * This here paints the button, in order to override
@@ -64,13 +65,13 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setColorAt(0.0f, Color::mid(bc, Qt::white, 5, 1));
         lg.setColorAt(1.0f, bc/*Color::mid(bc, Qt::black, 7, 1)*/);
-        Render::renderMask(r, painter, lg, m_s.pushbtn.rnd);
+        Render::renderMask(r, painter, lg, Settings::conf.pushbtn.rnd);
         QLinearGradient shadow(0, 0, 0, r.height());
         shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
         shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
         shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
         QBrush b(shadow);
-        Render::renderShadow(Render::Simple, r, painter, m_s.pushbtn.rnd, Render::All, 1.0f, &b);
+        Render::renderShadow(Render::Simple, r, painter, Settings::conf.pushbtn.rnd, Render::All, 1.0f, &b);
     }
     return true;
 }
@@ -202,7 +203,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
 
     Render::renderMask(checkRect, painter, lg);
     QLinearGradient shadow(0, 0, 0, checkRect.height());
-    const int o(m_s.shadows.opacity*255.0f);
+    const int o(Settings::conf.shadows.opacity*255.0f);
     shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
     shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
     shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
@@ -313,12 +314,12 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
 
         QLinearGradient shadow(0, 0, 0, option->rect.height());
         shadow.setColorAt(0.0f, QColor(0, 0, 0, 0));
-        const int o(m_s.shadows.opacity*255);
+        const int o(Settings::conf.shadows.opacity*255);
         shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
         shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
         QBrush brush(shadow);
-        Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, 1.0f, &brush);
-        Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, m_s.toolbtn.rnd, sides);
+        Render::renderShadow(Render::Simple, rect, painter, Settings::conf.toolbtn.rnd, sides, 1.0f, &brush);
+        Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lg, Settings::conf.toolbtn.rnd, sides);
 
 //        if (option->SUNKEN)
 //            Render::renderShadow(shadow, rect.sAdjusted(1, 1, -1, -2), painter, 4, Render::All-sides, 0.4f);
@@ -330,8 +331,8 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             QLinearGradient lga(rect.topLeft(), rect.bottomLeft());
             lga.setColorAt(0.0f, Color::mid(bca, Qt::white, 5, 1));
             lga.setColorAt(1.0f, bca/*Color::mid(bc, Qt::black, 7, 1)*/);
-            Render::renderShadow(Render::Simple, rect, painter, m_s.toolbtn.rnd, sides, m_s.shadows.opacity/*, &brush*/);
-            Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lga, m_s.toolbtn.rnd, sides);
+            Render::renderShadow(Render::Simple, rect, painter, Settings::conf.toolbtn.rnd, sides, Settings::conf.shadows.opacity/*, &brush*/);
+            Render::renderMask(rect.sAdjusted(0, 0, 0, -1), painter, lga, Settings::conf.toolbtn.rnd, sides);
         }
 
         painter->setClipping(false);

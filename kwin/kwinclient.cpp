@@ -29,6 +29,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_needSeparator(true)
     , m_factory(factory)
     , m_sizeGrip(0)
+    , m_opacity(1.0f)
 {
     setParent(factory);
 }
@@ -136,10 +137,10 @@ KwinClient::resize(const QSize &s)
     const int w(s.width()), h(s.height());
     if (compositingActive())
     {
-        QRegion r(2, 0, w-4, h);
-        r += QRegion(1, 0, w-2, h-1);
-        r += QRegion(0, 0, w, h-2);
-        setMask(r);
+//        QRegion r(2, 0, w-4, h);
+//        r += QRegion(1, 0, w-2, h-1);
+//        r += QRegion(0, 0, w, h-2);
+//        setMask(r);
     }
     else
     {
@@ -205,7 +206,9 @@ KwinClient::paint(QPainter &p)
     p.setBrush(Qt::NoBrush);
     const QRect tr(m_titleLayout->geometry());
     p.setClipRect(tr);
+    p.setOpacity(m_opacity);
     Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
+    p.setOpacity(1.0f);
     QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
     lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
     lg.setColorAt(0.5f, Qt::transparent);
@@ -267,7 +270,7 @@ KwinClient::activeChange()
 }
 
 /**
- * These flags specify which settings changed when rereading settings.
+ * These flags specify which settings changed when rereading Settings::conf.
  * Each setting in class KDecorationOptions specifies its matching flag.
  */
 /**
@@ -307,6 +310,7 @@ KwinClient::reset(unsigned long changed)
         m_headHeight = data->height;
         m_needSeparator = data->separator;
         m_textColor = QColor::fromRgba(data->text);
+        m_opacity = (float)data->opacity/100.0f;
         XFree(data);
     }
     else

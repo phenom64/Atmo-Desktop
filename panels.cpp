@@ -16,6 +16,8 @@
 #include "stylelib/color.h"
 #include "stylelib/unohandler.h"
 #include "overlay.h"
+#include "stylelib/settings.h"
+#include "stylelib/xhandler.h"
 
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -34,25 +36,34 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
         sides &= ~Render::Right;
     if (widgetRect.bottom() >= winRect.bottom())
         sides &= ~Render::Bottom;
-    //needless to check for top I think ;-)
 
-    const QRect &rect(widget->rect());
-    static QMap<int, QPixmap> s_pix;
-    if (!s_pix.contains(rect.height()))
+    if (sides & (Render::Left|Render::Right))
     {
-        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-        lg.setColorAt(0.0f, Color::titleBarColors[0]);
-        lg.setColorAt(1.0f, Color::titleBarColors[1]);
-        QPixmap p(Render::noise().width(), rect.height());
-        p.fill(Qt::transparent);
-        QPainter pt(&p);
-        pt.fillRect(p.rect(), lg);
-        pt.end();
-        s_pix.insert(rect.height(), Render::mid(p, Render::noise(), 40, 1));
+        painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
+        return true;
+    }
+    const QRect r(widget->rect());
+    if (sides & Render::Bottom)
+    {
+        UNOHandler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, 0, XHandler::opacity());;
+    }
+    else
+    {
+        QPixmap pix(r.size());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        UNOHandler::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, 0, XHandler::opacity());
+        p.end();
+        Render::renderMask(r, painter, pix, 4, Render::Bottom|Render::Left|Render::Right);
     }
 
-    Render::renderMask(rect.sAdjusted(1, 1, -1, -1), painter, s_pix.value(rect.height()), 3, sides);
-    Render::renderShadow(Render::Etched, rect, painter, 4, sides, m_s.shadows.opacity);
+    painter->save();
+    painter->setPen(Qt::black);
+    painter->setOpacity(Settings::conf.shadows.opacity);
+    painter->drawLine(r.topLeft(), r.topRight());
+    if (sides & Render::Bottom)
+        painter->drawLine(r.bottomLeft(), r.bottomRight());
+    painter->restore();
     return true;
 }
 
@@ -61,7 +72,7 @@ StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const 
 {
     if (widget && !qobject_cast<const QToolBar *>(widget->parentWidget()))
     if (option->rect.width() == 1 || option->rect.height() == 1)
-        painter->fillRect(option->rect, QColor(0, 0, 0, m_s.shadows.opacity*255.0f));
+        painter->fillRect(option->rect, QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
     return true;
 }
 
@@ -72,7 +83,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
         int th(win->property("titleHeight").toInt());
-        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top());
+        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
     }
     return true;
 }
@@ -84,7 +95,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
         int th(win->property("titleHeight").toInt());
-        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top());
+        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
     }
     return true;
 }
@@ -165,7 +176,7 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
 
     painter->save();
-    painter->setOpacity(m_s.shadows.opacity);
+    painter->setOpacity(Settings::conf.shadows.opacity);
     painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));
     QRect l(tr);
     l.setLeft(0);
@@ -201,7 +212,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     QRect r(option->rect);
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, m_s.shadows.opacity);
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, Settings::conf.shadows.opacity);
 
     if (opt->state & State_Raised)
     {

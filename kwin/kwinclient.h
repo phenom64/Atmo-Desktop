@@ -49,6 +49,7 @@ private:
     Factory *m_factory;
     QBrush m_brush;
     QPixmap m_pix;
+    float m_opacity;
     int m_headHeight, m_leftButtons, m_rightButtons;
     bool m_needSeparator;
     friend class SizeGrip;

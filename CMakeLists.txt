@@ -40,8 +40,7 @@ set(HDRS
     macmenu-dbus.h
     macmenu.h
     overlay.h
-    styleproject.h
-    settings.h)
+    styleproject.h)
     
 set(MOC_HDRS
     macmenu-dbus.h

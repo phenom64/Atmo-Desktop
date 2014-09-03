@@ -4,6 +4,7 @@
 #include "color.h"
 #include "render.h"
 #include "ops.h"
+#include "settings.h"
 
 #include <QMainWindow>
 #include <QTabBar>
@@ -90,15 +91,23 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
 }
 
 bool
-UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset)
+UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float opacity)
 {
+    if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
+    if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->window()))
+    if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
+    if (tb->orientation() != Qt::Horizontal)
+        return false;
     if (!w->isWindow())
         w = w->window();
 
     QVariant var(w->property("DSP_UNOheight"));
     if (var.isValid())
     {
+        p->save();
+        p->setOpacity(opacity);
         p->drawTiledPixmap(r, s_pix.value(var.toInt()), QPoint(0, offset));
+        p->restore();
         return true;
     }
     return false;
@@ -161,12 +170,13 @@ UNOHandler::fixWindowTitleBar(QWidget *win)
     WindowData wd;
     wd.height = getHeadHeight(win, ns);
     wd.separator = ns;
+    wd.opacity = (unsigned int)(Settings::conf.opacity*100.0f);
     wd.top = Color::titleBarColors[0].rgba();
     wd.bottom = Color::titleBarColors[1].rgba();
     wd.text = win->palette().color(win->foregroundRole()).rgba();
     if (!wd.height)
         return;
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 5);
+    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 6);
     updateWindow(win->winId());
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();

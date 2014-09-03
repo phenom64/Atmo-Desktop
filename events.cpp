@@ -13,10 +13,12 @@
 #include <QApplication>
 #include <QToolButton>
 #include <QTimer>
+#include <QStatusBar>
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
 #include "stylelib/unohandler.h"
+#include "stylelib/settings.h"
 
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
@@ -109,15 +111,50 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         p.end();
         return true;
     }
-    else if (qobject_cast<QMainWindow *>(o))
+    else if (QMainWindow *win = qobject_cast<QMainWindow *>(o))
     {
-        QWidget *win = static_cast<QWidget *>(o);
         if (int th = win->property("DSP_headHeight").toInt())
         {
             QPainter p(win);
+            QRegion r(win->rect());
+            QList<QToolBar *> children(win->findChildren<QToolBar *>());
+            for (int i = 0; i < children.count(); ++i)
+            {
+                QToolBar *c(children.at(i));
+                if (c->parentWidget() != win || win->toolBarArea(c) != Qt::TopToolBarArea
+                    || c->orientation() != Qt::Horizontal || !c->isVisible())
+                    continue;
+                r -= QRegion(c->geometry());
+            }
+            if (QStatusBar *bar = win->findChild<QStatusBar *>())
+                if (bar->isVisible())
+            {
+                if (bar->parentWidget() == win)
+                    r -= QRegion(bar->geometry());
+                else
+                    r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
+            }
+            if (QTabBar *bar = win->findChild<QTabBar *>())
+                if (bar->isVisible() && Ops::isSafariTabBar(bar))
+                {
+                    if (bar->parentWidget() == win)
+                        r -= QRegion(bar->geometry());
+                    else
+                        r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
+
+//                    QList<QWidget *> kids(bar->findChildren<QWidget *>());
+//                    for (int i = 0; i < kids.count(); ++i)
+//                    {
+//                        QWidget *kid(kids.at(i));
+//                        r -= QRegion(QRect(kid->mapTo(win, kid->rect().topLeft()), kid->size()));
+//                    }
+                }
+            p.setClipRegion(r);
+            p.fillRect(win->rect(), win->palette().color(win->backgroundRole()));
             p.setPen(Qt::black);
-            p.setOpacity(m_s.shadows.opacity);
+            p.setOpacity(Settings::conf.shadows.opacity);
             p.drawLine(0, th, win->width(), th);
+            p.setOpacity(1.0f);
             p.end();
             return false;
         }
@@ -172,7 +209,11 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         QTimer::singleShot(0, Ops::instance(), SLOT(updateToolBar()));
     }
     if (qobject_cast<QMainWindow *>(o))
+    {
         Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
+        unsigned int d(1);
+        XHandler::setXProperty<unsigned int>(static_cast<QWidget *>(o)->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+    }
 //    if (castObj(QTabBar *, bar, o))
 //    {
 //        if (Ops::isSafariTabBar(bar))

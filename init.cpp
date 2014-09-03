@@ -1,10 +1,13 @@
 #include <QApplication>
 #include <QDebug>
 #include <QSettings>
+#include <QFileInfo>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
+#include "stylelib/unohandler.h"
+#include "stylelib/settings.h"
 
 void
 StyleProject::init()
@@ -115,18 +118,23 @@ void
 StyleProject::readSettings()
 {
     QSettings s("dsp", "dsp");
+    //globals
+    Settings::conf.opacity = s.value(READOPACITY).toFloat()/100.0f;
+    Settings::conf.blackList = s.value(READBLACKLIST).toStringList();
+    if (Settings::conf.blackList.contains(QFileInfo(qApp->applicationFilePath()).fileName()))
+        Settings::conf.opacity = 1.0f;
     //pushbuttons
-    m_s.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
+    Settings::conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     //toolbuttons
-    m_s.toolbtn.rnd = s.value(READTOOLBTNRND).toInt();
+    Settings::conf.toolbtn.rnd = s.value(READTOOLBTNRND).toInt();
     //inputs
-    m_s.input.rnd = s.value(READINPUTRND).toInt();
+    Settings::conf.input.rnd = s.value(READINPUTRND).toInt();
     //sliders
-    m_s.sliders.size = s.value(READSLIDERSIZE).toInt();
+    Settings::conf.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers
-    m_s.scrollers.size = s.value(READSCROLLERSIZE).toInt();
+    Settings::conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
     //shadows
-    m_s.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
+    Settings::conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
     //tabs
-    m_s.tabs.rnd = s.value(READTABRND).toInt();
+    Settings::conf.tabs.rnd = s.value(READTABRND).toInt();
 }

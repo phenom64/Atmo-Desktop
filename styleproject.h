@@ -4,7 +4,6 @@
 #include <QCommonStyle>
 #include <QEvent>
 #include "stylelib/macros.h"
-#include "settings.h"
 
 #define DEBUG 1
 
@@ -17,7 +16,6 @@ class Q_DECL_EXPORT StyleProject : public QCommonStyle
     Q_OBJECT
     Q_CLASSINFO ("X-KDE-CustomElements", "true")
 public:
-    static Settings m_s;
     StyleProject();
     ~StyleProject();
     void init();

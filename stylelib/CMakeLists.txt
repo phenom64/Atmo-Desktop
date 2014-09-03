@@ -9,7 +9,8 @@ set(libSRCS
     color.cpp
     progresshandler.cpp
     animhandler.cpp
-    unohandler.cpp)
+    unohandler.cpp
+    settings.cpp)
     
 set(libHDRS
     xhandler.h
@@ -20,7 +21,8 @@ set(libHDRS
     color.h
     progresshandler.h
     animhandler.h
-    unohandler.h)
+    unohandler.h
+    settings.h)
 
 set(libMocHDRS
     progresshandler.h

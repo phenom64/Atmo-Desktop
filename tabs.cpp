@@ -20,6 +20,8 @@
 #include "stylelib/render.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/xhandler.h"
+#include "stylelib/settings.h"
 
 bool
 StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -78,6 +80,10 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setBrush(s_pix.value(r.height()));
             painter->setPen(Qt::NoPen);
+            painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            painter->drawPath(p);
+            painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+            painter->setOpacity(XHandler::opacity());
             painter->drawPath(p);
             painter->restore();
         }
@@ -147,15 +153,15 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 //    const QRect mask(r.sAdjusted(1, 1, -1, -2));
 //    Render::renderMask(mask, painter, lg, 32, sides);
 //    Render::renderShadow(isSelected?Render::Sunken:Render::Etched, r, painter, 32, sides, 0.66f);
-    Render::renderMask(r.sAdjusted(1, 1, -1, -1), painter, lg, qMax(0, m_s.tabs.rnd-1), sides);
+    Render::renderMask(r.sAdjusted(1, 1, -1, -1), painter, lg, qMax(0, Settings::conf.tabs.rnd-1), sides);
 
 //    QLinearGradient shadow(0, vert&&isRtl?r.width():0, vert&&isRtl?0:vert?r.width():0, vert?0:r.height());
-    const int o(m_s.shadows.opacity*255.0f);
+    const int o(Settings::conf.shadows.opacity*255.0f);
     shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
     shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
     shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
     QBrush b(shadow);
-    Render::renderShadow(Render::Simple, r, painter, m_s.tabs.rnd, sides, 1.0f, &b);
+    Render::renderShadow(Render::Simple, r, painter, Settings::conf.tabs.rnd, sides, 1.0f, &b);
     QRect mask(r.sAdjusted(1, 1, -1, -1));
     if (isSelected && !isOnly)
     {
@@ -292,7 +298,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     return true;
 }
 
-static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Render::Sides sides, QRect rect = QRect())
+static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, const Render::Sides sides, const float opacity, QRect rect = QRect())
 {
     QRect r(rect.isValid()?rect:bar->rect());
     static QMap<int, QPixmap> s_pix;
@@ -305,10 +311,12 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, Re
         pt.end();
         s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
     }
+    const float o(p->opacity());
+    p->setOpacity(qMin(1.0f, opacity*1.1f));
     p->fillRect(r, s_pix.value(r.height()));
 //    r.setBottom(r.bottom()+1);
 //    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
-    const float o(p->opacity());
+
     p->setPen(Qt::black);
     p->setOpacity(0.2f);
     p->drawLine(r.topLeft(), r.topRight());
@@ -336,7 +344,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
             QRect r(tabBar->rect());
             if (opt->rect.width() > r.width())
                 r = opt->rect;
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, r);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, XHandler::opacity(), r);
             return true;
         }
     }
@@ -399,7 +407,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, barRect);
+            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, XHandler::opacity(), barRect);
             return true;
         }
     }

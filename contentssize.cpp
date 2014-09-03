@@ -134,19 +134,20 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             else if (tab->position != QStyleOptionTab::Middle)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
         }
-//        if (bar)
-//        {
-//            const QString s(tab->text);
-//            QFont f(bar->font());
-//            int nonBoldWidth(QFontMetrics(f).boundingRect(s).width());
-//            f.setBold(true);
-//            int boldWidth(QFontMetrics(f).boundingRect(s).width());
-//            int add(boldWidth-nonBoldWidth);
-//            if (hor)
-//                sz.rwidth() += add;
-//            else
-//                sz.rheight() += add;
-//        }
+        if (bar && !bar->expanding())
+        {
+            const QString s(tab->text);
+            QFont f(bar->font());
+            int nonBoldWidth(QFontMetrics(f).boundingRect(s).width());
+            f.setBold(true);
+            int boldWidth(QFontMetrics(f).boundingRect(s).width());
+            int add(boldWidth-nonBoldWidth);
+            add+=4; //some extra padding for good measure...
+            if (!isVertical(tab, bar))
+                sz.rwidth() += add;
+            else
+                sz.rheight() += add;
+        }
         return sz;
     }
     case CT_ToolButton:

@@ -20,7 +20,7 @@ qt4_wrap_cpp(MOC_SRCS ${configMocHDRS})
 # standalone application to launch from terminal w/o going to systemsettings
 project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME} main.cpp ${configSRCS} ${MOC_SRCS} ${UI_HDRS})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} stylelib ${QT_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${QT_BINARY_DIR})
 
 # the systemsettings module in kde

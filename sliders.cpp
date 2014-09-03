@@ -15,6 +15,7 @@
 #include "stylelib/color.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/settings.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -259,7 +260,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     painter->setClipRect(cont);
     Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
     QLinearGradient shadow(0, 0, 0, opt->rect.height());
-    const int o(m_s.shadows.opacity*255.0f);
+    const int o(Settings::conf.shadows.opacity*255.0f);
     shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
     shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
     shadow.setColorAt(1.0f, QColor(0, 0, 0, o));

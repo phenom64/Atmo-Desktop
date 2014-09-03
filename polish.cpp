@@ -19,6 +19,7 @@
 #include <QRadioButton>
 #include <QSlider>
 #include <QScrollBar>
+#include <QTextEdit>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -27,6 +28,8 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/unohandler.h"
+#include "stylelib/xhandler.h"
+#include "stylelib/settings.h"
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
@@ -94,7 +97,6 @@ StyleProject::polish(QWidget *widget)
 #endif
 
 //    qDebug() << widget << widget->parentWidget() << widget->contentsMargins() << (widget->layout()?widget->layout()->contentsMargins():QMargins());
-
     if (qobject_cast<QPushButton *>(widget) ||
             qobject_cast<QCheckBox *>(widget) ||
             qobject_cast<QRadioButton *>(widget) ||
@@ -116,6 +118,8 @@ StyleProject::polish(QWidget *widget)
 
     if (castObj(QMainWindow *, win, widget))
     {
+        if (XHandler::opacity() < 1.0f)
+            win->setAttribute(Qt::WA_TranslucentBackground);
         installFilter(win);
     }
 
@@ -193,7 +197,7 @@ StyleProject::polish(QWidget *widget)
     {
         if (frame->frameShadow() == QFrame::Sunken
                 && qobject_cast<QMainWindow *>(Ops::window(frame)))
-            OverLay::manage(frame, m_s.shadows.opacity*255.0f);
+            OverLay::manage(frame, Settings::conf.shadows.opacity*255.0f);
     }
 
     if (castObj(QAbstractItemView *, view, widget))
