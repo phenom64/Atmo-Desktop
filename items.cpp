@@ -84,7 +84,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         bg = QPalette::Highlight;
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
-        const int rnd(isMenuBar*Settings::conf.pushbtn.rnd);
+        const int rnd(isMenuBar*(qMin(qMin(opt->rect.height(), opt->rect.width())/2, Settings::conf.pushbtn.rnd)));
         painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
 

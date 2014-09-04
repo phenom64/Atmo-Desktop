@@ -19,7 +19,6 @@ public:
     static ProgressHandler *instance();
     static void manage(QProgressBar *bar);
     static void release(QProgressBar *bar);
-    static void deleteInstance();
     static int busyValue(const QProgressBar *bar);
 
 protected slots:
@@ -31,7 +30,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 private:
-    static ProgressHandler *m_instance;
+    static ProgressHandler m_instance;
     QList<QProgressBar *> m_bars;
     QMap<QProgressBar *, TimerData *> m_data;
 };

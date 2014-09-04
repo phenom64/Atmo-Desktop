@@ -6,7 +6,7 @@
 
 #include "progresshandler.h"
 
-Q_DECL_EXPORT ProgressHandler *ProgressHandler::m_instance = 0;
+Q_DECL_EXPORT ProgressHandler ProgressHandler::m_instance;
 
 ProgressHandler::ProgressHandler(QObject *parent) :
     QObject(parent)
@@ -16,9 +16,7 @@ ProgressHandler::ProgressHandler(QObject *parent) :
 ProgressHandler
 *ProgressHandler::instance()
 {
-    if (!m_instance)
-        m_instance = new ProgressHandler();
-    return m_instance;
+    return &m_instance;
 }
 
 void
@@ -35,16 +33,6 @@ ProgressHandler::release(QProgressBar *bar)
 {
     bar->disconnect(instance());
     bar->removeEventFilter(instance());
-}
-
-void
-ProgressHandler::deleteInstance()
-{
-    if (m_instance)
-    {
-        delete m_instance;
-        m_instance = 0;
-    }
 }
 
 void

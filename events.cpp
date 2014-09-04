@@ -215,7 +215,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
 {
     if (!o->isWidgetType())
         return QCommonStyle::eventFilter(o, e);
-    QWidget *w = static_cast<QWidget *>(o);
+    QWidget *w(static_cast<QWidget *>(o));
     if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
     {
         static_cast<QWidget *>(o)->setMouseTracking(true);
@@ -236,11 +236,9 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         Ops::queToolBar(toolBar);
         QTimer::singleShot(0, Ops::instance(), SLOT(updateToolBar()));
     }
-    if (qobject_cast<QMainWindow *>(o))
+    if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
     {
         Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
-        unsigned int d(1);
-        XHandler::setXProperty<unsigned int>(static_cast<QWidget *>(o)->winId(), XHandler::KwinBlur, XHandler::Long, &d);
     }
 //    if (castObj(QTabBar *, bar, o))
 //    {

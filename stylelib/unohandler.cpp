@@ -19,9 +19,9 @@
 #include <QMenuBar>
 #include <QDebug>
 #include <QMouseEvent>
-#include <QCoreApplication>
+#include <QApplication>
 
-Q_DECL_EXPORT UNOHandler *UNOHandler::s_instance = 0;
+Q_DECL_EXPORT UNOHandler UNOHandler::s_instance;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
 
 UNOHandler::UNOHandler(QObject *parent)
@@ -32,9 +32,7 @@ UNOHandler::UNOHandler(QObject *parent)
 UNOHandler
 *UNOHandler::instance()
 {
-    if (!s_instance)
-        s_instance = new UNOHandler();
-    return s_instance;
+    return &s_instance;
 }
 
 void
@@ -170,7 +168,7 @@ UNOHandler::fixWindowTitleBar(QWidget *win)
     WindowData wd;
     wd.height = getHeadHeight(win, ns);
     wd.separator = ns;
-    wd.opacity = (unsigned int)(Settings::conf.opacity*100.0f);
+    wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
     wd.top = Color::titleBarColors[0].rgba();
     wd.bottom = Color::titleBarColors[1].rgba();
     wd.text = win->palette().color(win->foregroundRole()).rgba();
@@ -254,7 +252,7 @@ UNOHandler::fixTitle()
 
 //-------------------------------------------------------------------------------------------------
 
-Q_DECL_EXPORT WinHandler *WinHandler::s_instance = 0;
+Q_DECL_EXPORT WinHandler WinHandler::s_instance;
 
 WinHandler::WinHandler(QObject *parent)
     : QObject(parent)
@@ -283,9 +281,7 @@ WinHandler::release(QWidget *win)
 WinHandler
 *WinHandler::instance()
 {
-    if (!s_instance)
-        s_instance = new WinHandler();
-    return s_instance;
+    return &s_instance;
 }
 
 bool

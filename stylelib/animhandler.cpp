@@ -12,34 +12,15 @@
 
 using namespace Anim;
 
-static QStyle *s_style = 0;
 static bool s_block(false);
 
-Q_DECL_EXPORT Basic *Basic::s_instance = 0;
-
-void Anim::setStyle(QStyle *style)
-{
-    s_style = style;
-}
+Q_DECL_EXPORT Basic Basic::s_instance;
 
 Basic
 *Basic::instance()
 {
-    if (!s_instance)
-        s_instance = new Basic();
-    return s_instance;
+    return &s_instance;
 }
-
-void
-Basic::deleteInstance()
-{
-    if (s_instance)
-    {
-        delete s_instance;
-        s_instance = 0;
-    }
-}
-
 
 void
 Basic::manage(QWidget *w)
@@ -188,24 +169,12 @@ Basic::eventFilter(QObject *o, QEvent *e)
 
 //------------------------------------------------------------------------------------
 
-Q_DECL_EXPORT Tabs *Tabs::s_instance = 0;
+Q_DECL_EXPORT Tabs Tabs::s_instance;
 
 Tabs
 *Tabs::instance()
 {
-    if (!s_instance)
-        s_instance = new Tabs();
-    return s_instance;
-}
-
-void
-Tabs::deleteInstance()
-{
-    if (s_instance)
-    {
-        delete s_instance;
-        s_instance = 0;
-    }
+    return &s_instance;
 }
 
 void
@@ -313,9 +282,9 @@ Tabs::eventFilter(QObject *o, QEvent *e)
     }
     if (!o->isWidgetType())
         return false;
+    QTabBar *tb = static_cast<QTabBar *>(o);
     if (e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()))
     {
-        QTabBar *tb = static_cast<QTabBar *>(o);
         Tab tab(tb->tabAt(tb->mapFromGlobal(QCursor::pos())));
         if (tab > -1)
         {
@@ -329,30 +298,20 @@ Tabs::eventFilter(QObject *o, QEvent *e)
             m_timer->start(25);
         }
     }
+    else if (e->type() == QEvent::Resize)
+        tb->window()->update();
     return false;
 }
 
 
 //------------------------------------------------------------------------------------
 
-Q_DECL_EXPORT ToolBtns *ToolBtns::s_instance = 0;
+Q_DECL_EXPORT ToolBtns ToolBtns::s_instance;
 
 ToolBtns
 *ToolBtns::instance()
 {
-    if (!s_instance)
-        s_instance = new ToolBtns();
-    return s_instance;
-}
-
-void
-ToolBtns::deleteInstance()
-{
-    if (s_instance)
-    {
-        delete s_instance;
-        s_instance = 0;
-    }
+    return &s_instance;
 }
 
 void

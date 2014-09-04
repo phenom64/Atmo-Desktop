@@ -27,7 +27,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 private:
-    static UNOHandler *s_instance;
+    static UNOHandler s_instance;
     static QMap<int, QPixmap> s_pix;
 };
 
@@ -45,7 +45,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 private:
-    static WinHandler *s_instance;
+    static WinHandler s_instance;
     bool m_hasDrag;
     QWidget *m_hasPress;
     QPoint m_presPos;

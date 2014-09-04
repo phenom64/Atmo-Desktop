@@ -112,29 +112,5 @@ StyleProject::assignMethods()
     m_sc[CC_ComboBox] = method(comboBoxRect);
     m_sc[CC_GroupBox] = method(groupBoxRect);
     m_sc[CC_ToolButton] = method(toolButtonRect);
-}
-
-void
-StyleProject::readSettings()
-{
-    QSettings s("dsp", "dsp");
-    //globals
-    Settings::conf.opacity = s.value(READOPACITY).toFloat()/100.0f;
-    Settings::conf.blackList = s.value(READBLACKLIST).toStringList();
-    if (Settings::conf.blackList.contains(QFileInfo(qApp->applicationFilePath()).fileName()))
-        Settings::conf.opacity = 1.0f;
-    //pushbuttons
-    Settings::conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
-    //toolbuttons
-    Settings::conf.toolbtn.rnd = s.value(READTOOLBTNRND).toInt();
-    //inputs
-    Settings::conf.input.rnd = s.value(READINPUTRND).toInt();
-    //sliders
-    Settings::conf.sliders.size = s.value(READSLIDERSIZE).toInt();
-    //scrollers
-    Settings::conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
-    //shadows
-    Settings::conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
-    //tabs
-    Settings::conf.tabs.rnd = s.value(READTABRND).toInt();
+    m_sc[CC_SpinBox] = method(spinBoxRect);
 }

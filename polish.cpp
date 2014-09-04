@@ -119,7 +119,11 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QMainWindow *, win, widget))
     {
         if (XHandler::opacity() < 1.0f)
+        {
             win->setAttribute(Qt::WA_TranslucentBackground);
+            unsigned int d(1);
+            XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        }
         installFilter(win);
     }
 

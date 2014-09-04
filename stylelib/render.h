@@ -11,11 +11,11 @@ class Q_DECL_EXPORT Render
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
     enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
-    enum Shadow { Sunken = 0, Etched, Raised, Simple, ShadowCount };
+    enum ShadowType { Sunken = 0, Etched, Raised, Simple, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     Render();
     ~Render(){}
-    typedef uint Sides;
+    typedef uint Sides, Shadow;
     static Render *instance();
     static void deleteInstance();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
@@ -32,6 +32,8 @@ public:
     static QPixmap noise() { return instance()->m_noise; }
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1);
+    static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const QPoint &offSet = QPoint());
+
 
 protected:
     void _generateData();
@@ -51,7 +53,7 @@ protected:
     QRect rect(const QRect &rect, const Part part, const int roundNess) const;
 
 private:
-    static Render *m_instance;
+    static Render m_instance;
     QPixmap m_mask[MAXRND+1][PartCount];
     QPixmap m_shadow[ShadowCount][MAXRND+1][PartCount];
     QPixmap m_tab[AfterSelected+1][PartCount]; //before selected, selected and after selected...

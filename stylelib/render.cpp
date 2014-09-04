@@ -1,13 +1,16 @@
 #include <QDebug>
 #include <qmath.h>
 #include <QWidget>
+#include <QToolBar>
 
 #include "render.h"
 #include "color.h"
+#include "settings.h"
+#include "macros.h"
 
 #define OPACITY 0.75f
 
-Q_DECL_EXPORT Render *Render::m_instance = 0;
+Q_DECL_EXPORT Render Render::m_instance;
 
 /* blurring function below from:
  * http://stackoverflow.com/questions/3903223/qt4-how-to-blur-qpixmap-image
@@ -87,19 +90,7 @@ Render::blurred(const QImage& image, const QRect& rect, int radius, bool alphaOn
 Render
 *Render::instance()
 {
-    if (!m_instance)
-        m_instance = new Render();
-    return m_instance;
-}
-
-void
-Render::deleteInstance()
-{
-    if (m_instance)
-    {
-        delete m_instance;
-        m_instance = 0;
-    }
+    return &m_instance;
 }
 
 Render::Render()
@@ -191,7 +182,7 @@ Render::initShadowParts()
 //            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
 //            p.fillRect(pix.rect(), rg);
             p.setPen(Qt::NoPen);
-            int n(6);
+            int n(3);
             int a(255/n);
             for (int i = 1; i <= n; ++i)
             {
@@ -673,4 +664,48 @@ Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
     p.fillRect(p2.rect(), b);
     p.end();
     return mid(p1, p2, a1, a2);
+}
+
+void
+Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const QPoint &offSet)
+{
+    if (s >= ShadowCount)
+        return;
+    const int o(opacity*255);
+    if (s==Raised || s==Simple)
+    {
+        if (s==Raised)
+            r.sAdjust(1, 1, -1, 0);
+        if (s==Simple && !shadow)
+        {
+            QLinearGradient lg(0, 0, 0, r.height());
+            lg.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+            lg.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+            lg.setColorAt(1.0f, QColor(0, 0, 0, o));
+            QBrush sh(lg);
+            renderShadow(s, r, p, rnd, sides, opacity, &sh);
+        }
+        else
+            renderShadow(s, r, p, rnd, sides, opacity, shadow);
+        const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
+        const int m(1);
+        if (s==Simple)
+            r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -m);
+        else
+            r.sAdjust(m, m, -m, -(m+1));
+        if (!inToolBar || s==Raised)
+            rnd = qMax(0, rnd-m);
+    }
+    else
+    {
+        r.sAdjust(1, 1, -1, -2);
+        rnd = qMax(0, rnd-1);
+    }
+    renderMask(r, p, *mask, rnd, sides, offSet);
+    if (s==Sunken||s==Etched)
+    {
+        r.sAdjust(-1, -1, 1, 2);
+        rnd = qMin(rnd+1, MAXRND);
+        renderShadow(s, r, p, rnd, sides, opacity);
+    }
 }

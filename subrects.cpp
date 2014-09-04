@@ -20,6 +20,7 @@
 #include "styleproject.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/ops.h"
+#include "stylelib/settings.h"
 
 QRect
 StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
@@ -433,5 +434,19 @@ StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, cons
     default: break;
     }
     return visualRect(tb->direction, tb->rect, ret);
+}
+
+QRect
+StyleProject::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+{
+    castOpt(SpinBox, sb, opt);
+    if (!sb)
+        return QRect();
+
+    QRect r(QCommonStyle::subControlRect(CC_SpinBox, opt, sc, w));
+    int a(qMin(Settings::conf.input.rnd/2, r.height()/4));
+    if (sc == SC_SpinBoxEditField)
+        r.translate(sb->direction==Qt::RightToLeft?-a:a, 0);
+    return r;
 }
 

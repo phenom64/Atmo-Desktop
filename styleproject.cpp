@@ -25,6 +25,7 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/unohandler.h"
+#include "stylelib/settings.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {
@@ -46,7 +47,7 @@ StyleProject::StyleProject()
 //    Anim::setStyle(this);
     init();
     assignMethods();
-    readSettings();
+    Settings::read();
     Render::generateData();
     QPalette p(qApp->palette());
     QColor c = p.color(QPalette::Window);

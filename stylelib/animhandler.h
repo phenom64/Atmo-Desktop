@@ -13,8 +13,6 @@ namespace Anim
 
 #define STEPS 16
 
-Q_DECL_EXPORT void setStyle(QStyle *style);
-
 class Q_DECL_EXPORT Basic : public QObject
 {
     Q_OBJECT
@@ -23,7 +21,6 @@ public:
     static Basic *instance();
     static void manage(QWidget *w);
     static void release(QWidget *w);
-    static void deleteInstance();
     static int level(const QWidget *widget) { return instance()->hoverLevel(widget); }
 
 protected:
@@ -36,7 +33,7 @@ protected slots:
     void animate();
 
 private:
-    static Basic *s_instance;
+    static Basic s_instance;
     QMap<QWidget *, int> m_vals;
     QTimer *m_timer;
 };
@@ -50,7 +47,6 @@ public:
     static Tabs *instance();
     static void manage(QTabBar *tb);
     static void release(QTabBar *tb);
-    static void deleteInstance();
     static int level(const QTabBar *tb, Tab tab) { return instance()->hoverLevel(tb, tab); }
 
 protected:
@@ -63,7 +59,7 @@ protected slots:
     void animate();
 
 private:
-    static Tabs *s_instance;
+    static Tabs s_instance;
     QMap<QTabBar *, QMap<Tab, Level> > m_vals;
     QTimer *m_timer;
 };
@@ -77,7 +73,6 @@ public:
     static ToolBtns *instance();
     static void manage(QToolButton *tb);
     static void release(QToolButton *tb);
-    static void deleteInstance();
     static int level(const QToolButton *tb, bool arrow) { return instance()->hoverLevel(tb, arrow); }
 
 protected:
@@ -90,7 +85,7 @@ protected slots:
     void animate();
 
 private:
-    static ToolBtns *s_instance;
+    static ToolBtns s_instance;
     QMap<QToolButton *, QPair<Level, ArrowLevel> > m_vals;
     QTimer *m_timer;
 };
