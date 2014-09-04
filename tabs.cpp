@@ -311,6 +311,12 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
         pt.end();
         s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
     }
+    if (XHandler::opacity() < 1.0f)
+    {
+        p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p->fillRect(r, Qt::black);
+        p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    }
     const float o(p->opacity());
     p->setOpacity(qMin(1.0f, opacity*1.1f));
     p->fillRect(r, s_pix.value(r.height()));

@@ -35,7 +35,7 @@
 #define READSHADOWOPACITY SHADOWOPACITY, DEFSHADOWOPACITY
 #define READTABRND TABRND, DEFTABRND
 
-class Settings
+class Q_DECL_EXPORT Settings
 {
 public:
     float opacity;

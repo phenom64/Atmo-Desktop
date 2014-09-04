@@ -137,10 +137,15 @@ KwinClient::resize(const QSize &s)
     const int w(s.width()), h(s.height());
     if (compositingActive())
     {
-//        QRegion r(2, 0, w-4, h);
-//        r += QRegion(1, 0, w-2, h-1);
-//        r += QRegion(0, 0, w, h-2);
-//        setMask(r);
+        if (m_opacity < 1.0f)
+            clearMask();
+        else
+        {
+            QRegion r(2, 0, w-4, h);
+            r += QRegion(1, 0, w-2, h-1);
+            r += QRegion(0, 0, w, h-2);
+            setMask(r);
+        }
     }
     else
     {

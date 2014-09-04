@@ -23,11 +23,12 @@
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
 {
-    if (!e || !o)
+    if (!e || !o || !o->isWidgetType())
         return false;
     if (e->type() < EVSize && m_ev[e->type()])
         return (this->*m_ev[e->type()])(o, e);
 
+    QWidget *w(static_cast<QWidget *>(o));
     switch (e->type())
     {
 //    case QEvent::Show:
@@ -41,6 +42,9 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
             toolBar->update();
         break;
     }
+    case QEvent::Close:
+        if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
+            XHandler::deleteXProperty(w->winId(), XHandler::KwinBlur);
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
@@ -103,54 +107,78 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QStyleOptionTabBarBaseV2 opt;
         opt.rect = w->rect();
         QTabBar *tb = w->findChild<QTabBar *>();
-        if (!tb)
+        if (!Ops::isSafariTabBar(tb))
             return false;
         opt.rect.setHeight(tb->height());
         QPainter p(w);
+        QRect geo(tb->mapTo(w, tb->rect().topLeft()), tb->size());
+        p.setClipRegion(QRegion(w->rect())-QRegion(geo));
         drawTabBar(&opt, &p, tb);
         p.end();
         return true;
     }
     else if (QMainWindow *win = qobject_cast<QMainWindow *>(o))
     {
-        if (int th = win->property("DSP_headHeight").toInt())
+        bool ok;
+        int th(win->property("DSP_headHeight").toInt(&ok));
+        if (ok)
         {
+            bool needRound(true);
+            const QColor bgColor(win->palette().color(win->backgroundRole()));
             QPainter p(win);
-            QRegion r(win->rect());
-            QList<QToolBar *> children(win->findChildren<QToolBar *>());
-            for (int i = 0; i < children.count(); ++i)
+            if (XHandler::opacity() < 1.0f)
             {
-                QToolBar *c(children.at(i));
-                if (c->parentWidget() != win || win->toolBarArea(c) != Qt::TopToolBarArea
-                    || c->orientation() != Qt::Horizontal || !c->isVisible())
-                    continue;
-                r -= QRegion(c->geometry());
-            }
-            if (QStatusBar *bar = win->findChild<QStatusBar *>())
-                if (bar->isVisible())
-            {
-                if (bar->parentWidget() == win)
-                    r -= QRegion(bar->geometry());
-                else
-                    r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
-            }
-            if (QTabBar *bar = win->findChild<QTabBar *>())
-                if (bar->isVisible() && Ops::isSafariTabBar(bar))
+                QRegion r(win->rect());
+                QList<QToolBar *> children(win->findChildren<QToolBar *>());
+                for (int i = 0; i < children.count(); ++i)
                 {
-                    if (bar->parentWidget() == win)
-                        r -= QRegion(bar->geometry());
-                    else
-                        r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
-
-//                    QList<QWidget *> kids(bar->findChildren<QWidget *>());
-//                    for (int i = 0; i < kids.count(); ++i)
-//                    {
-//                        QWidget *kid(kids.at(i));
-//                        r -= QRegion(QRect(kid->mapTo(win, kid->rect().topLeft()), kid->size()));
-//                    }
+                    QToolBar *c(children.at(i));
+                    if (c->parentWidget() != win || win->toolBarArea(c) != Qt::TopToolBarArea
+                            || c->orientation() != Qt::Horizontal || !c->isVisible())
+                        continue;
+                    r -= QRegion(c->geometry());
                 }
-            p.setClipRegion(r);
-            p.fillRect(win->rect(), win->palette().color(win->backgroundRole()));
+                if (QStatusBar *bar = win->findChild<QStatusBar *>())
+                    if (bar->isVisible())
+                    {
+                        if (bar->mapTo(win, bar->rect().bottomLeft()).y() >= win->rect().bottom())
+                            needRound = false;
+                        if (bar->parentWidget() == win)
+                            r -= QRegion(bar->geometry());
+                        else
+                            r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
+                    }
+                if (QTabBar *bar = win->findChild<QTabBar *>())
+                    if (bar->isVisible() && Ops::isSafariTabBar(bar))
+                    {
+                        QRect geo;
+                        if (bar->parentWidget() == win)
+                            geo = bar->geometry();
+                        else
+                            geo = QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size());
+
+                        if (QTabWidget *tw = qobject_cast<QTabWidget *>(bar->parentWidget()))
+                        {
+                            int right(tw->mapTo(win, tw->rect().topRight()).x());
+                            int left(tw->mapTo(win, tw->rect().topLeft()).x());
+                            geo.setRight(right);
+                            geo.setLeft(left);
+                        }
+                        if (qApp->applicationName() == "konsole")
+                        {
+                            geo.setLeft(win->rect().left());
+                            geo.setRight(win->rect().right());
+                        }
+                        r -= QRegion(geo);
+                    }
+                p.setClipRegion(r);
+                if (needRound)
+                    Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
+                else
+                    p.fillRect(win->rect(), bgColor);
+            }
+            else
+                p.fillRect(win->rect(), bgColor);
             p.setPen(Qt::black);
             p.setOpacity(Settings::conf.shadows.opacity);
             p.drawLine(0, th, win->width(), th);

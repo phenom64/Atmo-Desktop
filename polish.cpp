@@ -244,11 +244,14 @@ StyleProject::polish(QWidget *widget)
         tabBar->setAttribute(Qt::WA_MouseTracking);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
-            QWidget *p(tabBar->parentWidget());
-            if (p)
+            if (Ops::isSafariTabBar(tabBar))
             {
-                p->setObjectName("konsole_tabbar_parent");
-                installFilter(p);
+                QWidget *p(tabBar->parentWidget());
+                if (p)
+                {
+                    p->setObjectName("konsole_tabbar_parent");
+                    installFilter(p);
+                }
             }
         }
     }
