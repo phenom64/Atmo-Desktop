@@ -37,8 +37,9 @@ class Q_DECL_EXPORT WinHandler : public QObject
 public:
     ~WinHandler(){}
     static WinHandler *instance();
-    static void manage(QWidget *win);
-    static void release(QWidget *win);
+    static void manage(QWidget *w);
+    static void release(QWidget *w);
+    static bool canDrag(QWidget *w);
 
 protected:
     WinHandler(QObject *parent = 0);
@@ -46,9 +47,6 @@ protected:
 
 private:
     static WinHandler s_instance;
-    bool m_hasDrag;
-    QWidget *m_hasPress;
-    QPoint m_presPos;
 };
 
 #endif //UNOHANDLER_H

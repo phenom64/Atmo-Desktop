@@ -233,12 +233,12 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         if ( !toolBar )
             return false;
         //below simply to trigger an event that forces the toolbar to call sizeFromContents again
-        Ops::queToolBar(toolBar);
-        QTimer::singleShot(0, Ops::instance(), SLOT(updateToolBar()));
+        Ops::updateToolBarLater(toolBar, 5);
     }
     if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
     {
-        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
+//        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
+        QTimer::singleShot(500, w, SLOT(update()));
     }
 //    if (castObj(QTabBar *, bar, o))
 //    {

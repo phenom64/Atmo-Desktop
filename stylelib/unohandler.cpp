@@ -20,6 +20,9 @@
 #include <QDebug>
 #include <QMouseEvent>
 #include <QApplication>
+#include <QStatusBar>
+#include <QLabel>
+#include <QDialog>
 
 Q_DECL_EXPORT UNOHandler UNOHandler::s_instance;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
@@ -256,26 +259,24 @@ Q_DECL_EXPORT WinHandler WinHandler::s_instance;
 
 WinHandler::WinHandler(QObject *parent)
     : QObject(parent)
-    , m_hasPress(0)
-    , m_hasDrag(false)
 {
 }
 
 void
-WinHandler::manage(QWidget *win)
+WinHandler::manage(QWidget *w)
 {
-    if (!win)
+    if (!w)
         return;
-    win->removeEventFilter(instance());
-    win->installEventFilter(instance());
+    w->removeEventFilter(instance());
+    w->installEventFilter(instance());
 }
 
 void
-WinHandler::release(QWidget *win)
+WinHandler::release(QWidget *w)
 {
-    if (!win)
+    if (!w)
         return;
-    win->removeEventFilter(instance());
+    w->removeEventFilter(instance());
 }
 
 WinHandler
@@ -287,35 +288,37 @@ WinHandler
 bool
 WinHandler::eventFilter(QObject *o, QEvent *e)
 {
-    if (!o || !e)
-        return false;
-    if (!o->isWidgetType())
+    if (!o || !e || !o->isWidgetType())
         return false;
     QWidget *w = static_cast<QWidget *>(o);
-    if (!w->isWindow())
-        return false;
     switch (e->type())
     {
-    case QEvent::MouseButtonRelease:
-    {
-        m_hasPress = 0;
-        return false;
-    }
     case QEvent::MouseButtonPress:
     {
         QMouseEvent *me(static_cast<QMouseEvent *>(e));
-        m_hasPress = w;
-        m_presPos = me->pos();
-        return false;
-    }
-    case QEvent::MouseMove:
-    {
-        QMouseEvent *me(static_cast<QMouseEvent *>(e));
-        if (w == m_hasPress && (qAbs(me->pos().x()-m_presPos.x())>5 || qAbs(me->pos().y()-m_presPos.y())>5) && !w->mouseGrabber())
-            XHandler::mwRes(me->globalPos(), w->window()->winId());
+        if (castObj(QTabBar *, tb, w))
+            if (tb->tabAt(me->pos()) != -1)
+                return false;
+        if (w->cursor().shape() != Qt::ArrowCursor
+                || QApplication::overrideCursor()
+                || w->mouseGrabber())
+            return false;
+        XHandler::mwRes(me->globalPos(), w->window()->winId());
         return false;
     }
     default: break;
     }
+    return false;
+}
+
+bool
+WinHandler::canDrag(QWidget *w)
+{
+    if (qobject_cast<QToolBar *>(w)
+            || qobject_cast<QLabel *>(w)
+            || qobject_cast<QTabBar *>(w)
+            || qobject_cast<QStatusBar *>(w)
+            || qobject_cast<QDialog *>(w))
+        return true;
     return false;
 }

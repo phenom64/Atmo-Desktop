@@ -10,7 +10,7 @@
 #include "../stylelib/xhandler.h"
 
 #define SZ 16
-SizeGrip::SizeGrip(KwinClient *parent) : QWidget(0), m_client(parent)
+SizeGrip::SizeGrip(KwinClient *parent) : QWidget(0), m_client(parent), m_timer(new QTimer(this))
 {
     if (!parent || parent->isPreview())
     {
@@ -28,6 +28,7 @@ SizeGrip::SizeGrip(KwinClient *parent) : QWidget(0), m_client(parent)
     repos();
     show();
     QTimer::singleShot(250, this, SLOT(restack()));
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(checkSize()));
 }
 
 /**
@@ -84,13 +85,26 @@ SizeGrip::repos()
     move(m_client->width()-SZ, m_client->height()-(m_client->m_titleLayout->geometry().height()+SZ));
 }
 
+void
+SizeGrip::checkSize()
+{
+    if (m_size == m_client->widget()->size())
+    {
+        m_timer->stop();
+        restack();
+    }
+    else
+        m_size = m_client->widget()->size();
+}
+
 bool
 SizeGrip::eventFilter(QObject *o, QEvent *e)
 {
-    if (e->type() == QEvent::ZOrderChange)
-        restack();
-    if (o == m_client->widget() && e->type() == QEvent::Resize || e->type() == QEvent::Show)
+    if (o == m_client->widget() && e->type() == QEvent::Resize || e->type() == QEvent::Show || e->type() == QEvent::ZOrderChange)
+    {
         repos();
+        m_timer->start(250);
+    }
     return QWidget::eventFilter(o, e);
 }
 

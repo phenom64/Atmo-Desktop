@@ -113,7 +113,7 @@ StyleProject::polish(QWidget *widget)
             widget->findChild<QTabBar *>())
         UNOHandler::manage(widget);
 
-    if (widget->isWindow())
+    if (WinHandler::canDrag(widget))
         WinHandler::manage(widget);
 
     if (castObj(QMainWindow *, win, widget))

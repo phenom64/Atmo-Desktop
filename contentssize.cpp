@@ -11,6 +11,7 @@
 #include "styleproject.h"
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
+#include "stylelib/settings.h"
 
 /** enum ContentsType {
     CT_PushButton,
@@ -185,12 +186,11 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             if (isFull)
                 sz.rwidth() += 16;
             else if (sides & (Render::Left|Render::Right))
-                sz.rwidth() += 2;
+                sz.rwidth() += (2+(Settings::conf.toolbtn.shadow==Render::Carved)*2);
             if (btn && btn->group())
                 sz.rwidth() += 8;
             if (btn && btn->isCheckable() && !isFull)
                 sz.rwidth() += 2;
-
         }
         if (sz.height() < 23)
             sz.setHeight(23);

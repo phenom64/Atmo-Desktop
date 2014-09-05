@@ -18,9 +18,12 @@ protected:
 
 protected slots:
     void restack();
+    void checkSize();
 
 private:
     KwinClient *m_client;
+    QTimer *m_timer;
+    QSize m_size;
 };
 
 #endif // WIDGETS_H

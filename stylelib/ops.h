@@ -54,7 +54,7 @@ public:
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
-    static void queToolBar(QToolBar *bar) { instance()->_queToolBar(bar); }
+    static void updateToolBarLater(QToolBar *bar, const int time = 250);
     static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
@@ -91,13 +91,9 @@ public slots:
     void updateToolBar();
     void later();
 
-protected:
-    void _queToolBar(QToolBar *bar) { if (!m_toolBars.contains(bar)) m_toolBars << bar; }
-
 private:
     static Ops *s_instance;
     static QQueue<QueueItem> m_laterQueue;
-    QList<QToolBar *> m_toolBars;
 };
 
 #endif // OPS_H

@@ -694,15 +694,43 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         else
             r.sAdjust(m, m, -m, -(m+1));
         if (!inToolBar || s==Raised)
-            rnd = qMax(0, rnd-m);
+            rnd = qMax(1, rnd-m);
+    }
+    else if (Carved)
+    {
+        QLinearGradient lg(0, 0, 0, r.height());
+        if (w && w->parentWidget())
+        {
+            QWidget *p(w->parentWidget());
+            const QColor bg(p->palette().color(p->backgroundRole()));
+            lg.setColorAt(0.1f, Color::mid(bg, Qt::black, 5, 1));
+            lg.setColorAt(1.0f, Color::mid(bg, Qt::white, 5, 1));
+        }
+        else
+        {
+            lg.setColorAt(0.1f, QColor(0, 0, 0, 127));
+            lg.setColorAt(1.0f, QColor(255, 255, 255, 127));
+        }
+        renderMask(r, p, lg, rnd, sides, offSet);
+        const int m(3);
+        r.sAdjust(m, m, -m, -m);
+        rnd = qMax(1, rnd-m);
     }
     else
     {
         r.sAdjust(1, 1, -1, -2);
-        rnd = qMax(0, rnd-1);
+        rnd = qMax(1, rnd-1);
     }
+
     renderMask(r, p, *mask, rnd, sides, offSet);
-    if (s==Sunken||s==Etched)
+    if (s==Carved)
+    {
+        const int m(1);
+        r.sAdjust(-m, -m, m, m);
+        rnd = qMin(rnd+1, MAXRND);
+        renderShadow(Simple, r, p, rnd, sides, opacity);
+    }
+    else if (s==Sunken||s==Etched)
     {
         r.sAdjust(-1, -1, 1, 2);
         rnd = qMin(rnd+1, MAXRND);

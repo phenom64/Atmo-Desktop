@@ -11,7 +11,7 @@ class Q_DECL_EXPORT Render
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
     enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
-    enum ShadowType { Sunken = 0, Etched, Raised, Simple, ShadowCount };
+    enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     Render();
     ~Render(){}

@@ -306,6 +306,9 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             case Render::Simple:
                 r.adjust(0, 0, 0, -1);
                 break;
+            case Render::Carved:
+                r.adjust(0, 3, 0, -3);
+                break;
             default: break;
             }
             painter->drawLine(r.topRight(), r.bottomRight());
@@ -344,8 +347,17 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     default: break;
     }
 
+    if (Settings::conf.toolbtn.shadow == Render::Carved)
+    if (opt->toolButtonStyle == Qt::ToolButtonIconOnly)
+    if (bar && bar->orientation() == Qt::Horizontal)
+    if (sides & (Render::Left|Render::Right) && sides != Render::All)
+    {
+        if (sides & Render::Left)
+            ir.translate(2, 0);
+        else if (sides & Render::Right)
+            ir.translate(-2, 0);
+    }
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
-//    if (!pix.isNull())
         drawItemPixmap(painter, ir, iAlign, pix);
     if (opt->toolButtonStyle)
         drawItemText(painter, rect, tAlign, opt->palette, opt->ENABLED, opt->text, QPalette::ButtonText);

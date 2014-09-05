@@ -5,21 +5,21 @@
 #include <QGradientStop>
 //settings vars...
 
-#define OPACITY "opacity"
-#define BLACKLIST "blacklist"
-#define PUSHBTNRND "pushbtn.rnd"
-#define PUSHBTNSHADOW "pushbtn.shadow"
-#define PUSHBTNGRAD "pushbtn.gradient"
-#define TOOLBTNRND "toolbtn.rnd"
-#define TOOLBTNSHADOW "toolbtn.shadow"
-#define TOOLBTNGRAD "toolbtn.gradient"
-#define INPUTRND "input.rnd"
-#define INPUTSHADOW "input.shadow"
-#define INPUTGRAD "input.gradient"
-#define SLIDERSIZE "sliders.size"
-#define SCROLLERSIZE "scrollers.size"
-#define SHADOWOPACITY "shadows.opacity"
-#define TABRND "tabs.rnd"
+#define OPACITY             "opacity"
+#define BLACKLIST           "blacklist"
+#define PUSHBTNRND          "pushbtn.rnd"
+#define PUSHBTNSHADOW       "pushbtn.shadow"
+#define PUSHBTNGRAD         "pushbtn.gradient"
+#define TOOLBTNRND          "toolbtn.rnd"
+#define TOOLBTNSHADOW       "toolbtn.shadow"
+#define TOOLBTNGRAD         "toolbtn.gradient"
+#define INPUTRND            "input.rnd"
+#define INPUTSHADOW         "input.shadow"
+#define INPUTGRAD           "input.gradient"
+#define SLIDERSIZE          "sliders.size"
+#define SCROLLERSIZE        "scrollers.size"
+#define SHADOWOPACITY       "shadows.opacity"
+#define TABRND              "tabs.rnd"
 
 //defaults
 
@@ -38,37 +38,37 @@
   * of a soft gradient would be "0.1:10, 1.0:-10".
   */
 
-#define DEFOPACITY 100
-#define DEFBLACKLIST "smplayer"
-#define DEFPUSHBTNRND 8
-#define DEFPUSHBTNSHADOW 3
-#define DEFPUSHBTNGRAD "0.1:5, 1.0:-5"
-#define DEFTOOLBTNRND 8
-#define DEFTOOLBTNSHADOW 3
-#define DEFTOOLBTNGRAD "0.1:5, 1.0:-5"
-#define DEFINPUTRND 8
-#define DEFINPUTSHADOW 3
-#define DEFINPUTGRAD "0.1:-5, 1.0:5"
-#define DEFSLIDERSIZE 16
-#define DEFSCROLLERSIZE 12
-#define DEFSHADOWOPACITY 33
-#define DEFTABRND 5
+#define DEFOPACITY              100
+#define DEFBLACKLIST            "smplayer"
+#define DEFPUSHBTNRND           8
+#define DEFPUSHBTNSHADOW        3
+#define DEFPUSHBTNGRAD          "0.1:5, 1.0:-5"
+#define DEFTOOLBTNRND           8
+#define DEFTOOLBTNSHADOW        3
+#define DEFTOOLBTNGRAD          "0.1:5, 1.0:-5"
+#define DEFINPUTRND             8
+#define DEFINPUTSHADOW          3
+#define DEFINPUTGRAD            "0.1:-5, 1.0:5"
+#define DEFSLIDERSIZE           16
+#define DEFSCROLLERSIZE         12
+#define DEFSHADOWOPACITY        33
+#define DEFTABRND               5
 
-#define READOPACITY OPACITY, DEFOPACITY
-#define READBLACKLIST BLACKLIST, DEFBLACKLIST
-#define READPUSHBTNRND PUSHBTNRND, DEFPUSHBTNRND
-#define READPUSHBTNSHADOW PUSHBTNSHADOW, DEFPUSHBTNSHADOW
-#define READPUSHBTNGRAD PUSHBTNGRAD, DEFPUSHBTNGRAD
-#define READTOOLBTNRND TOOLBTNRND, DEFTOOLBTNRND
-#define READTOOLBTNSHADOW TOOLBTNSHADOW, DEFTOOLBTNSHADOW
-#define READTOOLBTNGRAD TOOLBTNGRAD, DEFTOOLBTNGRAD
-#define READINPUTRND INPUTRND, DEFINPUTRND
-#define READINPUTSHADOW INPUTSHADOW, DEFINPUTSHADOW
-#define READINPUTGRAD INPUTGRAD, DEFINPUTGRAD
-#define READSLIDERSIZE SLIDERSIZE, DEFSLIDERSIZE
-#define READSCROLLERSIZE SCROLLERSIZE, DEFSCROLLERSIZE
-#define READSHADOWOPACITY SHADOWOPACITY, DEFSHADOWOPACITY
-#define READTABRND TABRND, DEFTABRND
+#define READOPACITY             OPACITY, DEFOPACITY
+#define READBLACKLIST           BLACKLIST, DEFBLACKLIST
+#define READPUSHBTNRND          PUSHBTNRND, DEFPUSHBTNRND
+#define READPUSHBTNSHADOW       PUSHBTNSHADOW, DEFPUSHBTNSHADOW
+#define READPUSHBTNGRAD         PUSHBTNGRAD, DEFPUSHBTNGRAD
+#define READTOOLBTNRND          TOOLBTNRND, DEFTOOLBTNRND
+#define READTOOLBTNSHADOW       TOOLBTNSHADOW, DEFTOOLBTNSHADOW
+#define READTOOLBTNGRAD         TOOLBTNGRAD, DEFTOOLBTNGRAD
+#define READINPUTRND            INPUTRND, DEFINPUTRND
+#define READINPUTSHADOW         INPUTSHADOW, DEFINPUTSHADOW
+#define READINPUTGRAD           INPUTGRAD, DEFINPUTGRAD
+#define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
+#define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
+#define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
+#define READTABRND              TABRND, DEFTABRND
 
 class Q_DECL_EXPORT Settings
 {

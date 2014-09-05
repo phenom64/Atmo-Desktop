@@ -189,15 +189,31 @@ Ops::updateGeoFromSender()
 }
 
 void
+Ops::updateToolBarLater(QToolBar *bar, const int time)
+{
+    QTimer *t(new QTimer(bar));
+    connect(t, SIGNAL(timeout()), instance(), SLOT(updateToolBar()));
+    t->start(time);
+    t->setProperty("DSP_childcount", bar->children().count());
+}
+
+void
 Ops::updateToolBar()
 {
-    while (!m_toolBars.isEmpty())
-    {
-        QToolBar *toolBar = m_toolBars.takeFirst();
-        const QSize &iconSize(toolBar->iconSize());
-        toolBar->setIconSize(iconSize - QSize(1, 1));
-        toolBar->setIconSize(iconSize);
-    }
+    QTimer *t(static_cast<QTimer *>(sender()));
+    if (!t)
+        return;
+    QToolBar *bar(static_cast<QToolBar *>(t->parent()));
+    if (!bar)
+        return;
+    if (t->property("DSP_childcount").toInt() != bar->children().count())
+        return;
+
+    const QSize &iconSize(bar->iconSize());
+    bar->setIconSize(iconSize - QSize(1, 1));
+    bar->setIconSize(iconSize);
+    t->stop();
+    t->deleteLater();
 }
 
 QPalette::ColorRole
