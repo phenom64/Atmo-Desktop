@@ -223,7 +223,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             {
                 const QAction *a(actions.at(i));
                 if (a->text() == item->text && a->font().bold())
-                    sz.rwidth() += (QFontMetrics(a->font()).boundingRect(item->text).width() - item->fontMetrics.boundingRect(item->text).width());
+                    sz.rwidth() += (QFontMetrics(a->font()).width(item->text) - QFontMetrics(item->font).width(item->text));
             }
         }
         return sz;
