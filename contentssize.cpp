@@ -216,20 +216,22 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         if (!item)
             return contentsSize;
         QSize sz(contentsSize+QSize(8, 0));
-        if (castObj(const QMenuBar *, bar, widget))
-        {
-            const QList<QAction *> actions = bar->actions();
-            for (int i = 0; i < actions.size(); ++i)
-            {
-                const QAction *a(actions.at(i));
-                if (a->text() == item->text && a->font().bold())
-                {
-                    QFontMetrics f(a->font());
+//        if (castObj(const QMenuBar *, bar, widget))
+//        {
+//            const QList<QAction *> actions = bar->actions();
+//            for (int i = 0; i < actions.size(); ++i)
+//            {
+//                const QAction *a(actions.at(i));
+//                if (a->text() == item->text && a->font().bold())
+//                {
+        QFont bf(item->font);
+        bf.setBold(true);
+                    QFontMetrics f(bf);
                     QFontMetrics ff(item->font);
                     sz.rwidth() += (f.boundingRect(item->text).width() - ff.boundingRect(item->text).width());
-                }
-            }
-        }
+//                }
+//            }
+//        }
         return sz;
     }
     case CT_MenuItem: return menuItemSize(qstyleoption_cast<const QStyleOptionMenuItem *>(opt), qobject_cast<const QMenu *>(widget), contentsSize);

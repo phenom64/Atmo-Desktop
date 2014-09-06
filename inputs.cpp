@@ -89,11 +89,8 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     }
     int m(2);
 
-    const bool inToolBar(widget&&qobject_cast<const QToolBar *>(widget->parentWidget()));
     if (!opt->editable)
     {
-//        Render::renderShadow(Render::Raised, frameRect, painter, 5);
-
         QColor bgc(opt->palette.color(bg));
         QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
         if (option->ENABLED && !(option->state & State_On))
@@ -103,16 +100,18 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         }
 
         painter->setClipRegion(QRegion(frameRect)-QRegion(arrowRect));
-        QBrush mask(bgc);
+        QLinearGradient lg(0, 0, 0, frameRect.height());
+        lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
+        QBrush mask(lg);
         Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Render::All, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
 
         const int o(Settings::conf.shadows.opacity*255.0f);
 
         const QColor hc(opt->palette.color(QPalette::Highlight));
-        QLinearGradient lg(0, 0, 0, opt->rect.height());
-        lg.setColorAt(0.0f, Color::mid(hc, Qt::white, 10, 1));
-        lg.setColorAt(1.0f, Color::mid(hc, Qt::black, 10, 1));
-        mask = QBrush(lg);
+        QLinearGradient lga(0, 0, 0, opt->rect.height());
+        lga.setColorAt(0.0f, Color::mid(hc, Qt::white, 10, 1));
+        lga.setColorAt(1.0f, Color::mid(hc, Qt::black, 10, 1));
+        mask = QBrush(lga);
 
         painter->setClipRect(arrowRect);
         Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Render::All & ~(ltr?Render::Left:Render::Right), Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
