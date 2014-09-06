@@ -240,10 +240,5 @@ StyleProject::showEvent(QObject *o, QEvent *e)
 //        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
         QTimer::singleShot(500, w, SLOT(update()));
     }
-//    if (castObj(QTabBar *, bar, o))
-//    {
-//        if (Ops::isSafariTabBar(bar))
-//            bar->setStyleSheet("QTabBar::tab::first{ margin-left: 16px; }");
-//    }
     return QCommonStyle::eventFilter(o, e);
 }

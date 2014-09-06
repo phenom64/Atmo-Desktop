@@ -203,7 +203,6 @@ StyleProject::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(Ops::window(frame)))
             OverLay::manage(frame, Settings::conf.shadows.opacity*255.0f);
     }
-
     if (castObj(QAbstractItemView *, view, widget))
     {
         view->viewport()->setAttribute(Qt::WA_Hover);
@@ -214,12 +213,12 @@ StyleProject::polish(QWidget *widget)
         if (QLineEdit *l = box->findChild<QLineEdit *>())
             connect(l, SIGNAL(textChanged(QString)), box, SLOT(update()));
     if (qobject_cast<QMenu *>(widget)||qobject_cast<QMenuBar *>(widget))
-    {
-        widget->setAttribute(Qt::WA_TranslucentBackground);
+    {     
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
         if (qobject_cast<QMenu *>(widget))
         {
+            widget->setAttribute(Qt::WA_TranslucentBackground);
             widget->setForegroundRole(QPalette::Text);
             widget->setBackgroundRole(QPalette::Base);
         }
