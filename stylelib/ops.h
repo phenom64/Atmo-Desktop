@@ -13,13 +13,6 @@
  * that actually makes sense, for now, deal w/ it.
  */
 
-class ToolButtonData
-{
-public:
-    bool prevSelected, nextSelected, isInTopToolBar;
-    unsigned int sides;
-};
-
 typedef void (QWidget::*Function)();
 class QueueItem
 {
@@ -53,7 +46,7 @@ public:
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
-    static ToolButtonData toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt = 0);
+    static void toolButtonData(const QToolButton *tbtn, const int sepext, bool &nextsel, bool &prevsel, bool &isintop, unsigned int &sides);
     static void updateToolBarLater(QToolBar *bar, const int time = 250);
     static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
 

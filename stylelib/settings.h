@@ -7,6 +7,7 @@
 
 #define OPACITY             "opacity"
 #define BLACKLIST           "blacklist"
+#define REMOVETITLE         "removetitlebars"
 #define PUSHBTNRND          "pushbtn.rnd"
 #define PUSHBTNSHADOW       "pushbtn.shadow"
 #define PUSHBTNGRAD         "pushbtn.gradient"
@@ -40,6 +41,7 @@
 
 #define DEFOPACITY              100
 #define DEFBLACKLIST            "smplayer"
+#define DEFREMOVETITLE          false
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
 #define DEFPUSHBTNGRAD          "0.1:5, 1.0:-5"
@@ -56,6 +58,7 @@
 
 #define READOPACITY             OPACITY, DEFOPACITY
 #define READBLACKLIST           BLACKLIST, DEFBLACKLIST
+#define READREMOVETITLE         REMOVETITLE, DEFREMOVETITLE
 #define READPUSHBTNRND          PUSHBTNRND, DEFPUSHBTNRND
 #define READPUSHBTNSHADOW       PUSHBTNSHADOW, DEFPUSHBTNSHADOW
 #define READPUSHBTNGRAD         PUSHBTNGRAD, DEFPUSHBTNGRAD
@@ -75,6 +78,7 @@ class Q_DECL_EXPORT Settings
 public:
     float opacity;
     QStringList blackList;
+    bool removeTitleBars;
     struct pushbtn
     {
         int rnd;

@@ -191,10 +191,15 @@ Ops::updateGeoFromSender()
 void
 Ops::updateToolBarLater(QToolBar *bar, const int time)
 {
-    QTimer *t(new QTimer(bar));
-    connect(t, SIGNAL(timeout()), instance(), SLOT(updateToolBar()));
+    QTimer *t(bar->findChild<QTimer *>("DSP_toolbartimer"));
+    if (!t)
+    {
+        t = new QTimer(bar);
+        t->setObjectName("DSP_toolbartimer");
+        connect(t, SIGNAL(timeout()), instance(), SLOT(updateToolBar()));
+        t->setProperty("DSP_childcount", bar->actions().count());
+    }
     t->start(time);
-    t->setProperty("DSP_childcount", bar->children().count());
 }
 
 void
@@ -206,7 +211,7 @@ Ops::updateToolBar()
     QToolBar *bar(static_cast<QToolBar *>(t->parent()));
     if (!bar)
         return;
-    if (t->property("DSP_childcount").toInt() != bar->children().count())
+    if (t->property("DSP_childcount").toInt() != bar->actions().count())
         return;
 
     const QSize &iconSize(bar->iconSize());
@@ -269,58 +274,44 @@ Ops::hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb)
     return false;
 }
 
-ToolButtonData
-Ops::toolButtonData(const QToolButton *tbtn, const QStyle *s, bool &ok, const QStyleOption *opt)
+void
+Ops::toolButtonData(const QToolButton *tbtn, const int sepext, bool &nextsel, bool &prevsel, bool &isintop, unsigned int &sides)
 {
-    ToolButtonData data;
-    ok = false;
     if (!tbtn)
-        return data;
+        return;
     castObj(const QToolBar *, bar, tbtn->parentWidget());
     if (!bar)
-        return data;
+        return;
     const QRect geo = tbtn->geometry();
     int x, y, r, b, h = tbtn->height(), hc = y+h/2, w = tbtn->width(), wc = x+w/2;
-    int margin = s->pixelMetric(QStyle::PM_ToolBarSeparatorExtent, opt, tbtn);
     geo.getCoords(&x, &y, &r, &b);
-    Render::Sides sides = Render::All;
-    bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
-
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+sepext, hc)))
     {
         sides &= ~Render::Right;
         if (btn->isChecked())
-            nextSelected = true;
+            nextsel = true;
     }
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc)))
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(x-sepext, hc)))
     {
         sides &= ~Render::Left;
         if (btn->isChecked())
-            prevSelected = true;
+            prevsel = true;
     }
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin)))
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, b+sepext)))
     {
         sides &= ~Render::Bottom;
         if (btn->isChecked())
-            nextSelected = true;
+            nextsel = true;
     }
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin)))
+    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, y-sepext)))
     {
         sides &= ~Render::Top;
         if (btn->isChecked())
-            prevSelected = true;
+            prevsel = true;
     }
-//    if (const QToolButton *btn = qobject_cast<const QToolButton *>(widget))
-        if (tbtn->isChecked())
-            nextSelected = true;
+    if (tbtn->isChecked())
+        nextsel = true;
     if (const QMainWindow *win = qobject_cast<const QMainWindow *>(bar->parentWidget()))
         if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
-            isInTopToolBar = true;
-
-    data.sides = sides;
-    data.isInTopToolBar = isInTopToolBar;
-    data.prevSelected = prevSelected;
-    data.nextSelected = nextSelected;
-    ok = true;
-    return data;
+            isintop = true;
 }

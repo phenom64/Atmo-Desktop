@@ -58,6 +58,7 @@ Settings::read()
     conf.blackList = s.value(READBLACKLIST).toStringList();
     if (conf.blackList.contains(QFileInfo(qApp->applicationFilePath()).fileName()))
         conf.opacity = 1.0f;
+    conf.removeTitleBars = s.value(READREMOVETITLE).toBool();
     //pushbuttons
     conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     conf.pushbtn.shadow = s.value(READPUSHBTNSHADOW).toInt();

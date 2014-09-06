@@ -1,6 +1,7 @@
 #include <QTableWidget>
 #include <QPainter>
 #include <QStyleOptionTabWidgetFrameV2>
+#include <QStyleOptionToolButton>
 #include <QMainWindow>
 #include <QToolBar>
 #include <QLayout>
@@ -45,6 +46,31 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     case QEvent::Close:
         if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
             XHandler::deleteXProperty(w->winId(), XHandler::KwinBlur);
+    case QEvent::MouseButtonPress:
+    {
+        if (QToolButton *tb = qobject_cast<QToolButton *>(w))
+            if (Ops::hasMenu(tb))
+        {
+            QStyleOptionToolButton option;
+            option.initFrom(tb);
+            option.features = QStyleOptionToolButton::None;
+            if (tb->popupMode() == QToolButton::MenuButtonPopup) {
+                option.subControls |= QStyle::SC_ToolButtonMenu;
+                option.features |= QStyleOptionToolButton::MenuButtonPopup;
+            }
+            if (tb->arrowType() != Qt::NoArrow)
+                option.features |= QStyleOptionToolButton::Arrow;
+            if (tb->popupMode() == QToolButton::DelayedPopup)
+                option.features |= QStyleOptionToolButton::PopupDelay;
+            if (tb->menu())
+                option.features |= QStyleOptionToolButton::HasMenu;
+            QRect r = subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
+            if (r.contains(static_cast<QMouseEvent *>(e)->pos()))
+                tb->setProperty("DSP_menupress", true);
+            else
+                tb->setProperty("DSP_menupress", false);
+        }
+    }
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
@@ -233,7 +259,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         if ( !toolBar )
             return false;
         //below simply to trigger an event that forces the toolbar to call sizeFromContents again
-        Ops::updateToolBarLater(toolBar, 5);
+        Ops::updateToolBarLater(toolBar, 50);
     }
     if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
     {

@@ -176,7 +176,8 @@ StyleProject::polish(QWidget *widget)
         }
         if (qobject_cast<QMenu *>(widget)
                 || qobject_cast<QDockWidget *>(widget)
-                || qobject_cast<QToolBar *>(widget))
+                || qobject_cast<QToolBar *>(widget)
+                || (qobject_cast<QMainWindow *>(widget) && Settings::conf.removeTitleBars))
             needShadows = true;
         if (needShadows)
             ShadowHandler::manage(widget);

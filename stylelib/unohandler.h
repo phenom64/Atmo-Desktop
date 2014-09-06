@@ -4,6 +4,44 @@
 #include <QWidget>
 #include "render.h"
 
+class Button : public QWidget
+{
+    Q_OBJECT
+public:
+    enum Type { Close, Min, Max, TypeCount };
+    Button(Type type, QWidget *parent = 0);
+    ~Button();
+
+signals:
+    void clicked();
+
+protected:
+    void paintEvent(QPaintEvent *);
+    void mousePressEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
+    bool paintClose(QPainter &p);
+    bool paintMin(QPainter &p);
+    bool paintMax(QPainter &p);
+
+    void drawBase(QColor c, QPainter &p, QRect &r) const;
+
+    typedef bool (Button::*PaintEvent)(QPainter &);
+
+private:
+    PaintEvent m_paintEvent[TypeCount];
+    Type m_type;
+    bool m_hasPress;
+};
+
+class Buttons : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit Buttons(QWidget *parent = 0);
+protected:
+    bool eventFilter(QObject *, QEvent *);
+};
+
 class QToolBar;
 class Q_DECL_EXPORT UNOHandler : public QObject
 {

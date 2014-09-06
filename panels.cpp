@@ -79,11 +79,23 @@ StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (widget)
+    if (widget && option)
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
-        int th(win->property("titleHeight").toInt());
-        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
+        int th(win->property("titleHeight").toInt()); 
+        if (Settings::conf.removeTitleBars && XHandler::opacity() < 1.0f)
+        {
+            Render::Sides sides(Render::checkedForWindowEdges(widget));
+            sides = Render::All-sides;
+            QPixmap p(option->rect.size());
+            p.fill(Qt::transparent);
+            QPainter pt(&p);
+            UNOHandler::drawUnoPart(&pt, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
+            pt.end();
+            Render::renderMask(option->rect, painter, p, 4, sides);
+        }
+        else
+            UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
     }
     return true;
 }

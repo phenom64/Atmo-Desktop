@@ -696,7 +696,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         if (!inToolBar || s==Raised)
             rnd = qMax(1, rnd-m);
     }
-    else if (Carved)
+    else if (s==Carved)
     {
         QLinearGradient lg(0, 0, 0, r.height());
         if (w && w->parentWidget())
@@ -735,5 +735,32 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         r.sAdjust(-1, -1, 1, 2);
         rnd = qMin(rnd+1, MAXRND);
         renderShadow(s, r, p, rnd, sides, opacity);
+    }
+}
+
+Render::Pos
+Render::pos(const Sides s, const Qt::Orientation o)
+{
+    if (o == Qt::Horizontal)
+    {
+        if (s&Left&&!(s&Right))
+            return First;
+        else if (s&Right&&!(s&Left))
+            return Last;
+        else if (s==All)
+            return Alone;
+        else
+            return Middle;
+    }
+    else
+    {
+        if (s&Top&&!(s&Bottom))
+            return First;
+        else if (s&Bottom&&!(s&Top))
+            return Last;
+        else if (s==All)
+            return Alone;
+        else
+            return Middle;
     }
 }

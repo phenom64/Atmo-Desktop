@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QBrush>
 #include <QDockWidget>
+#include <QMenu>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -201,77 +202,68 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     return false;
 }
 
+static QRect maskRect(const QRect &rect)
+{
+    QRect r(rect);
+    switch (Settings::conf.toolbtn.shadow)
+    {
+    case Render::Sunken:
+    case Render::Etched:
+    case Render::Raised:
+        r.adjust(0, 1, 0, -2);
+        break;
+    case Render::Simple:
+        r.adjust(0, 0, 0, -1);
+        break;
+    case Render::Carved:
+        r.adjust(0, 3, 0, -3);
+        break;
+    default: break;
+    }
+    return r;
+}
+
 bool
 StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ToolButton, opt, option);
     if (!opt)
         return true;
+
     painter->save();
 
-    const QToolButton *toolBtn(qobject_cast<const QToolButton *>(widget));
+    const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
     const QToolBar *bar(0);
     if (widget)
         bar = qobject_cast<const QToolBar *>(widget->parentWidget());
 
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
+    Ops::toolButtonData(btn, pixelMetric(PM_ToolBarSeparatorExtent, opt, widget), nextSelected, prevSelected, isInTopToolBar, sides);
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
-    const bool hasMenu(Ops::hasMenu(toolBtn, opt));
+    QRect mr(maskRect(rect));
+    const bool hasMenu(Ops::hasMenu(btn, opt));
 
     if (bar)
     {
         if (hasMenu && arrow.isValid())
             painter->setClipRegion(QRegion(rect)-QRegion(arrow));
-        const QRect geo = widget->geometry();
-        int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
-        int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
-        geo.getCoords(&x, &y, &r, &b);
-        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
-        {
-            sides &= ~Render::Right;
-            if (btn->isChecked())
-                nextSelected = true;
-        }
-        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc)))
-        {
-            sides &= ~Render::Left;
-            if (btn->isChecked())
-                prevSelected = true;
-        }
-        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin)))
-        {
-            sides &= ~Render::Bottom;
-            if (btn->isChecked())
-                nextSelected = true;
-        }
-        if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin)))
-        {
-            sides &= ~Render::Top;
-            if (btn->isChecked())
-                prevSelected = true;
-        }
-        if (const QToolButton *btn = qobject_cast<const QToolButton *>(widget))
-            if (btn->isChecked())
-                nextSelected = true;
-        if (const QMainWindow *win = qobject_cast<const QMainWindow *>(bar->parentWidget()))
-            if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
-                isInTopToolBar = true;
 
-        QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
+        QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
         QColor bc(option->palette.color(bg));
         QColor bca(bc);
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
         if (option->SUNKEN)
-            bca = bc = sc;
+        {
+            if (!btn->property("DSP_menupress").toBool())
+                bc = sc;
+        }
         else if (option->ENABLED)
         {
-            int hl(Anim::ToolBtns::level(qobject_cast<const QToolButton *>(widget), false));
-            int hla(Anim::ToolBtns::level(qobject_cast<const QToolButton *>(widget), true));
+            int hl(Anim::ToolBtns::level(btn, false));
             bc = Color::mid(bc, sc, STEPS-hl, hl);
-            bca = Color::mid(bca, sc, STEPS-hla, hla);
         }
 
         QLinearGradient lg(0, 0, 0, rect.height());
@@ -279,11 +271,17 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         QBrush mask(lg);
         Render::drawClickable(Settings::conf.toolbtn.shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
 
-        if (Ops::hasMenu(toolBtn, opt))
+        if (hasMenu)
         {
-            QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
-            painter->setClipRect(arrow);
+            if (option->SUNKEN && btn->property("DSP_menupress").toBool())
+                bca = sc;
+            else
+            {
+                const int hla(Anim::ToolBtns::level(btn, true));
+                bca = Color::mid(bca, sc, STEPS-hla, hla);
+            }
 
+            painter->setClipRect(arrow);
             QLinearGradient lga(0, 0, 0, rect.height());
             lga.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bca));
             QBrush amask(lga);
@@ -295,72 +293,52 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         if (!(sides&Render::Right) && !nextSelected && bar->orientation() == Qt::Horizontal)
         {
             painter->setPen(QColor(0, 0, 0, 32));
-            QRect r(rect);
-            switch (Settings::conf.toolbtn.shadow)
-            {
-            case Render::Sunken:
-            case Render::Etched:
-            case Render::Raised:
-                r.adjust(0, 1, 0, -2);
-                break;
-            case Render::Simple:
-                r.adjust(0, 0, 0, -1);
-                break;
-            case Render::Carved:
-                r.adjust(0, 3, 0, -3);
-                break;
-            default: break;
-            }
-            painter->drawLine(r.topRight(), r.bottomRight());
+            painter->drawLine(mr.topRight(), mr.bottomRight());
         }
     }
-    const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
-    Qt::Alignment iAlign = Qt::AlignCenter, tAlign = Qt::AlignCenter;
 
-    if (Ops::hasMenu(toolBtn, opt))
+    if (hasMenu)
     {
-        rect.setRight(arrow.left());
+        mr.setRight(arrow.left());
         painter->setPen(QColor(0, 0, 0, 32));
-        painter->drawLine(rect.adjusted(0, 0, 0, -1).topRight(), rect.adjusted(0, 1, 0, -1).bottomRight());
+        painter->drawLine(mr.topRight(), mr.bottomRight());
         Ops::drawArrow(painter, opt->palette.color(QPalette::ButtonText), arrow, Ops::Down, Qt::AlignCenter, 7);
     }
 
-    if (rect.height() > opt->iconSize.height() && rect.width() > opt->iconSize.width())
-        rect.shrink(3);
-    QRect ir(rect);
+    QRect ir(mr);
+    const Render::Pos rp(Render::pos(sides, bar?bar->orientation():Qt::Horizontal));
     switch (opt->toolButtonStyle)
     {
     case Qt::ToolButtonTextBesideIcon:
-//        iAlign = Qt::AlignLeft|Qt::AlignVCenter;
-//        tAlign = Qt::AlignLeft|Qt::AlignVCenter;
+        if (Settings::conf.toolbtn.shadow == Render::Carved)
+            if (rp == Render::First || rp == Render::Alone)
+                ir.translate(4, 0);
         ir.setRight(ir.left()+opt->iconSize.width());
-        rect.setLeft(ir.right());
-
+        mr.setLeft(ir.right());
         break;
     case Qt::ToolButtonTextUnderIcon:
-//        iAlign = Qt::AlignTop|Qt::AlignHCenter
-//        tAlign = Qt::AlignBottom|Qt::AlignHCenter;
-
         ir.setBottom(ir.top()+opt->iconSize.height());
-        rect.setTop(ir.bottom());
+        mr.setTop(ir.bottom());
         break;
     default: break;
     }
 
-    if (Settings::conf.toolbtn.shadow == Render::Carved)
-    if (opt->toolButtonStyle == Qt::ToolButtonIconOnly)
-    if (bar && bar->orientation() == Qt::Horizontal)
-    if (sides & (Render::Left|Render::Right) && sides != Render::All)
+    if (Settings::conf.toolbtn.shadow == Render::Carved
+            && opt->toolButtonStyle == Qt::ToolButtonIconOnly
+            && bar && bar->orientation() == Qt::Horizontal)
     {
-        if (sides & Render::Left)
+        if (rp == Render::First)
             ir.translate(2, 0);
-        else if (sides & Render::Right)
+        else if (rp == Render::Last && !hasMenu)
             ir.translate(-2, 0);
     }
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
-        drawItemPixmap(painter, ir, iAlign, pix);
+    {
+        const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
+        drawItemPixmap(painter, ir, Qt::AlignCenter, pix);
+    }
     if (opt->toolButtonStyle)
-        drawItemText(painter, rect, tAlign, opt->palette, opt->ENABLED, opt->text, QPalette::ButtonText);
+        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::ButtonText);
     painter->restore();
     return true;
 }

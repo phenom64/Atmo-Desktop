@@ -10,6 +10,7 @@ class Q_DECL_EXPORT Render
 {
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
+    enum Pos { First = 0, Middle = 1, Last = 2, Alone = 3 };
     enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
     enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
@@ -33,7 +34,7 @@ public:
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1);
     static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const QPoint &offSet = QPoint());
-
+    static Pos pos(const Sides s, const Qt::Orientation o);
 
 protected:
     void _generateData();
