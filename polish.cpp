@@ -20,6 +20,7 @@
 #include <QSlider>
 #include <QScrollBar>
 #include <QTextEdit>
+#include <QDialog>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -174,6 +175,12 @@ StyleProject::polish(QWidget *widget)
             widget->setAttribute(Qt::WA_TranslucentBackground);
             needShadows = true;
         }
+        if (Settings::conf.hackDialogs && qobject_cast<QDialog *>(widget))
+        {
+            widget->setWindowFlags(widget->windowFlags() | Qt::FramelessWindowHint);
+            WinHandler::manage(widget);
+            needShadows = true;
+        }
         if (qobject_cast<QMenu *>(widget)
                 || qobject_cast<QDockWidget *>(widget)
                 || qobject_cast<QToolBar *>(widget)
@@ -201,7 +208,7 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QFrame *, frame, widget))
     {
         if (frame->frameShadow() == QFrame::Sunken
-                && qobject_cast<QMainWindow *>(Ops::window(frame)))
+                && qobject_cast<QMainWindow *>(frame->window()))
             OverLay::manage(frame, Settings::conf.shadows.opacity*255.0f);
     }
     if (castObj(QAbstractItemView *, view, widget))

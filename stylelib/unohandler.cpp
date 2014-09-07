@@ -384,6 +384,7 @@ UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
             toolBar->insertWidget(a, title)->setObjectName("DSP_titleAction");
         toolBar->setProperty(HASSTRETCH, true);
     }
+    updateToolBar(toolBar);
     QTimer::singleShot(0, toolBar, SLOT(update()));
 }
 
@@ -546,18 +547,18 @@ UNOHandler::updateToolBar(QToolBar *toolBar)
     {
         if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
         {
-            if (!(win->windowFlags() & Qt::FramelessWindowHint))
-            {
-                toolBar->setMovable(true);
-                toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-                toolBar->setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
-            }
-            else
+            if (win->windowFlags() & Qt::FramelessWindowHint)
             {
                 toolBar->setMovable(false);
                 const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
                 toolBar->layout()->setContentsMargins(pm, pm, pm, pm);
                 toolBar->setContentsMargins(0, 0, 0, 0);
+            }
+            else
+            {
+                toolBar->setMovable(true);
+                toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+                toolBar->setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
             }
         }
         else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
@@ -636,6 +637,8 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::MouseButtonPress:
     {
+        if (w->isWindow())
+            return false;
         QMouseEvent *me(static_cast<QMouseEvent *>(e));
         if (castObj(QTabBar *, tb, w))
             if (tb->tabAt(me->pos()) != -1)
@@ -646,6 +649,28 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             return false;
         XHandler::mwRes(me->globalPos(), w->window()->winId());
         return false;
+    }
+    case QEvent::Show:
+    {
+        if (Settings::conf.hackDialogs)
+        if (qobject_cast<QDialog *>(w))
+        {
+            QWidget *p = w->parentWidget();
+            if  (!p)
+                p = qApp->activeWindow();
+            if (!p)
+                return false;
+            int y(p->mapToGlobal(p->rect().topLeft()).y());
+            if (p->windowFlags() & Qt::FramelessWindowHint
+                    && qobject_cast<QMainWindow *>(p))
+                if (QToolBar *bar = p->findChild<QToolBar *>())
+                    if (bar->orientation() == Qt::Horizontal
+                            && bar->geometry().topLeft() == QPoint(0, 0))
+                        y+=bar->height();
+            int x(p->mapToGlobal(p->rect().center()).x()-(w->width()/2));
+            w->move(x, y);
+            return false;
+        }
     }
     default: break;
     }
