@@ -129,7 +129,9 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
     Render::Sides sides = Render::All;
 //    if (widget && qobject_cast<QMenuBar *>(widget->parentWidget()))
 //        sides &= ~Render::Top;
-    Render::renderMask(option->rect, painter, option->palette.color(bg), 4, sides);
+    QColor bgc(option->palette.color(bg));
+    bgc.setAlpha(XHandler::opacity()*255.0f);
+    Render::renderMask(option->rect, painter, bgc, 4, sides);
     return true;
 }
 
