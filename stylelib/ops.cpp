@@ -223,7 +223,8 @@ Ops::updateToolBar()
     t->deleteLater();
     if (Settings::conf.removeTitleBars
             && bar->geometry().topLeft() == QPoint(0, 0)
-            && bar->orientation() == Qt::Horizontal)
+            && bar->orientation() == Qt::Horizontal
+            && qobject_cast<QMainWindow *>(bar->parentWidget()))
         UNOHandler::setupNoTitleBarWindow(bar);
 }
 
