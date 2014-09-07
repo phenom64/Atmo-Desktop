@@ -177,7 +177,6 @@ StyleProject::polish(QWidget *widget)
         }
         if (Settings::conf.hackDialogs && qobject_cast<QDialog *>(widget))
         {
-            widget->setWindowFlags(widget->windowFlags() | Qt::FramelessWindowHint);
             WinHandler::manage(widget);
             needShadows = true;
         }

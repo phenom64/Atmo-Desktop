@@ -348,13 +348,19 @@ static TitleWidget *canAddTitle(QToolBar *toolBar, bool &canhas)
 void
 UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
 {
-    if (toolBar->actions().isEmpty())
+    if (!toolBar
+            || toolBar->actions().isEmpty()
+            || !qobject_cast<QMainWindow *>(toolBar->parentWidget())
+            || toolBar->geometry().topLeft() != QPoint(0, 0)
+            || toolBar->orientation() != Qt::Horizontal)
+        return;
+    if (toolBar->parentWidget()->parentWidget())
         return;
 
     Buttons *b(toolBar->findChild<Buttons *>());
     if (!b)
     {
-        toolBar->insertWidget(toolBar->actions().first(), new Buttons(toolBar))->setObjectName("DSP_buttonsAction");
+        toolBar->insertWidget(toolBar->actions().first(), new Buttons(toolBar));
         toolBar->window()->installEventFilter(instance());
         toolBar->window()->setProperty(HASBUTTONS, true);
     }
@@ -362,7 +368,6 @@ UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
 
     bool cantitle;
     TitleWidget *t = canAddTitle(toolBar, cantitle);
-
     if (cantitle)
     {
         QAction *ta(0);
@@ -375,17 +380,29 @@ UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
         title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         int at(qFloor((float)toolBar->actions().count()/2.0f));
         int i(at);
-        QAction *a = toolBar->actions().at(i);
-        while (a && !a->isSeparator() && i > (at-3))
-             a = toolBar->actions().at(--i);
+        const QList<QAction *> actions(toolBar->actions());
+        QAction *a = actions.at(i);
+        while (a && i > (at-3))
+        {
+            if (!a)
+            {
+                toolBar->removeAction(toolBar->actionAt(title->geometry().topLeft()));
+                title->deleteLater();
+                return;
+            }
+            if (a->isSeparator())
+                break;
+            else
+                a = actions.at(--i);
+        }
         if (ta)
             toolBar->insertAction(a, ta);
         else
-            toolBar->insertWidget(a, title)->setObjectName("DSP_titleAction");
+            toolBar->insertWidget(a, title);
         toolBar->setProperty(HASSTRETCH, true);
     }
     updateToolBar(toolBar);
-    QTimer::singleShot(0, toolBar, SLOT(update()));
+    fixTitleLater(toolBar->parentWidget());
 }
 
 bool
@@ -425,12 +442,16 @@ bool
 UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float opacity)
 {
     if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
-    if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->window()))
-    if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
-    if (tb->orientation() != Qt::Horizontal)
-        return false;
+        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->window()))
+            if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
+                if (tb->orientation() != Qt::Horizontal)
+                    return false;
+
     if (!w->isWindow())
         w = w->window();
+
+    if (w->height() > w->width())
+        return false;
 
     QVariant var(w->property("DSP_UNOheight"));
     if (var.isValid())
@@ -658,8 +679,10 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             QWidget *p = w->parentWidget();
             if  (!p)
                 p = qApp->activeWindow();
-            if (!p)
+            if (!p || p == w)
                 return false;
+            w->setWindowFlags(w->windowFlags() | Qt::FramelessWindowHint);
+            w->setVisible(true);
             int y(p->mapToGlobal(p->rect().topLeft()).y());
             if (p->windowFlags() & Qt::FramelessWindowHint
                     && qobject_cast<QMainWindow *>(p))

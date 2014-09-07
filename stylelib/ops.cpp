@@ -207,10 +207,10 @@ Ops::updateToolBarLater(QToolBar *bar, const int time)
 void
 Ops::updateToolBar()
 {
-    QTimer *t(static_cast<QTimer *>(sender()));
+    QTimer *t(qobject_cast<QTimer *>(sender()));
     if (!t)
         return;
-    QToolBar *bar(static_cast<QToolBar *>(t->parent()));
+    QToolBar *bar(qobject_cast<QToolBar *>(t->parent()));
     if (!bar)
         return;
 //    if (t->property("DSP_childcount").toInt() != bar->actions().count())
