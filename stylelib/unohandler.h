@@ -42,6 +42,15 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 };
 
+class TitleWidget : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit TitleWidget(QWidget *parent = 0):QWidget(parent){}
+protected:
+    void paintEvent(QPaintEvent *);
+};
+
 class QToolBar;
 class Q_DECL_EXPORT UNOHandler : public QObject
 {
@@ -56,6 +65,7 @@ public:
     static void updateToolBar(QToolBar *toolBar);
     static void fixTitleLater(QWidget *win);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset = 0, float opacity = 1.0f);
+    static void setupNoTitleBarWindow(QToolBar *toolBar);
 
 public slots:
     void fixTitle();

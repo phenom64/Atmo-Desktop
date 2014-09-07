@@ -83,7 +83,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
         int th(win->property("titleHeight").toInt()); 
-        if (Settings::conf.removeTitleBars && XHandler::opacity() < 1.0f)
+        if (Settings::conf.removeTitleBars && XHandler::opacity() < 1.0f && win->windowFlags() & Qt::FramelessWindowHint)
         {
             Render::Sides sides(Render::checkedForWindowEdges(widget));
             sides = Render::All-sides;

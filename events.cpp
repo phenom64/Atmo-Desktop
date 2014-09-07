@@ -256,7 +256,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     if (castObj(QToolButton *, toolButton, o))
     {
         castObj(QToolBar *, toolBar, toolButton->parentWidget());
-        if ( !toolBar )
+        if (!toolBar)
             return false;
         //below simply to trigger an event that forces the toolbar to call sizeFromContents again
         Ops::updateToolBarLater(toolBar, 50);

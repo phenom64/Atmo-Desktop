@@ -22,6 +22,8 @@
 #include "macros.h"
 #include "color.h"
 #include "render.h"
+#include "settings.h"
+#include "unohandler.h"
 
 Q_DECL_EXPORT Ops *Ops::s_instance = 0;
 Q_DECL_EXPORT QQueue<QueueItem> Ops::m_laterQueue;
@@ -197,7 +199,7 @@ Ops::updateToolBarLater(QToolBar *bar, const int time)
         t = new QTimer(bar);
         t->setObjectName("DSP_toolbartimer");
         connect(t, SIGNAL(timeout()), instance(), SLOT(updateToolBar()));
-        t->setProperty("DSP_childcount", bar->actions().count());
+//        t->setProperty("DSP_childcount", bar->actions().count());
     }
     t->start(time);
 }
@@ -211,14 +213,18 @@ Ops::updateToolBar()
     QToolBar *bar(static_cast<QToolBar *>(t->parent()));
     if (!bar)
         return;
-    if (t->property("DSP_childcount").toInt() != bar->actions().count())
-        return;
+//    if (t->property("DSP_childcount").toInt() != bar->actions().count())
+//        return;
 
     const QSize &iconSize(bar->iconSize());
     bar->setIconSize(iconSize - QSize(1, 1));
     bar->setIconSize(iconSize);
     t->stop();
     t->deleteLater();
+    if (Settings::conf.removeTitleBars
+            && bar->geometry().topLeft() == QPoint(0, 0)
+            && bar->orientation() == Qt::Horizontal)
+        UNOHandler::setupNoTitleBarWindow(bar);
 }
 
 QPalette::ColorRole
