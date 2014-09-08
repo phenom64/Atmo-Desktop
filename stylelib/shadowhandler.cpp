@@ -10,14 +10,12 @@
 #include "xhandler.h"
 #include "ops.h"
 
-Q_DECL_EXPORT ShadowHandler *ShadowHandler::m_instance = 0;
+Q_DECL_EXPORT ShadowHandler ShadowHandler::m_instance;
 
 ShadowHandler
 *ShadowHandler::instance()
 {
-    if (!m_instance)
-        m_instance = new ShadowHandler();
-    return m_instance;
+    return &m_instance;
 }
 
 bool
@@ -129,7 +127,6 @@ ShadowHandler::release(QWidget *w)
 void
 ShadowHandler::removeDelete()
 {
-    deleteInstance();
     for (int i = 0; i < 8; ++i)
     {
         if (pix[i])
@@ -141,15 +138,3 @@ ShadowHandler::removeDelete()
     }
     XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
 }
-
-void
-ShadowHandler::deleteInstance()
-{
-    if (m_instance)
-    {
-        delete m_instance;
-        m_instance = 0;
-    }
-}
-
-

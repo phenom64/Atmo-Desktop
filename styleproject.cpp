@@ -89,6 +89,8 @@ StyleProject::drawPrimitive(PrimitiveElement element, const QStyleOption *option
 void
 StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
 {
+//    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
+//    return;
     if (text.isEmpty())
         return;
     painter->save();
@@ -110,9 +112,9 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
             painter->setPen(bevel);
             painter->drawText(rect.translated(0, 1), flags, text);
         }
-        painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
     }
 
+    painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
     painter->drawText(rect, flags, text);
     painter->restore();
 }

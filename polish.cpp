@@ -226,8 +226,6 @@ StyleProject::polish(QWidget *widget)
         if (qobject_cast<QMenu *>(widget))
         {
             widget->setAttribute(Qt::WA_TranslucentBackground);
-            unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
             widget->setForegroundRole(QPalette::Text);
             widget->setBackgroundRole(QPalette::Base);
         }

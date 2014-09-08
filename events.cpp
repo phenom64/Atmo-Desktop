@@ -246,6 +246,11 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
         static_cast<QWidget *>(o)->setMouseTracking(true);
         static_cast<QWidget *>(o)->setAttribute(Qt::WA_Hover);
+        if (qobject_cast<QMenu *>(o))
+        {
+            unsigned int d(0);
+            XHandler::setXProperty<unsigned int>(static_cast<QMenu *>(o)->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        }
     }
     if (w->inherits("KTitleWidget"))
     {

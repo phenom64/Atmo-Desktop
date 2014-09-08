@@ -11,12 +11,11 @@ public:
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static void removeDelete();
-    static void deleteInstance();
     static ShadowHandler *instance();
 protected:
     bool eventFilter(QObject *, QEvent *);
 private:
-    static ShadowHandler *m_instance;
+    static ShadowHandler m_instance;
 };
 
 #endif //SHADOWHANDLER_H
