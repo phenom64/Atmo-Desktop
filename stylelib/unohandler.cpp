@@ -452,16 +452,16 @@ bool
 UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float opacity)
 {
     if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
-        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->window()))
+        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
             if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
                 if (tb->orientation() != Qt::Horizontal)
                     return false;
 
-    if (!w->isWindow())
-        w = w->window();
-
     if (w->height() > w->width())
         return false;
+
+    if (!w->isWindow())
+        w = w->window();
 
     QVariant var(w->property("DSP_UNOheight"));
     if (var.isValid())
