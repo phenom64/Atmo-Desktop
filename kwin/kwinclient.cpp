@@ -15,6 +15,7 @@
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/render.h"
 #include "../stylelib/color.h"
+#include "../stylelib/settings.h"
 
 #define TITLEHEIGHT 22
 #define MARGIN 6
@@ -32,6 +33,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_opacity(1.0f)
 {
     setParent(factory);
+    Settings::read();
 }
 
 KwinClient::~KwinClient()

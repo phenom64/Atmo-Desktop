@@ -100,45 +100,52 @@ Button::mouseReleaseEvent(QMouseEvent *e)
 void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
-    p.save();
-    p.setPen(Qt::NoPen);
-    r.adjust(2, 2, -2, -2);
-    p.setBrush(Color::mid(c, Qt::black, 4, 1));
-    p.drawEllipse(r);
-    p.setBrush(c);
-    r.adjust(1, 1, -1, -1);
-    p.drawEllipse(r);
-    p.restore();
-#if 0
-    c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
-    const QColor low(Color::mid(c, Qt::black, 5, 3));
-    const QColor high(QColor(255, 255, 255, 127));
-    r.adjust(2, 2, -2, -2);
-    p.setBrush(high);
-    p.drawEllipse(r.translated(0, 1));
-    p.setBrush(low);
-    p.drawEllipse(r);
-    r.adjust(1, 1, -1, -1);
+    switch (Settings::conf.titleButtons)
+    {
+    case 0:
+    {
+        p.save();
+        p.setPen(Qt::NoPen);
+        r.adjust(2, 2, -2, -2);
+        p.setBrush(Color::mid(c, Qt::black, 4, 1));
+        p.drawEllipse(r);
+        p.setBrush(c);
+        r.adjust(1, 1, -1, -1);
+        p.drawEllipse(r);
+        p.restore();
+    }
+    case 1:
+    {
+        c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
+        const QColor low(Color::mid(c, Qt::black, 5, 3));
+        const QColor high(QColor(255, 255, 255, 127));
+        r.adjust(2, 2, -2, -2);
+        p.setBrush(high);
+        p.drawEllipse(r.translated(0, 1));
+        p.setBrush(low);
+        p.drawEllipse(r);
+        r.adjust(1, 1, -1, -1);
 
-    QRadialGradient rg(r.center()+QPoint(1, r.height()/2-1), r.height()-1);
-    rg.setColorAt(0.0f, Color::mid(c, Qt::white));
-    rg.setColorAt(0.5f, c);
+        QRadialGradient rg(r.center()+QPoint(1, r.height()/2-1), r.height()-1);
+        rg.setColorAt(0.0f, Color::mid(c, Qt::white));
+        rg.setColorAt(0.5f, c);
 
-    rg.setColorAt(1.0f, Color::mid(c, Qt::black));
-    p.setBrush(rg);
-    p.drawEllipse(r);
+        rg.setColorAt(1.0f, Color::mid(c, Qt::black));
+        p.setBrush(rg);
+        p.drawEllipse(r);
 
-    QRect rr(r);
-    rr.setWidth(6);
-    rr.setHeight(3);
-    rr.moveCenter(r.center());
-    rr.moveTop(r.top()+1);
-    QLinearGradient lg(rr.topLeft(), rr.bottomLeft());
-    lg.setColorAt(0.0f, QColor(255, 255, 255, 192));
-    lg.setColorAt(1.0f, QColor(255, 255, 255, 64));
-    p.setBrush(lg);
-    p.drawEllipse(rr);
-#endif
+        QRect rr(r);
+        rr.setWidth(6);
+        rr.setHeight(3);
+        rr.moveCenter(r.center());
+        rr.moveTop(r.top()+1);
+        QLinearGradient lg(rr.topLeft(), rr.bottomLeft());
+        lg.setColorAt(0.0f, QColor(255, 255, 255, 192));
+        lg.setColorAt(1.0f, QColor(255, 255, 255, 64));
+        p.setBrush(lg);
+        p.drawEllipse(rr);
+    }
+    }
 }
 
 /** Stolen colors from bespin....

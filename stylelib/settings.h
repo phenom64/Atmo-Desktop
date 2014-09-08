@@ -9,6 +9,7 @@
 #define BLACKLIST           "blacklist"
 #define REMOVETITLE         "removetitlebars"
 #define HACKDIALOGS         "hackdialogs"
+#define TITLEBUTTONS        "titlebuttons"
 #define PUSHBTNRND          "pushbtn.rnd"
 #define PUSHBTNSHADOW       "pushbtn.shadow"
 #define PUSHBTNGRAD         "pushbtn.gradient"
@@ -44,6 +45,7 @@
 #define DEFBLACKLIST            "smplayer"
 #define DEFREMOVETITLE          false
 #define DEFHACKDIALOGS          false
+#define DEFTITLEBUTTONS         0
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
 #define DEFPUSHBTNGRAD          "0.1:5, 1.0:-5"
@@ -62,6 +64,7 @@
 #define READBLACKLIST           BLACKLIST, DEFBLACKLIST
 #define READREMOVETITLE         REMOVETITLE, DEFREMOVETITLE
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
+#define READTITLEBUTTONS        TITLEBUTTONS, DEFTITLEBUTTONS
 #define READPUSHBTNRND          PUSHBTNRND, DEFPUSHBTNRND
 #define READPUSHBTNSHADOW       PUSHBTNSHADOW, DEFPUSHBTNSHADOW
 #define READPUSHBTNGRAD         PUSHBTNGRAD, DEFPUSHBTNGRAD
@@ -82,6 +85,7 @@ public:
     float opacity;
     QStringList blackList;
     bool removeTitleBars, hackDialogs;
+    int titleButtons;
     struct pushbtn
     {
         int rnd;
