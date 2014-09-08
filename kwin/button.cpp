@@ -91,6 +91,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         r.adjust(1, 1, -1, -1);
         p.drawEllipse(r);
         p.restore();
+        break;
     }
     case 1:
     {
@@ -122,7 +123,9 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         lg.setColorAt(1.0f, QColor(255, 255, 255, 64));
         p.setBrush(lg);
         p.drawEllipse(rr);
+        break;
     }
+    default: break;
     }
 }
 
