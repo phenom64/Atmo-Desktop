@@ -578,7 +578,7 @@ UNOHandler::updateToolBar(QToolBar *toolBar)
     {
         if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
         {
-            if (win->windowFlags() & Qt::FramelessWindowHint)
+            if (win->windowFlags() & Qt::FramelessWindowHint || !win->mask().isEmpty())
             {
                 toolBar->setMovable(false);
                 const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
@@ -681,6 +681,23 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
         XHandler::mwRes(me->globalPos(), w->window()->winId());
         return false;
     }
+    case QEvent::Paint:
+    {
+        if (qobject_cast<QDialog *>(w)
+                && w->testAttribute(Qt::WA_TranslucentBackground)
+                && w->windowFlags() & Qt::FramelessWindowHint)
+        {
+            QPainter p(w);
+            p.setPen(Qt::NoPen);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.setBrush(w->palette().color(w->backgroundRole()));
+            p.setOpacity(XHandler::opacity());
+            p.drawRoundedRect(w->rect(), 4, 4);
+            p.end();
+            return true;
+        }
+        return false;
+    }
     case QEvent::Show:
     {
         if (Settings::conf.hackDialogs)
@@ -693,6 +710,12 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
                 return false;
             w->setWindowFlags(w->windowFlags() | Qt::FramelessWindowHint);
             w->setVisible(true);
+            if (XHandler::opacity() < 1.0f)
+            {
+                w->setAttribute(Qt::WA_TranslucentBackground);
+                unsigned int d(0);
+                XHandler::setXProperty<unsigned int>(w->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+            }
             int y(p->mapToGlobal(p->rect().topLeft()).y());
             if (p->windowFlags() & Qt::FramelessWindowHint
                     && qobject_cast<QMainWindow *>(p))
@@ -702,8 +725,8 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
                         y+=bar->height();
             int x(p->mapToGlobal(p->rect().center()).x()-(w->width()/2));
             w->move(x, y);
-            return false;
         }
+        return false;
     }
     default: break;
     }
