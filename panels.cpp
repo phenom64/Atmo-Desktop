@@ -90,12 +90,12 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
             QPixmap p(option->rect.size());
             p.fill(Qt::transparent);
             QPainter pt(&p);
-            UNOHandler::drawUnoPart(&pt, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
+            UNOHandler::drawUnoPart(&pt, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
             pt.end();
             Render::renderMask(option->rect, painter, p, 4, sides);
         }
         else
-            UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
+            UNOHandler::drawUnoPart(painter, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
     }
     return true;
 }

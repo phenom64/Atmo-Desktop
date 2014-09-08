@@ -457,7 +457,7 @@ UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, floa
                 if (tb->orientation() != Qt::Horizontal)
                     return false;
 
-    if (w->height() > w->width())
+    if (!w->isWindow() && w->height() > w->width())
         return false;
 
     if (!w->isWindow())
