@@ -5,6 +5,7 @@
 #include "render.h"
 #include "ops.h"
 #include "settings.h"
+#include "shadowhandler.h"
 
 #include <QMainWindow>
 #include <QTabBar>
@@ -305,8 +306,12 @@ static void applyMask(QWidget *widget)
     if (XHandler::opacity() < 1.0f)
     {
         widget->clearMask();
-        widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
-        widget->show();
+        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint))
+        {
+            widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
+            widget->show();
+            ShadowHandler::manage(widget);
+        }
         unsigned int d(1);
         XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
     }
@@ -441,12 +446,6 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::Show:
     {
-        if (qobject_cast<QMainWindow *>(w) && XHandler::opacity() < 1.0f)
-        {
-            w->setAttribute(Qt::WA_TranslucentBackground);
-            w->move(9000, 9000);
-            return false;
-        }
         fixWindowTitleBar(w);
         return false;
     }
