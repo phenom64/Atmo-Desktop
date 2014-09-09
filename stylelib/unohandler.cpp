@@ -306,13 +306,13 @@ static void applyMask(QWidget *widget)
     if (XHandler::opacity() < 1.0f)
     {
         widget->clearMask();
-        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint))
+        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && Settings::conf.removeTitleBars)
         {
             widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
             widget->show();
             ShadowHandler::manage(widget);
         }
-        unsigned int d(1);
+        unsigned int d(0);
         XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
     }
     else
@@ -447,6 +447,11 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     case QEvent::Show:
     {
         fixWindowTitleBar(w);
+        if (qobject_cast<QMainWindow *>(w) && XHandler::opacity() < 1.0f && !w->parentWidget())
+        {
+            unsigned int d(0);
+            XHandler::setXProperty<unsigned int>(w->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        }
         return false;
     }
     default: break;

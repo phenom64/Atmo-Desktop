@@ -121,7 +121,7 @@ StyleProject::polish(QWidget *widget)
     {
         if (XHandler::opacity() < 1.0f && !win->parentWidget())
         {
-            unsigned int d(1);
+            unsigned int d(0);
             XHandler::setXProperty<unsigned int>(win->winId(), XHandler::KwinBlur, XHandler::Long, &d);
             win->setAttribute(Qt::WA_TranslucentBackground);
             win->move(9000, 9000);
