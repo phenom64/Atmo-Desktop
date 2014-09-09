@@ -304,6 +304,7 @@ static void applyMask(QWidget *widget)
 {
     if (XHandler::opacity() < 1.0f)
     {
+        widget->clearMask();
         widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
         widget->show();
         unsigned int d(1);
@@ -440,6 +441,12 @@ UNOHandler::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::Show:
     {
+        if (qobject_cast<QMainWindow *>(w) && XHandler::opacity() < 1.0f)
+        {
+            w->setAttribute(Qt::WA_TranslucentBackground);
+            w->move(9000, 9000);
+            return false;
+        }
         fixWindowTitleBar(w);
         return false;
     }
@@ -668,7 +675,7 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::MouseButtonPress:
     {
-        if (w->isWindow())
+        if (w->isWindow() && !qobject_cast<QDialog *>(w))
             return false;
         QMouseEvent *me(static_cast<QMouseEvent *>(e));
         if (castObj(QTabBar *, tb, w))

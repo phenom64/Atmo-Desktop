@@ -117,6 +117,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
      * for the KTabWidget and paint what we want
      * anyway.
      */
+    QWidget *w(static_cast<QWidget *>(o));
     if (o->inherits("KTabWidget"))
     {
         QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
@@ -143,8 +144,9 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         p.end();
         return true;
     }
-    else if (QMainWindow *win = qobject_cast<QMainWindow *>(o))
+    else if (qobject_cast<QMainWindow *>(w) && w->testAttribute(Qt::WA_TranslucentBackground))
     {
+        QMainWindow *win(static_cast<QMainWindow *>(w));
         bool ok;
         int th(win->property("DSP_headHeight").toInt(&ok));
         if (ok)

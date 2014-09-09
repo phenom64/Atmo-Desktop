@@ -121,9 +121,8 @@ StyleProject::polish(QWidget *widget)
     {
         if (XHandler::opacity() < 1.0f)
         {
-            win->setAttribute(Qt::WA_TranslucentBackground);
             unsigned int d(1);
-            XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+            XHandler::setXProperty<unsigned int>(win->winId(), XHandler::KwinBlur, XHandler::Long, &d);
         }
         installFilter(win);
     }
@@ -204,6 +203,9 @@ StyleProject::polish(QWidget *widget)
                 l->setAlignment(Qt::AlignCenter);
         }
     }
+    if (widget->inherits("KUrlNavigator"))
+        if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
+            widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be an idiot... oh well
     if (castObj(QFrame *, frame, widget))
     {
         if (frame->frameShadow() == QFrame::Sunken

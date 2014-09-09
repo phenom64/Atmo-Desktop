@@ -8,8 +8,6 @@
 #include "settings.h"
 #include "macros.h"
 
-#define OPACITY 0.75f
-
 Q_DECL_EXPORT Render Render::m_instance;
 
 /* blurring function below from:
@@ -161,16 +159,24 @@ Render::initShadowParts()
             {
                 p.setBrush(QColor(255, 255, 255, 192));
                 p.drawRoundedRect(rect, rnd, rnd);
+                rect.setBottom(rect.bottom()-1);
             }
             p.setBrush(Qt::black);
-            rect.setBottom(rect.bottom()-bool(r>1)*1);
             p.drawRoundedRect(rect, rnd, rnd);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            QRadialGradient rg(pix.rect().center()+QPointF(0, qMin(0.25f, add)), qFloor(size/2));
-            rg.setColorAt(r>3?qMin(0.8f, 0.6f+add):0, Qt::black);
-            rg.setColorAt(1.0f, Qt::transparent);
-            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
-            p.fillRect(rect, rg);
+
+            int steps(qMin(3, r));
+            int alpha(300/steps);
+            for (int i = 1; i < steps+1; ++i)
+            {
+                int sides(qMin(i, 2));
+                QRect ret(rect.adjusted(sides, i, -sides, -qMin(i, 1)));
+                p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                p.setBrush(Qt::black);
+                p.drawRoundedRect(ret, rnd, rnd);
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.setBrush(QColor(0, 0, 0, qMin(255, alpha*i)));
+                p.drawRoundedRect(ret, rnd, rnd);
+            }
             break;
         }
         case Raised:
