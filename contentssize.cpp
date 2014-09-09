@@ -215,6 +215,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         castOpt(MenuItem, item, opt);
         if (!item)
             return contentsSize;
+
         QSize sz(contentsSize+QSize(8, 0));
         if (castObj(const QMenuBar *, bar, widget))
         {

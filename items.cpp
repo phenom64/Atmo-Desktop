@@ -12,6 +12,7 @@
 #include <QTreeView>
 #include <QListView>
 #include <QTableView>
+#include <QApplication>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -26,16 +27,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     painter->save();
-    QFont f(opt->font);
-    bool isMenuBar(false);
-    if (castObj(const QMenuBar *, bar, widget))
-    {
-        isMenuBar = true;
-        drawMenuBar(option, painter, widget);
-        if (QAction *a = bar->actionAt(opt->rect.center()))
-            f.setBold(a->font().bold());
-    }
-    painter->setFont(f);
+    bool isMenuBar(qobject_cast<const QMenuBar *>(widget));
     painter->setRenderHint(QPainter::Antialiasing);
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
@@ -132,7 +124,26 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 
     for (int i = 0; i < 2 && i < text.count(); ++i)
-        drawItemText(painter, textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
+    {
+        if (isMenuBar)
+        {
+            const QMenuBar *bar(static_cast<const QMenuBar *>(widget));
+            drawMenuBar(option, painter, widget);
+            if (QAction *a = bar->actionAt(opt->rect.center()))
+            {
+                QFont f(a->font());
+                if (f.bold() && qApp->styleSheet().contains("QMenuBar:item", Qt::CaseInsensitive) || qApp->styleSheet().contains("QMenuBar::item", Qt::CaseInsensitive))
+                {
+                    int w(QFontMetrics(f).width(text.at(i)));
+                    int realw(QFontMetrics(opt->font).width(text.at(i)));
+                    int stretch(realw*100/w);
+                    f.setStretch(stretch);
+                }
+                painter->setFont(f);
+            }
+        }
+        drawItemText(painter, isMenuBar?opt->rect:textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
+    }
     painter->restore();
     return true;
 }
