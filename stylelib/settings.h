@@ -23,6 +23,7 @@
 #define SCROLLERSIZE        "scrollers.size"
 #define SHADOWOPACITY       "shadows.opacity"
 #define TABRND              "tabs.rnd"
+#define TABCLOSER           "tabs.closebuttonside"
 
 //defaults
 
@@ -59,6 +60,7 @@
 #define DEFSCROLLERSIZE         12
 #define DEFSHADOWOPACITY        33
 #define DEFTABRND               5
+#define DEFTABCLOSER            0
 
 #define READOPACITY             OPACITY, DEFOPACITY
 #define READBLACKLIST           BLACKLIST, DEFBLACKLIST
@@ -78,6 +80,7 @@
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
 #define READTABRND              TABRND, DEFTABRND
+#define READTABCLOSER           TABCLOSER, DEFTABCLOSER
 
 class Q_DECL_EXPORT Settings
 {
@@ -88,20 +91,17 @@ public:
     int titleButtons;
     struct pushbtn
     {
-        int rnd;
-        int shadow;
+        int rnd, shadow;
         QList<QPair<float, int> > gradient;
     } pushbtn;
     struct toolbtn
     {
-        int rnd;
-        int shadow;
+        int rnd, shadow;
         QList<QPair<float, int> > gradient;
     } toolbtn;
     struct input
     {
-        int rnd;
-        int shadow;
+        int rnd, shadow;
         QList<QPair<float, int> > gradient;
     } input;
     struct sliders
@@ -118,7 +118,7 @@ public:
     } shadows;
     struct tabs
     {
-        int rnd;
+        int rnd, closeButtonSide;
     } tabs;
     static Settings conf;
 

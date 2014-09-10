@@ -233,7 +233,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
         QPixmap pix(frame->rect().size());
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-        Render::renderShadow(Render::Raised, pix.rect(), &p, 8);
+        Render::renderShadow(Render::Raised, pix.rect(), &p, 8, Render::All, Settings::conf.shadows.opacity);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Render::renderMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
         p.end();

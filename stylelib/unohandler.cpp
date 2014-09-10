@@ -712,7 +712,8 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
     case QEvent::Show:
     {
         if (Settings::conf.hackDialogs)
-        if (qobject_cast<QDialog *>(w))
+        if (qobject_cast<QDialog *>(w)
+                && w->isModal())
         {
             QWidget *p = w->parentWidget();
             if  (!p)

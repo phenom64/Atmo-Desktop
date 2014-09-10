@@ -81,4 +81,5 @@ Settings::read()
     conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
     //tabs
     conf.tabs.rnd = s.value(READTABRND).toInt();
+    conf.tabs.closeButtonSide = s.value(READTABCLOSER).toInt();
 }

@@ -72,7 +72,9 @@ StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter,
     castOpt(Button, opt, option);
     if (!opt)
         return true;
-    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
+    if (opt->features & QStyleOptionButton::Flat)
+        fg = (widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
     QRect r(opt->rect);
     if (!opt->text.isEmpty())
         drawItemText(painter, r, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
@@ -304,15 +306,16 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         painter->drawLine(mr.topRight(), mr.bottomRight());
         Ops::drawArrow(painter, opt->palette.color(QPalette::ButtonText), arrow, Ops::Down, Qt::AlignCenter, 7);
     }
-
+//    const bool hor(!bar||bar->orientation() == Qt::Horizontal);
     QRect ir(mr);
     const Render::Pos rp(Render::pos(sides, bar?bar->orientation():Qt::Horizontal));
     switch (opt->toolButtonStyle)
     {
     case Qt::ToolButtonTextBesideIcon:
-        if (Settings::conf.toolbtn.shadow == Render::Carved)
-            if (rp == Render::First || rp == Render::Alone)
-                ir.translate(4, 0);
+        if (rp == Render::First || rp == Render::Alone)
+            ir.translate(6, 0);
+        else
+            ir.translate(4, 0);
         ir.setRight(ir.left()+opt->iconSize.width());
         mr.setLeft(ir.right());
         break;
@@ -338,7 +341,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         drawItemPixmap(painter, ir, Qt::AlignCenter, pix);
     }
     if (opt->toolButtonStyle)
-        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::ButtonText);
+        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
     painter->restore();
     return true;
 }

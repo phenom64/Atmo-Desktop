@@ -116,6 +116,9 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         QRect rightRect;
         if (tab->rightButtonSize.isValid())
         {
+            if (safBar && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == 1)
+            if (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab)
+                overlap *= 2;
             const QSize sz(tab->rightButtonSize);
             rightRect.setSize(sz);
             rightRect.moveCenter(tab->rect.center());

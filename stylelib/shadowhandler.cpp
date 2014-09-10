@@ -156,7 +156,7 @@ unsigned long
     rt = mask.rect();
 
 
-    QRect arrow(up?QRect(0, m, m-1, m-rnd):QRect(0, mask.height()-adj, m-1, m-rnd));
+    QRect arrow(up?QRect(0, m, m, m-rnd):QRect(0, mask.height()-adj, m, m-rnd));
     int center(size+(tb->width()/2-arrow.width()/2));
     arrow.moveLeft(center);
 

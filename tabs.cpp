@@ -217,9 +217,11 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         return true;
     castObj(const QTabBar *, bar, widget);
     painter->save();
-//    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
     const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
     const bool isSelected(opt->state & State_Selected || isOnly);
+    const bool isEnd(opt->position == QStyleOptionTab::End);
+    const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide);
 //    const QRect rect(opt->rect);
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
     int h(4);
@@ -227,15 +229,16 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     if (safTabs)
     {
         h = pixelMetric(PM_TabBarTabOverlap, option, widget);
-        if ((isOnly || opt->position == QStyleOptionTab::End) && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide)
+        if ((isOnly || isEnd) && leftClose)
             h *= 2;
+        if ((isOnly || isFirst) && !leftClose)
+            h *= 2;
+
     }
     QRect ir(tr.adjusted(h, 0, -h, 0));
-
-
     if (!opt->icon.isNull())
     {
-        if (styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide) //icon on right...
+        if (leftClose) //icon on right...
         {
             tr.setRight(tr.right()-(opt->iconSize.width()+h));
             ir.setLeft(tr.right());
@@ -246,15 +249,9 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
             ir.setRight(tr.left());
         }
     }
-//    QRect lr(subElementRect(SE_TabBarTabLeftButton, opt, widget));
-//    QRect rr(subElementRect(SE_TabBarTabRightButton, opt, widget));
     int trans(0);
     switch (opt->shape)
     {
-//    case QTabBar::RoundedNorth:
-//    case QTabBar::TriangularNorth:
-//    case QTabBar::RoundedSouth:
-//    case QTabBar::TriangularSouth:
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
         trans = -90;

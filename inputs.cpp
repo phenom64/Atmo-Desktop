@@ -133,6 +133,12 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         if (widget)
             if (QLineEdit *l = widget->findChild<QLineEdit *>())
                 brush = l->palette().brush(l->backgroundRole());
+        if (brush.style() < 2)
+        {
+            QLinearGradient lg(0, 0, 0, option->rect.height());
+            lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, brush.color()));
+            brush = QBrush(lg);
+        }
 //        drawSafariLineEdit(opt->rect, painter, brush);
         Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Render::All, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &brush);
     }
@@ -184,6 +190,12 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 //    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
 
     QBrush mask(option->palette.brush(QPalette::Base));
+    if (mask.style() < 2)
+    {
+        QLinearGradient lg(0, 0, 0, opt->rect.height());
+        lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, mask.color()));
+        mask = QBrush(lg);
+    }
     Render::drawClickable(Settings::conf.input.shadow, opt->rect, painter, Render::All, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
 
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
