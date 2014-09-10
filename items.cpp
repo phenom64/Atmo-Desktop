@@ -180,7 +180,8 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
         {
             painter->setPen(Qt::NoPen);
             painter->setBrush(brush);
-            painter->drawRoundedRect(opt->rect, Settings::conf.input.rnd, Settings::conf.input.rnd);
+            const int rnd(qMin(6, Settings::conf.input.rnd)); //too much roundness just looks silly
+            painter->drawRoundedRect(opt->rect, rnd, rnd);
         }
         else
         {
