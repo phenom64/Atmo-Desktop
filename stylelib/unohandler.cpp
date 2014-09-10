@@ -717,8 +717,9 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             QWidget *p = w->parentWidget();
             if  (!p)
                 p = qApp->activeWindow();
-            if (!p || p == w)
+            if (!p || p == w || p->objectName() == "BE::Desk")
                 return false;
+
             w->setWindowFlags(w->windowFlags() | Qt::FramelessWindowHint);
             w->setVisible(true);
             if (XHandler::opacity() < 1.0f)

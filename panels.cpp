@@ -9,6 +9,7 @@
 #include <QCheckBox>
 #include <QMenuBar>
 #include <QMap>
+#include <QToolButton>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -125,12 +126,11 @@ StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QW
 bool
 StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
+    const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
     Render::Sides sides = Render::All;
-//    if (widget && qobject_cast<QMenuBar *>(widget->parentWidget()))
-//        sides &= ~Render::Top;
     QColor bgc(option->palette.color(bg));
-    bgc.setAlpha(XHandler::opacity()*255.0f);
+    if (widget && !widget->property("DSP_hasmenuarrow").toBool())
+        bgc.setAlpha(XHandler::opacity()*255.0f);
     Render::renderMask(option->rect, painter, bgc, 4, sides);
     return true;
 }

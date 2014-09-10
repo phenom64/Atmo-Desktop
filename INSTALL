@@ -2,7 +2,9 @@ Dummy Instructions
 
 INSTALL:
 
-cmake -DCMAKE_INSTALL_PREFIX=/usr
+mkdir build
+cd build
+cmake ../ -DCMAKE_INSTALL_PREFIX=/usr
 make
 sudo make install 
 
