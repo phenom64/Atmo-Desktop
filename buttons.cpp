@@ -58,7 +58,7 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
             int hl(Anim::Basic::level(widget));
             bc = Color::mid(bc, sc, STEPS-hl, hl);
         }
-        QLinearGradient lg(0, 0, 0, opt->rect.height());
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, opt->rect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bc));
         QBrush m(lg);
         Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Render::All, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &m);
@@ -121,7 +121,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
 
-    QLinearGradient lg(0, 0, 0, checkRect.height());
+    QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, checkRect.height()));
     lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
     QBrush mask(lg);
     Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, Render::All, 3, Settings::conf.shadows.opacity, widget, &mask);
@@ -175,7 +175,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
         int hl(Anim::Basic::level(widget));
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
-    QLinearGradient lg(0, 0, 0, checkRect.height());
+    QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, checkRect.height()));
     lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
     QBrush mask(lg);
     Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, Render::All, MAXRND, Settings::conf.shadows.opacity, widget, &mask);
@@ -268,7 +268,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             bc = Color::mid(bc, sc, STEPS-hl, hl);
         }
 
-        QLinearGradient lg(0, 0, 0, rect.height());
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.toolbtn.shadow, rect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bc));
         QBrush mask(lg);
         Render::drawClickable(Settings::conf.toolbtn.shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
@@ -284,7 +284,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             }
 
             painter->setClipRect(arrow);
-            QLinearGradient lga(0, 0, 0, rect.height());
+            QLinearGradient lga(0, 0, 0, Render::maskHeight(Settings::conf.toolbtn.shadow, rect.height()));
             lga.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bca));
             QBrush amask(lga);
             Render::drawClickable(Settings::conf.toolbtn.shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &amask);

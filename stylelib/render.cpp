@@ -157,7 +157,7 @@ Render::initShadowParts()
             const int rnd(bool(r>2)?r:1);
             if (r > 1)
             {
-                p.setBrush(QColor(255, 255, 255, 192));
+                p.setBrush(QColor(255, 255, 255, 255));
                 p.drawRoundedRect(rect, rnd, rnd);
                 rect.setBottom(rect.bottom()-1);
             }
@@ -206,7 +206,7 @@ Render::initShadowParts()
             white.fill(Qt::transparent);
             QPainter pt(&white);
             pt.setRenderHint(QPainter::Antialiasing);
-            pt.setBrush(QColor(255, 255, 255, 192));
+            pt.setBrush(QColor(255, 255, 255, 255));
             pt.setPen(Qt::NoPen);
             pt.drawRoundedRect(white.rect(), r, r);
             pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -727,7 +727,6 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         r.sAdjust(1, 1, -1, -2);
         rnd = qMax(1, rnd-1);
     }
-
     renderMask(r, p, *mask, rnd, sides, offSet);
     if (s==Carved)
     {
@@ -768,5 +767,22 @@ Render::pos(const Sides s, const Qt::Orientation o)
             return Alone;
         else
             return Middle;
+    }
+}
+
+int
+Render::maskHeight(const Shadow s, const int height)
+{
+    switch (s)
+    {
+    case Render::Sunken:
+    case Render::Etched:
+    case Render::Raised:
+        return height-3;
+    case Render::Simple:
+        return height-1;
+    case Render::Carved:
+        return height-6;
+    default: return 0;
     }
 }

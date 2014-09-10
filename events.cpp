@@ -144,7 +144,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         p.end();
         return true;
     }
-    else if (qobject_cast<QMainWindow *>(w) && w->testAttribute(Qt::WA_TranslucentBackground))
+    else if (qobject_cast<QMainWindow *>(w))
     {
         QMainWindow *win(static_cast<QMainWindow *>(w));
         bool ok;

@@ -43,7 +43,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     QBrush mask(option->palette.brush(QPalette::Base));
     if (mask.style() == Qt::SolidPattern || mask.style() == Qt::NoBrush)
     {
-        QLinearGradient lg(0, 0, 0, option->rect.height());
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.input.shadow, option->rect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, option->palette.color(QPalette::Base)));
         mask = QBrush(lg);
     }
@@ -100,7 +100,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         }
 
         painter->setClipRegion(QRegion(frameRect)-QRegion(arrowRect));
-        QLinearGradient lg(0, 0, 0, frameRect.height());
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, frameRect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
         QBrush mask(lg);
         Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Render::All, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
@@ -108,7 +108,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         const int o(Settings::conf.shadows.opacity*255.0f);
 
         const QColor hc(opt->palette.color(QPalette::Highlight));
-        QLinearGradient lga(0, 0, 0, opt->rect.height());
+        QLinearGradient lga(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, opt->rect.height()));
         lga.setColorAt(0.0f, Color::mid(hc, Qt::white, 10, 1));
         lga.setColorAt(1.0f, Color::mid(hc, Qt::black, 10, 1));
         mask = QBrush(lga);
@@ -135,7 +135,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
                 brush = l->palette().brush(l->backgroundRole());
         if (brush.style() < 2)
         {
-            QLinearGradient lg(0, 0, 0, option->rect.height());
+            QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.input.shadow, option->rect.height()));
             lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, brush.color()));
             brush = QBrush(lg);
         }
@@ -182,7 +182,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
     if (!opt)
         return true;
 
-    QRect frame(subControlRect(CC_SpinBox, opt, SC_SpinBoxFrame, widget));
+//    QRect frame(subControlRect(CC_SpinBox, opt, SC_SpinBoxFrame, widget));
     QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget).shrinked(2));
 //    up.setBottom(up.bottom()-1);
     QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget).shrinked(2));
@@ -192,7 +192,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
     QBrush mask(option->palette.brush(QPalette::Base));
     if (mask.style() < 2)
     {
-        QLinearGradient lg(0, 0, 0, opt->rect.height());
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.input.shadow, opt->rect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, mask.color()));
         mask = QBrush(lg);
     }

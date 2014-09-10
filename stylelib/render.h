@@ -35,6 +35,7 @@ public:
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1);
     static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const QPoint &offSet = QPoint());
     static Pos pos(const Sides s, const Qt::Orientation o);
+    static int maskHeight(const Shadow s, const int height);
 
 protected:
     void _generateData();
