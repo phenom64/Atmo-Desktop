@@ -8,6 +8,7 @@
 #define OPACITY             "opacity"
 #define BLACKLIST           "blacklist"
 #define REMOVETITLE         "removetitlebars"
+#define TITLEPOS            "titlepos"
 #define HACKDIALOGS         "hackdialogs"
 #define TITLEBUTTONS        "titlebuttons"
 
@@ -54,6 +55,7 @@
 #define DEFOPACITY              100
 #define DEFBLACKLIST            "smplayer"
 #define DEFREMOVETITLE          false
+#define DEFTITLEPOS             1
 #define DEFHACKDIALOGS          false
 #define DEFTITLEBUTTONS         0
 
@@ -81,6 +83,7 @@
 #define READOPACITY             OPACITY, DEFOPACITY
 #define READBLACKLIST           BLACKLIST, DEFBLACKLIST
 #define READREMOVETITLE         REMOVETITLE, DEFREMOVETITLE
+#define READTITLEPOS            TITLEPOS, DEFTITLEPOS
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
 #define READTITLEBUTTONS        TITLEBUTTONS, DEFTITLEBUTTONS
 
@@ -111,7 +114,7 @@ public:
     float opacity;
     QStringList blackList;
     bool removeTitleBars, hackDialogs;
-    int titleButtons;
+    int titleButtons, titlePos;
     struct pushbtn
     {
         int rnd, shadow;

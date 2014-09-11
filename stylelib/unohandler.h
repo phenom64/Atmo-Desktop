@@ -46,6 +46,7 @@ class TitleWidget : public QWidget
 {
     Q_OBJECT
 public:
+    enum TitlePos { Left = 0, Center, Right };
     explicit TitleWidget(QWidget *parent = 0):QWidget(parent){}
 protected:
     void paintEvent(QPaintEvent *);

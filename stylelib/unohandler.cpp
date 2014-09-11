@@ -280,7 +280,22 @@ TitleWidget::paintEvent(QPaintEvent *)
     f.setBold(window()->isActiveWindow());
     f.setPointSize(f.pointSize()*1.2f);
     p.setFont(f);
-    style()->drawItemText(&p, rect(), Qt::AlignCenter, palette(), true, p.fontMetrics().elidedText(title, Qt::ElideRight, rect().width()), foregroundRole());
+    int align(Qt::AlignVCenter);
+    switch (Settings::conf.titlePos)
+    {
+    case Left:
+        align |= Qt::AlignLeft;
+        break;
+    case Center:
+        align |= Qt::AlignHCenter;
+        break;
+    case Right:
+        align |= Qt::AlignRight;
+        break;
+    default: break;
+    }
+
+    style()->drawItemText(&p, rect(), align, palette(), true, p.fontMetrics().elidedText(title, Qt::ElideRight, rect().width()), foregroundRole());
     p.end();
 }
 
@@ -400,6 +415,15 @@ UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
         toolBar->window()->installEventFilter(instance());
         toolBar->window()->setProperty(HASBUTTONS, true);
     }
+    else
+    {
+        QAction *a(toolBar->actionAt(b->geometry().topLeft()));
+        if (a)
+        {
+            toolBar->removeAction(a);
+            toolBar->insertAction(toolBar->actions().first(), a);
+        }
+    }
     applyMask(toolBar->window());
 
     bool cantitle;
@@ -414,23 +438,29 @@ UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
         }
         TitleWidget *title(t?t:new TitleWidget(toolBar));
         title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        int at(qFloor((float)toolBar->actions().count()/2.0f));
-        int i(at);
-        const QList<QAction *> actions(toolBar->actions());
-        QAction *a = actions.at(i);
-        while (a && i > (at-3))
+        QAction *a(0);
+        if (Settings::conf.titlePos == TitleWidget::Center)
         {
-            if (!a)
+            int at(qFloor((float)toolBar->actions().count()/2.0f));
+            int i(at);
+            const QList<QAction *> actions(toolBar->actions());
+            a = actions.at(i);
+            while (a && i > (at-3))
             {
-                toolBar->removeAction(toolBar->actionAt(title->geometry().topLeft()));
-                title->deleteLater();
-                return;
+                if (!a)
+                {
+                    toolBar->removeAction(toolBar->actionAt(title->geometry().topLeft()));
+                    title->deleteLater();
+                    return;
+                }
+                if (a->isSeparator())
+                    break;
+                else
+                    a = actions.at(--i);
             }
-            if (a->isSeparator())
-                break;
-            else
-                a = actions.at(--i);
         }
+        else if (Settings::conf.titlePos == TitleWidget::Left)
+            a = toolBar->actions().at(1);
         if (ta)
             toolBar->insertAction(a, ta);
         else
