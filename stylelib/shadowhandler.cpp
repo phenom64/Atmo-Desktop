@@ -221,8 +221,8 @@ ShadowHandler::installShadows(QMenu *m)
     QToolButton *tb(qobject_cast<QToolButton *>(m->parentWidget()));
     if (!tb)
     {
-        QWidget *w(qApp->activeWindow());
-        if (!(tb = qobject_cast<QToolButton *>(w->childAt(w->mapFromGlobal(QCursor::pos())))))
+        QWidget *w(qApp->activeWindow()); 
+        if (!w || !(tb = qobject_cast<QToolButton *>(w->childAt(w->mapFromGlobal(QCursor::pos())))))
         {
             installShadows(m->winId());
             return;

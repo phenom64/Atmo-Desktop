@@ -49,6 +49,18 @@ Settings::gradientStops(const QList<QPair<float, int> > pairs, const QColor &c)
     return stops;
 }
 
+static QPair<QColor, int> tintColor(const QString &tint)
+{
+    const QStringList pair(tint.split(":"));
+    QPair<QColor, int> c;
+    if (pair.count() != 2)
+        return c;
+    c.second = pair.last().toInt();
+    if (c.second > -1 && c.second < 360)
+        c.first.setHsv(pair.first().toInt(), 255, 255);
+    return c;
+}
+
 void
 Settings::read()
 {
@@ -65,14 +77,17 @@ Settings::read()
     conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     conf.pushbtn.shadow = s.value(READPUSHBTNSHADOW).toInt();
     conf.pushbtn.gradient = stringToGrad(s.value(READPUSHBTNGRAD).toString());
+    conf.pushbtn.tint = tintColor(s.value(READPUSHBTNTINT).toString());
     //toolbuttons
     conf.toolbtn.rnd = s.value(READTOOLBTNRND).toInt();
     conf.toolbtn.shadow = s.value(READTOOLBTNSHADOW).toInt();
     conf.toolbtn.gradient = stringToGrad(s.value(READTOOLBTNGRAD).toString());
+    conf.toolbtn.tint = tintColor(s.value(READTOOLBTNTINT).toString());
     //inputs
     conf.input.rnd = s.value(READINPUTRND).toInt();
     conf.input.shadow = s.value(READINPUTSHADOW).toInt();
     conf.input.gradient = stringToGrad(s.value(READINPUTGRAD).toString());
+    conf.input.tint = tintColor(s.value(READINPUTTINT).toString());
     //sliders
     conf.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers

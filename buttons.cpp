@@ -49,6 +49,8 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
     if (!(opt->features & QStyleOptionButton::Flat))
     {
         QColor bc(option->palette.color(bg));
+        if (Settings::conf.pushbtn.tint.second > -1)
+            bc = Color::mid(bc, Settings::conf.pushbtn.tint.first, 100-Settings::conf.pushbtn.tint.second, Settings::conf.pushbtn.tint.second);
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
         if (option->SUNKEN || opt->features & QStyleOptionButton::DefaultButton)
@@ -112,8 +114,9 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
         bg = QPalette::Highlight;
         fg = QPalette::HighlightedText;
     }
-
     QColor bgc(opt->palette.color(bg));
+    if (Settings::conf.pushbtn.tint.second > -1)
+        bgc = Color::mid(bgc, Settings::conf.pushbtn.tint.first, 100-Settings::conf.pushbtn.tint.second, Settings::conf.pushbtn.tint.second);
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
     if (option->ENABLED && !(option->state & (State_On|State_NoChange)))
     {
@@ -169,6 +172,8 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     }
 
     QColor bgc(opt->palette.color(bg));
+    if (Settings::conf.pushbtn.tint.second > -1)
+        bgc = Color::mid(bgc, Settings::conf.pushbtn.tint.first, 100-Settings::conf.pushbtn.tint.second, Settings::conf.pushbtn.tint.second);
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
     if (option->ENABLED && !(option->state & State_On))
     {
@@ -254,6 +259,8 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
 
         QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
         QColor bc(option->palette.color(bg));
+        if (Settings::conf.toolbtn.tint.second > -1)
+            bc = Color::mid(bc, Settings::conf.toolbtn.tint.first, 100-Settings::conf.toolbtn.tint.second, Settings::conf.toolbtn.tint.second);
         QColor bca(bc);
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 

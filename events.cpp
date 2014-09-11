@@ -266,7 +266,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         if (!toolBar)
             return false;
         //below simply to trigger an event that forces the toolbar to call sizeFromContents again
-        Ops::updateToolBarLater(toolBar, 250);
+        Ops::updateToolBarLater(toolBar, 500);
     }
     if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
     {
