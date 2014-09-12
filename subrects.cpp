@@ -89,18 +89,19 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 
         if (tab->leftButtonSize.isValid())
         {
+            int o(overlap);
             if (safBar)
             if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
-                overlap *= 2;
+                o *= 2;
             const QSize sz(tab->leftButtonSize);
             leftRect.setSize(sz);
             leftRect.moveCenter(tab->rect.center());
             if (west)
-                leftRect.moveBottom(tab->rect.bottom()-overlap);
+                leftRect.moveBottom(tab->rect.bottom()-o);
             else if (east)
-                leftRect.moveTop(tab->rect.top()+overlap);
+                leftRect.moveTop(tab->rect.top()+o);
             else
-                leftRect.moveLeft(tab->rect.left()+overlap);
+                leftRect.moveLeft(tab->rect.left()+o);
         }
 
         if (leftRect.isValid())
@@ -116,18 +117,19 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         QRect rightRect;
         if (tab->rightButtonSize.isValid())
         {
+            int o(overlap);
             if (safBar && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == 1)
             if (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab)
-                overlap *= 2;
+                o *= 2;
             const QSize sz(tab->rightButtonSize);
             rightRect.setSize(sz);
             rightRect.moveCenter(tab->rect.center());
             if (west)
-                rightRect.moveBottom(tab->rect.bottom()-overlap);
+                rightRect.moveBottom(tab->rect.bottom()-o);
             else if (east)
-                rightRect.moveTop(tab->rect.top()+overlap);
+                rightRect.moveTop(tab->rect.top()+o);
             else
-                rightRect.moveRight(tab->rect.right()-overlap);
+                rightRect.moveRight(tab->rect.right()-o);
         }
 
         if (rightRect.isValid())

@@ -11,22 +11,19 @@ endif ()
 set(KWIN_SRCS
     kwinclient.cpp
     factory.cpp
-    button.cpp
-    widgets.cpp)
+    sizegrip.cpp)
     
 set(KWIN_HDRS
     kwinclient.h
     factory.h
-    button.h
     factorydbusadaptor.h
-    widgets.h)
+    sizegrip.h)
     
 set(KWIN_MOC_HDRS
     kwinclient.h
     factory.h
-    button.h
     factorydbusadaptor.h
-    widgets.)
+    sizegrip.h)
 
 set(QT_USE_DBUS TRUE)
     

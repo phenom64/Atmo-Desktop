@@ -1,16 +1,14 @@
+#include "widgets.h"
+#include "settings.h"
+#include "color.h"
 #include <QPainter>
+#include <QEvent>
 #include <QMouseEvent>
 
-#include "button.h"
-#include "../stylelib/ops.h"
-#include "../stylelib/color.h"
-#include "../stylelib/settings.h"
-
-Button::Button(Type type, KwinClient *client, QWidget *parent)
+Button::Button(Type type, QWidget *parent)
     : QWidget(parent)
     , m_type(type)
     , m_hasPress(false)
-    , m_client(client)
 {
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_Hover);
@@ -54,16 +52,7 @@ Button::mouseReleaseEvent(QMouseEvent *e)
         e->accept();
         m_hasPress = false;
         if (rect().contains(e->pos()))
-        {
-            emit clicked();
-            switch (m_type)
-            {
-            case Close: m_client->closeWindow(); break;
-            case Min: m_client->minimize(); break;
-            case Max: m_client->maximize(e->button()); break;
-            default: break;
-            }
-        }
+            onClick(e, m_type);
     }
 }
 
@@ -173,12 +162,11 @@ Button::paintClose(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
-//    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
     QRect r(rect());
-    drawBase(m_client->isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+    drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
     if (underMouse())
     {
-        p.setBrush(m_client->options()->color(KDecoration::ColorFont));
+        p.setBrush(palette().color(foregroundRole()));
         p.drawEllipse(r.adjusted(3, 3, -3, -3));
     }
     p.end();
@@ -190,12 +178,11 @@ Button::paintMax(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
-//    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
     QRect r(rect());
-    drawBase(m_client->isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+    drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
     if (underMouse())
     {
-        p.setBrush(m_client->options()->color(KDecoration::ColorFont));
+        p.setBrush(palette().color(foregroundRole()));
         p.drawEllipse(r.adjusted(3, 3, -3, -3));
     }
     p.end();
@@ -207,12 +194,11 @@ Button::paintMin(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
-//    QRectF penRect(QRectF(rect()).adjusted(0.5f, 0.5f, -1.0f, -1.0f));
     QRect r(rect());
-    drawBase(m_client->isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+    drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
     if (underMouse())
     {
-        p.setBrush(m_client->options()->color(KDecoration::ColorFont));
+        p.setBrush(palette().color(foregroundRole()));
         p.drawEllipse(r.adjusted(3, 3, -3, -3));
     }
     p.end();

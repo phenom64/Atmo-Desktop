@@ -9,8 +9,6 @@
 #include <QPixmap>
 
 #include "kwinclient.h"
-#include "button.h"
-#include "widgets.h"
 #include "../stylelib/ops.h"
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/render.h"
@@ -20,6 +18,33 @@
 #define TITLEHEIGHT 22
 #define MARGIN 6
 #define SPACING 4
+
+///-------------------------------------------------------------------
+
+DButton::DButton(const Type &t, KwinClient *client, QWidget *parent)
+    : Button(t, parent)
+    , m_client(client)
+{
+
+}
+
+bool
+DButton::isActive()
+{
+    return m_client?m_client->isActive():true;
+}
+
+void
+DButton::onClick(QMouseEvent *e, const Type &t)
+{
+    switch (t)
+    {
+    case Close: m_client->closeWindow(); break;
+    case Min: m_client->minimize(); break;
+    case Max: m_client->maximize(e->button()); break;
+    default: break;
+    }
+}
 
 ///-------------------------------------------------------------------
 
@@ -120,7 +145,7 @@ KwinClient::populate(const QString &buttons, bool left)
         }
         if (supported)
         {
-            Button *b = new Button(t, this, widget());
+            DButton *b = new DButton(t, this, widget());
             size += b->width()+SPACING;
             m_titleLayout->addWidget(b);
         }

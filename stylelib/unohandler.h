@@ -3,34 +3,15 @@
 
 #include <QWidget>
 #include "render.h"
+#include "widgets.h"
 
-class Button : public QWidget
+class DButton : public Button
 {
-    Q_OBJECT
 public:
-    enum Type { Close, Min, Max, TypeCount };
-    Button(Type type, QWidget *parent = 0);
-    ~Button();
-
-signals:
-    void clicked();
-
+    DButton(const Type &t, QWidget *parent = 0) : Button(t, parent){}
 protected:
-    void paintEvent(QPaintEvent *);
-    void mousePressEvent(QMouseEvent *);
-    void mouseReleaseEvent(QMouseEvent *);
-    bool paintClose(QPainter &p);
-    bool paintMin(QPainter &p);
-    bool paintMax(QPainter &p);
-
-    void drawBase(QColor c, QPainter &p, QRect &r) const;
-
-    typedef bool (Button::*PaintEvent)(QPainter &);
-
-private:
-    PaintEvent m_paintEvent[TypeCount];
-    Type m_type;
-    bool m_hasPress;
+    bool isActive() { return window()->isActiveWindow(); }
+    void onClick(QMouseEvent *e, const Type &t);
 };
 
 class Buttons : public QWidget

@@ -6,10 +6,27 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
+#include "sizegrip.h"
 #include "factory.h"
+#include "../stylelib/widgets.h"
 
 class Factory;
+class KwinClient;
 class SizeGrip;
+class DButton : public Button
+{
+public:
+    DButton(const Type &t, KwinClient *client = 0, QWidget *parent = 0);
+    ~DButton(){}
+
+protected:
+    bool isActive();
+    void onClick(QMouseEvent *e, const Type &t);
+
+private:
+    KwinClient *m_client;
+};
+
 class KwinClient : public KDecoration
 {
     Q_OBJECT
@@ -54,7 +71,7 @@ private:
     bool m_needSeparator;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
-    friend class Button;
+    friend class DButton;
 };
 
 #endif //KWINCLIENT_H

@@ -16,6 +16,7 @@
 #include <QStyleOptionToolButton>
 #include <QTimer>
 #include <QMenuBar>
+#include <QLabel>
 
 #include "ops.h"
 #include "xhandler.h"
@@ -213,12 +214,26 @@ Ops::updateToolBar()
     QToolBar *bar(qobject_cast<QToolBar *>(t->parent()));
     if (!bar)
         return;
-//    if (t->property("DSP_childcount").toInt() != bar->actions().count())
-//        return;
 
     const QSize &iconSize(bar->iconSize());
     bar->setIconSize(iconSize - QSize(1, 1));
     bar->setIconSize(iconSize);
+    for (int i = 0; i < bar->actions().count(); ++i)
+    {
+        QAction *a(bar->actions().at(i));
+        if (QWidget *w = bar->widgetForAction(a))
+        {
+            bool prevIsToolBtn(false);
+            QAction *prev(0);
+            if (i)
+                prev = bar->actions().at(i-1);
+            if (!prev)
+                continue;
+            prevIsToolBtn = qobject_cast<QToolButton *>(bar->widgetForAction(prev));
+            if (!prevIsToolBtn && !prev->isSeparator() && !a->isSeparator())
+                bar->insertSeparator(a);
+        }
+    }
     t->stop();
     t->deleteLater();
     if (Settings::conf.removeTitleBars

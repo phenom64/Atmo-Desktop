@@ -27,11 +27,15 @@
 #define INPUTGRAD           "input.gradient"
 #define INPUTTINT           "input.tinthue"
 
+#define TABRND              "tabs.rnd"
+#define TABSHADOW           "tabs.shadow"
+#define TABGRAD             "tabs.gradient"
+#define SAFTABRND           "tabs.safrnd"           //safaritabs roundness capped at 8 atm, might change in the future if needed
+#define TABCLOSER           "tabs.closebuttonside"
+
 #define SLIDERSIZE          "sliders.size"
 #define SCROLLERSIZE        "scrollers.size"
 #define SHADOWOPACITY       "shadows.opacity"
-#define TABRND              "tabs.rnd"
-#define TABCLOSER           "tabs.closebuttonside"
 
 //defaults
 
@@ -74,11 +78,15 @@
 #define DEFINPUTGRAD            "0.1:-5, 1.0:5"
 #define DEFINPUTTINT            "-1:0"
 
+#define DEFTABRND               4
+#define DEFTABSHADOW            3
+#define DEFTABGRAD              "0.1:5, 1.0:-5"
+#define DEFSAFTABRND            4
+#define DEFTABCLOSER            0
+
 #define DEFSLIDERSIZE           16
 #define DEFSCROLLERSIZE         12
 #define DEFSHADOWOPACITY        33
-#define DEFTABRND               5
-#define DEFTABCLOSER            0
 
 #define READOPACITY             OPACITY, DEFOPACITY
 #define READBLACKLIST           BLACKLIST, DEFBLACKLIST
@@ -102,11 +110,15 @@
 #define READINPUTGRAD           INPUTGRAD, DEFINPUTGRAD
 #define READINPUTTINT           INPUTTINT, DEFINPUTTINT
 
+#define READTABRND              TABRND, DEFTABRND
+#define READTABSHADOW           TABSHADOW, DEFTABSHADOW
+#define READTABGRAD             TABGRAD, DEFTABGRAD
+#define READSAFTABRND           SAFTABRND, DEFSAFTABRND
+#define READTABCLOSER           TABCLOSER, DEFTABCLOSER
+
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
-#define READTABRND              TABRND, DEFTABRND
-#define READTABCLOSER           TABCLOSER, DEFTABCLOSER
 
 class Q_DECL_EXPORT Settings
 {
@@ -147,7 +159,8 @@ public:
     } shadows;
     struct tabs
     {
-        int rnd, closeButtonSide;
+        int rnd, safrnd, closeButtonSide, shadow;
+        QList<QPair<float, int> > gradient;
     } tabs;
     static Settings conf;
 

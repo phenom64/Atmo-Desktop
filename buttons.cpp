@@ -342,10 +342,11 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         else if (rp == Render::Last && !hasMenu)
             ir.translate(-2, 0);
     }
+    const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
     {
         const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
-        drawItemPixmap(painter, ir, Qt::AlignCenter, pix);
+        drawItemPixmap(painter, inDock?widget->rect():ir, Qt::AlignCenter, pix);
     }
     if (opt->toolButtonStyle)
         drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);

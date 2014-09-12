@@ -262,22 +262,21 @@ Render::splitShadowParts(const Shadow shadow, int roundNess, const int size, con
     m_shadow[shadow][roundNess][BottomRightPart] = source.copy(size-roundNess, size-roundNess, roundNess, roundNess);
 }
 
-static int tr(4); //tab roundness
 static int ts(4); //tab shadow size
 
-static QPainterPath tab(const QRect &r, int d)
+static QPainterPath tab(const QRect &r, int rnd)
 {
     int x1, y1, x2, y2;
     r.getCoords(&x1, &y1, &x2, &y2);
     QPainterPath path;
     path.moveTo(x2, y1);
-    path.quadTo(x2-d, y1, x2-d, y1+d);
-    path.lineTo(x2-d, y2-d);
-    path.quadTo(x2-d, y2, x2-d*2, y2);
-    path.lineTo(x1+d*2, y2);
-    path.quadTo(x1+d, y2, x1+d, y2-d);
-    path.lineTo(x1+d, y1+d);
-    path.quadTo(x1+d, y1, x1, y1);
+    path.quadTo(x2-rnd, y1, x2-rnd, y1+rnd);
+    path.lineTo(x2-rnd, y2-rnd);
+    path.quadTo(x2-rnd, y2, x2-rnd*2, y2);
+    path.lineTo(x1+rnd*2, y2);
+    path.quadTo(x1+rnd, y2, x1+rnd, y2-rnd);
+    path.lineTo(x1+rnd, y1+rnd);
+    path.quadTo(x1+rnd, y1, x1, y1);
     path.lineTo(x2, y1);
     path.closeSubpath();
     return path;
@@ -286,109 +285,80 @@ static QPainterPath tab(const QRect &r, int d)
 void
 Render::initTabs()
 {
-    for (int i = 0; i < AfterSelected+1; ++i)
-    {
-        int hsz = (tr*4)+(ts*4);
-        int vsz = hsz/2;
-        ++hsz;
-        ++vsz;
-        QImage img(hsz, vsz, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        const QRect r(img.rect());
-        QPainterPath path(tab(r.adjusted(ts, 0, -ts, 0), tr));
-//        switch(i)
-//        {
-//        case 0: //left of selected
-//        {
-//            path.moveTo(x1, y1);
-//            path.quadTo(x1+d, y1, x1+d, y1+d);
-//            path.lineTo(x1+d, y2-d);
-//            path.quadTo(x1+d, y2, x1+d*2, y2);
-//            path.lineTo(x2, y2);
-//        }
-//        case 1:  //selected
-//        {
-
-//        }
-//        case 2:  //right of selected
-//        {
-//            path.moveTo(x2, y1);
-//            path.quadTo(x2-d, y1, x2-d, y1+d);
-//            path.lineTo(x2-d, y2-d);
-//            path.quadTo(x2-d, y2, x2-d*2, y2);
-//            path.lineTo(x1, y2);
-//        }
-//        }
-        QPainter p(&img);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(Qt::NoPen);
-        p.setBrush(Qt::black);
-        p.drawPath(path);
-        p.end();
-        img = blurred(img, img.rect(), ts);
-        p.begin(&img);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QPen(Qt::black, 2.0f));
-        p.setBrush(Qt::black);
-        p.drawPath(path);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
-        p.setPen(Qt::NoPen);
-        p.drawPath(path);
-//        renderShadow(Etched, img.rect(), &p, ts*4, Top);
-        p.setPen(Qt::black);
-        p.drawLine(img.rect().topLeft(), img.rect().topRight());
-        renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.2f);
-        p.end();
-        --hsz;
-        hsz/=2;
-        --vsz;
-        vsz/=2;
-        m_tab[i][TopLeftPart] = QPixmap::fromImage(img.copy(0, 0, hsz, vsz));
-        m_tab[i][TopMidPart] = QPixmap::fromImage(img.copy(hsz, 0, 1, vsz));
-        m_tab[i][TopRightPart] = QPixmap::fromImage(img.copy(hsz+1, 0, hsz, vsz));
-        m_tab[i][LeftPart] = QPixmap::fromImage(img.copy(0, vsz, hsz, 1));
-        m_tab[i][CenterPart] = QPixmap::fromImage(img.copy(hsz, vsz, 1, 1));
-        m_tab[i][RightPart] = QPixmap::fromImage(img.copy(hsz+1, vsz, hsz, 1));
-        m_tab[i][BottomLeftPart] = QPixmap::fromImage(img.copy(0, vsz+1, hsz, vsz));
-        m_tab[i][BottomMidPart] = QPixmap::fromImage(img.copy(hsz, vsz+1, 1, vsz));
-        m_tab[i][BottomRightPart] = QPixmap::fromImage(img.copy(hsz+1, vsz+1, hsz, vsz));
-    }
+    const int tr(Settings::conf.tabs.safrnd);
+    int hsz = (tr*4)+(ts*4);
+    int vsz = hsz/2;
+    ++hsz;
+    ++vsz;
+    QImage img(hsz, vsz, QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    const QRect r(img.rect());
+    QPainterPath path(tab(r.adjusted(ts, 0, -ts, 0), tr));
+    QPainter p(&img);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::black);
+    p.drawPath(path);
+    p.end();
+    img = blurred(img, img.rect(), ts);
+    p.begin(&img);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(Qt::black, 2.0f));
+    p.setBrush(Qt::black);
+    p.drawPath(path);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
+    p.setPen(Qt::NoPen);
+    p.drawPath(path);
+    p.setPen(Qt::black);
+    p.drawLine(img.rect().topLeft(), img.rect().topRight());
+    renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.2f);
+    p.end();
+    --hsz;
+    hsz/=2;
+    --vsz;
+    vsz/=2;
+    m_tab[TopLeftPart] = QPixmap::fromImage(img.copy(0, 0, hsz, vsz));
+    m_tab[TopMidPart] = QPixmap::fromImage(img.copy(hsz, 0, 1, vsz));
+    m_tab[TopRightPart] = QPixmap::fromImage(img.copy(hsz+1, 0, hsz, vsz));
+    m_tab[LeftPart] = QPixmap::fromImage(img.copy(0, vsz, hsz, 1));
+    m_tab[CenterPart] = QPixmap::fromImage(img.copy(hsz, vsz, 1, 1));
+    m_tab[RightPart] = QPixmap::fromImage(img.copy(hsz+1, vsz, hsz, 1));
+    m_tab[BottomLeftPart] = QPixmap::fromImage(img.copy(0, vsz+1, hsz, vsz));
+    m_tab[BottomMidPart] = QPixmap::fromImage(img.copy(hsz, vsz+1, 1, vsz));
+    m_tab[BottomRightPart] = QPixmap::fromImage(img.copy(hsz+1, vsz+1, hsz, vsz));
 }
 
 void
 Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o)
 {
-    const QSize sz(m_tab[t][TopLeftPart].size());
+    const QSize sz(m_tab[TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
         return;
     int x1, y1, x2, y2;
     r.getCoords(&x1, &y1, &x2, &y2);
-//    x1-=tr;
-//    x2+=tr;
     int halfH(r.width()-(sz.width()*2)), halfV(r.height()-(sz.height()*2));
-    const float opacity(p->opacity());
+    p->save();
     p->setOpacity(o);
-
-    if (t < AfterSelected)
-    {
-        p->drawTiledPixmap(QRect(x1, y1, sz.width(), sz.height()), m_tab[t][TopLeftPart]);
-        p->drawTiledPixmap(QRect(x1, y1+sz.height(), sz.width(), halfV), m_tab[t][LeftPart]);
-        p->drawTiledPixmap(QRect(x1, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[t][BottomLeftPart]);
-    }
-
-    p->drawTiledPixmap(QRect(x1+sz.width(), y1, halfH, sz.height()), m_tab[t][TopMidPart]);
-    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height(), halfH, halfV), m_tab[t][CenterPart]);
-    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), m_tab[t][BottomMidPart]);
 
     if (t > BeforeSelected)
     {
-        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1, sz.width(), sz.height()), m_tab[t][TopRightPart]);
-        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), m_tab[t][RightPart]);
-        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[t][BottomRightPart]);
+        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1, sz.width(), sz.height()), m_tab[TopRightPart]);
+        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), m_tab[RightPart]);
+        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[BottomRightPart]);
     }
-    p->setOpacity(opacity);
+    if (t < AfterSelected)
+    {
+        p->drawTiledPixmap(QRect(x1, y1, sz.width(), sz.height()), m_tab[TopLeftPart]);
+        p->drawTiledPixmap(QRect(x1, y1+sz.height(), sz.width(), halfV), m_tab[LeftPart]);
+        p->drawTiledPixmap(QRect(x1, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[BottomLeftPart]);
+    }
+    p->drawTiledPixmap(QRect(x1+sz.width(), y1, halfH, sz.height()), m_tab[TopMidPart]);
+    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height(), halfH, halfV), m_tab[CenterPart]);
+    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), m_tab[BottomMidPart]);
+
     if (path)
-        *path = tab(r.adjusted(tr, 0, -tr, 0), tr);
+        *path = tab(r.adjusted(ts, 0, -ts, 0), Settings::conf.tabs.safrnd);
+    p->restore();
 }
 
 QRect
@@ -786,3 +756,36 @@ Render::maskHeight(const Shadow s, const int height)
     default: return 0;
     }
 }
+
+int
+Render::maskWidth(const Shadow s, const int width)
+{
+    switch (s)
+    {
+    case Render::Sunken:
+    case Render::Etched:
+    case Render::Raised:
+        return width-2;
+    case Render::Simple:
+        return width;
+    case Render::Carved:
+        return width-6;
+    default: return 0;
+    }
+}
+
+
+QRect
+Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
+{
+    switch (s)
+    {
+    case Sunken:
+    case Etched:
+    case Raised: return r.sAdjusted(1, 1, -1, -2); break;
+    case Simple: return r.sAdjusted(0, 0, 0, -1); break;
+    case Carved: return r.sAdjusted(3, 3, -3, -3); break;
+    default: return r;
+    }
+}
+

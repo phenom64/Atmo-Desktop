@@ -1,19 +1,14 @@
-#ifndef BUTTON_H
-#define BUTTON_H
+#ifndef WIDGETS_H
+#define WIDGETS_H
 
 #include <QWidget>
-#include "kwinclient.h"
 
-class Button : public QWidget
+class Q_DECL_EXPORT Button : public QWidget
 {
-    Q_OBJECT
 public:
     enum Type { Close, Min, Max, TypeCount };
-    Button(Type type, KwinClient *client, QWidget *parent = 0);
+    Button(Type type, QWidget *parent = 0);
     ~Button();
-
-signals:
-    void clicked();
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -26,12 +21,13 @@ protected:
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 
     typedef bool (Button::*PaintEvent)(QPainter &);
+    virtual bool isActive() = 0;
+    virtual void onClick(QMouseEvent *e, const Type &t) = 0;
 
 private:
     PaintEvent m_paintEvent[TypeCount];
     Type m_type;
     bool m_hasPress;
-    KwinClient *m_client;
 };
 
-#endif //BUTTON_H
+#endif //WIDGETS_H

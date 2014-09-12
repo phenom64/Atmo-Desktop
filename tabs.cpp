@@ -52,14 +52,11 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
         if (!isFirst && !isOnly)
             r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
-        if (!isLast && !isOnly)
+        if (!bar->expanding() || !isLast && !isOnly)
             r.setRight(r.right()+((painter->device() == widget)?o:o/2));
 
-        if (isLast && qApp->applicationName() == "konversation")
-            r.setRight(r.right()+o);
-
         QPainterPath p;
-        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, 0.25f);
+        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, Settings::conf.shadows.opacity);
         if (isSelected)
         {
             static QMap<int, QPixmap> s_pix;
@@ -110,9 +107,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         int hl(Anim::Tabs::level(bar, bar->tabAt(opt->rect.center())));
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
-
-    QColor fgc(opt->palette.color(fg));
-    QLinearGradient lg, shadow;
+    QLinearGradient lg;
     QRect r(opt->rect);
     bool vert(false);
     switch (opt->shape)
@@ -121,8 +116,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     case QTabBar::TriangularNorth:
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
-        lg = QLinearGradient(0, 0, 0, r.height());
-        shadow = QLinearGradient(0, 0, 0, r.height());
+        lg = QLinearGradient(0, 0, 0, Render::maskHeight(Settings::conf.tabs.shadow, r.height()));
         if (isOnly)
             break;
         if (isRtl)
@@ -132,14 +126,12 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
-        lg = QLinearGradient(0, 0, r.width(), 0);
-        shadow = QLinearGradient(0, 0, r.width(), 0);
+        lg = QLinearGradient(0, 0, Render::maskWidth(Settings::conf.tabs.shadow, r.width()), 0);
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
         {
-            lg = QLinearGradient(r.width(), 0, 0, 0);
-            shadow = QLinearGradient(r.width(), 0, 0, 0);
+            lg = QLinearGradient(Render::maskWidth(Settings::conf.tabs.shadow, r.width()), 0, 0, 0);
         }
         vert = true;
         if (isOnly)
@@ -148,21 +140,10 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         break;
     default: break;
     }
-    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white));
-    lg.setColorAt(1.0f, bgc/*Color::mid(bgc, Qt::white, 4, 1)*/);
-//    const QRect mask(r.sAdjusted(1, 1, -1, -2));
-//    Render::renderMask(mask, painter, lg, 32, sides);
-//    Render::renderShadow(isSelected?Render::Sunken:Render::Etched, r, painter, 32, sides, 0.66f);
-    Render::renderMask(r.sAdjusted(1, 1, -1, -1), painter, lg, qMax(0, Settings::conf.tabs.rnd-1), sides);
-
-//    QLinearGradient shadow(0, vert&&isRtl?r.width():0, vert&&isRtl?0:vert?r.width():0, vert?0:r.height());
-    const int o(Settings::conf.shadows.opacity*255.0f);
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
-    QBrush b(shadow);
-    Render::renderShadow(Render::Simple, r, painter, Settings::conf.tabs.rnd, sides, 1.0f, &b);
-    QRect mask(r.sAdjusted(1, 1, -1, -1));
+    lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, bgc));
+    QBrush b(lg);
+    Render::drawClickable(Settings::conf.tabs.shadow, r, painter, sides, Settings::conf.tabs.rnd, Settings::conf.shadows.opacity, widget, &b);
+    const QRect mask(Render::maskRect(Settings::conf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
 //        QPixmap shadow(mask.size());
@@ -321,11 +302,11 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
 //    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
 
     p->setPen(Qt::black);
-    p->setOpacity(0.2f);
+    p->setOpacity(Settings::conf.shadows.opacity/2);
     p->drawLine(r.topLeft(), r.topRight());
     p->drawLine(r.bottomLeft(), r.bottomRight());
     p->setOpacity(o);
-    Render::renderShadow(Render::Sunken, r, p, 16, Render::Top, 0.1f);
+    Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, Settings::conf.shadows.opacity/2);
 }
 
 bool

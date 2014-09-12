@@ -123,8 +123,15 @@ StyleProject::polish(QWidget *widget)
         {
             unsigned int d(0);
             XHandler::setXProperty<unsigned int>(win->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-            win->setAttribute(Qt::WA_TranslucentBackground);
-            win->move(9000, 9000);
+            const QIcon icn = widget->windowIcon();
+            const bool wasVisible= widget->isVisible();
+            const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
+            if (wasVisible)
+              widget->hide();
+            widget->setAttribute(Qt::WA_TranslucentBackground);
+            widget->setWindowIcon(icn);
+            widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
+            widget->setVisible(wasVisible);
         }
         installFilter(win);
     }
@@ -189,6 +196,8 @@ StyleProject::polish(QWidget *widget)
         if (needShadows)
             ShadowHandler::manage(widget);
     }
+    if (castObj(QDockWidget *,dock, widget))
+        dock->setAutoFillBackground(false);
     if (castObj(QScrollBar *, sb, widget))
         sb->setAttribute(Qt::WA_Hover);
 

@@ -93,18 +93,17 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_TabBarTab:
     {
         castOpt(TabV3, tab, opt);
-        castObj(const QTabBar *, bar, widget);
+
         if (!tab)
             break;
 
+        castObj(const QTabBar *, bar, widget);
         QSize sz(contentsSize);
-//        bool hor(tab->shape < QTabBar::RoundedWest || (tab->shape > QTabBar::RoundedEast && tab->shape < QTabBar::TriangularWest));
         if (Ops::isSafariTabBar(bar))
         {
             if (bar->expanding())
             {
                 int w(bar->width());
-
                 if (castObj(const QTabWidget *, tw, bar->parentWidget()))
                 {
                     for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
@@ -121,15 +120,9 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
                     {
                         const QWidget *wi(children.at(i));
                         if (wi->isVisible() && wi->parentWidget() == bar)
-                        {
                             w-=wi->width();
-//                            if (w > wi->geometry().x())
-//                                w = wi->geometry().x();
-                        }
-
                     }
                 }
-
                 sz.setWidth(w/bar->count());
             }
             else if (tab->position != QStyleOptionTab::Middle)

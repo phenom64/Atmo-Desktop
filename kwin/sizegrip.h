@@ -1,8 +1,9 @@
-#ifndef WIDGETS_H
-#define WIDGETS_H
+#ifndef SIZEGRIP_H
+#define SIZEGRIP_H
 
 #include "kwinclient.h"
 
+class KwinClient;
 class SizeGrip : public QWidget
 {
     Q_OBJECT
@@ -26,4 +27,4 @@ private:
     QSize m_size;
 };
 
-#endif // WIDGETS_H
+#endif // SIZEGRIP_H

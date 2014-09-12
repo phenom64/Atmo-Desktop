@@ -10,7 +10,8 @@ set(libSRCS
     progresshandler.cpp
     animhandler.cpp
     unohandler.cpp
-    settings.cpp)
+    settings.cpp
+    widgets.cpp)
     
 set(libHDRS
     xhandler.h
@@ -22,13 +23,15 @@ set(libHDRS
     progresshandler.h
     animhandler.h
     unohandler.h
-    settings.h)
+    settings.h
+    widgets.h)
 
 set(libMocHDRS
     progresshandler.h
     animhandler.h
     unohandler.h
-    ops.h)
+    ops.h
+    widgets.h)
 
 set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 set(QT_USE_QTDBUS TRUE)

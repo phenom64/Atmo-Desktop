@@ -89,13 +89,16 @@ Settings::read()
     conf.input.shadow = s.value(READINPUTSHADOW).toInt();
     conf.input.gradient = stringToGrad(s.value(READINPUTGRAD).toString());
     conf.input.tint = tintColor(s.value(READINPUTTINT).toString());
+    //tabs
+    conf.tabs.rnd = s.value(READTABRND).toInt();
+    conf.tabs.shadow = s.value(READTABSHADOW).toInt();
+    conf.tabs.gradient = stringToGrad(s.value(READTABGRAD).toString());
+    conf.tabs.safrnd = qMin(s.value(READSAFTABRND).toInt(), 8);
+    conf.tabs.closeButtonSide = s.value(READTABCLOSER).toInt();
     //sliders
     conf.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
     //shadows
     conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
-    //tabs
-    conf.tabs.rnd = s.value(READTABRND).toInt();
-    conf.tabs.closeButtonSide = s.value(READTABCLOSER).toInt();
 }

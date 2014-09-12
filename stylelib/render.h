@@ -10,6 +10,7 @@ class Q_DECL_EXPORT Render
 {
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
+    enum SidePart { West = 0, North, East, South, SidePartCount };
     enum Pos { First = 0, Middle = 1, Last = 2, Alone = 3 };
     enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
     enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, ShadowCount };
@@ -36,6 +37,8 @@ public:
     static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const QPoint &offSet = QPoint());
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const Shadow s, const int height);
+    static int maskWidth(const Shadow s, const int width);
+    static QRect maskRect(const Shadow s, const QRect &r, const Sides sides);
 
 protected:
     void _generateData();
@@ -58,7 +61,7 @@ private:
     static Render m_instance;
     QPixmap m_mask[MAXRND+1][PartCount];
     QPixmap m_shadow[ShadowCount][MAXRND+1][PartCount];
-    QPixmap m_tab[AfterSelected+1][PartCount]; //before selected, selected and after selected...
+    QPixmap m_tab[PartCount];
     QPixmap m_noise;
 };
 
