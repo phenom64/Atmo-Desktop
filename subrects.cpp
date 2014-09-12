@@ -80,28 +80,29 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
             return QRect();
 
         const bool safBar(Ops::isSafariTabBar(bar));
-        int overlap(safBar?pixelMetric(PM_TabBarTabOverlap, opt, widget):4);
-        QRect textRect(tab->rect);
+        int o(safBar?Settings::conf.tabs.safrnd:4);
+        int ladd((safBar && tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)*o);
+        int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
+        QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));
+        QRect textRect(rect);
         QRect leftRect;
 
         const bool east(tab->shape == QTabBar::RoundedEast || tab->shape == QTabBar::TriangularEast);
         const bool west(tab->shape == QTabBar::RoundedWest || tab->shape == QTabBar::TriangularWest);
+        const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide);
+        const bool closable(bar && bar->tabsClosable());
 
-        if (tab->leftButtonSize.isValid())
+        if (tab->leftButtonSize.isValid() || ((closable && !leftClose && tab->rightButtonSize.isValid()) || !tab->icon.isNull()))
         {
-            int o(overlap);
-            if (safBar)
-            if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
-                o *= 2;
-            const QSize sz(tab->leftButtonSize);
+            const QSize sz(tab->leftButtonSize.isValid()?tab->leftButtonSize:tab->iconSize);
             leftRect.setSize(sz);
-            leftRect.moveCenter(tab->rect.center());
+            leftRect.moveCenter(rect.center());
             if (west)
-                leftRect.moveBottom(tab->rect.bottom()-o);
+                leftRect.moveBottom(rect.bottom()-o);
             else if (east)
-                leftRect.moveTop(tab->rect.top()+o);
+                leftRect.moveTop(rect.top()+o);
             else
-                leftRect.moveLeft(tab->rect.left()+o);
+                leftRect.moveLeft(rect.left()+o);
         }
 
         if (leftRect.isValid())
@@ -115,21 +116,17 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         }
 
         QRect rightRect;
-        if (tab->rightButtonSize.isValid())
+        if (tab->rightButtonSize.isValid() || (closable && leftClose && tab->leftButtonSize.isValid() && !tab->icon.isNull()))
         {
-            int o(overlap);
-            if (safBar && styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == 1)
-            if (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab)
-                o *= 2;
-            const QSize sz(tab->rightButtonSize);
+            const QSize sz(tab->leftButtonSize.isValid()?tab->leftButtonSize:tab->iconSize);
             rightRect.setSize(sz);
-            rightRect.moveCenter(tab->rect.center());
+            rightRect.moveCenter(rect.center());
             if (west)
-                rightRect.moveBottom(tab->rect.bottom()-o);
+                rightRect.moveBottom(rect.bottom()-o);
             else if (east)
-                rightRect.moveTop(tab->rect.top()+o);
+                rightRect.moveTop(rect.top()+o);
             else
-                rightRect.moveRight(tab->rect.right()-o);
+                rightRect.moveRight(rect.right()-o);
         }
 
         if (rightRect.isValid())

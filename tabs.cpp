@@ -50,10 +50,18 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
         int o(pixelMetric(PM_TabBarTabOverlap, option, widget));
         QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
-        if (!isFirst && !isOnly)
-            r.setLeft(r.left()-((isFirst||isOnly)?o/2:o));
-        if (!bar->expanding() || !isLast && !isOnly)
-            r.setRight(r.right()+((painter->device() == widget)?o:o/2));
+        int leftMargin(o), rightMargin(o);
+        if (isFirst || isOnly)
+            leftMargin /= 2;
+        if ((isLast || isOnly) && bar->expanding())
+            rightMargin /= 2;
+        if (!bar->expanding())
+        {
+            --leftMargin;
+            ++rightMargin;
+        }
+        r.setLeft(r.left()-leftMargin);
+        r.setRight(r.right()+rightMargin);
 
         QPainterPath p;
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, Settings::conf.shadows.opacity);
@@ -146,14 +154,6 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     const QRect mask(Render::maskRect(Settings::conf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
-//        QPixmap shadow(mask.size());
-//        shadow.fill(Qt::transparent);
-//        QPainter p(&shadow);
-//        Render::renderShadow(Render::Sunken, shadow.rect(), &p, 32, Render::All-sides, 0.33f);
-//        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-//        Render::renderShadow(Render::Sunken, shadow.rect(), &p, 32, sides);
-//        p.end();
-//        painter->drawTiledPixmap(mask, shadow);
         const QPen pen(painter->pen());
         painter->setPen(QColor(0, 0, 0, 32)/*Color::mid(bgc, fgc)*/);
         if (!isFirst)
@@ -198,38 +198,13 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         return true;
     castObj(const QTabBar *, bar, widget);
     painter->save();
-    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
+//    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
     const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
     const bool isSelected(opt->state & State_Selected || isOnly);
-    const bool isEnd(opt->position == QStyleOptionTab::End);
-    const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide);
-//    const QRect rect(opt->rect);
+//    const bool isEnd(opt->position == QStyleOptionTab::End);
+    const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
+    QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
-    int h(4);
-    const bool safTabs(Ops::isSafariTabBar(bar));
-    if (safTabs)
-    {
-        h = pixelMetric(PM_TabBarTabOverlap, option, widget);
-        if ((isOnly || isEnd) && leftClose)
-            h *= 2;
-        if ((isOnly || isFirst) && !leftClose)
-            h *= 2;
-
-    }
-    QRect ir(tr.adjusted(h, 0, -h, 0));
-    if (!opt->icon.isNull())
-    {
-        if (leftClose) //icon on right...
-        {
-            tr.setRight(tr.right()-(opt->iconSize.width()+h));
-            ir.setLeft(tr.right());
-        }
-        else
-        {
-            tr.setLeft(tr.left()+(opt->iconSize.width()+h));
-            ir.setRight(tr.left());
-        }
-    }
     int trans(0);
     switch (opt->shape)
     {
@@ -261,7 +236,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         painter->setFont(f);
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
-    if (isSelected && !safTabs)
+    if (isSelected && !Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
         fg = QPalette::HighlightedText;
 
     const QFontMetrics fm(painter->fontMetrics());
@@ -270,9 +245,9 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         elide = Qt::ElideRight;
     const QString text(fm.elidedText(opt->text, elide, tr.width()));
     drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, text, fg);
+    painter->restore();
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
-    painter->restore();
     return true;
 }
 

@@ -262,8 +262,6 @@ Render::splitShadowParts(const Shadow shadow, int roundNess, const int size, con
     m_shadow[shadow][roundNess][BottomRightPart] = source.copy(size-roundNess, size-roundNess, roundNess, roundNess);
 }
 
-static int ts(4); //tab shadow size
-
 static QPainterPath tab(const QRect &r, int rnd)
 {
     int x1, y1, x2, y2;
@@ -281,6 +279,8 @@ static QPainterPath tab(const QRect &r, int rnd)
     path.closeSubpath();
     return path;
 }
+
+static const int ts(4); //tab shadow...
 
 void
 Render::initTabs()
