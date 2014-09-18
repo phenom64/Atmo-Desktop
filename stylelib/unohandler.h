@@ -34,6 +34,7 @@ protected:
 };
 
 class QToolBar;
+class QMainWindow;
 class Q_DECL_EXPORT UNOHandler : public QObject
 {
     Q_OBJECT
@@ -77,6 +78,34 @@ protected:
 
 private:
     static WinHandler s_instance;
+};
+
+class QAbstractScrollArea;
+class Q_DECL_EXPORT ScrollWatcher : public QObject
+{
+    Q_OBJECT
+public:
+    ~ScrollWatcher(){}
+    static void watch(QAbstractScrollArea *area);
+    static inline ScrollWatcher *instance() { return &s_instance; }
+    static void regenBg(QMainWindow *win);
+    static QPixmap bg(qlonglong win);
+    static QRegion paintRegion(QMainWindow *win);
+
+protected:
+    ScrollWatcher(QObject *parent = 0);
+    bool eventFilter(QObject *, QEvent *);
+
+protected slots:
+    void updateWin(QMainWindow *win);
+    void updateLater();
+    void removeFromQueue();
+
+private:
+    static ScrollWatcher s_instance;
+    static QMap<qlonglong, QPixmap> s_winBg;
+    QTimer *m_timer;
+    QList<QMainWindow *> m_wins;
 };
 
 #endif //UNOHANDLER_H

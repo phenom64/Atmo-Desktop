@@ -15,7 +15,7 @@ static int _n = 0;
 class Q_DECL_EXPORT XHandler
 {
 public:
-    enum Value { WindowData = 0, KwinShadows, KwinBlur, StoreShadow, MenuShadowUp, MenuShadowDown, DecoData, ValueCount };
+    enum Value { WindowData = 0, KwinShadows, KwinBlur, StoreShadow, MenuShadowUp, MenuShadowDown, DecoData, DecoBgPix, ValueCount };
     enum Size { Byte = 8, Short = 16, Long = 32, LongLong = 64 };
     typedef unsigned int TypeSize;
     template<typename T> static void setXProperty(const WId w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
@@ -34,6 +34,8 @@ public:
     static void mwRes(const QPoint &globalPoint, const WId &win, bool resize = false);
     static bool compositingActive();
     static float opacity();
+
+    static QPixmap x11Pix(const QPixmap &pix);
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);

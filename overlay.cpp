@@ -97,6 +97,8 @@ OverLay::paintEvent(QPaintEvent *)
 bool
 OverLay::eventFilter(QObject *o, QEvent *e)
 {
+    if (!o || !e || !o->isWidgetType())
+        return false;
     if (o != m_frame && e->type() == QEvent::ChildRemoved)
     {
         m_timer->start();

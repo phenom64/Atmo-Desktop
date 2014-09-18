@@ -9,12 +9,14 @@
 #include <QStyleOptionSlider>
 #include <QScrollBar>
 #include <QToolButton>
+#include <QToolBar>
+#include <QHoverEvent>
 
 using namespace Anim;
 
 static bool s_block(false);
 
-Q_DECL_EXPORT Basic Basic::s_instance;
+Basic Basic::s_instance;
 
 Basic
 *Basic::instance()
@@ -130,9 +132,14 @@ Basic::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e || !o->isWidgetType())
         return false;
-    if (e->type() == QEvent::Enter || e->type() == QEvent::Leave)
+    bool want(false);
+    want |= e->type() == QEvent::Enter;
+    want |= e->type() == QEvent::HoverEnter;
+    want |= e->type() == QEvent::HoverLeave;
+    want |= e->type() == QEvent::Leave;
+    if (want)
     {
-        if (e->type() == QEvent::Enter)
+        if (e->type() == QEvent::Enter || e->type() == QEvent::HoverEnter)
             m_vals.insert(static_cast<QWidget *>(o), 0);
         m_timer->start(25);
         return false;
@@ -152,7 +159,7 @@ Basic::eventFilter(QObject *o, QEvent *e)
 
 //------------------------------------------------------------------------------------
 
-Q_DECL_EXPORT Tabs Tabs::s_instance;
+Tabs Tabs::s_instance;
 
 Tabs
 *Tabs::instance()
@@ -289,7 +296,7 @@ Tabs::eventFilter(QObject *o, QEvent *e)
 
 //------------------------------------------------------------------------------------
 
-Q_DECL_EXPORT ToolBtns ToolBtns::s_instance;
+ToolBtns ToolBtns::s_instance;
 
 ToolBtns
 *ToolBtns::instance()
@@ -307,6 +314,12 @@ ToolBtns::manage(QToolButton *tb)
     tb->setAttribute(Qt::WA_Hover);
     if (Ops::hasMenu(tb))
         tb->setAttribute(Qt::WA_MouseTracking);
+    if (QToolBar *bar = qobject_cast<QToolBar *>(tb->parentWidget()))
+    {
+        bar->setMouseTracking(true);
+        bar->removeEventFilter(instance());
+        bar->installEventFilter(instance());
+    }
     tb->disconnect(instance());
     connect(tb, SIGNAL(destroyed()), instance(), SLOT(removeSender()));
 }
@@ -332,6 +345,8 @@ void
 ToolBtns::remove(QToolButton *tb)
 {
     m_vals.remove(tb);
+    if (tb == m_hovered)
+        m_hovered = 0;
 }
 
 void
@@ -340,6 +355,8 @@ ToolBtns::removeSender()
     //superfluos?
     static_cast<QToolButton *>(sender())->removeEventFilter(this);
     m_vals.remove(static_cast<QToolButton *>(sender()));
+    if (sender() == m_hovered)
+        m_hovered = 0;
 }
 
 int
@@ -390,11 +407,11 @@ ToolBtns::animate()
             QRect r = tb->style()->subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
             QPoint pos(tb->mapFromGlobal(QCursor::pos()));
             arrowMouse = bool(Ops::hasMenu(tb, &option) && r.contains(pos));
-            btnMouse = bool(tb->underMouse() && !arrowMouse);
+            btnMouse = bool(tb->underMouse() && tb == m_hovered && !arrowMouse);
         }
         else
         {
-            btnMouse = tb->underMouse();
+            btnMouse = tb->underMouse() && tb == m_hovered;
         }
 
         Level lvl(levels.first);
@@ -421,34 +438,45 @@ ToolBtns::animate()
         if (lvl==0 && arLvl==0)
             m_vals.remove(tb);
 
-        tb->update();
+        tb->repaint();
     }
     if (!needRunning)
         m_timer->stop();
-    s_block = false;
 }
 
 bool
 ToolBtns::eventFilter(QObject *o, QEvent *e)
 {
-    if (!o || !e)
+    if (!o || !e || !o->isWidgetType())
         return false;
-    if (e->type() == QEvent::Leave)
+    if (m_hovered && e->type() == QEvent::MouseMove && qobject_cast<QToolBar *>(o))
     {
-        m_timer->start(25);
+        if (!(static_cast<QToolBar *>(o)->childAt(static_cast<QMouseEvent *>(e)->pos())) && m_hovered)
+        {
+            m_hovered = 0;
+            if (!m_timer->isActive())
+                m_timer->start(25);
+        }
         return false;
     }
-    if (!o->isWidgetType())
+    if (e->type() == QEvent::Leave || e->type() == QEvent::HoverLeave)
+    {
+        m_hovered = 0;
+        if (!m_timer->isActive())
+            m_timer->start(25);
         return false;
-
-    if ((e->type() == QEvent::Enter || e->type() == QEvent::Leave) ||
-            (e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()) && Ops::hasMenu(static_cast<const QToolButton *>(o))))
+    }
+    if (qobject_cast<QToolButton *>(o))
+    if (e->type() == QEvent::Enter || e->type() == QEvent::HoverEnter
+            || (e->type() == QEvent::HoverMove && !m_timer->isActive() && Ops::hasMenu(static_cast<const QToolButton *>(o))))
     {
         QToolButton *tb = static_cast<QToolButton *>(o);
+        if (tb->underMouse())
+            m_hovered = tb;
         if (!m_vals.contains(tb))
             m_vals.insert(tb, QPair<Level, ArrowLevel>(0, 0));
-        s_block = true;
-        m_timer->start(25);
+        if (!m_timer->isActive())
+            m_timer->start(25);
     }
     return false;
 }

@@ -26,6 +26,8 @@
 #include <QDialog>
 #include <QToolButton>
 #include <qmath.h>
+#include <QAbstractScrollArea>
+#include <QScrollBar>
 
 Q_DECL_EXPORT UNOHandler UNOHandler::s_instance;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
@@ -325,15 +327,21 @@ UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, floa
     if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget())
         return false;
 
-    if (!w->isWindow())
-        w = w->window();
+    QWidget *win(w->window());
 
-    QVariant var(w->property("DSP_UNOheight"));
+    QVariant var(win->property("DSP_UNOheight"));
     if (var.isValid())
     {
         p->save();
         p->setOpacity(opacity);
         p->drawTiledPixmap(r, s_pix.value(var.toInt()), QPoint(0, offset));
+        p->setOpacity(1.0f);
+        if (Settings::conf.contAware)
+        if (w->mapTo(win, w->rect().topLeft()).y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
+        {
+            p->setOpacity(0.33f);
+            p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win));
+        }
         p->restore();
         return true;
     }
@@ -541,7 +549,8 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
                 return false;
         if (w->cursor().shape() != Qt::ArrowCursor
                 || QApplication::overrideCursor()
-                || w->mouseGrabber())
+                || w->mouseGrabber()
+                || me->button() != Qt::LeftButton)
             return false;
         XHandler::mwRes(me->globalPos(), w->window()->winId());
         return false;
@@ -610,4 +619,152 @@ WinHandler::canDrag(QWidget *w)
             || qobject_cast<QDialog *>(w))
         return true;
     return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+Q_DECL_EXPORT ScrollWatcher ScrollWatcher::s_instance;
+QMap<qlonglong, QPixmap> ScrollWatcher::s_winBg;
+
+ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent), m_timer(new QTimer(this))
+{
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(updateLater()));
+}
+
+void
+ScrollWatcher::watch(QAbstractScrollArea *area)
+{
+    if (!Settings::conf.contAware)
+        return;
+    area->window()->removeEventFilter(instance());
+    area->window()->installEventFilter(instance());
+    connect(area->window(), SIGNAL(destroyed()), instance(), SLOT(removeFromQueue()));
+    area->viewport()->removeEventFilter(instance());
+    area->viewport()->installEventFilter(instance());
+}
+
+void
+ScrollWatcher::removeFromQueue()
+{
+    QMainWindow *mw(static_cast<QMainWindow *>(sender()));
+    if (m_wins.contains(mw))
+        m_wins.removeOne(mw);
+}
+
+void
+ScrollWatcher::updateLater()
+{
+    for (int i = 0; i < m_wins.count(); ++i)
+        updateWin(m_wins.at(i));
+    m_wins.clear();
+}
+
+void
+ScrollWatcher::updateWin(QMainWindow *win)
+{
+    regenBg(win);
+    const QList<QToolBar *> toolBars(win->findChildren<QToolBar *>());
+    for (int i = 0; i < toolBars.count(); ++i)
+        toolBars.at(i)->update();
+    if (QStatusBar *sb = win->findChild<QStatusBar *>())
+        sb->update();
+    if (QTabBar *tb = win->findChild<QTabBar *>())
+        tb->update();
+}
+
+void
+ScrollWatcher::regenBg(QMainWindow *win)
+{
+    const QRegion clipReg(paintRegion(win));
+    const QRect bound(clipReg.boundingRect());
+//    QImage img(win->size()/*+QSize(0, 22)*/, QImage::Format_ARGB32);
+    QImage img(win->width(), win->height()-(bound.height()-2), QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    p.setClipRegion(clipReg/*.translated(0, 22)*/);
+    win->render(&p/*, QPoint(0, 22)*/);
+    p.end();
+    img = img.copy(0, clipReg.boundingRect().top()+1, img.width(), 1);
+    img = Render::blurred(img, img.rect(), 128);
+
+    QPixmap pix(QPixmap::fromImage(img));
+    QPixmap decoPix = XHandler::x11Pix(pix/*.copy(0, 0, win->width(), 1)*/);
+    unsigned long d(decoPix.handle());
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::LongLong, &d);
+    UNOHandler::updateWindow(win->winId());
+    decoPix.detach();
+    s_winBg.insert((qlonglong)win, pix);
+}
+
+QPixmap
+ScrollWatcher::bg(qlonglong win)
+{
+    return s_winBg.value(win, QPixmap());
+}
+
+bool
+ScrollWatcher::eventFilter(QObject *o, QEvent *e)
+{
+    if (e->type() == QEvent::Resize && qobject_cast<QMainWindow *>(o))
+    {
+        QMainWindow *win(static_cast<QMainWindow *>(o));
+        if (!m_wins.contains(win))
+            m_wins << win;
+        m_timer->start(50);
+    }
+    if (e->type() == QEvent::Paint && !qobject_cast<QMainWindow *>(o))
+    {
+        QMainWindow *win(qobject_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
+        if (!m_wins.contains(win))
+            m_wins << win;
+        m_timer->start(50);
+    }
+    return false;
+}
+
+QRegion
+ScrollWatcher::paintRegion(QMainWindow *win)
+{
+    QRegion r(win->rect());
+    QList<QToolBar *> children(win->findChildren<QToolBar *>());
+    for (int i = 0; i < children.count(); ++i)
+    {
+        QToolBar *c(children.at(i));
+        if (c->parentWidget() != win || win->toolBarArea(c) != Qt::TopToolBarArea
+                || c->orientation() != Qt::Horizontal || !c->isVisible())
+            continue;
+        r -= QRegion(c->geometry());
+    }
+    if (QStatusBar *bar = win->findChild<QStatusBar *>())
+        if (bar->isVisible())
+        {
+            if (bar->parentWidget() == win)
+                r -= QRegion(bar->geometry());
+            else
+                r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
+        }
+    if (QTabBar *bar = win->findChild<QTabBar *>())
+        if (bar->isVisible() && Ops::isSafariTabBar(bar))
+        {
+            QRect geo;
+            if (bar->parentWidget() == win)
+                geo = bar->geometry();
+            else
+                geo = QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size());
+
+            if (QTabWidget *tw = qobject_cast<QTabWidget *>(bar->parentWidget()))
+            {
+                int right(tw->mapTo(win, tw->rect().topRight()).x());
+                int left(tw->mapTo(win, tw->rect().topLeft()).x());
+                geo.setRight(right);
+                geo.setLeft(left);
+            }
+            if (qApp->applicationName() == "konsole")
+            {
+                geo.setLeft(win->rect().left());
+                geo.setRight(win->rect().right());
+            }
+            r -= QRegion(geo);
+        }
+    return r;
 }

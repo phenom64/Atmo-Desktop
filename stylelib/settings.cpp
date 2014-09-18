@@ -74,6 +74,7 @@ Settings::read()
     conf.titlePos = conf.removeTitleBars?s.value(READTITLEPOS).toInt():-1;
     conf.hackDialogs = s.value(READHACKDIALOGS).toBool();
     conf.titleButtons = s.value(READTITLEBUTTONS).toInt();
+    conf.contAware = s.value(READCONTAWARE).toBool();
     //pushbuttons
     conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     conf.pushbtn.shadow = s.value(READPUSHBTNSHADOW).toInt();

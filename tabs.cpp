@@ -22,6 +22,7 @@
 #include "stylelib/animhandler.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/settings.h"
+#include "stylelib/unohandler.h"
 
 bool
 StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -90,6 +91,13 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
             painter->setOpacity(XHandler::opacity());
             painter->drawPath(p);
+            if (Settings::conf.contAware)
+            {
+                painter->setOpacity(0.33f);
+                painter->setBrush(ScrollWatcher::bg((qlonglong)bar->window()));
+//                painter->setBrushOrigin(bar->mapFrom(bar->window(), bar->rect().topLeft()));
+                painter->drawPath(p);
+            }
             painter->restore();
         }
         return true;
@@ -273,6 +281,13 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
     const float o(p->opacity());
     p->setOpacity(qMin(1.0f, opacity*1.1f));
     p->fillRect(r, s_pix.value(r.height()));
+    p->setOpacity(1.0f);
+    if (Settings::conf.contAware)
+    {
+        p->setOpacity(0.33f);
+        p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)bar->window())/*, bar->mapTo(bar->window(), bar->rect().topLeft())*/);
+        p->setOpacity(1.0f);
+    }
 //    r.setBottom(r.bottom()+1);
 //    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
 

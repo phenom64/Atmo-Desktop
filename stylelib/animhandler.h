@@ -86,6 +86,7 @@ protected slots:
 
 private:
     static ToolBtns s_instance;
+    QToolButton *m_hovered;
     QMap<QToolButton *, QPair<Level, ArrowLevel> > m_vals;
     QTimer *m_timer;
 };

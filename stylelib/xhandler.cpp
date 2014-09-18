@@ -4,6 +4,7 @@
 #include "fixx11h.h"
 #include <QX11Info>
 #include <QMouseEvent>
+#include <QPainter>
 #include "settings.h"
 
 static Atom atom[XHandler::ValueCount] =
@@ -14,7 +15,8 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_MENUHADOWUP", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_MENUHADOWDOWN", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STORESHADOW", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False)
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False),
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECOBGPIX", False)
 };
 
 void
@@ -101,4 +103,16 @@ XHandler::opacity()
         return Settings::conf.opacity;
     else
         return 1.0f;
+}
+
+QPixmap
+XHandler::x11Pix(const QPixmap &pix)
+{
+    Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
+    QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
+    p.fill(Qt::transparent);
+    QPainter pt(&p);
+    pt.drawTiledPixmap(p.rect(), pix);
+    pt.end();
+    return p;
 }

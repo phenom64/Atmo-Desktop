@@ -10,6 +10,7 @@
 #include <QMenuBar>
 #include <QMap>
 #include <QToolButton>
+#include <QDockWidget>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -97,6 +98,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
         }
         else
             UNOHandler::drawUnoPart(painter, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
+//        painter->drawTiledPixmap(option->rect, bg, widget->geometry().topLeft());
     }
     return true;
 }
@@ -108,7 +110,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
         int th(win->property("titleHeight").toInt());
-        UNOHandler::drawUnoPart(painter, option->rect, win, th+widget->geometry().top(), XHandler::opacity());
+        UNOHandler::drawUnoPart(painter, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
     }
     return true;
 }
@@ -116,10 +118,6 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!(widget && widget->isWindow()))
-        return true;
-
-    Render::renderShadow(Render::Sunken, option->rect, painter, 32, Render::Top);
     return true;
 }
 
@@ -147,7 +145,7 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
-    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, 0.2f);
+    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, Settings::conf.shadows.opacity);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -188,6 +186,7 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 //    const QRect cr(subElementRect(SE_DockWidgetCloseButton, opt, widget));
 //    const QRect fr(subElementRect(SE_DockWidgetFloatButton, opt, widget));
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
+    castObj(const QDockWidget *, dock, widget);
 
     painter->save();
     painter->setOpacity(Settings::conf.shadows.opacity);
@@ -196,6 +195,14 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
     l.setLeft(0);
     l.setBottom(l.bottom()+1);
     painter->drawLine(l.bottomLeft(), l.bottomRight());
+    if (dock && !dock->isFloating())
+    {
+        const bool left(dock->geometry().x() < dock->window()->width() - dock->geometry().right());
+        if (left && dock->geometry().x() > 0)
+            painter->drawLine(dock->rect().topLeft(), dock->rect().bottomLeft());
+        if (!left && dock->geometry().right()+1 < dock->window()->rect().right())
+            painter->drawLine(dock->rect().topRight(), dock->rect().bottomRight());
+    }
     painter->restore();
 
     const QFont f(painter->font());
@@ -240,6 +247,6 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
         painter->drawTiledPixmap(frame->rect(), pix);
     }
     if (frame && frame->frameShadow() == QFrame::Plain)
-        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, 0.25f);
+        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, Settings::conf.shadows.opacity);
     return true;
 }

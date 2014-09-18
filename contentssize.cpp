@@ -125,8 +125,8 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
                 }
                 sz.setWidth(w/bar->count());
             }
-            else if (tab->position == QStyleOptionTab::Middle || tab->position == QStyleOptionTab::OnlyOneTab)
-                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap);
+            else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
         }
         if (bar && !bar->expanding())
         {
@@ -136,7 +136,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             f.setBold(true);
             int boldWidth(QFontMetrics(f).boundingRect(s).width());
             int add(boldWidth-nonBoldWidth);
-            add+=4; //some extra padding for good measure...
+//            add+=4; //some extra padding for good measure...
             if (!isVertical(tab, bar))
                 sz.rwidth() += add;
             else

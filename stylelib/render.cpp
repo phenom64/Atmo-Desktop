@@ -164,7 +164,7 @@ Render::initShadowParts()
             p.setBrush(Qt::black);
             p.drawRoundedRect(rect, rnd, rnd);
 
-            int steps(qMin(3, r));
+            int steps(qBound(1, qMax(0, r-1), 3));
             int alpha(300/steps);
             for (int i = 1; i < steps+1; ++i)
             {

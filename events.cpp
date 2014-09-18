@@ -156,49 +156,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
             QPainter p(win);
             if (XHandler::opacity() < 1.0f)
             {
-                QRegion r(win->rect());
-                QList<QToolBar *> children(win->findChildren<QToolBar *>());
-                for (int i = 0; i < children.count(); ++i)
-                {
-                    QToolBar *c(children.at(i));
-                    if (c->parentWidget() != win || win->toolBarArea(c) != Qt::TopToolBarArea
-                            || c->orientation() != Qt::Horizontal || !c->isVisible())
-                        continue;
-                    r -= QRegion(c->geometry());
-                }
-                if (QStatusBar *bar = win->findChild<QStatusBar *>())
-                    if (bar->isVisible())
-                    {
-                        if (bar->mapTo(win, bar->rect().bottomLeft()).y() >= win->rect().bottom())
-                            needRound = false;
-                        if (bar->parentWidget() == win)
-                            r -= QRegion(bar->geometry());
-                        else
-                            r -= QRegion(QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size()));
-                    }
-                if (QTabBar *bar = win->findChild<QTabBar *>())
-                    if (bar->isVisible() && Ops::isSafariTabBar(bar))
-                    {
-                        QRect geo;
-                        if (bar->parentWidget() == win)
-                            geo = bar->geometry();
-                        else
-                            geo = QRect(bar->mapTo(win, bar->rect().topLeft()), bar->size());
-
-                        if (QTabWidget *tw = qobject_cast<QTabWidget *>(bar->parentWidget()))
-                        {
-                            int right(tw->mapTo(win, tw->rect().topRight()).x());
-                            int left(tw->mapTo(win, tw->rect().topLeft()).x());
-                            geo.setRight(right);
-                            geo.setLeft(left);
-                        }
-                        if (qApp->applicationName() == "konsole")
-                        {
-                            geo.setLeft(win->rect().left());
-                            geo.setRight(win->rect().right());
-                        }
-                        r -= QRegion(geo);
-                    }
+                QRegion r(ScrollWatcher::paintRegion(win));
                 p.setClipRegion(r);
                 if (needRound)
                     Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);

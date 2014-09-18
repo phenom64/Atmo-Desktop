@@ -248,6 +248,13 @@ KwinClient::paint(QPainter &p)
     p.setPen(QPen(lg, 1.0f));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
+    if (!m_bgPix.isNull())
+    {
+        p.setOpacity(0.33f);
+        Render::renderMask(tr, &p, m_bgPix, 4, Render::All & ~Render::Bottom);
+        p.setOpacity(1.0f);
+    }
+
     QFont f(p.font());
     f.setBold(isActive());
     p.setFont(f);
@@ -350,6 +357,11 @@ KwinClient::reset(unsigned long changed)
         m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
         m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
         m_needSeparator = true;
+    }
+    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+    {
+        m_bgPix = QPixmap::fromX11Pixmap(*bg);
+        m_bgPix.detach();
     }
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
