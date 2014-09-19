@@ -85,15 +85,16 @@ XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
 bool
 XHandler::compositingActive()
 {
-    static Atom *net_wm_cm = 0;
-    if (!net_wm_cm)
-    {
-        char net_wm_cm_name[ 100 ];
-        sprintf(net_wm_cm_name, "_NET_WM_CM_S%d", DefaultScreen(QX11Info::display()));
-        net_wm_cm = new Atom();
-        *net_wm_cm = XInternAtom(QX11Info::display(), net_wm_cm_name, False);
-    }
-    return XGetSelectionOwner(QX11Info::display(), *net_wm_cm) != None;
+    return QX11Info::isCompositingManagerRunning();
+//    static Atom *net_wm_cm = 0;
+//    if (!net_wm_cm)
+//    {
+//        char net_wm_cm_name[ 100 ];
+//        sprintf(net_wm_cm_name, "_NET_WM_CM_S%d", DefaultScreen(QX11Info::display()));
+//        net_wm_cm = new Atom();
+//        *net_wm_cm = XInternAtom(QX11Info::display(), net_wm_cm_name, False);
+//    }
+//    return XGetSelectionOwner(QX11Info::display(), *net_wm_cm) != None;
 }
 
 float
@@ -108,11 +109,11 @@ XHandler::opacity()
 QPixmap
 XHandler::x11Pix(const QPixmap &pix)
 {
-    Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
+    const Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
     QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
-    p.fill(Qt::transparent);
     QPainter pt(&p);
-    pt.drawTiledPixmap(p.rect(), pix);
+    pt.setCompositionMode(QPainter::CompositionMode_Source);
+    pt.drawPixmap(p.rect(), pix);
     pt.end();
     return p;
 }

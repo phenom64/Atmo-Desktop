@@ -362,6 +362,7 @@ KwinClient::reset(unsigned long changed)
     {
         m_bgPix = QPixmap::fromX11Pixmap(*bg);
         m_bgPix.detach();
+        XFreePixmap(QX11Info::display(), *bg);
     }
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());

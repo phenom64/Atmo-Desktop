@@ -337,10 +337,13 @@ UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, floa
         p->drawTiledPixmap(r, s_pix.value(var.toInt()), QPoint(0, offset));
         p->setOpacity(1.0f);
         if (Settings::conf.contAware)
-        if (w->mapTo(win, w->rect().topLeft()).y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
         {
-            p->setOpacity(0.33f);
-            p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win));
+            const QPoint offset(w->mapTo(win, w->rect().topLeft()));
+            if (offset.y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
+            {
+                p->setOpacity(0.33f);
+                p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
+            }
         }
         p->restore();
         return true;
@@ -657,6 +660,7 @@ ScrollWatcher::updateLater()
     for (int i = 0; i < m_wins.count(); ++i)
         updateWin(m_wins.at(i));
     m_wins.clear();
+    m_timer->stop();
 }
 
 void
@@ -672,28 +676,31 @@ ScrollWatcher::updateWin(QMainWindow *win)
         tb->update();
 }
 
+static bool s_block;
+
 void
 ScrollWatcher::regenBg(QMainWindow *win)
 {
+    s_block = true;
     const QRegion clipReg(paintRegion(win));
     const QRect bound(clipReg.boundingRect());
-//    QImage img(win->size()/*+QSize(0, 22)*/, QImage::Format_ARGB32);
-    QImage img(win->width(), win->height()-(bound.height()-2), QImage::Format_ARGB32);
+    const int height(22+bound.top());
+    QImage img(win->width(), height/6/*+QSize(0, 22)*/, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     QPainter p(&img);
-    p.setClipRegion(clipReg/*.translated(0, 22)*/);
-    win->render(&p/*, QPoint(0, 22)*/);
+    win->render(&p, QPoint(0, -(height-22)));
     p.end();
-    img = img.copy(0, clipReg.boundingRect().top()+1, img.width(), 1);
-    img = Render::blurred(img, img.rect(), 128);
+    img = img.scaled(img.width(), height);
+    img = Render::blurred(img.mirrored(), img.rect(), 8);
 
     QPixmap pix(QPixmap::fromImage(img));
-    QPixmap decoPix = XHandler::x11Pix(pix/*.copy(0, 0, win->width(), 1)*/);
+    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
     unsigned long d(decoPix.handle());
-    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::LongLong, &d);
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, &d);
     UNOHandler::updateWindow(win->winId());
     decoPix.detach();
-    s_winBg.insert((qlonglong)win, pix);
+    s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height-22));
+    s_block = false;
 }
 
 QPixmap
@@ -710,14 +717,15 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         QMainWindow *win(static_cast<QMainWindow *>(o));
         if (!m_wins.contains(win))
             m_wins << win;
-        m_timer->start(50);
+        m_timer->start(5);
     }
-    if (e->type() == QEvent::Paint && !qobject_cast<QMainWindow *>(o))
+    if (e->type() == QEvent::Paint && !qobject_cast<QMainWindow *>(o) && !s_block)
     {
+
         QMainWindow *win(qobject_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
         if (!m_wins.contains(win))
             m_wins << win;
-        m_timer->start(50);
+        m_timer->start(5);
     }
     return false;
 }

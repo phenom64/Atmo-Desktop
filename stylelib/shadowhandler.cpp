@@ -104,7 +104,7 @@ unsigned long
                 pix[i] = new QPixmap(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
                 pix[i]->fill(Qt::transparent);
                 QPainter pt(pix[i]);
-                pt.drawTiledPixmap(pix[i]->rect(), QPixmap::fromImage(img).copy(r));
+                pt.drawPixmap(pix[i]->rect(), QPixmap::fromImage(img).copy(r));
                 pt.end();
                 data[i] = pix[i]->handle();
             }
@@ -194,7 +194,7 @@ unsigned long
             menupix[i] = new QPixmap(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
             menupix[i]->fill(Qt::transparent);
             QPainter pt(menupix[i]);
-            pt.drawTiledPixmap(menupix[i]->rect(), pix.copy(r));
+            pt.drawPixmap(menupix[i]->rect(), pix.copy(r));
             pt.end();
             data[i] = menupix[i]->handle();
         }

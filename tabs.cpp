@@ -95,7 +95,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             {
                 painter->setOpacity(0.33f);
                 painter->setBrush(ScrollWatcher::bg((qlonglong)bar->window()));
-//                painter->setBrushOrigin(bar->mapFrom(bar->window(), bar->rect().topLeft()));
+                painter->setBrushOrigin(bar->mapFrom(bar->window(), bar->rect().topLeft()));
                 painter->drawPath(p);
             }
             painter->restore();
@@ -285,7 +285,7 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
     if (Settings::conf.contAware)
     {
         p->setOpacity(0.33f);
-        p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)bar->window())/*, bar->mapTo(bar->window(), bar->rect().topLeft())*/);
+        p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)bar->window()), bar->mapTo(bar->window(), bar->rect().topLeft()));
         p->setOpacity(1.0f);
     }
 //    r.setBottom(r.bottom()+1);
