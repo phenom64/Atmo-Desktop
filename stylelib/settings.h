@@ -12,6 +12,7 @@
 #define HACKDIALOGS         "hackdialogs"
 #define TITLEBUTTONS        "titlebuttons"
 #define CONTAWARE           "contentawareuno"
+#define COMPACTMENU         "compactmenu"
 
 #define PUSHBTNRND          "pushbtn.rnd"
 #define PUSHBTNSHADOW       "pushbtn.shadow"
@@ -63,7 +64,8 @@
 #define DEFTITLEPOS             1
 #define DEFHACKDIALOGS          false
 #define DEFTITLEBUTTONS         0
-#define DEFCONTAWARE            false
+#define DEFCONTAWARE            QStringList() << "dfm"
+#define DEFCOMPACTMENU          false
 
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
@@ -97,6 +99,7 @@
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
 #define READTITLEBUTTONS        TITLEBUTTONS, DEFTITLEBUTTONS
 #define READCONTAWARE           CONTAWARE, DEFCONTAWARE
+#define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
 
 #define READPUSHBTNRND          PUSHBTNRND, DEFPUSHBTNRND
 #define READPUSHBTNSHADOW       PUSHBTNSHADOW, DEFPUSHBTNSHADOW
@@ -128,7 +131,7 @@ class Q_DECL_EXPORT Settings
 public:
     float opacity;
     QStringList blackList;
-    bool removeTitleBars, hackDialogs, contAware;
+    bool removeTitleBars, hackDialogs, contAware, compactMenu;
     int titleButtons, titlePos;
     struct pushbtn
     {

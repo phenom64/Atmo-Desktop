@@ -71,13 +71,18 @@ public:
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static bool canDrag(QWidget *w);
+    static void addCompactMenu(QWidget *w);
 
 protected:
     WinHandler(QObject *parent = 0);
     bool eventFilter(QObject *, QEvent *);
 
+protected slots:
+    void menuShow();
+
 private:
     static WinHandler s_instance;
+    QList<QWidget *> m_menuWins;
 };
 
 class QAbstractScrollArea;

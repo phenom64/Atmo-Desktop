@@ -28,6 +28,7 @@
 #include <qmath.h>
 #include <QAbstractScrollArea>
 #include <QScrollBar>
+#include <QElapsedTimer>
 
 Q_DECL_EXPORT UNOHandler UNOHandler::s_instance;
 Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
@@ -534,6 +535,15 @@ WinHandler
     return &s_instance;
 }
 
+void
+WinHandler::addCompactMenu(QWidget *w)
+{
+    if (instance()->m_menuWins.contains(w))
+        return;
+    instance()->m_menuWins << w;
+    w->installEventFilter(instance());
+}
+
 bool
 WinHandler::eventFilter(QObject *o, QEvent *e)
 {
@@ -605,11 +615,41 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             int x(p->mapToGlobal(p->rect().center()).x()-(w->width()/2));
             w->move(x, y);
         }
+        if (Settings::conf.compactMenu && w->testAttribute(Qt::WA_WState_Created) && qobject_cast<QMainWindow *>(w) && m_menuWins.contains(w))
+        {
+            QMainWindow *mw(static_cast<QMainWindow *>(w));
+            mw->menuBar()->hide();
+            QToolBar *tb(mw->findChild<QToolBar *>());
+            if (!tb || !mw->menuBar() || tb->findChild<QToolButton *>("DSP_menubutton"))
+                return false;
+
+            QToolButton *tbtn(new QToolButton(tb));
+            tbtn->setText("Menu");
+            QMenu *m = new QMenu(tbtn);
+            m->addActions(mw->menuBar()->actions());
+            connect(m, SIGNAL(aboutToShow()), this, SLOT(menuShow()));
+            tbtn->setObjectName("DSP_menubutton");
+            tbtn->setMenu(m);
+            tbtn->setPopupMode(QToolButton::InstantPopup);
+            QAction *before(tb->actions().first());
+            tb->insertWidget(before, tbtn);
+            tb->insertSeparator(before);
+
+        }
         return false;
     }
     default: break;
     }
     return false;
+}
+
+void
+WinHandler::menuShow()
+{
+    QMenu *m(static_cast<QMenu *>(sender()));
+    m->clear();
+    QMainWindow *mw(static_cast<QMainWindow *>(m->parentWidget()->window()));
+    m->addActions(mw->menuBar()->actions());
 }
 
 bool
@@ -681,16 +721,25 @@ static bool s_block;
 void
 ScrollWatcher::regenBg(QMainWindow *win)
 {
+//    QElapsedTimer t;
+//    t.start();
     s_block = true;
     const QRegion clipReg(paintRegion(win));
     const QRect bound(clipReg.boundingRect());
-    const int height(22+bound.top());
-    QImage img(win->width(), height/6/*+QSize(0, 22)*/, QImage::Format_ARGB32);
+    const int height(bound.top());
+    QImage img(win->width(), (height+22)/6/*+QSize(0, 22)*/, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     QPainter p(&img);
-    win->render(&p, QPoint(0, -(height-22)));
+
+    win->render(&p, QPoint(), QRect(QPoint(0, height), img.size()), QWidget::DrawChildren);
+
+    QLinearGradient lg(img.rect().bottomLeft(), img.rect().topLeft());
+    lg.setColorAt(0.0f, QColor(0, 0, 0, 160));
+    lg.setColorAt(1.0f, Qt::transparent);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.fillRect(img.rect(), lg);
     p.end();
-    img = img.scaled(img.width(), height);
+    img = img.scaled(img.width(), height+22);
     img = Render::blurred(img.mirrored(), img.rect(), 8);
 
     QPixmap pix(QPixmap::fromImage(img));
@@ -699,8 +748,9 @@ ScrollWatcher::regenBg(QMainWindow *win)
     XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, &d);
     UNOHandler::updateWindow(win->winId());
     decoPix.detach();
-    s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height-22));
+    s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height));
     s_block = false;
+//    qDebug() << "took" << t.elapsed() << "ms to gen gfx";
 }
 
 QPixmap
@@ -712,20 +762,24 @@ ScrollWatcher::bg(qlonglong win)
 bool
 ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
+    if (s_block)
+        return false;
     if (e->type() == QEvent::Resize && qobject_cast<QMainWindow *>(o))
     {
         QMainWindow *win(static_cast<QMainWindow *>(o));
         if (!m_wins.contains(win))
             m_wins << win;
-        m_timer->start(5);
+        if (!m_timer->isActive())
+            m_timer->start(50);
     }
-    if (e->type() == QEvent::Paint && !qobject_cast<QMainWindow *>(o) && !s_block)
+    if (e->type() == QEvent::Paint && !qobject_cast<QMainWindow *>(o))
     {
 
         QMainWindow *win(qobject_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
         if (!m_wins.contains(win))
             m_wins << win;
-        m_timer->start(5);
+        if (!m_timer->isActive())
+            m_timer->start(50);
     }
     return false;
 }

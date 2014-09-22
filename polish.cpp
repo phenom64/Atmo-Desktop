@@ -122,6 +122,8 @@ StyleProject::polish(QWidget *widget)
 
     if (castObj(QMainWindow *, win, widget))
     {
+        if (Settings::conf.compactMenu && win->menuBar())
+            WinHandler::addCompactMenu(win);
         if (XHandler::opacity() < 1.0f && !win->parentWidget())
         {
             unsigned int d(0);
