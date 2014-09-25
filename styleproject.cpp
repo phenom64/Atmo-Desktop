@@ -49,10 +49,6 @@ StyleProject::StyleProject()
     assignMethods();
     Settings::read();
     Render::generateData();
-    QPalette p(qApp->palette());
-    QColor c = p.color(QPalette::Window);
-    Color::titleBarColors[0] = Color::mid(c, Qt::white, 10, 1);
-    Color::titleBarColors[1] = Color::mid(c, Qt::black, 10, 1);
 }
 
 StyleProject::~StyleProject()
@@ -213,5 +209,5 @@ StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) c
 void
 StyleProject::fixMainWindowToolbar()
 {
-    UNOHandler::updateToolBar(static_cast<QToolBar *>(sender()));
+    UNO::Handler::updateToolBar(static_cast<QToolBar *>(sender()));
 }

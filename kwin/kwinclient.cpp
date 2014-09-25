@@ -239,7 +239,9 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setClipRect(tr);
     p.setOpacity(m_opacity);
-    Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
+    if (!m_bgPix[0].isNull())
+//        p.drawTiledPixmap(tr, m_bgPix[0]);
+        Render::renderMask(tr, &p, m_bgPix[0], 4, Render::All & ~Render::Bottom);
     p.setOpacity(1.0f);
     QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
     lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
@@ -248,10 +250,10 @@ KwinClient::paint(QPainter &p)
     p.setPen(QPen(lg, 1.0f));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
-    if (!m_bgPix.isNull())
+    if (!m_bgPix[1].isNull())
     {
         p.setOpacity(0.33f);
-        Render::renderMask(tr, &p, m_bgPix, 4, Render::All & ~Render::Bottom);
+        Render::renderMask(tr, &p, m_bgPix[1], 4, Render::All & ~Render::Bottom);
         p.setOpacity(1.0f);
     }
 
@@ -344,12 +346,13 @@ KwinClient::reset(unsigned long changed)
     WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
     if (data && !isPreview())
     {
-        m_titleColor[0] = QColor::fromRgba(data->top);
-        m_titleColor[1] = QColor::fromRgba(data->bottom);
         m_headHeight = data->height;
         m_needSeparator = data->separator;
         m_textColor = QColor::fromRgba(data->text);
         m_opacity = (float)data->opacity/100.0f;
+        m_bgPix[0] = QPixmap::fromX11Pixmap(data->bgpix);
+        m_bgPix[0].detach();
+//        XFreePixmap(QX11Info::display(), data->bgpix);
         XFree(data);
     }
     else
@@ -360,8 +363,8 @@ KwinClient::reset(unsigned long changed)
     }
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
     {
-        m_bgPix = QPixmap::fromX11Pixmap(*bg);
-        m_bgPix.detach();
+        m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
+        m_bgPix[1].detach();
         XFreePixmap(QX11Info::display(), *bg);
     }
     QRect r(0, 0, width(), m_headHeight);

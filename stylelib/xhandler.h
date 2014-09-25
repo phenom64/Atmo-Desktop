@@ -6,9 +6,10 @@
 
 typedef struct _WindowData
 {
-    QRgb top, bottom, text;
+    QRgb text;
     bool separator;
     unsigned int height, opacity;
+    unsigned long bgpix;
 } WindowData;
 
 static int _n = 0;
@@ -36,6 +37,7 @@ public:
     static float opacity();
 
     static QPixmap x11Pix(const QPixmap &pix);
+    static void freePix(const unsigned long pix);
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);

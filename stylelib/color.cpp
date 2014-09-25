@@ -1,6 +1,6 @@
 #include "color.h"
-
-Q_DECL_EXPORT QColor Color::titleBarColors[2];
+#include <QPalette>
+#include <QApplication>
 
 QColor
 Color::mid(const QColor &c1, const QColor c2, int i1, int i2)
@@ -82,6 +82,16 @@ Color::complementary(QColor c)
 {
     shiftHue(c, 180);
     return c;
+}
+
+QColor
+(&Color::titleBarColors())[2]
+//*Color::titleBarColors()
+{
+    QPalette p(qApp->palette());
+    QColor c = p.color(QPalette::Window);
+    QColor ret[2] = { Color::mid(c, Qt::white, 10, 1), Color::mid(c, Qt::black, 10, 1) };
+    return ret;
 }
 
 

@@ -117,3 +117,9 @@ XHandler::x11Pix(const QPixmap &pix)
     pt.end();
     return p;
 }
+
+void
+XHandler::freePix(const unsigned long pix)
+{
+    XFreePixmap(QX11Info::display(), pix);
+}

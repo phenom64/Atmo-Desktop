@@ -112,7 +112,7 @@ StyleProject::polish(QWidget *widget)
     if (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
             widget->findChild<QTabBar *>())
-        UNOHandler::manage(widget);
+        UNO::Handler::manage(widget);
 
     if (Settings::conf.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
         ScrollWatcher::watch(static_cast<QAbstractScrollArea *>(widget));
@@ -270,6 +270,7 @@ StyleProject::polish(QWidget *widget)
         Anim::Tabs::manage(tabBar);
         tabBar->setAttribute(Qt::WA_Hover);
         tabBar->setAttribute(Qt::WA_MouseTracking);
+        installFilter(tabBar);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
             if (Ops::isSafariTabBar(tabBar))
@@ -300,7 +301,7 @@ StyleProject::unpolish(QWidget *widget)
     widget->removeEventFilter(this);
     ShadowHandler::release(widget);
     Anim::Basic::release(widget);
-    UNOHandler::release(widget);
+    UNO::Handler::release(widget);
     WinHandler::release(widget);
     if (castObj(QProgressBar *, pb, widget))
         ProgressHandler::release(pb);

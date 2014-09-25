@@ -30,9 +30,6 @@
 #include <QScrollBar>
 #include <QElapsedTimer>
 
-Q_DECL_EXPORT UNOHandler UNOHandler::s_instance;
-Q_DECL_EXPORT QMap<int, QPixmap> UNOHandler::s_pix;
-
 void
 DButton::onClick(QMouseEvent *e, const Type &t)
 {
@@ -103,407 +100,6 @@ TitleWidget::paintEvent(QPaintEvent *)
     p.end();
 }
 
-UNOHandler::UNOHandler(QObject *parent)
-    : QObject(parent)
-{
-}
-
-UNOHandler
-*UNOHandler::instance()
-{
-    return &s_instance;
-}
-
-void
-UNOHandler::manage(QWidget *mw)
-{
-    mw->removeEventFilter(instance());
-    mw->installEventFilter(instance());
-    QList<QToolBar *> toolBars = mw->findChildren<QToolBar *>();
-    for (int i = 0; i < toolBars.count(); ++i)
-    {
-        QToolBar *bar(toolBars.at(i));
-        bar->removeEventFilter(instance());
-        bar->installEventFilter(instance());
-    }
-    fixTitleLater(mw);
-}
-
-void
-UNOHandler::release(QWidget *mw)
-{
-    mw->removeEventFilter(instance());
-    QList<QToolBar *> toolBars = mw->findChildren<QToolBar *>();
-    for (int i = 0; i < toolBars.count(); ++i)
-        toolBars.at(i)->removeEventFilter(instance());
-}
-
-#define HASCHECK "DSP_hascheck"
-
-static void applyMask(QWidget *widget)
-{
-    if (XHandler::opacity() < 1.0f)
-    {
-        widget->clearMask();
-        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && Settings::conf.removeTitleBars)
-        {
-            widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
-            widget->show();
-            ShadowHandler::manage(widget);
-        }
-        unsigned int d(0);
-        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-    }
-    else
-    {
-        const int w(widget->width()), h(widget->height());
-        QRegion r(0, 2, w, h-4);
-        r += QRegion(1, 1, w-2, h-2);
-        r += QRegion(2, 0, w-4, h);
-        widget->setMask(r);
-    }
-    widget->setProperty(HASCHECK, true);
-}
-
-#define HASSTRETCH "DSP_hasstretch"
-#define HASBUTTONS "DSP_hasbuttons"
-
-static TitleWidget *canAddTitle(QToolBar *toolBar, bool &canhas)
-{
-    canhas = false;
-    const QList<QAction *> actions(toolBar->actions());
-    if (toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly)
-    {
-        canhas = true;
-        for (int i = 0; i < actions.count(); ++i)
-        {
-            QAction *a(actions.at(i));
-            if (a->isSeparator())
-                continue;
-            QWidget *w(toolBar->widgetForAction(actions.at(i)));
-            if (!w || qobject_cast<Buttons *>(w) || qobject_cast<TitleWidget *>(w))
-                continue;
-            if (!qobject_cast<QToolButton *>(w))
-            {
-                canhas = false;
-                break;
-            }
-        }
-    }
-    TitleWidget *tw(toolBar->findChild<TitleWidget *>());
-    if (!canhas && tw)
-    {
-        toolBar->removeAction(toolBar->actionAt(tw->geometry().topLeft()));
-        tw->deleteLater();
-        toolBar->setProperty(HASSTRETCH, false);
-    }
-    return tw;
-}
-
-void
-UNOHandler::setupNoTitleBarWindow(QToolBar *toolBar)
-{
-    if (!toolBar
-            || toolBar->actions().isEmpty()
-            || !qobject_cast<QMainWindow *>(toolBar->parentWidget())
-            || toolBar->geometry().topLeft() != QPoint(0, 0)
-            || toolBar->orientation() != Qt::Horizontal)
-        return;
-    if (toolBar->parentWidget()->parentWidget())
-        return;
-
-    Buttons *b(toolBar->findChild<Buttons *>());
-    if (!b)
-    {
-        toolBar->insertWidget(toolBar->actions().first(), new Buttons(toolBar));
-        toolBar->window()->installEventFilter(instance());
-        toolBar->window()->setProperty(HASBUTTONS, true);
-    }
-    else
-    {
-        QAction *a(toolBar->actionAt(b->geometry().topLeft()));
-        if (a)
-        {
-            toolBar->removeAction(a);
-            toolBar->insertAction(toolBar->actions().first(), a);
-        }
-    }
-    applyMask(toolBar->window());
-
-    bool cantitle;
-    TitleWidget *t = canAddTitle(toolBar, cantitle);
-    if (cantitle)
-    {
-        QAction *ta(0);
-        if (t)
-        {
-            ta = toolBar->actionAt(t->geometry().topLeft());
-            toolBar->removeAction(ta);
-        }
-        TitleWidget *title(t?t:new TitleWidget(toolBar));
-        title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        QAction *a(0);
-        if (Settings::conf.titlePos == TitleWidget::Center)
-        {
-            int at(qFloor((float)toolBar->actions().count()/2.0f));
-            int i(at);
-            const QList<QAction *> actions(toolBar->actions());
-            a = actions.at(i);
-            while (a && i > (at-3))
-            {
-                if (!a)
-                {
-                    toolBar->removeAction(toolBar->actionAt(title->geometry().topLeft()));
-                    title->deleteLater();
-                    return;
-                }
-                if (a->isSeparator())
-                    break;
-                else
-                    a = actions.at(--i);
-            }
-        }
-        else if (Settings::conf.titlePos == TitleWidget::Left)
-            a = toolBar->actions().at(1);
-        if (ta)
-            toolBar->insertAction(a, ta);
-        else
-            toolBar->insertWidget(a, title);
-        toolBar->setProperty(HASSTRETCH, true);
-    }
-    updateToolBar(toolBar);
-    fixTitleLater(toolBar->parentWidget());
-}
-
-bool
-UNOHandler::eventFilter(QObject *o, QEvent *e)
-{
-    if (!o || !e)
-        return false;
-    if (!o->isWidgetType())
-        return false;
-    QWidget *w = static_cast<QWidget *>(o);
-    switch (e->type())
-    {
-    case QEvent::Resize:
-    {
-        if (w->isWindow())
-        {
-            fixWindowTitleBar(w);
-            if (qobject_cast<QMainWindow *>(w) && w->property(HASBUTTONS).toBool())
-                applyMask(w);
-        }
-        if (castObj(QToolBar *, toolBar, o))
-            if (castObj(QMainWindow *, win, toolBar->parentWidget()))
-                updateToolBar(toolBar);
-        return false;
-    }
-    case QEvent::Show:
-    {
-        fixWindowTitleBar(w);
-        if (qobject_cast<QMainWindow *>(w) && XHandler::opacity() < 1.0f && !w->parentWidget())
-        {
-            unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(w->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-        }
-        return false;
-    }
-    default: break;
-    }
-    return false;
-}
-
-bool
-UNOHandler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float opacity)
-{
-    if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
-        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
-            if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
-                if (tb->orientation() != Qt::Horizontal)
-                    return false;
-
-    if (!w->isWindow() && w->height() > w->width())
-        return false;
-
-    if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget())
-        return false;
-
-    QWidget *win(w->window());
-
-    QVariant var(win->property("DSP_UNOheight"));
-    if (var.isValid())
-    {
-        p->save();
-        p->setOpacity(opacity);
-        p->drawTiledPixmap(r, s_pix.value(var.toInt()), QPoint(0, offset));
-        p->setOpacity(1.0f);
-        if (Settings::conf.contAware)
-        {
-            const QPoint offset(w->mapTo(win, w->rect().topLeft()));
-            if (offset.y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
-            {
-                p->setOpacity(0.33f);
-                p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
-            }
-        }
-        p->restore();
-        return true;
-    }
-    return false;
-}
-
-static QDBusMessage methodCall(const QString &method)
-{
-    return QDBusMessage::createMethodCall("org.kde.kwin", "/StyleProjectFactory", "org.kde.DBus.StyleProjectFactory", method);
-}
-
-void
-UNOHandler::updateWindow(WId window)
-{
-    QDBusMessage msg = methodCall("update");
-    msg << QVariant::fromValue((unsigned int)window);
-    QDBusConnection::sessionBus().send(msg);
-}
-
-
-static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator)
-{
-    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
-    if (!h && !(Settings::conf.removeTitleBars && win->property("DSP_hasbuttons").toBool()))
-        return 0;
-
-    unsigned int totheight(h?*h:0);
-    win->setProperty("titleHeight", totheight);
-    int tbheight(0);
-    if (castObj(QMainWindow *, mw, win))
-    {
-        if (mw->menuBar() && mw->menuBar()->isVisible())
-            totheight += mw->menuBar()->height();
-
-        QList<QToolBar *> tbs(mw->findChildren<QToolBar *>());
-        for (int i = 0; i<tbs.count(); ++i)
-        {
-            QToolBar *tb(tbs.at(i));
-            if (tb->isVisible())
-                if (!tb->findChild<QTabBar *>())
-                    if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
-                    {
-                        if (tb->geometry().bottom() > tbheight)
-                            tbheight = tb->height();
-                        needSeparator = 0;
-                    }
-        }
-    }
-    totheight += tbheight;
-    if (Ops::isSafariTabBar(win->findChild<QTabBar *>()))
-        needSeparator = 0;
-    win->setProperty("DSP_headHeight", tbheight);
-    win->setProperty("DSP_UNOheight", totheight);
-    return totheight;
-}
-
-void
-UNOHandler::fixWindowTitleBar(QWidget *win)
-{
-    if (!win || !win->isWindow())
-        return;
-    unsigned int ns(1);
-    WindowData wd;
-    wd.height = getHeadHeight(win, ns);
-    wd.separator = ns;
-    wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
-    wd.top = Color::titleBarColors[0].rgba();
-    wd.bottom = Color::titleBarColors[1].rgba();
-    wd.text = win->palette().color(win->foregroundRole()).rgba();
-    if (!wd.height)
-        return;
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 6);
-    updateWindow(win->winId());
-//    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
-//    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
-    if (!s_pix.contains(wd.height))
-    {
-        QLinearGradient lg(0, 0, 0, wd.height);
-        lg.setColorAt(0.0f, Color::titleBarColors[0]);
-        lg.setColorAt(1.0f, Color::titleBarColors[1]);
-        QPixmap p(Render::noise().width(), wd.height);
-        p.fill(Qt::transparent);
-        QPainter pt(&p);
-        pt.fillRect(p.rect(), lg);
-        pt.end();
-        s_pix.insert(wd.height, Render::mid(p, Render::noise(), 40, 1));
-    }
-
-    const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
-    for (int i = 0; i < toolBars.size(); ++i)
-        toolBars.at(i)->update();
-    if (QMenuBar *mb = win->findChild<QMenuBar *>())
-        mb->update();
-}
-
-void
-UNOHandler::updateToolBar(QToolBar *toolBar)
-{
-    QMainWindow *win = static_cast<QMainWindow *>(toolBar->parentWidget());
-    if (toolBar->isWindow() && toolBar->isFloating())
-    {
-        toolBar->setContentsMargins(0, 0, 0, 0);
-        if (toolBar->layout())
-            toolBar->layout()->setContentsMargins(4, 4, 4, 4);
-    }
-    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea && toolBar->layout())
-    {
-        if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
-        {
-            if (win->windowFlags() & Qt::FramelessWindowHint || !win->mask().isEmpty())
-            {
-                toolBar->setMovable(false);
-                const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
-                toolBar->layout()->setContentsMargins(pm, pm, pm, pm);
-                toolBar->setContentsMargins(0, 0, 0, 0);
-            }
-            else
-            {
-                toolBar->setMovable(true);
-                toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-                toolBar->setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
-            }
-        }
-        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
-        {
-            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            toolBar->setMovable(false);
-        }
-        else
-            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
-    }
-}
-
-void
-UNOHandler::fixTitleLater(QWidget *win)
-{
-    if (!win)
-        return;
-    QTimer *t = new QTimer(win);
-    connect(t, SIGNAL(timeout()), instance(), SLOT(fixTitle()));
-    t->start(250);
-}
-
-void
-UNOHandler::fixTitle()
-{
-    if (QTimer *t = qobject_cast<QTimer *>(sender()))
-    if (t->parent()->isWidgetType())
-    if (QWidget *w = static_cast<QWidget *>(t->parent()))
-    if (w->isWindow())
-    {
-        fixWindowTitleBar(w);
-        t->stop();
-        t->deleteLater();
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
 
 Q_DECL_EXPORT WinHandler WinHandler::s_instance;
 
@@ -620,7 +216,7 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             QMainWindow *mw(static_cast<QMainWindow *>(w));
             mw->menuBar()->hide();
             QToolBar *tb(mw->findChild<QToolBar *>());
-            if (!tb || !mw->menuBar() || tb->findChild<QToolButton *>("DSP_menubutton"))
+            if (!tb || tb->findChild<QToolButton *>("DSP_menubutton"))
                 return false;
 
             QToolButton *tbtn(new QToolButton(tb));
@@ -731,7 +327,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
     img.fill(Qt::transparent);
     QPainter p(&img);
 
-    win->render(&p, QPoint(), QRect(QPoint(0, height), img.size()), QWidget::DrawChildren);
+    win->render(&p, QPoint(), QRect(QPoint(0, height+1), img.size()), QWidget::DrawChildren);
 
     QLinearGradient lg(img.rect().bottomLeft(), img.rect().topLeft());
     lg.setColorAt(0.0f, QColor(0, 0, 0, 160));
@@ -746,7 +342,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
     QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
     unsigned long d(decoPix.handle());
     XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, &d);
-    UNOHandler::updateWindow(win->winId());
+    UNO::Handler::updateWindow(win->winId());
     decoPix.detach();
     s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height));
     s_block = false;
@@ -830,3 +426,428 @@ ScrollWatcher::paintRegion(QMainWindow *win)
         }
     return r;
 }
+
+//-------------------------------------------------------------------------------------------------
+
+using namespace UNO;
+
+Q_DECL_EXPORT Handler Handler::s_instance;
+Q_DECL_EXPORT QMap<int, QPixmap> Handler::s_pix;
+Q_DECL_EXPORT QMap<QWidget *, UNO::Data> Handler::s_unoData;
+
+Handler::Handler(QObject *parent)
+    : QObject(parent)
+{
+}
+
+Handler
+*Handler::instance()
+{
+    return &s_instance;
+}
+
+void
+Handler::manage(QWidget *mw)
+{
+    mw->removeEventFilter(instance());
+    mw->installEventFilter(instance());
+    QList<QToolBar *> toolBars = mw->findChildren<QToolBar *>();
+    for (int i = 0; i < toolBars.count(); ++i)
+    {
+        QToolBar *bar(toolBars.at(i));
+        bar->removeEventFilter(instance());
+        bar->installEventFilter(instance());
+    }
+    fixTitleLater(mw);
+}
+
+void
+Handler::release(QWidget *mw)
+{
+    mw->removeEventFilter(instance());
+    QList<QToolBar *> toolBars = mw->findChildren<QToolBar *>();
+    for (int i = 0; i < toolBars.count(); ++i)
+        toolBars.at(i)->removeEventFilter(instance());
+}
+
+#define HASCHECK "DSP_hascheck"
+
+static void applyMask(QWidget *widget)
+{
+    if (XHandler::opacity() < 1.0f)
+    {
+        widget->clearMask();
+        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && Settings::conf.removeTitleBars)
+        {
+            widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
+            widget->show();
+            ShadowHandler::manage(widget);
+        }
+        unsigned int d(0);
+        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+    }
+    else
+    {
+        const int w(widget->width()), h(widget->height());
+        QRegion r(0, 2, w, h-4);
+        r += QRegion(1, 1, w-2, h-2);
+        r += QRegion(2, 0, w-4, h);
+        widget->setMask(r);
+    }
+    widget->setProperty(HASCHECK, true);
+}
+
+#define HASSTRETCH "DSP_hasstretch"
+#define HASBUTTONS "DSP_hasbuttons"
+
+static TitleWidget *canAddTitle(QToolBar *toolBar, bool &canhas)
+{
+    canhas = false;
+    const QList<QAction *> actions(toolBar->actions());
+    if (toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly)
+    {
+        canhas = true;
+        for (int i = 0; i < actions.count(); ++i)
+        {
+            QAction *a(actions.at(i));
+            if (a->isSeparator())
+                continue;
+            QWidget *w(toolBar->widgetForAction(actions.at(i)));
+            if (!w || qobject_cast<Buttons *>(w) || qobject_cast<TitleWidget *>(w))
+                continue;
+            if (!qobject_cast<QToolButton *>(w))
+            {
+                canhas = false;
+                break;
+            }
+        }
+    }
+    TitleWidget *tw(toolBar->findChild<TitleWidget *>());
+    if (!canhas && tw)
+    {
+        toolBar->removeAction(toolBar->actionAt(tw->geometry().topLeft()));
+        tw->deleteLater();
+        toolBar->setProperty(HASSTRETCH, false);
+    }
+    return tw;
+}
+
+void
+Handler::setupNoTitleBarWindow(QToolBar *toolBar)
+{
+    if (!toolBar
+            || toolBar->actions().isEmpty()
+            || !qobject_cast<QMainWindow *>(toolBar->parentWidget())
+            || toolBar->geometry().topLeft() != QPoint(0, 0)
+            || toolBar->orientation() != Qt::Horizontal)
+        return;
+    if (toolBar->parentWidget()->parentWidget())
+        return;
+
+    Buttons *b(toolBar->findChild<Buttons *>());
+    if (!b)
+    {
+        toolBar->insertWidget(toolBar->actions().first(), new Buttons(toolBar));
+        toolBar->window()->installEventFilter(instance());
+        toolBar->window()->setProperty(HASBUTTONS, true);
+    }
+    else
+    {
+        QAction *a(toolBar->actionAt(b->geometry().topLeft()));
+        if (a)
+        {
+            toolBar->removeAction(a);
+            toolBar->insertAction(toolBar->actions().first(), a);
+        }
+    }
+    applyMask(toolBar->window());
+
+    bool cantitle;
+    TitleWidget *t = canAddTitle(toolBar, cantitle);
+    if (cantitle)
+    {
+        QAction *ta(0);
+        if (t)
+        {
+            ta = toolBar->actionAt(t->geometry().topLeft());
+            toolBar->removeAction(ta);
+        }
+        TitleWidget *title(t?t:new TitleWidget(toolBar));
+        title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        QAction *a(0);
+        if (Settings::conf.titlePos == TitleWidget::Center)
+        {
+            int at(qFloor((float)toolBar->actions().count()/2.0f));
+            int i(at);
+            const QList<QAction *> actions(toolBar->actions());
+            a = actions.at(i);
+            while (a && i > (at-3))
+            {
+                if (!a)
+                {
+                    toolBar->removeAction(toolBar->actionAt(title->geometry().topLeft()));
+                    title->deleteLater();
+                    return;
+                }
+                if (a->isSeparator())
+                    break;
+                else
+                    a = actions.at(--i);
+            }
+        }
+        else if (Settings::conf.titlePos == TitleWidget::Left)
+            a = toolBar->actions().at(1);
+        if (ta)
+            toolBar->insertAction(a, ta);
+        else
+            toolBar->insertWidget(a, title);
+        toolBar->setProperty(HASSTRETCH, true);
+    }
+    updateToolBar(toolBar);
+    fixTitleLater(toolBar->parentWidget());
+}
+
+bool
+Handler::eventFilter(QObject *o, QEvent *e)
+{
+    if (!o || !e)
+        return false;
+    if (!o->isWidgetType())
+        return false;
+    QWidget *w = static_cast<QWidget *>(o);
+    switch (e->type())
+    {
+    case QEvent::Resize:
+    {
+        if (w->isWindow())
+        {
+            fixWindowTitleBar(w);
+            if (qobject_cast<QMainWindow *>(w) && w->property(HASBUTTONS).toBool())
+                applyMask(w);
+        }
+        if (castObj(QToolBar *, toolBar, o))
+            if (castObj(QMainWindow *, win, toolBar->parentWidget()))
+                updateToolBar(toolBar);
+        return false;
+    }
+    case QEvent::Show:
+    {
+        fixWindowTitleBar(w);
+        if (qobject_cast<QMainWindow *>(w) && XHandler::opacity() < 1.0f && !w->parentWidget())
+        {
+            unsigned int d(0);
+            XHandler::setXProperty<unsigned int>(w->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        }
+        return false;
+    }
+    default: break;
+    }
+    return false;
+}
+
+bool
+Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float opacity)
+{
+    if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
+        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
+            if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
+                if (tb->orientation() != Qt::Horizontal)
+                    return false;
+
+    if (!w->isWindow() && w->height() > w->width())
+        return false;
+
+    if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget())
+        return false;
+
+    QWidget *win(w->window());
+
+    if (int i = unoHeight(win, All))
+    {
+        p->save();
+        p->setOpacity(opacity);
+        p->drawTiledPixmap(r, s_pix.value(i), QPoint(0, offset));
+        p->setOpacity(1.0f);
+        if (Settings::conf.contAware)
+        {
+            const QPoint offset(w->mapTo(win, w->rect().topLeft()));
+            if (offset.y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
+            {
+                p->setOpacity(0.33f);
+                p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
+            }
+        }
+        p->restore();
+        return true;
+    }
+    return false;
+}
+
+static QDBusMessage methodCall(const QString &method)
+{
+    return QDBusMessage::createMethodCall("org.kde.kwin", "/StyleProjectFactory", "org.kde.DBus.StyleProjectFactory", method);
+}
+
+void
+Handler::updateWindow(WId window)
+{
+    QDBusMessage msg = methodCall("update");
+    msg << QVariant::fromValue((unsigned int)window);
+    QDBusConnection::sessionBus().send(msg);
+}
+
+
+unsigned int
+Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
+{
+    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
+    if (!h && !(Settings::conf.removeTitleBars && win->property("DSP_hasbuttons").toBool()))
+        return 0;
+
+    int hd[HeightCount];
+    hd[TitleBar] = (h?*h:0);
+    hd[All] = hd[TitleBar];
+    hd[ToolBars] = hd[ToolBarAndTabBar] = 0;
+    if (castObj(QMainWindow *, mw, win))
+    {
+        if (mw->menuBar() && mw->menuBar()->isVisible())
+            hd[All] += mw->menuBar()->height();
+
+        QList<QToolBar *> tbs(mw->findChildren<QToolBar *>());
+        for (int i = 0; i<tbs.count(); ++i)
+        {
+            QToolBar *tb(tbs.at(i));
+            if (tb->isVisible())
+                if (!tb->findChild<QTabBar *>())
+                    if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
+                    {
+                        if (tb->geometry().bottom() > hd[ToolBars])
+                            hd[ToolBars] = tb->height();
+                        needSeparator = 0;
+                    }
+        }
+    }
+    hd[ToolBarAndTabBar] = hd[ToolBars];
+    QTabBar *tb = win->findChild<QTabBar *>();
+    if (Ops::isSafariTabBar(tb) && tb->isVisible())
+    {
+        needSeparator = 0;
+        const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
+        if (y > hd[ToolBarAndTabBar])
+            hd[ToolBarAndTabBar] = y;
+    }
+    else
+        tb = 0;
+    hd[All] += hd[ToolBarAndTabBar];
+//    win->setProperty("DSP_headHeight", hd[ToolBarAndTabBar]);
+//    win->setProperty("DSP_UNOheight", hd[All]);
+    s_unoData.insert(win, Data(hd, tb));
+    return hd[All];
+}
+
+void
+Handler::fixWindowTitleBar(QWidget *win)
+{
+    if (!win || !win->isWindow())
+        return;
+    unsigned int ns(1);
+    WindowData wd;
+    wd.height = getHeadHeight(win, ns);
+    wd.separator = ns;
+    wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
+    wd.text = win->palette().color(win->foregroundRole()).rgba();
+    if (!wd.height)
+        return;
+
+    static QMap<QWidget *, unsigned long> s_titleBg;
+    if (!s_pix.contains(wd.height))
+    {
+        QLinearGradient lg(0, 0, 0, wd.height);
+        lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, win->palette().color(win->backgroundRole())));
+        QPixmap p(Render::noise().width(), wd.height);
+        p.fill(Qt::transparent);
+        QPainter pt(&p);
+        pt.fillRect(p.rect(), lg);
+        pt.end();
+        p = Render::mid(p, Render::noise(), 40, 1);
+        s_pix.insert(wd.height, p);
+        if (s_titleBg.contains(win))
+            XHandler::freePix(s_titleBg.value(win));
+        s_titleBg.insert(win, XHandler::x11Pix(p.copy(0, 0, Render::noise().width(), unoHeight(win, TitleBar))).handle());
+    }
+    wd.bgpix = s_titleBg.value(win);
+
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::WindowData, XHandler::Long, reinterpret_cast<unsigned long *>(&wd), 5);
+    updateWindow(win->winId());
+//    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
+//    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
+
+    const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
+    for (int i = 0; i < toolBars.size(); ++i)
+        toolBars.at(i)->update();
+    if (QMenuBar *mb = win->findChild<QMenuBar *>())
+        mb->update();
+}
+
+void
+Handler::updateToolBar(QToolBar *toolBar)
+{
+    QMainWindow *win = static_cast<QMainWindow *>(toolBar->parentWidget());
+    if (toolBar->isWindow() && toolBar->isFloating())
+    {
+        toolBar->setContentsMargins(0, 0, 0, 0);
+        if (toolBar->layout())
+            toolBar->layout()->setContentsMargins(4, 4, 4, 4);
+    }
+    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea && toolBar->layout())
+    {
+        if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
+        {
+            if (win->windowFlags() & Qt::FramelessWindowHint || !win->mask().isEmpty())
+            {
+                toolBar->setMovable(false);
+                const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
+                toolBar->layout()->setContentsMargins(pm, pm, pm, pm);
+                toolBar->setContentsMargins(0, 0, 0, 0);
+            }
+            else
+            {
+                toolBar->setMovable(true);
+                toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+                toolBar->setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
+            }
+        }
+        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
+        {
+            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+            toolBar->setMovable(false);
+        }
+        else
+            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
+    }
+}
+
+void
+Handler::fixTitleLater(QWidget *win)
+{
+    if (!win)
+        return;
+    QTimer *t = new QTimer(win);
+    connect(t, SIGNAL(timeout()), instance(), SLOT(fixTitle()));
+    t->start(250);
+}
+
+void
+Handler::fixTitle()
+{
+    if (QTimer *t = qobject_cast<QTimer *>(sender()))
+    if (t->parent()->isWidgetType())
+    if (QWidget *w = static_cast<QWidget *>(t->parent()))
+    if (w->isWindow())
+    {
+        fixWindowTitleBar(w);
+        t->stop();
+        t->deleteLater();
+    }
+}
+

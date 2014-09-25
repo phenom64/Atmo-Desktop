@@ -6,10 +6,10 @@
 
 Q_DECL_EXPORT Settings Settings::conf;
 
-static QList<QPair<float, int> > stringToGrad(const QString &string)
+static Gradient stringToGrad(const QString &string)
 {
     const QStringList pairs(string.split(",", QString::SkipEmptyParts));
-    QList<QPair<float, int> > gradient;
+    Gradient gradient;
     if (pairs.isEmpty())
         return gradient;
     for (int i = 0; i < pairs.count(); ++i)
@@ -24,13 +24,13 @@ static QList<QPair<float, int> > stringToGrad(const QString &string)
         int val(pair.last().toInt(&ok));
         if (!ok)
             break;
-        gradient << QPair<float, int>(stop, val);
+        gradient << GradientStop(stop, val);
     }
     return gradient;
 }
 
 QGradientStop
-Settings::pairToStop(const QPair<float, int> pair, const QColor &c)
+Settings::pairToStop(const GradientStop pair, const QColor &c)
 {
     QGradientStop stop;
     stop.first = pair.first;
@@ -41,7 +41,7 @@ Settings::pairToStop(const QPair<float, int> pair, const QColor &c)
 }
 
 QGradientStops
-Settings::gradientStops(const QList<QPair<float, int> > pairs, const QColor &c)
+Settings::gradientStops(const Gradient pairs, const QColor &c)
 {
     QGradientStops stops;
     for (int i = 0; i < pairs.count(); ++i)
@@ -49,10 +49,10 @@ Settings::gradientStops(const QList<QPair<float, int> > pairs, const QColor &c)
     return stops;
 }
 
-static QPair<QColor, int> tintColor(const QString &tint)
+static Tint tintColor(const QString &tint)
 {
     const QStringList pair(tint.split(":"));
-    QPair<QColor, int> c;
+    Tint c;
     if (pair.count() != 2)
         return c;
     c.second = pair.last().toInt();
@@ -97,6 +97,8 @@ Settings::read()
     conf.tabs.gradient = stringToGrad(s.value(READTABGRAD).toString());
     conf.tabs.safrnd = qMin(s.value(READSAFTABRND).toInt(), 8);
     conf.tabs.closeButtonSide = s.value(READTABCLOSER).toInt();
+    //uno
+    conf.uno.gradient = stringToGrad(s.value(READUNOGRAD).toString());
     //sliders
     conf.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers

@@ -240,7 +240,7 @@ Ops::updateToolBar()
             && bar->geometry().topLeft() == QPoint(0, 0)
             && bar->orientation() == Qt::Horizontal
             && qobject_cast<QMainWindow *>(bar->parentWidget()))
-        UNOHandler::setupNoTitleBarWindow(bar);
+        UNO::Handler::setupNoTitleBarWindow(bar);
 }
 
 QPalette::ColorRole

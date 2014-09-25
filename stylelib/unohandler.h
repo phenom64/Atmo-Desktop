@@ -2,8 +2,14 @@
 #define UNOHANDLER_H
 
 #include <QWidget>
+#include <QMap>
 #include "render.h"
 #include "widgets.h"
+
+class QToolBar;
+class QMainWindow;
+class QAbstractScrollArea;
+class QTabBar;
 
 class DButton : public Button
 {
@@ -33,35 +39,6 @@ protected:
     void paintEvent(QPaintEvent *);
 };
 
-class QToolBar;
-class QMainWindow;
-class Q_DECL_EXPORT UNOHandler : public QObject
-{
-    Q_OBJECT
-public:
-    ~UNOHandler(){}
-    static UNOHandler *instance();
-    static void manage(QWidget *mw);
-    static void release(QWidget *mw);
-    static void fixWindowTitleBar(QWidget *win);
-    static void updateWindow(WId window);
-    static void updateToolBar(QToolBar *toolBar);
-    static void fixTitleLater(QWidget *win);
-    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset = 0, float opacity = 1.0f);
-    static void setupNoTitleBarWindow(QToolBar *toolBar);
-
-public slots:
-    void fixTitle();
-
-protected:
-    UNOHandler(QObject *parent = 0);
-    bool eventFilter(QObject *, QEvent *);
-
-private:
-    static UNOHandler s_instance;
-    static QMap<int, QPixmap> s_pix;
-};
-
 class Q_DECL_EXPORT WinHandler : public QObject
 {
     Q_OBJECT
@@ -85,7 +62,7 @@ private:
     QList<QWidget *> m_menuWins;
 };
 
-class QAbstractScrollArea;
+
 class Q_DECL_EXPORT ScrollWatcher : public QObject
 {
     Q_OBJECT
@@ -112,5 +89,57 @@ private:
     QTimer *m_timer;
     QList<QMainWindow *> m_wins;
 };
+
+namespace UNO
+{
+enum HeightData { ToolBars = 0, ToolBarAndTabBar, TitleBar, All, HeightCount };
+
+class Q_DECL_EXPORT Data
+{
+public:
+    Data(int *heightData = 0, QTabBar *saftb = 0) : possibleSafTabBar(saftb) { if (heightData) for (int i = 0; i < HeightCount; ++i) height[i]=heightData[i]; }
+    ~Data(){}
+    int height[HeightCount];
+    QTabBar *possibleSafTabBar;
+};
+
+class Q_DECL_EXPORT Handler : public QObject
+{
+    Q_OBJECT
+public:
+    static QMap<QWidget *, UNO::Data> s_unoData;
+    ~Handler(){}
+    static Handler *instance();
+    static void manage(QWidget *mw);
+    static void release(QWidget *mw);
+    static void fixWindowTitleBar(QWidget *win);
+    static void updateWindow(WId window);
+    static void updateToolBar(QToolBar *toolBar);
+    static void fixTitleLater(QWidget *win);
+    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset = 0, float opacity = 1.0f);
+    static void setupNoTitleBarWindow(QToolBar *toolBar);
+
+public slots:
+    void fixTitle();
+
+protected:
+    Handler(QObject *parent = 0);
+    bool eventFilter(QObject *, QEvent *);
+    static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator);
+
+private:
+    static Handler s_instance;
+    static QMap<int, QPixmap> s_pix;
+};
+
+static int unoHeight(const QWidget *w, const HeightData d)
+{
+    int i(0);
+    if (Handler::s_unoData.contains(const_cast<QWidget *>(w)))
+        i = Handler::s_unoData.value(const_cast<QWidget *>(w)).height[d];
+    return i;
+}
+
+}
 
 #endif //UNOHANDLER_H

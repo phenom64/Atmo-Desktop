@@ -12,7 +12,8 @@ public:
     static int luminosity(const QColor &c);
     static void shiftHue(QColor &c, int amount);
     static QColor complementary(QColor c);
-    static QColor titleBarColors[2];
+    static QColor (&titleBarColors())[2];
+//    static QColor *titleBarColors();
 };
 
 #endif // COLOR_H

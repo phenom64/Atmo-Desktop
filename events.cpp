@@ -71,6 +71,14 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
                 tb->setProperty("DSP_menupress", false);
         }
     }
+    case QEvent::Hide:
+    {
+        if (qobject_cast<QTabBar *>(w))
+        {
+            if (Ops::isSafariTabBar(static_cast<QTabBar *>(w)))
+                UNO::Handler::fixWindowTitleBar(w->window());
+        }
+    }
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
@@ -147,9 +155,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
     else if (qobject_cast<QMainWindow *>(w))
     {
         QMainWindow *win(static_cast<QMainWindow *>(w));
-        bool ok;
-        int th(win->property("DSP_headHeight").toInt(&ok));
-        if (ok)
+        if (UNO::unoHeight(w, UNO::ToolBarAndTabBar))
         {
             bool needRound(true);
             const QColor bgColor(win->palette().color(win->backgroundRole()));
@@ -167,8 +173,8 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
                 p.fillRect(win->rect(), bgColor);
             p.setPen(Qt::black);
             p.setOpacity(Settings::conf.shadows.opacity);
+            int th(UNO::unoHeight(w, UNO::ToolBars));
             p.drawLine(0, th, win->width(), th);
-            p.setOpacity(1.0f);
             p.end();
             return false;
         }
@@ -230,6 +236,11 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
 //        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
         QTimer::singleShot(500, w, SLOT(update()));
+    }
+    if (qobject_cast<QTabBar *>(w))
+    {
+        if (Ops::isSafariTabBar(static_cast<QTabBar *>(w)))
+            UNO::Handler::fixWindowTitleBar(w->window());
     }
     return QCommonStyle::eventFilter(o, e);
 }

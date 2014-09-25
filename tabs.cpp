@@ -68,27 +68,22 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, Settings::conf.shadows.opacity);
         if (isSelected)
         {
-            static QMap<int, QPixmap> s_pix;
-            if (!s_pix.contains(r.height()))
-            {
-                QPixmap pix(Render::noise().width(), r.height());
-                pix.fill(Qt::transparent);
-                QPainter pt(&pix);
-//                pt.fillRect(pix.rect(), Color::titleBarColors[1]);
-                QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
-                lg.setColorAt(0.0f, Color::titleBarColors[1]);
-                lg.setColorAt(1.0f, Color::mid(Color::titleBarColors[1], Qt::black, 8, 1));
-                pt.fillRect(pix.rect(), lg);
-                pt.end();
-                s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
-            }
             painter->save();
             painter->setRenderHint(QPainter::Antialiasing);
-            painter->setBrush(s_pix.value(r.height()));
             painter->setPen(Qt::NoPen);
-            painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            painter->drawPath(p);
-            painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+            QPixmap pix(r.size());
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            UNO::Handler::drawUnoPart(&pt, pix.rect(), widget, bar->mapTo(widget->window(), bar->rect().topLeft()).y()+UNO::unoHeight(bar->window(), UNO::TitleBar));
+            pt.end();
+            if (XHandler::opacity() < 1.0f)
+            {
+                painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                painter->setBrush(Qt::black);
+                painter->drawPath(p);
+                painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+            }
+            painter->setBrush(pix);
             painter->setOpacity(XHandler::opacity());
             painter->drawPath(p);
             if (Settings::conf.contAware)
@@ -262,16 +257,6 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
 static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, const Render::Sides sides, const float opacity, QRect rect = QRect())
 {
     QRect r(rect.isValid()?rect:bar->rect());
-    static QMap<int, QPixmap> s_pix;
-    if (!s_pix.contains(r.height()))
-    {
-        QPixmap pix(Render::noise().width(), r.height());
-        pix.fill(Qt::transparent);
-        QPainter pt(&pix);
-        pt.fillRect(pix.rect(), c);
-        pt.end();
-        s_pix.insert(r.height(), Render::mid(pix, Render::noise(), 40, 1));
-    }
     if (XHandler::opacity() < 1.0f)
     {
         p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -279,21 +264,17 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
         p->setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
     const float o(p->opacity());
-    p->setOpacity(qMin(1.0f, opacity*1.1f));
-    p->fillRect(r, s_pix.value(r.height()));
-    p->setOpacity(1.0f);
+    UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()).y()+UNO::unoHeight(bar->window(), UNO::TitleBar), XHandler::opacity());
     if (Settings::conf.contAware)
     {
         p->setOpacity(0.33f);
         p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)bar->window()), bar->mapTo(bar->window(), bar->rect().topLeft()));
         p->setOpacity(1.0f);
     }
-//    r.setBottom(r.bottom()+1);
-//    Render::renderShadow(Render::Etched, r, p, 16, Render::Top|Render::Bottom, 0.33f);
-
     p->setPen(Qt::black);
     p->setOpacity(Settings::conf.shadows.opacity/2);
     p->drawLine(r.topLeft(), r.topRight());
+    p->setOpacity(Settings::conf.shadows.opacity);
     p->drawLine(r.bottomLeft(), r.bottomRight());
     p->setOpacity(o);
     Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, Settings::conf.shadows.opacity/2);
@@ -318,7 +299,8 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
             QRect r(tabBar->rect());
             if (opt->rect.width() > r.width())
                 r = opt->rect;
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, XHandler::opacity(), r);
+
+            renderSafariBar(painter, tabBar, Color::mid((QColor)Color::titleBarColors()[1], Qt::black, 20, 1), sides, XHandler::opacity(), r);
             return true;
         }
     }
@@ -381,7 +363,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid(Color::titleBarColors[1], Qt::black, 20, 1), sides, XHandler::opacity(), barRect);
+            renderSafariBar(painter, tabBar, Color::mid((QColor)Color::titleBarColors()[1], Qt::black, 20, 1), sides, XHandler::opacity(), barRect);
             return true;
         }
     }

@@ -35,6 +35,8 @@
 #define SAFTABRND           "tabs.safrnd"           //safaritabs roundness capped at 8 atm, might change in the future if needed
 #define TABCLOSER           "tabs.closebuttonside"
 
+#define UNOGRAD             "uno.gradient"
+
 #define SLIDERSIZE          "sliders.size"
 #define SCROLLERSIZE        "scrollers.size"
 #define SHADOWOPACITY       "shadows.opacity"
@@ -88,6 +90,8 @@
 #define DEFSAFTABRND            4
 #define DEFTABCLOSER            0
 
+#define DEFUNOGRAD              "0.1:5, 1.0:-5"
+
 #define DEFSLIDERSIZE           16
 #define DEFSCROLLERSIZE         12
 #define DEFSHADOWOPACITY        33
@@ -122,9 +126,15 @@
 #define READSAFTABRND           SAFTABRND, DEFSAFTABRND
 #define READTABCLOSER           TABCLOSER, DEFTABCLOSER
 
+#define READUNOGRAD             UNOGRAD, DEFUNOGRAD
+
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
+
+typedef QList<QPair<float, int> > Gradient;
+typedef QPair<float, int> GradientStop;
+typedef QPair<QColor, int> Tint;
 
 class Q_DECL_EXPORT Settings
 {
@@ -136,20 +146,20 @@ public:
     struct pushbtn
     {
         int rnd, shadow;
-        QList<QPair<float, int> > gradient;
-        QPair<QColor, int> tint;
+        Gradient gradient;
+        Tint tint;
     } pushbtn;
     struct toolbtn
     {
         int rnd, shadow;
-        QList<QPair<float, int> > gradient;
-        QPair<QColor, int> tint;
+        Gradient gradient;
+        Tint tint;
     } toolbtn;
     struct input
     {
         int rnd, shadow;
-        QList<QPair<float, int> > gradient;
-        QPair<QColor, int> tint;
+        Gradient gradient;
+        Tint tint;
     } input;
     struct sliders
     {
@@ -166,8 +176,13 @@ public:
     struct tabs
     {
         int rnd, safrnd, closeButtonSide, shadow;
-        QList<QPair<float, int> > gradient;
+        Gradient gradient;
     } tabs;
+    struct uno
+    {
+        Gradient gradient;
+    } uno;
+
     static Settings conf;
 
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
