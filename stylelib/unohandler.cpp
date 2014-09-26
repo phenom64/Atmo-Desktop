@@ -763,7 +763,10 @@ Handler::fixWindowTitleBar(QWidget *win)
     if (!s_pix.contains(wd.height))
     {
         QLinearGradient lg(0, 0, 0, wd.height);
-        lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, win->palette().color(win->backgroundRole())));
+        QColor bc(win->palette().color(win->backgroundRole()));
+        bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
+        lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
+
         QPixmap p(Render::noise().width(), wd.height);
         p.fill(Qt::transparent);
         QPainter pt(&p);

@@ -36,6 +36,7 @@
 #define TABCLOSER           "tabs.closebuttonside"
 
 #define UNOGRAD             "uno.gradient"
+#define UNOTINT             "uno.tinthue"
 
 #define SLIDERSIZE          "sliders.size"
 #define SCROLLERSIZE        "scrollers.size"
@@ -91,6 +92,7 @@
 #define DEFTABCLOSER            0
 
 #define DEFUNOGRAD              "0.1:5, 1.0:-5"
+#define DEFUNOTINT              "-1:0"
 
 #define DEFSLIDERSIZE           16
 #define DEFSCROLLERSIZE         12
@@ -127,6 +129,7 @@
 #define READTABCLOSER           TABCLOSER, DEFTABCLOSER
 
 #define READUNOGRAD             UNOGRAD, DEFUNOGRAD
+#define READUNOTINT             UNOTINT, DEFUNOTINT
 
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
@@ -181,6 +184,7 @@ public:
     struct uno
     {
         Gradient gradient;
+        Tint tint;
     } uno;
 
     static Settings conf;

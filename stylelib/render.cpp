@@ -675,18 +675,16 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
     else if (s==Carved)
     {
         QLinearGradient lg(0, 0, 0, r.height());
+        int high(63), low(63);
         if (w && w->parentWidget())
         {
             QWidget *p(w->parentWidget());
             const QColor bg(p->palette().color(p->backgroundRole()));
-            lg.setColorAt(0.1f, Color::mid(bg, Qt::black, 5, 1));
-            lg.setColorAt(1.0f, Color::mid(bg, Qt::white, 5, 1));
+            high = bg.value()/2;
+            low = qMin(255, 280-bg.value());
         }
-        else
-        {
-            lg.setColorAt(0.1f, QColor(0, 0, 0, 127));
-            lg.setColorAt(1.0f, QColor(255, 255, 255, 127));
-        }
+        lg.setColorAt(0.1f, QColor(0, 0, 0, low));
+        lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
         const int m(3);
         r.sAdjust(m, m, -m, -m);
