@@ -242,6 +242,8 @@ KwinClient::paint(QPainter &p)
     if (!m_bgPix[0].isNull())
 //        p.drawTiledPixmap(tr, m_bgPix[0]);
         Render::renderMask(tr, &p, m_bgPix[0], 4, Render::All & ~Render::Bottom);
+    else
+        Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
     p.setOpacity(1.0f);
     QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
     lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
