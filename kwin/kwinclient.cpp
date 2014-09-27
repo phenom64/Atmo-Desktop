@@ -352,12 +352,6 @@ KwinClient::reset(unsigned long changed)
         m_needSeparator = data->separator;
         m_textColor = QColor::fromRgba(data->text);
         m_opacity = (float)data->opacity/100.0f;
-        if (data->bgpix && data->bgpix != m_bgPix[0].handle())
-        {
-            if (!m_bgPix[0].isNull())
-                XFreePixmap(QX11Info::display(), m_bgPix[0].handle());
-            m_bgPix[0] = QPixmap::fromX11Pixmap(data->bgpix);
-        }
         XFree(data);
     }
     else
@@ -367,6 +361,12 @@ KwinClient::reset(unsigned long changed)
         m_needSeparator = true;
     }
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+    {
+        m_bgPix[0] = QPixmap::fromX11Pixmap(*bg);
+        m_bgPix[0].detach();
+        XFreePixmap(QX11Info::display(), *bg);
+    }
+    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::ContPix))
     {
         m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
         m_bgPix[1].detach();

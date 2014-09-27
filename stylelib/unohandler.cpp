@@ -341,7 +341,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
     QPixmap pix(QPixmap::fromImage(img));
     QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
     unsigned long d(decoPix.handle());
-    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, &d);
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::ContPix, XHandler::Long, &d);
     UNO::Handler::updateWindow(win->winId());
     decoPix.detach();
     s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height));
@@ -756,11 +756,9 @@ Handler::fixWindowTitleBar(QWidget *win)
     wd.separator = ns;
     wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
-    wd.bgpix = 0;
     if (!wd.height)
         return;
 
-    static QMap<QWidget *, QPixmap> s_titleMap;
     if (!s_pix.contains(wd.height))
     {
         QLinearGradient lg(0, 0, 0, wd.height);
@@ -777,10 +775,11 @@ Handler::fixWindowTitleBar(QWidget *win)
         if (n)
             p = Render::mid(p, Render::noise(), 100-n, n);
         s_pix.insert(wd.height, p);
-        s_titleMap.insert(win, XHandler::x11Pix(p.copy(0, 0, Render::noise().width(), unoHeight(win, TitleBar))));
     }
-    wd.bgpix = s_titleMap.value(win, 0).handle();
-    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::WindowData, XHandler::Long, reinterpret_cast<unsigned long *>(&wd), 5);
+    QPixmap x11Pix(XHandler::x11Pix(s_pix.value(wd.height).copy(0, 0, Render::noise().width(), unoHeight(win, TitleBar))));
+    unsigned long handle(x11Pix.handle());
+    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 4);
     updateWindow(win->winId());
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();

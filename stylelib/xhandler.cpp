@@ -16,7 +16,8 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_MENUHADOWDOWN", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STORESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECOBGPIX", False)
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECOBGPIX", False),
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False)
 };
 
 void
@@ -119,7 +120,8 @@ XHandler::x11Pix(const QPixmap &pix)
 }
 
 void
-XHandler::freePix(const unsigned long pix)
+XHandler::freePix(QPixmap pix)
 {
-    XFreePixmap(QX11Info::display(), pix);
+    pix.detach();
+    XFreePixmap(QX11Info::display(), pix.handle());
 }
