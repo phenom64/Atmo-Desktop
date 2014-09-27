@@ -756,10 +756,11 @@ Handler::fixWindowTitleBar(QWidget *win)
     wd.separator = ns;
     wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
+    wd.bgpix = 0;
     if (!wd.height)
         return;
 
-    static QMap<QWidget *, unsigned long> s_titleBg;
+    static QMap<QWidget *, QPixmap> s_titleMap;
     if (!s_pix.contains(wd.height))
     {
         QLinearGradient lg(0, 0, 0, wd.height);
@@ -767,19 +768,18 @@ Handler::fixWindowTitleBar(QWidget *win)
         bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
         lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
 
-        QPixmap p(Render::noise().width(), wd.height);
+        const unsigned int n(Settings::conf.uno.noise);
+        QPixmap p(n?Render::noise().width():1, wd.height);
         p.fill(Qt::transparent);
         QPainter pt(&p);
         pt.fillRect(p.rect(), lg);
         pt.end();
-        p = Render::mid(p, Render::noise(), 40, 1);
+        if (n)
+            p = Render::mid(p, Render::noise(), 100-n, n);
         s_pix.insert(wd.height, p);
-        if (s_titleBg.contains(win))
-            XHandler::freePix(s_titleBg.value(win));
-        s_titleBg.insert(win, XHandler::x11Pix(p.copy(0, 0, Render::noise().width(), unoHeight(win, TitleBar))).handle());
+        s_titleMap.insert(win, XHandler::x11Pix(p.copy(0, 0, Render::noise().width(), unoHeight(win, TitleBar))));
     }
-    wd.bgpix = s_titleBg.value(win);
-
+    wd.bgpix = s_titleMap.value(win, 0).handle();
     XHandler::setXProperty<unsigned long>(win->winId(), XHandler::WindowData, XHandler::Long, reinterpret_cast<unsigned long *>(&wd), 5);
     updateWindow(win->winId());
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
@@ -790,6 +790,11 @@ Handler::fixWindowTitleBar(QWidget *win)
         toolBars.at(i)->update();
     if (QMenuBar *mb = win->findChild<QMenuBar *>())
         mb->update();
+    if (QTabBar *tb = win->findChild<QTabBar *>())
+        tb->update();
+    if (QStatusBar *sb = win->findChild<QStatusBar *>())
+        sb->update();
+
 }
 
 void

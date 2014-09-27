@@ -37,6 +37,7 @@
 
 #define UNOGRAD             "uno.gradient"
 #define UNOTINT             "uno.tinthue"
+#define UNONOISE            "uno.noisefactor"
 
 #define SLIDERSIZE          "sliders.size"
 #define SCROLLERSIZE        "scrollers.size"
@@ -93,6 +94,7 @@
 
 #define DEFUNOGRAD              "0.1:5, 1.0:-5"
 #define DEFUNOTINT              "-1:0"
+#define DEFUNONOISE             10
 
 #define DEFSLIDERSIZE           16
 #define DEFSCROLLERSIZE         12
@@ -130,6 +132,7 @@
 
 #define READUNOGRAD             UNOGRAD, DEFUNOGRAD
 #define READUNOTINT             UNOTINT, DEFUNOTINT
+#define READUNONOISE           UNONOISE, DEFUNONOISE
 
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
@@ -185,6 +188,7 @@ public:
     {
         Gradient gradient;
         Tint tint;
+        unsigned int noise;
     } uno;
 
     static Settings conf;
