@@ -35,7 +35,7 @@ public:
     static bool compositingActive();
     static float opacity();
 
-    static QPixmap x11Pix(const QPixmap &pix);
+    static QPixmap x11Pix(const QPixmap &pix, const Qt::HANDLE handle = 0);
     static void freePix(QPixmap pix);
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);

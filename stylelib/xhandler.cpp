@@ -108,9 +108,9 @@ XHandler::opacity()
 }
 
 QPixmap
-XHandler::x11Pix(const QPixmap &pix)
+XHandler::x11Pix(const QPixmap &pix, const Qt::HANDLE handle)
 {
-    const Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
+    const Pixmap x = handle?handle:XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
     QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
     QPainter pt(&p);
     pt.setCompositionMode(QPainter::CompositionMode_Source);

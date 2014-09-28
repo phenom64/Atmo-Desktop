@@ -431,29 +431,38 @@ ScrollWatcher::paintRegion(QMainWindow *win)
 
 using namespace UNO;
 
-Q_DECL_EXPORT Handler Handler::s_instance;
+Q_DECL_EXPORT Handler *Handler::s_instance = 0;
 Q_DECL_EXPORT QMap<int, QVector<QPixmap> > Handler::s_pix;
 Q_DECL_EXPORT QMap<QWidget *, UNO::Data> Handler::s_unoData;
 
 Handler::Handler(QObject *parent)
     : QObject(parent)
 {
+    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(cleanUp()));
 }
 
 Handler::~Handler()
 {
-//    QMapIterator<int, QVector<QPixmap> > i(s_pix);
-//    while (i.hasNext())
-//    {
-//        QVector<QPixmap> pix(i.next().value());
-//        XHandler::freePix(pix.at(1));
-//    }
 }
 
 Handler
 *Handler::instance()
 {
-    return &s_instance;
+    if (!s_instance)
+        s_instance = new Handler();
+    return s_instance;
+}
+
+void
+Handler::cleanUp()
+{
+    QMapIterator<int, QVector<QPixmap> > i(s_pix);
+    while (i.hasNext())
+    {
+        QVector<QPixmap> pix(i.next().value());
+        XHandler::freePix(pix[1]);
+    }
+    s_pix.clear();
 }
 
 void
@@ -674,11 +683,9 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float o
     if (int i = unoHeight(win, All))
         if (s_pix.contains(i))
         {
-            qDebug() << i << s_pix.value(i).at(0).size();
             p->save();
             p->setOpacity(opacity);
             p->drawTiledPixmap(r, s_pix.value(i).at(0), QPoint(0, offset));
-            p->setOpacity(1.0f);
             if (Settings::conf.contAware)
             {
                 const QPoint offset(w->mapTo(win, w->rect().topLeft()));
@@ -740,7 +747,7 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     }
     hd[ToolBarAndTabBar] = hd[ToolBars];
     QTabBar *tb = win->findChild<QTabBar *>();
-    if (Ops::isSafariTabBar(tb))
+    if (tb->isVisible() && Ops::isSafariTabBar(tb))
     {
         needSeparator = 0;
         const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
@@ -750,10 +757,29 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     else
         tb = 0;
     hd[All] += hd[ToolBarAndTabBar];
-//    win->setProperty("DSP_headHeight", hd[ToolBarAndTabBar]);
-//    win->setProperty("DSP_UNOheight", hd[All]);
     s_unoData.insert(win, Data(hd, tb));
     return hd[All];
+}
+
+static QVector<QPixmap> unoParts(QWidget *win, int h)
+{
+    QLinearGradient lg(0, 0, 0, h);
+    QColor bc(win->palette().color(win->backgroundRole()));
+    bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
+    lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
+
+    const unsigned int n(Settings::conf.uno.noise);
+    const int w(n?Render::noise().width():1);
+    QPixmap p(w, h);
+    p.fill(Qt::transparent);
+    QPainter pt(&p);
+    pt.fillRect(p.rect(), lg);
+    pt.end();
+    if (n)
+        p = Render::mid(p, Render::noise(), 100-n, n);
+    QVector<QPixmap> values;
+    values << p.copy(0, unoHeight(win, TitleBar), w, unoHeight(win, ToolBarAndTabBar)) << XHandler::x11Pix(p.copy(0, 0, w, unoHeight(win, TitleBar)));
+    return values;
 }
 
 void
@@ -770,30 +796,13 @@ Handler::fixWindowTitleBar(QWidget *win)
     if (!wd.height)
         return;
     if (!s_pix.contains(wd.height))
-    {
-        qDebug() << "inserting pix w/ height" << wd.height;
-        QLinearGradient lg(0, 0, 0, wd.height);
-        QColor bc(win->palette().color(win->backgroundRole()));
-        bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
-        lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
-
-        const unsigned int n(Settings::conf.uno.noise);
-        const int w(n?Render::noise().width():1);
-        QPixmap p(w, wd.height);
-        p.fill(Qt::transparent);
-        QPainter pt(&p);
-        pt.fillRect(p.rect(), lg);
-        pt.end();
-        if (n)
-            p = Render::mid(p, Render::noise(), 100-n, n);
-        QPixmap decobg(XHandler::x11Pix(p.copy(0, 0, w, unoHeight(win, TitleBar))));
-        QVector<QPixmap> values;
-        values << p << decobg;
-        s_pix.insert(wd.height, values);
-    }
+        s_pix.insert(wd.height, unoParts(win, wd.height));
     unsigned long handle(s_pix.value(wd.height).at(1).handle());
-    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
-    XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 4);
+    const WId id(win->winId());
+    unsigned long *h = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
+    if (!h || (h && *h != handle))
+        XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+    XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 4);
     updateWindow(win->winId());
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();

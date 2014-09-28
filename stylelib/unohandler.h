@@ -121,6 +121,7 @@ public:
 
 public slots:
     void fixTitle();
+    void cleanUp();
 
 protected:
     Handler(QObject *parent = 0);
@@ -128,7 +129,7 @@ protected:
     static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator);
 
 private:
-    static Handler s_instance;
+    static Handler *s_instance;
     static QMap<int, QVector<QPixmap> > s_pix;
 };
 

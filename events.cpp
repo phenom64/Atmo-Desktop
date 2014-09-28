@@ -144,6 +144,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QTabBar *tb = w->findChild<QTabBar *>();
         if (!Ops::isSafariTabBar(tb))
             return false;
+
         opt.rect.setHeight(tb->height());
         QPainter p(w);
         QRect geo(tb->mapTo(w, tb->rect().topLeft()), tb->size());

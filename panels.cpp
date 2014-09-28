@@ -85,7 +85,6 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
         painter->save();
-        int th(UNO::unoHeight(win, UNO::TitleBar));
         if (Settings::conf.removeTitleBars && XHandler::opacity() < 1.0f && win->windowFlags() & Qt::FramelessWindowHint)
         {
             Render::Sides sides(Render::checkedForWindowEdges(widget));
@@ -93,12 +92,12 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
             QPixmap p(option->rect.size());
             p.fill(Qt::transparent);
             QPainter pt(&p);
-            UNO::Handler::drawUnoPart(&pt, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
+            UNO::Handler::drawUnoPart(&pt, option->rect, widget, widget->geometry().top(), XHandler::opacity());
             pt.end();
             Render::renderMask(option->rect, painter, p, 4, sides);
         }
         else
-            UNO::Handler::drawUnoPart(painter, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
+            UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().top(), XHandler::opacity());
 //        painter->drawTiledPixmap(option->rect, bg, widget->geometry().topLeft());
 //        int hh(UNO::unoHeight(win, UNO::ToolBars));
 //        if (hh == widget->geometry().bottom()+1)
@@ -117,10 +116,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
 {
     if (widget)
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
-    {
-        int th(UNO::unoHeight(win, UNO::TitleBar));
-        UNO::Handler::drawUnoPart(painter, option->rect, widget, th+widget->geometry().top(), XHandler::opacity());
-    }
+        UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().top(), XHandler::opacity());
     return true;
 }
 

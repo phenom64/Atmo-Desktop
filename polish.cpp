@@ -273,7 +273,7 @@ StyleProject::polish(QWidget *widget)
         installFilter(tabBar);
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
-            if (Ops::isSafariTabBar(tabBar))
+            if (Ops::isSafariTabBar(tabBar)) //hmmm
             {
                 QWidget *p(tabBar->parentWidget());
                 if (p)

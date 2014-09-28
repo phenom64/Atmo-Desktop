@@ -74,7 +74,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             QPixmap pix(r.size());
             pix.fill(Qt::transparent);
             QPainter pt(&pix);
-            UNO::Handler::drawUnoPart(&pt, pix.rect(), widget, bar->mapTo(widget->window(), bar->rect().topLeft()).y()+UNO::unoHeight(bar->window(), UNO::TitleBar));
+            UNO::Handler::drawUnoPart(&pt, pix.rect(), widget, bar->mapTo(widget->window(), bar->rect().topLeft()).y());
             pt.end();
             if (XHandler::opacity() < 1.0f)
             {
@@ -264,7 +264,7 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
         p->setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
     const float o(p->opacity());
-    UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()).y()+UNO::unoHeight(bar->window(), UNO::TitleBar), XHandler::opacity());
+    UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()).y(), XHandler::opacity());
     if (Settings::conf.contAware)
     {
         p->setOpacity(0.33f);
