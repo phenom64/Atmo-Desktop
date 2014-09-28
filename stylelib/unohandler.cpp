@@ -747,7 +747,7 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     }
     hd[ToolBarAndTabBar] = hd[ToolBars];
     QTabBar *tb = win->findChild<QTabBar *>();
-    if (tb->isVisible() && Ops::isSafariTabBar(tb))
+    if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
     {
         needSeparator = 0;
         const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
