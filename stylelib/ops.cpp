@@ -59,7 +59,7 @@ QWidget
 bool
 Ops::isSafariTabBar(const QTabBar *tabBar)
 {
-    if (!tabBar || !(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth) || !tabBar->window())
+    if (!tabBar || !(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth) || !tabBar->window() || !tabBar->isVisible())
         return false;
 //    QMainWindow *mainWin = qobject_cast<QMainWindow *>(tabBar->window()); // gnarffffff! rekonq tabbar isnt in a mainwin... sighs
     QWidget *win = tabBar->window();

@@ -361,11 +361,8 @@ KwinClient::reset(unsigned long changed)
         m_needSeparator = true;
     }
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-    {
-        m_bgPix[0] = QPixmap::fromX11Pixmap(*bg);
-        m_bgPix[0].detach();
-        XFreePixmap(QX11Info::display(), *bg);
-    }
+        if (*bg && *bg != m_bgPix[0].handle())
+            m_bgPix[0] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::ContPix))
     {
         m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);

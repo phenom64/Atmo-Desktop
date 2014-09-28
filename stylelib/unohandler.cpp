@@ -432,12 +432,22 @@ ScrollWatcher::paintRegion(QMainWindow *win)
 using namespace UNO;
 
 Q_DECL_EXPORT Handler Handler::s_instance;
-Q_DECL_EXPORT QMap<int, QPixmap> Handler::s_pix;
+Q_DECL_EXPORT QMap<int, QVector<QPixmap> > Handler::s_pix;
 Q_DECL_EXPORT QMap<QWidget *, UNO::Data> Handler::s_unoData;
 
 Handler::Handler(QObject *parent)
     : QObject(parent)
 {
+}
+
+Handler::~Handler()
+{
+    QMapIterator<int, QVector<QPixmap> > i(s_pix);
+    while (i.hasNext())
+    {
+        QVector<QPixmap> pix(i.next().value());
+        XHandler::freePix(pix.at(1));
+    }
 }
 
 Handler
@@ -661,25 +671,26 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float o
         return false;
 
     QWidget *win(w->window());
-
     if (int i = unoHeight(win, All))
-    {
-        p->save();
-        p->setOpacity(opacity);
-        p->drawTiledPixmap(r, s_pix.value(i), QPoint(0, offset));
-        p->setOpacity(1.0f);
-        if (Settings::conf.contAware)
+        if (s_pix.contains(i))
         {
-            const QPoint offset(w->mapTo(win, w->rect().topLeft()));
-            if (offset.y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
+            qDebug() << i << s_pix.value(i).at(0).size();
+            p->save();
+            p->setOpacity(opacity);
+            p->drawTiledPixmap(r, s_pix.value(i).at(0), QPoint(0, offset));
+            p->setOpacity(1.0f);
+            if (Settings::conf.contAware)
             {
-                p->setOpacity(0.33f);
-                p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
+                const QPoint offset(w->mapTo(win, w->rect().topLeft()));
+                if (offset.y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
+                {
+                    p->setOpacity(0.33f);
+                    p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
+                }
             }
+            p->restore();
+            return true;
         }
-        p->restore();
-        return true;
-    }
     return false;
 }
 
@@ -729,7 +740,7 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     }
     hd[ToolBarAndTabBar] = hd[ToolBars];
     QTabBar *tb = win->findChild<QTabBar *>();
-    if (Ops::isSafariTabBar(tb) && tb->isVisible())
+    if (Ops::isSafariTabBar(tb))
     {
         needSeparator = 0;
         const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
@@ -758,26 +769,29 @@ Handler::fixWindowTitleBar(QWidget *win)
     wd.text = win->palette().color(win->foregroundRole()).rgba();
     if (!wd.height)
         return;
-
     if (!s_pix.contains(wd.height))
     {
+        qDebug() << "inserting pix w/ height" << wd.height;
         QLinearGradient lg(0, 0, 0, wd.height);
         QColor bc(win->palette().color(win->backgroundRole()));
         bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
         lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
 
         const unsigned int n(Settings::conf.uno.noise);
-        QPixmap p(n?Render::noise().width():1, wd.height);
+        const int w(n?Render::noise().width():1);
+        QPixmap p(w, wd.height);
         p.fill(Qt::transparent);
         QPainter pt(&p);
         pt.fillRect(p.rect(), lg);
         pt.end();
         if (n)
             p = Render::mid(p, Render::noise(), 100-n, n);
-        s_pix.insert(wd.height, p);
+        QPixmap decobg(XHandler::x11Pix(p.copy(0, 0, w, unoHeight(win, TitleBar))));
+        QVector<QPixmap> values;
+        values << p << decobg;
+        s_pix.insert(wd.height, values);
     }
-    QPixmap x11Pix(XHandler::x11Pix(s_pix.value(wd.height).copy(0, 0, Render::noise().width(), unoHeight(win, TitleBar))));
-    unsigned long handle(x11Pix.handle());
+    unsigned long handle(s_pix.value(wd.height).at(1).handle());
     XHandler::setXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
     XHandler::setXProperty<unsigned int>(win->winId(), XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 4);
     updateWindow(win->winId());
@@ -793,7 +807,6 @@ Handler::fixWindowTitleBar(QWidget *win)
         tb->update();
     if (QStatusBar *sb = win->findChild<QStatusBar *>())
         sb->update();
-
 }
 
 void

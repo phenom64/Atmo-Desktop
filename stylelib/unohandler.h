@@ -108,7 +108,7 @@ class Q_DECL_EXPORT Handler : public QObject
     Q_OBJECT
 public:
     static QMap<QWidget *, UNO::Data> s_unoData;
-    ~Handler(){}
+    ~Handler();
     static Handler *instance();
     static void manage(QWidget *mw);
     static void release(QWidget *mw);
@@ -129,7 +129,7 @@ protected:
 
 private:
     static Handler s_instance;
-    static QMap<int, QPixmap> s_pix;
+    static QMap<int, QVector<QPixmap> > s_pix;
 };
 
 static int unoHeight(const QWidget *w, const HeightData d)

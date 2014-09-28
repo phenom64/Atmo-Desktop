@@ -122,6 +122,5 @@ XHandler::x11Pix(const QPixmap &pix)
 void
 XHandler::freePix(QPixmap pix)
 {
-    pix.detach();
     XFreePixmap(QX11Info::display(), pix.handle());
 }
