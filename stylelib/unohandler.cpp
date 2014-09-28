@@ -442,12 +442,12 @@ Handler::Handler(QObject *parent)
 
 Handler::~Handler()
 {
-    QMapIterator<int, QVector<QPixmap> > i(s_pix);
-    while (i.hasNext())
-    {
-        QVector<QPixmap> pix(i.next().value());
-        XHandler::freePix(pix.at(1));
-    }
+//    QMapIterator<int, QVector<QPixmap> > i(s_pix);
+//    while (i.hasNext())
+//    {
+//        QVector<QPixmap> pix(i.next().value());
+//        XHandler::freePix(pix.at(1));
+//    }
 }
 
 Handler
