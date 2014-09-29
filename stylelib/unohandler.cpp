@@ -676,11 +676,16 @@ Handler::eventFilter(QObject *o, QEvent *e)
 bool
 Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint offset, float opacity)
 {
+    QWidget *win(w->window());
+    const int clientUno(unoHeight(win, ToolBarAndTabBar));
+    if (!clientUno)
+        return false;
     if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
-        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
-            if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
-                if (tb->orientation() != Qt::Horizontal)
-                    return false;
+//        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
+//            if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
+//                if (tb->orientation() != Qt::Horizontal)
+        if (tb->geometry().top() > clientUno)
+            return false;
 
     if (!w->isWindow() && w->height() > w->width())
         return false;
@@ -688,25 +693,20 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint offset
     if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget())
         return false;
 
-    QWidget *win(w->window());
-
-    if (int i = unoHeight(win, All))
-        if (s_pix.contains(i))
+    const int allUno(unoHeight(win, All));
+    if (s_pix.contains(allUno))
+    {
+        const float savedOpacity(p->opacity());
+        p->setOpacity(opacity);
+        p->drawTiledPixmap(r, s_pix.value(allUno).at(0), offset);
+        if (Settings::conf.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
         {
-            p->save();
-            p->setOpacity(opacity);
-            p->drawTiledPixmap(r, s_pix.value(i).at(0), offset);
-            if (Settings::conf.contAware)
-            {
-                if (w->mapTo(win, QPoint(0,0)).y() < unoHeight(win, ToolBarAndTabBar))
-                {
-                    p->setOpacity(0.33f);
-                    p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
-                }
-            }
-            p->restore();
-            return true;
+            p->setOpacity(0.33f);
+            p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
         }
+        p->setOpacity(savedOpacity);
+        return true;
+    }
     return false;
 }
 
@@ -737,15 +737,16 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     hd[ToolBars] = hd[ToolBarAndTabBar] = 0;
     if (castObj(QMainWindow *, mw, win))
     {
-        if (mw->menuBar() && mw->menuBar()->isVisible())
-            hd[All] += mw->menuBar()->height();
+        QMenuBar *menuBar = mw->findChild<QMenuBar *>();
+        if (menuBar && menuBar->isVisible())
+            hd[All] += menuBar->height();
 
         QList<QToolBar *> tbs(mw->findChildren<QToolBar *>());
         for (int i = 0; i<tbs.count(); ++i)
         {
             QToolBar *tb(tbs.at(i));
             if (tb->isVisible())
-                if (!tb->findChild<QTabBar *>())
+                if (!tb->findChild<QTabBar *>()) //ah eiskalt...
                     if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
                     {
                         if (tb->geometry().bottom() > hd[ToolBars])
@@ -756,7 +757,7 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     }
     hd[ToolBarAndTabBar] = hd[ToolBars];
     QTabBar *tb = win->findChild<QTabBar *>();
-    if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
+    if (/*tb && tb->isVisible() && */Ops::isSafariTabBar(tb))
     {
         needSeparator = 0;
         const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
