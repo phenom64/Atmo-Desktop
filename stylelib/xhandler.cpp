@@ -122,5 +122,11 @@ XHandler::x11Pix(const QPixmap &pix, const Qt::HANDLE handle)
 void
 XHandler::freePix(QPixmap pix)
 {
-    XFreePixmap(QX11Info::display(), pix.handle());
+    freePix(pix.handle());
+}
+
+void
+XHandler::freePix(const Qt::HANDLE handle)
+{
+    XFreePixmap(QX11Info::display(), handle);
 }

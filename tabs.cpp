@@ -74,7 +74,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             QPixmap pix(r.size());
             pix.fill(Qt::transparent);
             QPainter pt(&pix);
-            UNO::Handler::drawUnoPart(&pt, pix.rect(), widget, bar->mapTo(widget->window(), bar->rect().topLeft()).y());
+            UNO::Handler::drawUnoPart(&pt, pix.rect(), widget, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
             pt.end();
             if (XHandler::opacity() < 1.0f)
             {
@@ -83,16 +83,9 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
                 painter->drawPath(p);
                 painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
             }
+            painter->setBrushOrigin(r.topLeft());
             painter->setBrush(pix);
-            painter->setOpacity(XHandler::opacity());
             painter->drawPath(p);
-            if (Settings::conf.contAware)
-            {
-                painter->setOpacity(0.33f);
-                painter->setBrush(ScrollWatcher::bg((qlonglong)bar->window()));
-                painter->setBrushOrigin(bar->mapFrom(bar->window(), bar->rect().topLeft()));
-                painter->drawPath(p);
-            }
             painter->restore();
         }
         return true;
@@ -264,13 +257,7 @@ static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, co
         p->setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
     const float o(p->opacity());
-    UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()).y(), XHandler::opacity());
-    if (Settings::conf.contAware)
-    {
-        p->setOpacity(0.33f);
-        p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)bar->window()), bar->mapTo(bar->window(), bar->rect().topLeft()));
-        p->setOpacity(1.0f);
-    }
+    UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
     p->setPen(Qt::black);
     p->setOpacity(Settings::conf.shadows.opacity/2);
     p->drawLine(r.topLeft(), r.topRight());

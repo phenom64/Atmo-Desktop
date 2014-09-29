@@ -364,11 +364,7 @@ KwinClient::reset(unsigned long changed)
         if (*bg && *bg != m_bgPix[0].handle())
             m_bgPix[0] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::ContPix))
-    {
-        m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
-        m_bgPix[1].detach();
-        XFreePixmap(QX11Info::display(), *bg);
-    }
+        m_bgPix[1] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
     m_unoGradient.setColorAt(0.0f, m_titleColor[0]);

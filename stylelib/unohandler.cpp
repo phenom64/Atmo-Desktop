@@ -264,6 +264,7 @@ WinHandler::canDrag(QWidget *w)
 
 Q_DECL_EXPORT ScrollWatcher ScrollWatcher::s_instance;
 QMap<qlonglong, QPixmap> ScrollWatcher::s_winBg;
+QMap<QWidget *, Qt::HANDLE> ScrollWatcher::s_handles;
 
 ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent), m_timer(new QTimer(this))
 {
@@ -288,6 +289,8 @@ ScrollWatcher::removeFromQueue()
     QMainWindow *mw(static_cast<QMainWindow *>(sender()));
     if (m_wins.contains(mw))
         m_wins.removeOne(mw);
+    if (s_handles.contains(mw))
+        XHandler::freePix(s_handles.value(mw));
 }
 
 void
@@ -339,8 +342,12 @@ ScrollWatcher::regenBg(QMainWindow *win)
     img = Render::blurred(img.mirrored(), img.rect(), 8);
 
     QPixmap pix(QPixmap::fromImage(img));
-    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
-    unsigned long d(decoPix.handle());
+
+
+    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22), s_handles.value(win, 0));
+    Qt::HANDLE d(decoPix.handle());
+    if (!s_handles.contains(win))
+        s_handles.insert(win, d);
     XHandler::setXProperty<unsigned long>(win->winId(), XHandler::ContPix, XHandler::Long, &d);
     UNO::Handler::updateWindow(win->winId());
     decoPix.detach();
@@ -365,6 +372,8 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         QMainWindow *win(static_cast<QMainWindow *>(o));
         if (!m_wins.contains(win))
             m_wins << win;
+        if (s_handles.contains(win))
+            XHandler::freePix(s_handles.take(win));
         if (!m_timer->isActive())
             m_timer->start(50);
     }
@@ -665,7 +674,7 @@ Handler::eventFilter(QObject *o, QEvent *e)
 }
 
 bool
-Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float opacity)
+Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint offset, float opacity)
 {
     if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
         if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
@@ -680,16 +689,16 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, int offset, float o
         return false;
 
     QWidget *win(w->window());
+
     if (int i = unoHeight(win, All))
         if (s_pix.contains(i))
         {
             p->save();
             p->setOpacity(opacity);
-            p->drawTiledPixmap(r, s_pix.value(i).at(0), QPoint(0, offset));
+            p->drawTiledPixmap(r, s_pix.value(i).at(0), offset);
             if (Settings::conf.contAware)
             {
-                const QPoint offset(w->mapTo(win, w->rect().topLeft()));
-                if (offset.y() < ScrollWatcher::paintRegion(qobject_cast<QMainWindow *>(win)).boundingRect().y())
+                if (w->mapTo(win, QPoint(0,0)).y() < unoHeight(win, ToolBarAndTabBar))
                 {
                     p->setOpacity(0.33f);
                     p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);

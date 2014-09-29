@@ -37,6 +37,7 @@ public:
 
     static QPixmap x11Pix(const QPixmap &pix, const Qt::HANDLE handle = 0);
     static void freePix(QPixmap pix);
+    static void freePix(const Qt::HANDLE handle);
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);

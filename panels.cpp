@@ -47,14 +47,14 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
     const QRect r(widget->rect());
     if (sides & Render::Bottom)
     {
-        UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, 0, XHandler::opacity());;
+        UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());;
     }
     else
     {
         QPixmap pix(r.size());
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-        UNO::Handler::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, 0, XHandler::opacity());
+        UNO::Handler::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
         p.end();
         Render::renderMask(r, painter, pix, 4, Render::Bottom|Render::Left|Render::Right);
     }
@@ -92,12 +92,12 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
             QPixmap p(option->rect.size());
             p.fill(Qt::transparent);
             QPainter pt(&p);
-            UNO::Handler::drawUnoPart(&pt, option->rect, widget, widget->geometry().top(), XHandler::opacity());
+            UNO::Handler::drawUnoPart(&pt, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
             pt.end();
             Render::renderMask(option->rect, painter, p, 4, sides);
         }
         else
-            UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().top(), XHandler::opacity());
+            UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
 //        painter->drawTiledPixmap(option->rect, bg, widget->geometry().topLeft());
 //        int hh(UNO::unoHeight(win, UNO::ToolBars));
 //        if (hh == widget->geometry().bottom()+1)
@@ -116,7 +116,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
 {
     if (widget)
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
-        UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().top(), XHandler::opacity());
+        UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
     return true;
 }
 
