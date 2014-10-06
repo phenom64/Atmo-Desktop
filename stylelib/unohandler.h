@@ -117,7 +117,7 @@ public:
     static void updateWindow(WId window);
     static void updateToolBar(QToolBar *toolBar);
     static void fixTitleLater(QWidget *win);
-    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint offset = QPoint(), float opacity = 1.0f);
+    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset = QPoint(), float opacity = 1.0f);
     static void setupNoTitleBarWindow(QToolBar *toolBar);
 
 public slots:

@@ -2,6 +2,7 @@
 #include "color.h"
 #include <QSettings>
 #include <QFileInfo>
+#include <QDir>
 #include <QApplication>
 
 Q_DECL_EXPORT Settings Settings::conf;
@@ -68,11 +69,20 @@ static Tint tintColor(const QString &tint)
 void
 Settings::read()
 {
-    QSettings s("dsp", "dsp");
+    const QString appName(QFileInfo(qApp->applicationFilePath()).fileName());
+    QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
+
+    const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(appName)));
+    QString append("/dsp.conf");
+    if (presetFile.exists())
+        append = QString("/%1.conf").arg(appName);
+    settingsPath.append(append);
+
+    QSettings s(settingsPath, QSettings::NativeFormat);
     //globals
     conf.opacity = s.value(READOPACITY).toFloat()/100.0f;
     conf.blackList = s.value(READBLACKLIST).toStringList();
-    if (conf.blackList.contains(QFileInfo(qApp->applicationFilePath()).fileName()))
+    if (conf.blackList.contains(appName))
         conf.opacity = 1.0f;
     conf.removeTitleBars = s.value(READREMOVETITLE).toBool();
     conf.titlePos = conf.removeTitleBars?s.value(READTITLEPOS).toInt():-1;

@@ -230,7 +230,6 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             QAction *before(tb->actions().first());
             tb->insertWidget(before, tbtn);
             tb->insertSeparator(before);
-
         }
         return false;
     }
@@ -674,7 +673,7 @@ Handler::eventFilter(QObject *o, QEvent *e)
 }
 
 bool
-Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint offset, float opacity)
+Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset, float opacity)
 {
     QWidget *win(w->window());
     const int clientUno(unoHeight(win, ToolBarAndTabBar));
@@ -750,14 +749,14 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
                     if (mw->toolBarArea(tb) == Qt::TopToolBarArea)
                     {
                         if (tb->geometry().bottom() > hd[ToolBars])
-                            hd[ToolBars] = tb->height();
+                            hd[ToolBars] = tb->geometry().bottom()+1;
                         needSeparator = 0;
                     }
         }
     }
     hd[ToolBarAndTabBar] = hd[ToolBars];
     QTabBar *tb = win->findChild<QTabBar *>();
-    if (/*tb && tb->isVisible() && */Ops::isSafariTabBar(tb))
+    if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
     {
         needSeparator = 0;
         const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());

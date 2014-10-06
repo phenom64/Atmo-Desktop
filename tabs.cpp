@@ -74,7 +74,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
             QPixmap pix(r.size());
             pix.fill(Qt::transparent);
             QPainter pt(&pix);
-            UNO::Handler::drawUnoPart(&pt, pix.rect(), widget, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
+            UNO::Handler::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
             pt.end();
             if (XHandler::opacity() < 1.0f)
             {
