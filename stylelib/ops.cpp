@@ -61,12 +61,9 @@ Ops::isSafariTabBar(const QTabBar *tabBar)
 {
     if (!tabBar || !(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth) || !tabBar->documentMode())
         return false;
-//    QMainWindow *mainWin = qobject_cast<QMainWindow *>(tabBar->window()); // gnarffffff! rekonq tabbar isnt in a mainwin... sighs
+
     QWidget *win(tabBar->window());
-    const QRect &winRect(win->rect());
-    const QPoint &topLeft(tabBar->mapTo(win, tabBar->rect().topLeft()));
-    const QRect tabBarRect(topLeft, tabBar->size());
-    if (tabBarRect.top() <= winRect.top()+1)
+    if (tabBar->mapTo(win, QPoint(0, 0)).y() <= 1)
         return true;
     const QPoint &checkPoint(tabBar->mapTo(win, QPoint(1, -1)));
     return isOrInsideA<const QToolBar *>(win->childAt(checkPoint));

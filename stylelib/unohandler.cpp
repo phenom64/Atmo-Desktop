@@ -755,18 +755,22 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
         }
     }
     hd[ToolBarAndTabBar] = hd[ToolBars];
-    QTabBar *tb = win->findChild<QTabBar *>();
-    if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
+    QList<QTabBar *> tabbars = win->findChildren<QTabBar *>();
+    QTabBar *possible(0);
+    for (int i = 0; i < tabbars.count(); ++i)
     {
-        needSeparator = 0;
-        const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
-        if (y > hd[ToolBarAndTabBar])
-            hd[ToolBarAndTabBar] = y;
+        QTabBar *tb(tabbars.at(i));
+        if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
+        {
+            possible = tb;
+            needSeparator = 0;
+            const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
+            if (y > hd[ToolBarAndTabBar])
+                hd[ToolBarAndTabBar] = y;
+        }
     }
-    else
-        tb = 0;
     hd[All] += hd[ToolBarAndTabBar];
-    s_unoData.insert(win, Data(hd, tb));
+    s_unoData.insert(win, Data(hd, possible));
     return hd[All];
 }
 
