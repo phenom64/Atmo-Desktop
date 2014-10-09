@@ -50,7 +50,7 @@ static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, Q
 
     cs += QSize((item->menuHasCheckableItems?32:6)+32, 0); //just to add some decent width to the menu
     if (Settings::conf.menues.icons)
-        cs.rwidth()+= 28;
+        cs.rwidth()+= 20;
     const bool isSeparator(item->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!item->text.isEmpty());
     if (isSeparator && !hasText)

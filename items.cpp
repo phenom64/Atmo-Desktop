@@ -39,7 +39,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
     const QPalette pal(opt->palette);
 
-    int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?(hasMenu||isSeparator?32:6):0), h(opt->rect.height()), w(opt->rect.width());
+    int leftMargin(isMenu?(opt->menuHasCheckableItems?24:6):0), rightMargin(isMenu?(hasMenu||isSeparator?24:6):0), h(opt->rect.height()), w(opt->rect.width());
 
     QRect button(0, opt->rect.top(), h, h);
     button.moveLeft(button.left()+(leftMargin/2 - h/2));
@@ -50,7 +50,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 
     if (isSeparator)
     {
-        painter->setPen(pal.color(QPalette::Disabled, fg));
+        painter->setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
         painter->translate(0, 0.5f);
         const int top(opt->rect.top());
         const int y(top+(h/2));
@@ -67,6 +67,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         painter->translate(0, -0.5f);
         if (hasText)
             drawItemText(painter, opt->rect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, fg);
+
         painter->setFont(sf);
         return true;
     }
@@ -95,8 +96,8 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         QAction *a(static_cast<const QMenu *>(widget)->actionAt(opt->rect.topLeft()));
         if (a && !a->icon().isNull())
         {
-            const QRect iconRect(textRect.adjusted(0, 0, -(textRect.width()-28), 0));
-            textRect.setLeft(textRect.left()+28);
+            const QRect iconRect(textRect.adjusted(0, 0, -(textRect.width()-16), 0));
+            textRect.setLeft(textRect.left()+20);
             const QPixmap icon(a->icon().pixmap(16, opt->ENABLED?QIcon::Normal:QIcon::Disabled));
             drawItemPixmap(painter, iconRect, Qt::AlignCenter, icon);
         }
