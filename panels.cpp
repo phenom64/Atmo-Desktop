@@ -140,6 +140,7 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
     painter->setPen(Qt::NoPen);
     painter->setBrush(bgc);
     painter->drawRoundedRect(option->rect, 4, 4);
+#if 0
     if (Settings::conf.menues.icons)
     {
         const QRect ir(option->rect.adjusted(0, 0, -(option->rect.width()-28), 0));
@@ -151,6 +152,7 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
         painter->translate(0.5f, 0);
         painter->drawLine(ir.topRight(), ir.bottomRight());
     }
+#endif
     painter->restore();
     return true;
 }

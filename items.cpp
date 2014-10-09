@@ -34,20 +34,19 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool isMenu(qobject_cast<const QMenu *>(widget));
     const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!opt->text.isEmpty());
-//    const bool hasRadioButton(opt->checkType == QStyleOptionMenuItem::Exclusive);
-//    const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
+    const bool hasRadioButton(opt->checkType == QStyleOptionMenuItem::Exclusive);
+    const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
     const QPalette pal(opt->palette);
 
-    int x(0);
     int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?(hasMenu||isSeparator?32:6):0), h(opt->rect.height()), w(opt->rect.width());
-    if (Settings::conf.menues.icons && isMenu)
-        x+=28;
 
-    QRect button(x, opt->rect.top(), h, h);
+    QRect button(0, opt->rect.top(), h, h);
     button.moveLeft(button.left()+(leftMargin/2 - h/2));
-    QRect textRect(opt->rect.adjusted(x+leftMargin, 0, -rightMargin, 0));
+    QRect textRect(opt->rect.adjusted(leftMargin, 0, -rightMargin, 0));
     QRect arrow(textRect.right()+((rightMargin/2)-(h/2)), opt->rect.top(), h, h);
+
+
 
     if (isSeparator)
     {
@@ -88,7 +87,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
         const int rnd(isMenuBar*(qMin(qMin(h, opt->rect.width())/2, Settings::conf.pushbtn.rnd)));
-        painter->drawRoundedRect(opt->rect.adjusted((isMenu&&Settings::conf.menues.icons)*28, 0, 0, 0), rnd, rnd);
+        painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
 
     if (Settings::conf.menues.icons && isMenu)
@@ -96,7 +95,8 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         QAction *a(static_cast<const QMenu *>(widget)->actionAt(opt->rect.topLeft()));
         if (a && !a->icon().isNull())
         {
-            const QRect iconRect(opt->rect.adjusted(0, 0, -(opt->rect.width()-28), 0));
+            const QRect iconRect(textRect.adjusted(0, 0, -(textRect.width()-28), 0));
+            textRect.setLeft(textRect.left()+28);
             const QPixmap icon(a->icon().pixmap(16, opt->ENABLED?QIcon::Normal:QIcon::Disabled));
             drawItemPixmap(painter, iconRect, Qt::AlignCenter, icon);
         }
@@ -137,6 +137,8 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 #else
     if (opt->checked)
         Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
+    else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
+        Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
 #endif
 
     if (hasMenu)
