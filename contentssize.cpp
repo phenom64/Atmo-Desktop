@@ -49,18 +49,16 @@ static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, Q
         return cs;
 
     cs += QSize((item->menuHasCheckableItems?32:6)+32, 0); //just to add some decent width to the menu
+    if (Settings::conf.menues.icons)
+        cs.rwidth()+= 28;
     const bool isSeparator(item->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!item->text.isEmpty());
-    if (isSeparator)
-    {
-        if (hasText)
-            cs += QSize(0, item->fontMetrics.height());
-        else
-            cs += QSize(0, 2);
-    }
-
-    if (hasText)
-        cs += QSize(0, 4);
+    if (isSeparator && !hasText)
+        cs += QSize(0, 2);
+    else if (isSeparator)
+        cs.rheight() += item->fontMetrics.height();
+    else
+        cs += QSize(0, 6);
 
     return cs;
 }

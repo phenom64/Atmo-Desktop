@@ -34,31 +34,42 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool isMenu(qobject_cast<const QMenu *>(widget));
     const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!opt->text.isEmpty());
-    const bool hasRadioButton(opt->checkType == QStyleOptionMenuItem::Exclusive);
-    const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
+//    const bool hasRadioButton(opt->checkType == QStyleOptionMenuItem::Exclusive);
+//    const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
-    const QPalette pal(widget?widget->palette():opt->palette);
+    const QPalette pal(opt->palette);
 
-    const int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?(hasMenu||isSeparator?32:6):0), square(opt->rect.height());
+    int x(0);
+    int leftMargin(isMenu?(opt->menuHasCheckableItems?32:6):0), rightMargin(isMenu?(hasMenu||isSeparator?32:6):0), h(opt->rect.height()), w(opt->rect.width());
+    if (Settings::conf.menues.icons && isMenu)
+        x+=28;
+
+    QRect button(x, opt->rect.top(), h, h);
+    button.moveLeft(button.left()+(leftMargin/2 - h/2));
+    QRect textRect(opt->rect.adjusted(x+leftMargin, 0, -rightMargin, 0));
+    QRect arrow(textRect.right()+((rightMargin/2)-(h/2)), opt->rect.top(), h, h);
 
     if (isSeparator)
     {
         painter->setPen(pal.color(QPalette::Disabled, fg));
         painter->translate(0, 0.5f);
-        const int top(opt->rect.top()), height(opt->rect.height()), width(opt->rect.width());
-        const int y(top+(height/2));
+        const int top(opt->rect.top());
+        const int y(top+(h/2));
+        QFont f(painter->font());
+        const QFont sf(f);
+        f.setBold(true);
+        painter->setFont(f);
         if (hasText)
-        {
-            painter->drawLine(0, y, leftMargin, y);
-            painter->drawLine(width-rightMargin, y, width, y);
-        }
-        else
-        {
-            painter->drawLine(0, y, width, y);
-            painter->restore();
-            return true;
-        }
+            painter->setClipRegion(QRegion(opt->rect)-QRegion(itemTextRect(painter->fontMetrics(), opt->rect, Qt::AlignCenter, opt->ENABLED, opt->text)));
+        painter->drawLine(0, y, w, y);
+        if (hasText)
+            painter->setClipping(false);
+
         painter->translate(0, -0.5f);
+        if (hasText)
+            drawItemText(painter, opt->rect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, fg);
+        painter->setFont(sf);
+        return true;
     }
 
     if (!hasText)
@@ -76,14 +87,22 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         bg = QPalette::Highlight;
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
-        const int rnd(isMenuBar*(qMin(qMin(opt->rect.height(), opt->rect.width())/2, Settings::conf.pushbtn.rnd)));
-        painter->drawRoundedRect(opt->rect, rnd, rnd);
+        const int rnd(isMenuBar*(qMin(qMin(h, opt->rect.width())/2, Settings::conf.pushbtn.rnd)));
+        painter->drawRoundedRect(opt->rect.adjusted((isMenu&&Settings::conf.menues.icons)*28, 0, 0, 0), rnd, rnd);
     }
 
-    QRect button(leftMargin/2 - square/2, opt->rect.top(), square, square);
-    QRect textRect(opt->rect.adjusted(leftMargin, 0, -rightMargin, 0));
-    QRect arrow(textRect.right()+((rightMargin/2)-(square/2)), opt->rect.top(), square, square);
+    if (Settings::conf.menues.icons && isMenu)
+    {
+        QAction *a(static_cast<const QMenu *>(widget)->actionAt(opt->rect.topLeft()));
+        if (a && !a->icon().isNull())
+        {
+            const QRect iconRect(opt->rect.adjusted(0, 0, -(opt->rect.width()-28), 0));
+            const QPixmap icon(a->icon().pixmap(16, opt->ENABLED?QIcon::Normal:QIcon::Disabled));
+            drawItemPixmap(painter, iconRect, Qt::AlignCenter, icon);
+        }
+    }
 
+#if 0
     if (hasRadioButton)
     {
         QRect copy(button.adjusted(2, 2, -2, -2));
@@ -115,9 +134,13 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
             Ops::drawCheckMark(painter, pal.color(fg), copy);
         }
     }
+#else
+    if (opt->checked)
+        Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
+#endif
 
     if (hasMenu)
-        Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right);
+        Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right, Qt::AlignCenter, 9);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };

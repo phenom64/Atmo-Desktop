@@ -130,7 +130,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
     Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, Render::All, 3, Settings::conf.shadows.opacity, widget, &mask);
 
     if (opt->state & (State_On|State_NoChange))
-        Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect, opt->state & State_NoChange);
+        Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect.shrinked(2).translated(1, -1), opt->state & State_NoChange);
 
     return true;
 }

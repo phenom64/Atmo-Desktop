@@ -134,7 +134,24 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
     QColor bgc(option->palette.color(bg));
     if (widget && !widget->property("DSP_hasmenuarrow").toBool())
         bgc.setAlpha(XHandler::opacity()*255.0f);
-    Render::renderMask(option->rect, painter, bgc, 4, sides);
+//    Render::renderMask(option->rect, painter, bgc, 4, sides);
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(bgc);
+    painter->drawRoundedRect(option->rect, 4, 4);
+    if (Settings::conf.menues.icons)
+    {
+        const QRect ir(option->rect.adjusted(0, 0, -(option->rect.width()-28), 0));
+        painter->setClipRect(ir);
+        painter->setBrush(QColor(0, 0, 0, 32));
+        painter->drawRoundedRect(option->rect, 4, 4);
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QColor(0, 0, 0, 255.0f*Settings::conf.shadows.opacity));
+        painter->translate(0.5f, 0);
+        painter->drawLine(ir.topRight(), ir.bottomRight());
+    }
+    painter->restore();
     return true;
 }
 

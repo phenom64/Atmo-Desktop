@@ -77,9 +77,9 @@ Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
     p->save();
     p->translate(r.topLeft());
 
-    const int size = qMin(r.width(), r.height());
+    int size = qMin(r.width(), r.height());
     const int third = size/3, thirds = third*2, sixth=third/2;
-    const int points[] = { third,third+sixth, third+sixth,thirds+sixth, thirds+sixth,third-sixth };
+    const int points[] = { sixth,thirds-sixth, third,size-sixth, thirds+sixth,sixth };
 
     p->setRenderHint(QPainter::Antialiasing);
     QPen pen(c, third*(tristate?0.33f:0.66f), tristate?Qt::DashLine:Qt::SolidLine);

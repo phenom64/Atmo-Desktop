@@ -759,10 +759,10 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     QTabBar *possible(0);
     for (int i = 0; i < tabbars.count(); ++i)
     {
-        QTabBar *tb(tabbars.at(i));
+        const QTabBar *tb(tabbars.at(i));
         if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
         {
-            possible = tb;
+            possible = const_cast<QTabBar *>(tb);
             needSeparator = 0;
             const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
             if (y > hd[ToolBarAndTabBar])

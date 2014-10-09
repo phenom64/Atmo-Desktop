@@ -115,6 +115,8 @@ Settings::read()
     conf.uno.gradient = stringToGrad(s.value(READUNOGRAD).toString());
     conf.uno.tint = tintColor(s.value(READUNOTINT).toString());
     conf.uno.noise = s.value(READUNONOISE).toInt();
+    //menues
+    conf.menues.icons = s.value(READMENUICONS).toBool();
     //sliders
     conf.sliders.size = s.value(READSLIDERSIZE).toInt();
     //scrollers

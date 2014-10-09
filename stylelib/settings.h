@@ -39,6 +39,8 @@
 #define UNOTINT             "uno.tinthue"
 #define UNONOISE            "uno.noisefactor"
 
+#define MENUICONS           "menues.icons"
+
 #define SLIDERSIZE          "sliders.size"
 #define SCROLLERSIZE        "scrollers.size"
 #define SHADOWOPACITY       "shadows.opacity"
@@ -96,6 +98,8 @@
 #define DEFUNOTINT              "-1:0"
 #define DEFUNONOISE             10
 
+#define DEFMENUICONS            false
+
 #define DEFSLIDERSIZE           16
 #define DEFSCROLLERSIZE         12
 #define DEFSHADOWOPACITY        33
@@ -132,7 +136,9 @@
 
 #define READUNOGRAD             UNOGRAD, DEFUNOGRAD
 #define READUNOTINT             UNOTINT, DEFUNOTINT
-#define READUNONOISE           UNONOISE, DEFUNONOISE
+#define READUNONOISE            UNONOISE, DEFUNONOISE
+
+#define READMENUICONS           MENUICONS, DEFMENUICONS
 
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
@@ -190,6 +196,10 @@ public:
         Tint tint;
         unsigned int noise;
     } uno;
+    struct menues
+    {
+        bool icons;
+    } menues;
 
     static Settings conf;
 
