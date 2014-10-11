@@ -98,16 +98,13 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
     if (pal.brush(bgRole).style() == Qt::SolidPattern && !pal.brush(bgRole).gradient())
     if (pal.color(textRole).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
-    if (textRole != QPalette::NoRole)
+    if (textRole != QPalette::NoRole && bgRole != QPalette::NoRole && enabled)
     {
-        if (bgRole != QPalette::NoRole && enabled)
-        {
-            const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
-            const int rgb(isDark?0:255);
-            const QColor bevel(rgb, rgb, rgb, 127);
-            painter->setPen(bevel);
-            painter->drawText(rect.translated(0, 1), flags, text);
-        }
+        const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
+        const int rgb(isDark?0:255);
+        const QColor bevel(rgb, rgb, rgb, 127);
+        painter->setPen(bevel);
+        painter->drawText(rect.translated(0, 1), flags, text);
     }
 
     painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));

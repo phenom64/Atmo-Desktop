@@ -112,6 +112,7 @@ DButton::paintKeepAboveButton(QPainter &p)
     pt.end();
     p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
     p.end();
+    return true;
 }
 
 bool
@@ -136,6 +137,7 @@ DButton::paintKeepBelowButton(QPainter &p)
     pt.end();
     p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
     p.end();
+    return true;
 }
 
 ///-------------------------------------------------------------------
