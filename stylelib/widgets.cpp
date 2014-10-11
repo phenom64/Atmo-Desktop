@@ -1,9 +1,11 @@
 #include "widgets.h"
 #include "settings.h"
 #include "color.h"
+#include "render.h"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QImage>
 
 Button::Button(Type type, QWidget *parent)
     : QWidget(parent)
@@ -19,6 +21,14 @@ Button::Button(Type type, QWidget *parent)
     m_paintEvent[Close] = &Button::paintClose;
     m_paintEvent[Min] = &Button::paintMin;
     m_paintEvent[Max] = &Button::paintMax;
+    m_paintEvent[OnAllDesktops] = &Button::paintOnAllDesktopsButton;
+    m_paintEvent[WindowMenu] = &Button::paintWindowMenuButton;
+    m_paintEvent[KeepAbove] = &Button::paintKeepAboveButton;
+    m_paintEvent[KeepBelow] = &Button::paintKeepBelowButton;
+    m_paintEvent[Shade] = &Button::paintShadeButton;
+    m_paintEvent[Resize] = &Button::paintResizeButton;
+    m_paintEvent[QuickHelp] = &Button::paintQuickHelpButton;
+    m_paintEvent[AppMenu] = &Button::paintApplicationMenu;
 }
 
 Button::~Button()
@@ -203,4 +213,29 @@ Button::paintMin(QPainter &p)
     }
     p.end();
     return true;
+}
+
+QPixmap
+Button::sunkenized(const QRect &r, const QPixmap &source)
+{
+    QImage img(r.size(), QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    p.fillRect(img.rect(), QColor(255, 255, 255, 127));
+    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    p.drawTiledPixmap(r, source);
+    p.end();
+    const QImage blur = Render::blurred(img, img.rect(), 2);
+
+    QPixmap pix(r.size());
+    pix.fill(Qt::transparent);
+    p.begin(&pix);
+    p.drawTiledPixmap(pix.rect(), source);
+    p.drawPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(blur));
+    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    p.drawPixmap(pix.rect(), source);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOver);
+    p.drawPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(img));
+    p.end();
+    return pix;
 }

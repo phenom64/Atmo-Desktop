@@ -610,10 +610,15 @@ Render::makeNoise()
 }
 
 QPixmap
-Render::mid(const QPixmap &p1, const QPixmap &p2, const int a1, const int a2)
+Render::mid(const QPixmap &p1, const QPixmap &p2, const int a1, const int a2, const QSize &sz)
 {
-    const int w(qMin(p1.width(), p2.width()));
-    const int h(qMin(p1.height(), p2.height()));
+    int w(qMin(p1.width(), p2.width()));
+    int h(qMin(p1.height(), p2.height()));
+    if (sz.isValid())
+    {
+        w = sz.width();
+        h = sz.height();
+    }
     QImage i1 = p1.copy(0, 0, w, h).toImage().convertToFormat(QImage::Format_ARGB32);
     QImage i2 = p2.copy(0, 0, w, h).toImage().convertToFormat(QImage::Format_ARGB32);
     const int size(w*h);

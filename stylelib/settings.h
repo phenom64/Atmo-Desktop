@@ -38,6 +38,7 @@
 #define UNOGRAD             "uno.gradient"
 #define UNOTINT             "uno.tinthue"
 #define UNONOISE            "uno.noisefactor"
+#define UNOHOR              "uno.horizontal"
 
 #define MENUICONS           "menues.icons"
 
@@ -97,6 +98,7 @@
 #define DEFUNOGRAD              "0.1:5, 1.0:-5"
 #define DEFUNOTINT              "-1:0"
 #define DEFUNONOISE             10
+#define DEFUNOHOR               false
 
 #define DEFMENUICONS            false
 
@@ -137,6 +139,7 @@
 #define READUNOGRAD             UNOGRAD, DEFUNOGRAD
 #define READUNOTINT             UNOTINT, DEFUNOTINT
 #define READUNONOISE            UNONOISE, DEFUNONOISE
+#define READUNOHOR              UNOHOR, DEFUNOHOR
 
 #define READMENUICONS           MENUICONS, DEFMENUICONS
 
@@ -195,6 +198,7 @@ public:
         Gradient gradient;
         Tint tint;
         unsigned int noise;
+        bool hor;
     } uno;
     struct menues
     {

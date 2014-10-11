@@ -369,12 +369,12 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
     if (e->type() == QEvent::Resize && qobject_cast<QMainWindow *>(o))
     {
         QMainWindow *win(static_cast<QMainWindow *>(o));
-        if (!m_wins.contains(win))
-            m_wins << win;
+//        if (!m_wins.contains(win))
+//            m_wins << win;
         if (s_handles.contains(win))
             XHandler::freePix(s_handles.take(win));
-        if (!m_timer->isActive())
-            m_timer->start(50);
+//        if (!m_timer->isActive())
+//            m_timer->start(50);
     }
     if (e->type() == QEvent::Paint && !qobject_cast<QMainWindow *>(o))
     {
@@ -440,7 +440,7 @@ ScrollWatcher::paintRegion(QMainWindow *win)
 using namespace UNO;
 
 Q_DECL_EXPORT Handler *Handler::s_instance = 0;
-Q_DECL_EXPORT QMap<int, QVector<QPixmap> > Handler::s_pix;
+Q_DECL_EXPORT QMap<uint, QVector<QPixmap> > Handler::s_pix;
 Q_DECL_EXPORT QMap<QWidget *, UNO::Data> Handler::s_unoData;
 
 Handler::Handler(QObject *parent)
@@ -464,7 +464,7 @@ Handler
 void
 Handler::cleanUp()
 {
-    QMapIterator<int, QVector<QPixmap> > i(s_pix);
+    QMapIterator<uint, QVector<QPixmap> > i(s_pix);
     while (i.hasNext())
     {
         QVector<QPixmap> pix(i.next().value());
@@ -693,11 +693,15 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offse
         return false;
 
     const int allUno(unoHeight(win, All));
-    if (s_pix.contains(allUno))
+    uint check = allUno;
+    if (Settings::conf.uno.hor)
+        check = check<<16|win->width();
+    if (s_pix.contains(check))
     {
         const float savedOpacity(p->opacity());
         p->setOpacity(opacity);
-        p->drawTiledPixmap(r, s_pix.value(allUno).at(0), offset);
+
+        p->drawTiledPixmap(r, s_pix.value(check).at(0), offset);
         if (Settings::conf.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
         {
             p->setOpacity(0.33f);
@@ -776,20 +780,21 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
 
 static QVector<QPixmap> unoParts(QWidget *win, int h)
 {
-    QLinearGradient lg(0, 0, 0, h);
+    const bool hor(Settings::conf.uno.hor);
+    QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
     QColor bc(win->palette().color(win->backgroundRole()));
     bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
     lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
 
     const unsigned int n(Settings::conf.uno.noise);
-    const int w(n?Render::noise().width():1);
+    const int w(hor?win->width():(n?Render::noise().width():1));
     QPixmap p(w, h);
     p.fill(Qt::transparent);
     QPainter pt(&p);
     pt.fillRect(p.rect(), lg);
     pt.end();
     if (n)
-        p = Render::mid(p, Render::noise(), 100-n, n);
+        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
     QVector<QPixmap> values;
     values << p.copy(0, unoHeight(win, TitleBar), w, unoHeight(win, ToolBarAndTabBar)) << XHandler::x11Pix(p.copy(0, 0, w, unoHeight(win, TitleBar)));
     return values;
@@ -806,11 +811,16 @@ Handler::fixWindowTitleBar(QWidget *win)
     wd.separator = ns;
     wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
+
     if (!wd.height)
         return;
-    if (!s_pix.contains(wd.height))
-        s_pix.insert(wd.height, unoParts(win, wd.height));
-    unsigned long handle(s_pix.value(wd.height).at(1).handle());
+
+    uint check = wd.height;
+    if (Settings::conf.uno.hor)
+        check = check<<16|win->width();
+    if (!s_pix.contains(check))
+        s_pix.insert(check, unoParts(win, wd.height));
+    unsigned long handle(s_pix.value(check).at(1).handle());
     const WId id(win->winId());
     unsigned long *h = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
     if (!h || (h && *h != handle))

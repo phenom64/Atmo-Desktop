@@ -33,7 +33,7 @@ public:
     static QPixmap colorized(QPixmap pix, const QBrush &b);
     static QPixmap noise() { return instance()->m_noise; }
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
-    static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1);
+    static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
     static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const QPoint &offSet = QPoint());
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const Shadow s, const int height);

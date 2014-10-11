@@ -131,7 +131,7 @@ protected:
 
 private:
     static Handler *s_instance;
-    static QMap<int, QVector<QPixmap> > s_pix;
+    static QMap<uint, QVector<QPixmap> > s_pix;
 };
 
 static int unoHeight(const QWidget *w, const HeightData d)

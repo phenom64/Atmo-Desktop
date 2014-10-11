@@ -46,8 +46,6 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     QRect textRect(opt->rect.adjusted(leftMargin, 0, -rightMargin, 0));
     QRect arrow(textRect.right()+((rightMargin/2)-(h/2)), opt->rect.top(), h, h);
 
-
-
     if (isSeparator)
     {
         painter->setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
@@ -103,44 +101,10 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         }
     }
 
-#if 0
-    if (hasRadioButton)
-    {
-        QRect copy(button.adjusted(2, 2, -2, -2));
-        painter->setBrush(pal.color(fg));
-        painter->setPen(Qt::NoPen);
-        painter->drawEllipse(copy);
-        copy.adjust(2, 2, -2, -2);
-        painter->setBrush(pal.color(bg));
-        painter->drawEllipse(copy);
-        if (opt->checked)
-        {
-            painter->setBrush(pal.color(fg));
-            copy.adjust(2, 2, -2, -2);
-            painter->drawEllipse(copy);
-        }
-    }
-    else if (hasCheckBox)
-    {
-        QRect copy(button.adjusted(2, 2, -2, -2));
-        painter->setBrush(pal.color(fg));
-        painter->setPen(Qt::NoPen);
-        painter->drawRoundedRect(copy, 3, 3);
-        copy.adjust(2, 2, -2, -2);
-        painter->setBrush(pal.color(bg));
-        painter->drawRoundedRect(copy, 1, 1);
-        if (opt->checked)
-        {
-            copy.adjust(1, 1, -1, -1);
-            Ops::drawCheckMark(painter, pal.color(fg), copy);
-        }
-    }
-#else
     if (opt->checked)
         Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
     else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
         Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
-#endif
 
     if (hasMenu)
         Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right, Qt::AlignCenter, 9);

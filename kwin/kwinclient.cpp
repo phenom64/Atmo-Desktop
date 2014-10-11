@@ -25,7 +25,6 @@ DButton::DButton(const Type &t, KwinClient *client, QWidget *parent)
     : Button(t, parent)
     , m_client(client)
 {
-
 }
 
 bool
@@ -42,8 +41,101 @@ DButton::onClick(QMouseEvent *e, const Type &t)
     case Close: m_client->closeWindow(); break;
     case Min: m_client->minimize(); break;
     case Max: m_client->maximize(e->button()); break;
+    case OnAllDesktops: m_client->toggleOnAllDesktops(); break;
+    case WindowMenu: m_client->showWindowMenu(e->globalPos()); break;
+    case KeepAbove: m_client->setKeepAbove(!m_client->keepAbove()); break;
+    case KeepBelow: m_client->setKeepBelow(!m_client->keepBelow()); break;
     default: break;
     }
+    update();
+}
+
+bool
+DButton::paintOnAllDesktopsButton(QPainter &p)
+{
+    const int sz(rect().width()/8);
+    const QRect r(rect().adjusted(sz, sz, -sz, -sz));
+    const int rw(r.width());
+    const int rh(r.height());
+    const int w(rw/4);
+    const int h(rh/4);
+    QRegion vert(r.adjusted((rw-w)/2, 0, -((rw-w)/2), 0));
+    QRegion hor(r.adjusted(0, (rh-h)/2, 0, -((rh-h)/2)));
+    QPixmap pix(rect().size());
+    pix.fill(Qt::transparent);
+    QPainter pt(&pix);
+    pt.setClipRegion(m_client->isOnAllDesktops()?hor:vert+hor);
+    pt.fillRect(pix.rect(), palette().color(foregroundRole()));
+    pt.end();
+    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.end();
+    return true;
+}
+
+bool
+DButton::paintWindowMenuButton(QPainter &p)
+{
+    p.setPen(Qt::NoPen);
+    const int sz(rect().width()/8);
+    QPixmap pix(rect().size());
+    pix.fill(Qt::transparent);
+    QPainter pt(&pix);
+    QRect rt(sz, sz, rect().width()-sz*2, sz);
+    for (int i = 0; i < 12; i+=3)
+        pt.fillRect(rt.translated(0, i), palette().color(foregroundRole()));
+    pt.end();
+    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.end();
+    return true;
+}
+
+bool
+DButton::paintKeepAboveButton(QPainter &p)
+{
+    QRect arrow(QPoint(), QSize(10, 10));
+    arrow.moveLeft(rect().left());
+    arrow.translate(0, 1);
+    QPainterPath path;
+    path.moveTo(arrow.topLeft());
+    path.quadTo(arrow.center(), arrow.bottomLeft());
+    path.quadTo(arrow.center(), arrow.bottomRight());
+    path.lineTo(arrow.topRight());
+    path.lineTo(arrow.topLeft());
+    path.closeSubpath();
+    QPixmap pix(size());
+    pix.fill(Qt::transparent);
+    QPainter pt(&pix);
+    pt.setPen(Qt::NoPen);
+    pt.setBrush(palette().color(m_client->keepAbove()?QPalette::Highlight:foregroundRole()));
+    pt.setRenderHint(QPainter::Antialiasing);
+    pt.drawPath(path);
+    pt.end();
+    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.end();
+}
+
+bool
+DButton::paintKeepBelowButton(QPainter &p)
+{
+    QRect arrow(QPoint(), QSize(10, 10));
+    arrow.moveBottomRight(rect().bottomRight());
+    QPainterPath path;
+    path.moveTo(arrow.topLeft());
+    path.quadTo(arrow.center(), arrow.topRight());
+    path.quadTo(arrow.center(), arrow.bottomRight());
+    path.lineTo(arrow.bottomLeft());
+    path.lineTo(arrow.topLeft());
+    path.closeSubpath();
+    QPixmap pix(size());
+    pix.fill(Qt::transparent);
+    QPainter pt(&pix);
+    pt.setPen(Qt::NoPen);
+    pt.setBrush(palette().color(m_client->keepBelow()?QPalette::Highlight:foregroundRole()));
+    pt.setRenderHint(QPainter::Antialiasing);
+    pt.drawPath(path);
+    pt.end();
+    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.end();
 }
 
 ///-------------------------------------------------------------------
@@ -137,6 +229,10 @@ KwinClient::populate(const QString &buttons, bool left)
         * @li 'R' resize button
         * @li '_' spacer
         */
+        case 'B': t = Button::KeepBelow; break;
+        case 'F': t = Button::KeepAbove; break;
+        case 'M': t = Button::WindowMenu; break;
+        case 'S': t = Button::OnAllDesktops; break;
         case 'X': t = Button::Close; break;
         case 'I': t = Button::Min; break;
         case 'A': t = Button::Max; break;
