@@ -375,6 +375,9 @@ KwinClient::paint(QPainter &p)
         p.setPen(options()->color(KwinClient::ColorFont, isActive()));
 
     p.drawText(tr, Qt::AlignCenter, text);
+    QRect ir(p.fontMetrics().boundingRect(tr, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
+    if (ir.left() > m_leftButtons)
+        p.drawTiledPixmap(ir, icon().pixmap(16));
 
     if (m_needSeparator)
     {
