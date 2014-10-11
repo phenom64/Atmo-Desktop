@@ -26,6 +26,8 @@ protected:
     bool paintWindowMenuButton(QPainter &p);
     bool paintKeepAboveButton(QPainter &p);
     bool paintKeepBelowButton(QPainter &p);
+    bool paintApplicationMenuButton(QPainter &p);
+    bool paintShadeButton(QPainter &p);
 
 private:
     KwinClient *m_client;

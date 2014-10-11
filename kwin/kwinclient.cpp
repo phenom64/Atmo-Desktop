@@ -45,6 +45,8 @@ DButton::onClick(QMouseEvent *e, const Type &t)
     case WindowMenu: m_client->showWindowMenu(e->globalPos()); break;
     case KeepAbove: m_client->setKeepAbove(!m_client->keepAbove()); break;
     case KeepBelow: m_client->setKeepBelow(!m_client->keepBelow()); break;
+    case AppMenu: m_client->showApplicationMenu(e->globalPos()); break;
+    case Shade: m_client->setShade(!m_client->isShade()); break;
     default: break;
     }
     update();
@@ -134,6 +136,27 @@ DButton::paintKeepBelowButton(QPainter &p)
     pt.setBrush(palette().color(m_client->keepBelow()?QPalette::Highlight:foregroundRole()));
     pt.setRenderHint(QPainter::Antialiasing);
     pt.drawPath(path);
+    pt.end();
+    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.end();
+    return true;
+}
+
+bool
+DButton::paintApplicationMenuButton(QPainter &p)
+{
+    return paintWindowMenuButton(p);
+}
+
+bool
+DButton::paintShadeButton(QPainter &p)
+{
+    const int s(rect().width()/8);
+    QRect r(s, s*2, rect().width()-s*2, s*2);
+    QPixmap pix(rect().size());
+    pix.fill(Qt::transparent);
+    QPainter pt(&pix);
+    pt.fillRect(r, palette().color(m_client->isShade()?QPalette::Highlight:foregroundRole()));
     pt.end();
     p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
     p.end();
@@ -231,6 +254,8 @@ KwinClient::populate(const QString &buttons, bool left)
         * @li 'R' resize button
         * @li '_' spacer
         */
+        case 'L': t = Button::Shade; break;
+        case 'N': t = Button::AppMenu; break;
         case 'B': t = Button::KeepBelow; break;
         case 'F': t = Button::KeepAbove; break;
         case 'M': t = Button::WindowMenu; break;

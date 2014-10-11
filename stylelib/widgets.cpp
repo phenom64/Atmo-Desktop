@@ -28,7 +28,7 @@ Button::Button(Type type, QWidget *parent)
     m_paintEvent[Shade] = &Button::paintShadeButton;
     m_paintEvent[Resize] = &Button::paintResizeButton;
     m_paintEvent[QuickHelp] = &Button::paintQuickHelpButton;
-    m_paintEvent[AppMenu] = &Button::paintApplicationMenu;
+    m_paintEvent[AppMenu] = &Button::paintApplicationMenuButton;
 }
 
 Button::~Button()

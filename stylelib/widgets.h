@@ -35,7 +35,7 @@ protected:
     virtual bool paintShadeButton(QPainter &p) {return false;}
     virtual bool paintResizeButton(QPainter &p) {return false;}
     virtual bool paintQuickHelpButton(QPainter &p) {return false;}
-    virtual bool paintApplicationMenu(QPainter &p) {return false;}
+    virtual bool paintApplicationMenuButton(QPainter &p) {return false;}
 
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 
