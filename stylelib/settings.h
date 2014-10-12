@@ -10,9 +10,11 @@
 #define REMOVETITLE         "removetitlebars"
 #define TITLEPOS            "titlepos"
 #define HACKDIALOGS         "hackdialogs"
-#define TITLEBUTTONS        "titlebuttons"
 #define CONTAWARE           "contentawareuno"
 #define COMPACTMENU         "compactmenu"
+
+#define DECOBUTTONS         "deco.buttons"
+#define DECOICON            "deco.icon"
 
 #define PUSHBTNRND          "pushbtn.rnd"
 #define PUSHBTNSHADOW       "pushbtn.shadow"
@@ -75,9 +77,11 @@
 #define DEFREMOVETITLE          false
 #define DEFTITLEPOS             1
 #define DEFHACKDIALOGS          false
-#define DEFTITLEBUTTONS         0
 #define DEFCONTAWARE            QStringList() << "dfm"
 #define DEFCOMPACTMENU          false
+
+#define DEFDECOBUTTONS          0
+#define DEFDECOICON             true
 
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
@@ -122,9 +126,11 @@
 #define READREMOVETITLE         REMOVETITLE, DEFREMOVETITLE
 #define READTITLEPOS            TITLEPOS, DEFTITLEPOS
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
-#define READTITLEBUTTONS        TITLEBUTTONS, DEFTITLEBUTTONS
 #define READCONTAWARE           CONTAWARE, DEFCONTAWARE
 #define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
+
+#define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
+#define READDECOICON            DECOICON, DEFDECOICON
 
 #define READPUSHBTNRND          PUSHBTNRND, DEFPUSHBTNRND
 #define READPUSHBTNSHADOW       PUSHBTNSHADOW, DEFPUSHBTNSHADOW
@@ -173,7 +179,13 @@ public:
     float opacity;
     QStringList blackList;
     bool removeTitleBars, hackDialogs, contAware, compactMenu;
-    int titleButtons, titlePos;
+    int titlePos;
+    struct deco
+    {
+        int buttons;
+        bool icon;
+    } deco;
+
     struct pushbtn
     {
         int rnd, shadow;

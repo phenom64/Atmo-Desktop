@@ -58,7 +58,7 @@ DButton::onClick(QMouseEvent *e, const Type &t)
 bool
 DButton::paintMaxButton(QPainter &p)
 {
-    if (Settings::conf.titleButtons == -1)
+    if (Settings::conf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
@@ -454,7 +454,7 @@ KwinClient::paint(QPainter &p)
     p.setFont(f);
 
     QString text(caption());
-    const QRect textRect(tr.adjusted(!icon().isNull()*20, 0, 0, 0));
+    const QRect textRect(tr.adjusted(Settings::conf.deco.icon&&!icon().isNull()*20, 0, 0, 0));
     const int maxW(textRect.width()-(qMax(m_leftButtons, m_rightButtons)*2));
     if (p.fontMetrics().width(text) > maxW)
         text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
@@ -470,7 +470,7 @@ KwinClient::paint(QPainter &p)
         p.setPen(options()->color(KwinClient::ColorFont, isActive()));
 
     p.drawText(textRect, Qt::AlignCenter, text);
-    if (!icon().isNull())
+    if (Settings::conf.deco.icon && !icon().isNull())
     {
         QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
         if (ir.left() > m_leftButtons)
@@ -561,7 +561,8 @@ KwinClient::reset(unsigned long changed)
         if (*bg && *bg != m_bgPix[0].handle())
             m_bgPix[0] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::ContPix))
-        m_bgPix[1] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
+        if (*bg && *bg != m_bgPix[1].handle())
+            m_bgPix[1] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
     m_unoGradient.setColorAt(0.0f, m_titleColor[0]);

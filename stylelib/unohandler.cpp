@@ -342,14 +342,13 @@ ScrollWatcher::regenBg(QMainWindow *win)
 
     QPixmap pix(QPixmap::fromImage(img));
 
-
-    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22), s_handles.value(win, 0));
+    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
     Qt::HANDLE d(decoPix.handle());
-    if (!s_handles.contains(win))
-        s_handles.insert(win, d);
     XHandler::setXProperty<unsigned long>(win->winId(), XHandler::ContPix, XHandler::Long, &d);
     UNO::Handler::updateWindow(win->winId());
-    decoPix.detach();
+    if (s_handles.contains(win))
+        XHandler::freePix(s_handles.value(win));
+    s_handles.insert(win, d);
     s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height));
     s_block = false;
 //    qDebug() << "took" << t.elapsed() << "ms to gen gfx";
@@ -368,11 +367,11 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         return false;
     if (e->type() == QEvent::Resize && qobject_cast<QMainWindow *>(o))
     {
-        QMainWindow *win(static_cast<QMainWindow *>(o));
+//        QMainWindow *win(static_cast<QMainWindow *>(o));
 //        if (!m_wins.contains(win))
 //            m_wins << win;
-        if (s_handles.contains(win))
-            XHandler::freePix(s_handles.take(win));
+//        if (s_handles.contains(win))
+//            XHandler::freePix(s_handles.take(win));
 //        if (!m_timer->isActive())
 //            m_timer->start(50);
     }

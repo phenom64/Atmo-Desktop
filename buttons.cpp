@@ -258,7 +258,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             painter->setClipRegion(QRegion(rect)-QRegion(arrow));
 
         QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
-        QColor bc(option->palette.color(bg));
+        QColor bc(option->palette.color(QPalette::Active, bg));
         if (Settings::conf.toolbtn.tint.second > -1)
             bc = Color::mid(bc, Settings::conf.toolbtn.tint.first, 100-Settings::conf.toolbtn.tint.second, Settings::conf.toolbtn.tint.second);
         QColor bca(bc);

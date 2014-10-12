@@ -137,6 +137,7 @@ StyleProject::polish(QWidget *widget)
             widget->setWindowIcon(icn);
             widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
             widget->setVisible(wasVisible);
+            QTimer::singleShot(0, widget, SLOT(update()));
         }
         installFilter(win);
     }

@@ -77,7 +77,7 @@ Button::mouseReleaseEvent(QMouseEvent *e)
 void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
-    switch (Settings::conf.titleButtons)
+    switch (Settings::conf.deco.buttons)
     {
     case 0:
     {
@@ -173,7 +173,7 @@ Button::paintCloseButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    if (Settings::conf.titleButtons == -1)
+    if (Settings::conf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         r = rect().adjusted(s, s, -s, -s);
@@ -224,7 +224,7 @@ Button::paintMinButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    if (Settings::conf.titleButtons == -1)
+    if (Settings::conf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
