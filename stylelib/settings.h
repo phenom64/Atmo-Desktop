@@ -43,6 +43,11 @@
 #define MENUICONS           "menues.icons"
 
 #define SLIDERSIZE          "sliders.size"
+#define SLIDERDOT           "sliders.dot"
+#define SLIDERGRAD          "sliders.slidergradient"
+#define SLIDERGROOVE        "sliders.groovegradient"
+#define SLIDERGROOVESHADOW  "sliders.grooveshadow"
+
 #define SCROLLERSIZE        "scrollers.size"
 #define SHADOWOPACITY       "shadows.opacity"
 
@@ -76,26 +81,26 @@
 
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
-#define DEFPUSHBTNGRAD          "0.1:5, 1.0:-5"
+#define DEFPUSHBTNGRAD          "0.0:5, 1.0:-5"
 #define DEFPUSHBTNTINT          "-1:0"
 
 #define DEFTOOLBTNRND           8
 #define DEFTOOLBTNSHADOW        3
-#define DEFTOOLBTNGRAD          "0.1:5, 1.0:-5"
+#define DEFTOOLBTNGRAD          "0.0:5, 1.0:-5"
 #define DEFTOOLBTNTINT          "-1:0"
 
 #define DEFINPUTRND             8
 #define DEFINPUTSHADOW          3
-#define DEFINPUTGRAD            "0.1:-5, 1.0:5"
+#define DEFINPUTGRAD            "0.0:-5, 1.0:5"
 #define DEFINPUTTINT            "-1:0"
 
 #define DEFTABRND               4
 #define DEFTABSHADOW            3
-#define DEFTABGRAD              "0.1:5, 1.0:-5"
+#define DEFTABGRAD              "0.0:5, 1.0:-5"
 #define DEFSAFTABRND            4
 #define DEFTABCLOSER            0
 
-#define DEFUNOGRAD              "0.1:5, 1.0:-5"
+#define DEFUNOGRAD              "0.0:5, 1.0:-5"
 #define DEFUNOTINT              "-1:0"
 #define DEFUNONOISE             10
 #define DEFUNOHOR               false
@@ -103,6 +108,12 @@
 #define DEFMENUICONS            false
 
 #define DEFSLIDERSIZE           16
+#define DEFSLIDERDOT            true
+#define DEFSLIDERGRAD           "0.0:5, 1.0:-5"
+#define DEFSLIDERGROOVE         "0.0:-5, 1.0:5"
+#define DEFSLIDERGROOVESHAD     0
+
+
 #define DEFSCROLLERSIZE         12
 #define DEFSHADOWOPACITY        33
 
@@ -144,6 +155,11 @@
 #define READMENUICONS           MENUICONS, DEFMENUICONS
 
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
+#define READSLIDERDOT           SLIDERDOT, DEFSLIDERDOT
+#define READSLIDERGRAD          SLIDERGRAD, DEFSLIDERGRAD
+#define READSLIDERGROOVE        SLIDERGROOVE, DEFSLIDERGROOVE
+#define READSLIDERGROOVESHAD    SLIDERGROOVESHADOW, DEFSLIDERGROOVESHAD
+
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
 
@@ -178,7 +194,9 @@ public:
     } input;
     struct sliders
     {
-        int size;
+        bool dot;
+        int size, grooveShadow;
+        Gradient grooveGrad, sliderGrad;
     } sliders;
     struct scrollers
     {

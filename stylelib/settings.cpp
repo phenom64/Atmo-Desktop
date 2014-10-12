@@ -120,6 +120,10 @@ Settings::read()
     conf.menues.icons = s.value(READMENUICONS).toBool();
     //sliders
     conf.sliders.size = s.value(READSLIDERSIZE).toInt();
+    conf.sliders.dot = s.value(READSLIDERDOT).toBool();
+    conf.sliders.grooveShadow = s.value(READSLIDERGROOVESHAD).toInt();
+    conf.sliders.grooveGrad = stringToGrad(s.value(READSLIDERGROOVE).toString());
+    conf.sliders.sliderGrad = stringToGrad(s.value(READSLIDERGRAD).toString());
     //scrollers
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
     //shadows

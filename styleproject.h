@@ -111,6 +111,7 @@ public:
     /* subcontrolrects */
     QRect scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
+    QRect sliderRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;

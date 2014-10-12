@@ -264,8 +264,11 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         QColor bca(bc);
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
+        Render::Shadow shadow(Settings::conf.toolbtn.shadow);
         if (option->SUNKEN)
         {
+            if (shadow == Render::Etched)
+                shadow = Render::Sunken;
             if (!btn->property("DSP_menupress").toBool())
                 bc = sc;
         }
@@ -278,7 +281,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.toolbtn.shadow, rect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bc));
         QBrush mask(lg);
-        Render::drawClickable(Settings::conf.toolbtn.shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
+        Render::drawClickable(shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
 
         if (hasMenu)
         {
@@ -294,7 +297,21 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             QLinearGradient lga(0, 0, 0, Render::maskHeight(Settings::conf.toolbtn.shadow, rect.height()));
             lga.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bca));
             QBrush amask(lga);
-            Render::drawClickable(Settings::conf.toolbtn.shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &amask);
+            Render::drawClickable(shadow, rect, painter, sides, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &amask);
+        }
+
+        if (option->SUNKEN && Settings::conf.toolbtn.shadow == Render::Etched && Render::pos(sides, bar->orientation()) != Render::Alone)
+        {
+            QPixmap pix(rect.size());
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            const Render::Sides inv(Render::All-sides);
+            const QRect mr(Render::maskRect(shadow, rect, sides));
+            Render::renderShadow(shadow, mr, &pt, Settings::conf.toolbtn.rnd, inv, Settings::conf.shadows.opacity);
+            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            Render::renderShadow(shadow, mr, &pt, Settings::conf.toolbtn.rnd, sides, Settings::conf.shadows.opacity);
+            pt.end();
+            painter->drawTiledPixmap(rect, pix);
         }
 
         painter->setClipping(false);

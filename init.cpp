@@ -113,4 +113,5 @@ StyleProject::assignMethods()
     m_sc[CC_GroupBox] = method(groupBoxRect);
     m_sc[CC_ToolButton] = method(toolButtonRect);
     m_sc[CC_SpinBox] = method(spinBoxRect);
+    m_sc[CC_Slider] = method(sliderRect);
 }

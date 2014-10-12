@@ -390,6 +390,52 @@ StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const
 }
 
 QRect
+StyleProject::sliderRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+{
+    QRect ret;
+    castOpt(Slider, slider, opt);
+    if (!slider)
+        return ret;
+
+    int tm(pixelMetric(PM_SliderTickmarkOffset, opt, w));
+    const QSlider::TickPosition tp(slider->tickPosition);
+    if (tp == QSlider::TicksBothSides)
+        tm/=2;
+    QRect r(slider->rect);
+    bool hor(slider->orientation == Qt::Horizontal);
+    if (slider->tickPosition)
+    {
+        const bool needLeft(!hor&&(tp==QSlider::TicksLeft||tp==QSlider::TicksBothSides)),
+                needRight(!hor&&(tp==QSlider::TicksRight||tp==QSlider::TicksBothSides)),
+                needTop(hor&&(tp==QSlider::TicksAbove||tp==QSlider::TicksBothSides)),
+                needBottom(hor&&(tp==QSlider::TicksBelow||tp==QSlider::TicksBothSides));
+        r.adjust(needLeft*tm, needTop*tm, -(needRight*tm), -(needBottom*tm));
+    }
+    int grooveSize(hor ? r.width() : r.height());
+    unsigned int range(slider->maximum-slider->minimum);
+    int sliderSize(pixelMetric(PM_SliderLength, opt, w));
+
+    int pos = sliderPositionFromValue(slider->minimum, slider->maximum, slider->sliderPosition, grooveSize-sliderSize, slider->upsideDown);
+
+    switch (sc)
+    {
+    case SC_SliderGroove: ret = r; break;
+    case SC_SliderHandle:
+    {
+        if (!range)
+            break;
+        if (hor)
+            ret = QRect(pos, r.height()/2-sliderSize/2, sliderSize, sliderSize);
+        else
+            ret = QRect(r.width()/2-sliderSize/2, pos, sliderSize, sliderSize);
+        break;
+    }
+    default: return QCommonStyle::subControlRect(CC_ScrollBar, opt, sc, w);
+    }
+    return visualRect(slider->direction, slider->rect, ret);
+}
+
+QRect
 StyleProject::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;

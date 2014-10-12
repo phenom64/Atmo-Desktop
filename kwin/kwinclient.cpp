@@ -110,7 +110,7 @@ DButton::paintWindowMenuButton(QPainter &p)
 {
     const int s(rect().width()/8);
     QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(palette().color(m_client->isShade()?QPalette::Highlight:foregroundRole()), s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    const QPen pen(palette().color(foregroundRole()), s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
     QPixmap pix(rect().size());
     pix.fill(Qt::transparent);
@@ -454,24 +454,28 @@ KwinClient::paint(QPainter &p)
     p.setFont(f);
 
     QString text(caption());
-    const int maxW(tr.width()-(qMax(buttonCornerWidth(true), buttonCornerWidth(false))*2));
+    const QRect textRect(tr.adjusted(!icon().isNull()*20, 0, 0, 0));
+    const int maxW(textRect.width()-(qMax(m_leftButtons, m_rightButtons)*2));
     if (p.fontMetrics().width(text) > maxW)
         text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
 
     if (isActive())
     {
         p.setPen(QColor(255, 255, 255, 127));
-        p.drawText(tr.translated(0, 1), Qt::AlignCenter, text);
+        p.drawText(textRect.translated(0, 1), Qt::AlignCenter, text);
     }
     if (m_textColor.isValid())
         p.setPen(m_textColor);
     else
         p.setPen(options()->color(KwinClient::ColorFont, isActive()));
 
-    p.drawText(tr, Qt::AlignCenter, text);
-    QRect ir(p.fontMetrics().boundingRect(tr, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
-    if (ir.left() > m_leftButtons)
-        p.drawTiledPixmap(ir, icon().pixmap(16));
+    p.drawText(textRect, Qt::AlignCenter, text);
+    if (!icon().isNull())
+    {
+        QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
+        if (ir.left() > m_leftButtons)
+            p.drawTiledPixmap(ir, icon().pixmap(16));
+    }
 
     if (m_needSeparator)
     {

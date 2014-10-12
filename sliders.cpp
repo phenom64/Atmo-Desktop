@@ -83,30 +83,59 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
         return false;
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText)), bg(Ops::bgRole(widget, QPalette::Window));
     QRect slider(subControlRect(CC_Slider, option, SC_SliderHandle, widget));
-    QRect groove(subControlRect(CC_Slider, option, SC_SliderGroove, widget));
+    const QRect realGroove(subControlRect(CC_Slider, option, SC_SliderGroove, widget));
+    QRect groove(realGroove);
 
 
     const bool hor(opt->orientation==Qt::Horizontal);
-    int d(2); //shadow size for slider and groove 'extent'
-//    const int m(qMin(groove.height(), groove.width())/3); //margin
+    const Render::Shadow gs(Settings::conf.sliders.grooveShadow);
+    int d(/*gs==Render::Carved?12:*/Settings::conf.sliders.size/2); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
         groove.setHeight(d);
     else
         groove.setWidth(d);
     groove.moveCenter(c);
-    ++d; //need to account the one px frame...
+    d/=2;
     groove.adjust(hor*d, !hor*d, -(hor*d), -(!hor*d)); //set the proper inset for the groove in order to account for the slider shadow
-    --d;
-
-    Render::renderMask(groove, painter, Color::mid(opt->palette.color(bg), opt->palette.color(fg)));
-//    Render::renderShadow(Render::Sunken, groove.adjusted(-1, -1, 1, 2), painter, 32, Render::All, 0.5f);
-//    Render::renderShadow(Render::Raised, slider, painter);
-
-    --d;
-    slider.adjust(d, d, -d, -d);
 
     QColor bgc(opt->palette.color(bg));
+    QLinearGradient lga(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
+    lga.setStops(Settings::gradientStops(Settings::conf.sliders.grooveGrad, Color::mid(opt->palette.color(fg), opt->palette.color(bg))));
+    QBrush amask(lga);
+    Render::drawClickable(gs, groove, painter, Render::All, d, Settings::conf.shadows.opacity, widget, &amask);
+
+    if (opt->tickPosition)
+    {
+        if (hor)
+        {
+            painter->setClipRegion(QRegion(opt->rect)-QRegion(realGroove));
+            int x, y, x2, y2;
+            opt->rect.getCoords(&x, &y, &x2, &y2);
+
+            const int available(pixelMetric( PM_SliderSpaceAvailable, option, widget ));
+
+            int interval = opt->tickInterval;
+            if (interval < 1)
+                interval = opt->pageStep;
+            int current(opt->minimum);
+            const int fudge(pixelMetric( PM_SliderLength, option, widget )/2);
+            while( current <= opt->maximum )
+            {
+                const int position( sliderPositionFromValue( opt->minimum, opt->maximum, current, available ) + fudge );
+                if (hor)
+                    painter->drawLine(position, y, position, y2);
+                else
+                    painter->drawLine(x, position, x2, position);
+                current += interval;
+            }
+            painter->setClipping(false);
+        }
+        else //vert...
+        {
+
+        }
+    }
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
     if (option->ENABLED)
     {
@@ -114,32 +143,25 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
 
-    QLinearGradient lg(0, d, 0, slider.height()); //buahahaha just noticed a bug in rendermask.
+    QLinearGradient lg(0, 0, 0, Render::maskHeight(Render::Raised, Settings::conf.sliders.size));
+    lg.setStops(Settings::gradientStops(Settings::conf.sliders.sliderGrad, bgc));
+    QBrush mask(lg);
+    Render::drawClickable(Render::Raised, slider, painter, Render::All, Settings::conf.sliders.size/2, Settings::conf.shadows.opacity, widget, &mask);
 
-    lg.setColorAt(0.0f, Color::mid(bgc, Qt::white, 5, 1));
-    lg.setColorAt(1.0f, bgc);
-
-    Render::renderMask(slider.adjusted(1, 1, -1, -1), painter, lg);
-
-//    QLinearGradient shadow(0, 0, 0, option->rect.height());
-//    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-//    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-//    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
-    QBrush b(QColor(0, 0, 0, 48));
-
-    Render::renderShadow(Render::Simple, slider, painter, 32, Render::All, 1.0f, &b);
-#if 0
-    int ds(slider.height()/2);
-    ds &= ~1;
-    QRect dot(0, 0, ds, ds);
-    dot.moveCenter(slider.center());
-    painter->save();
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(option->palette.color(fg));
-    painter->drawEllipse(dot);
-    painter->restore();
-#endif
+    if (Settings::conf.sliders.dot)
+    {
+        const int ds(slider.height()/3);
+        const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
+        QLinearGradient dg(dot.topLeft(), dot.bottomLeft());
+        dg.setColorAt(0.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
+        dg.setColorAt(1.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setBrush(dg);
+        painter->setPen(Qt::NoPen);
+        painter->drawEllipse(dot);
+        painter->restore();
+    }
     return true;
 }
 

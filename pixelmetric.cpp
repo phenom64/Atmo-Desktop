@@ -98,6 +98,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_SliderThickness:
     case PM_SliderLength:
     case PM_SliderControlThickness: return Settings::conf.sliders.size/*qMin(option->rect.height(), option->rect.width())*/;
+    case PM_SliderTickmarkOffset: return 8;
     case PM_ScrollBarSliderMin: return 32;
     case PM_ToolTipLabelFrameWidth:
         return 8;
