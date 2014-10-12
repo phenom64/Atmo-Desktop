@@ -18,9 +18,9 @@ Button::Button(Type type, QWidget *parent)
     for (int i = 0; i < TypeCount; ++i)
         m_paintEvent[i] = 0;
 
-    m_paintEvent[Close] = &Button::paintClose;
-    m_paintEvent[Min] = &Button::paintMin;
-    m_paintEvent[Max] = &Button::paintMax;
+    m_paintEvent[Close] = &Button::paintCloseButton;
+    m_paintEvent[Min] = &Button::paintMinButton;
+    m_paintEvent[Max] = &Button::paintMaxButton;
     m_paintEvent[OnAllDesktops] = &Button::paintOnAllDesktopsButton;
     m_paintEvent[WindowMenu] = &Button::paintWindowMenuButton;
     m_paintEvent[KeepAbove] = &Button::paintKeepAboveButton;
@@ -168,7 +168,42 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFF37CC40 };
 
 bool
-Button::paintClose(QPainter &p)
+Button::paintCloseButton(QPainter &p)
+{
+    p.setPen(Qt::NoPen);
+    p.setRenderHint(QPainter::Antialiasing);
+    QRect r(rect());
+    if (Settings::conf.titleButtons == -1)
+    {
+        const int s(rect().width()/8);
+        r = rect().adjusted(s, s, -s, -s);
+        const QPen pen(palette().color(foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPixmap pix(rect().size());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        pt.drawLine(r.topLeft(), r.bottomRight());
+        pt.drawLine(r.topRight(), r.bottomLeft());
+        pt.end();
+        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    }
+    else
+    {
+        drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+        if (underMouse())
+        {
+            p.setBrush(palette().color(foregroundRole()));
+            p.drawEllipse(r.adjusted(3, 3, -3, -3));
+        }
+    }
+    p.end();
+    return true;
+}
+
+bool
+Button::paintMaxButton(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
@@ -184,32 +219,36 @@ Button::paintClose(QPainter &p)
 }
 
 bool
-Button::paintMax(QPainter &p)
+Button::paintMinButton(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
-    if (underMouse())
+    if (Settings::conf.titleButtons == -1)
     {
-        p.setBrush(palette().color(foregroundRole()));
-        p.drawEllipse(r.adjusted(3, 3, -3, -3));
+        const int s(rect().width()/8);
+        QRect r = rect().adjusted(s, s, -s, -s);
+        const QPen pen(palette().color(foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPixmap pix(rect().size());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        int x, y, w, h;
+        r.getRect(&x, &y, &w, &h);
+        pt.drawLine(x, y+h/2, x+w, y+h/2);
+        pt.end();
+        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
     }
-    p.end();
-    return true;
-}
-
-bool
-Button::paintMin(QPainter &p)
-{
-    p.setPen(Qt::NoPen);
-    p.setRenderHint(QPainter::Antialiasing);
-    QRect r(rect());
-    drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
-    if (underMouse())
+    else
     {
-        p.setBrush(palette().color(foregroundRole()));
-        p.drawEllipse(r.adjusted(3, 3, -3, -3));
+        drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+        if (underMouse())
+        {
+            p.setBrush(palette().color(foregroundRole()));
+            p.drawEllipse(r.adjusted(3, 3, -3, -3));
+        }
     }
     p.end();
     return true;

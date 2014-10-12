@@ -22,12 +22,15 @@ public:
 protected:
     bool isActive();
     void onClick(QMouseEvent *e, const Type &t);
+
+    bool paintMaxButton(QPainter &p);
     bool paintOnAllDesktopsButton(QPainter &p);
     bool paintWindowMenuButton(QPainter &p);
     bool paintKeepAboveButton(QPainter &p);
     bool paintKeepBelowButton(QPainter &p);
     bool paintApplicationMenuButton(QPainter &p);
     bool paintShadeButton(QPainter &p);
+    bool paintQuickHelpButton(QPainter &p);
 
 private:
     KwinClient *m_client;

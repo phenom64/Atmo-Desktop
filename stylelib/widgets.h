@@ -24,10 +24,9 @@ protected:
     void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
-    bool paintClose(QPainter &p);
-    bool paintMin(QPainter &p);
-    bool paintMax(QPainter &p);
-
+    virtual bool paintCloseButton(QPainter &p);
+    virtual bool paintMinButton(QPainter &p);
+    virtual bool paintMaxButton(QPainter &p);
     virtual bool paintOnAllDesktopsButton(QPainter &p) {return false;}
     virtual bool paintWindowMenuButton(QPainter &p) {return false;}
     virtual bool paintKeepAboveButton(QPainter &p) {return false;}
