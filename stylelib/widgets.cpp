@@ -211,11 +211,32 @@ Button::paintMaxButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
-    if (underMouse())
+    if (Settings::conf.deco.buttons == -1)
     {
-        p.setBrush(palette().color(foregroundRole()));
-        p.drawEllipse(r.adjusted(3, 3, -3, -3));
+        const int s(rect().width()/8);
+        QRect r = rect().adjusted(s, s, -s, -s);
+        const QPen pen(palette().color(window()->isMaximized()?QPalette::Highlight:foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPixmap pix(rect().size());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        int x, y, w, h;
+        r.getRect(&x, &y, &w, &h);
+        pt.drawLine(x+w/2, y, x+w/2, y+h);
+        pt.drawLine(x, y+h/2, x+w, y+h/2);
+        pt.end();
+        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    }
+    else
+    {
+        drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+        if (underMouse())
+        {
+            p.setBrush(palette().color(foregroundRole()));
+            p.drawEllipse(r.adjusted(3, 3, -3, -3));
+        }
     }
     p.end();
     return true;

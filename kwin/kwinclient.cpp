@@ -43,10 +43,10 @@ DButton::onClick(QMouseEvent *e, const Type &t)
     case Min: m_client->minimize(); break;
     case Max: m_client->maximize(e->button()); break;
     case OnAllDesktops: m_client->toggleOnAllDesktops(); break;
-    case WindowMenu: m_client->showWindowMenu(e->globalPos()); break;
+    case WindowMenu: m_client->showWindowMenu(mapToGlobal(rect().bottomLeft())); break;
     case KeepAbove: m_client->setKeepAbove(!m_client->keepAbove()); break;
     case KeepBelow: m_client->setKeepBelow(!m_client->keepBelow()); break;
-    case AppMenu: m_client->showApplicationMenu(e->globalPos()); break;
+    case AppMenu: m_client->showApplicationMenu(mapToGlobal(rect().bottomLeft())); break;
     case Shade: m_client->setShade(!m_client->isShade()); break;
     case QuickHelp: m_client->showContextHelp(); break;
     default: break;
@@ -76,6 +76,7 @@ DButton::paintMaxButton(QPainter &p)
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
         p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+        p.end();
         return true;
     }
     else
