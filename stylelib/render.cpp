@@ -700,7 +700,16 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         r.sAdjust(1, 1, -1, -2);
         rnd = qMax(1, rnd-1);
     }
-    renderMask(r, p, *mask, rnd, sides, offSet);
+    if (mask)
+        renderMask(r, p, *mask, rnd, sides, offSet);
+    else if (s==Carved)
+    {
+        QBrush newMask(Qt::black);
+        const QPainter::CompositionMode mode(p->compositionMode());
+        p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        renderMask(r, p, newMask, rnd, sides, offSet);
+        p->setCompositionMode(mode);
+    }
     if (s==Carved)
     {
         const int m(1);

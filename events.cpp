@@ -156,7 +156,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
     else if (qobject_cast<QMainWindow *>(w))
     {
         QMainWindow *win(static_cast<QMainWindow *>(w));
-        if (UNO::unoHeight(w, UNO::ToolBarAndTabBar))
+        if (XHandler::opacity() < 1.0f)
         {
             bool needRound(true);
             const QColor bgColor(win->palette().color(win->backgroundRole()));
@@ -174,8 +174,8 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
                 p.fillRect(win->rect(), bgColor);
             p.setPen(Qt::black);
             p.setOpacity(Settings::conf.shadows.opacity);
-            int th(UNO::unoHeight(w, UNO::ToolBars));
-            p.drawLine(0, th, win->width(), th);
+            if (int th = UNO::unoHeight(w, UNO::ToolBars))
+                p.drawLine(0, th, win->width(), th);
             p.end();
             return false;
         }
