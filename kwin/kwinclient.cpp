@@ -7,6 +7,7 @@
 #include <QHBoxLayout>
 #include <QTimer>
 #include <QPixmap>
+#include <QCoreApplication>
 
 #include "kwinclient.h"
 #include "../stylelib/ops.h"
@@ -507,6 +508,9 @@ KwinClient::activeChange()
     if (!isPreview())
         ShadowHandler::installShadows(windowId());
     widget()->update();
+    for (int i = 0; i < m_buttons.count(); ++i)
+        m_buttons.at(i)->update();
+    resize(widget()->size());
 }
 
 /**
@@ -528,6 +532,7 @@ KwinClient::reset(unsigned long changed)
 {
     if ((changed & SettingButtons) || isPreview())
     {
+        m_buttons.clear();
         while (QLayoutItem *item = m_titleLayout->takeAt(0))
         {
             if (item->widget())
@@ -540,6 +545,7 @@ KwinClient::reset(unsigned long changed)
         populate(options()->titleButtonsLeft(), true);
         m_titleLayout->addStretch();
         populate(options()->titleButtonsRight(), false);
+        m_buttons = widget()->findChildren<Button * >();
     }
     int n(0);
     WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
@@ -572,7 +578,13 @@ KwinClient::reset(unsigned long changed)
     QPainter pt(&p);
     pt.fillRect(p.rect(), m_unoGradient);
     pt.end();
-    m_brush = QBrush(Render::mid(p, Render::noise(), 40, 1));
+    const QPixmap &bg = Render::mid(p, Render::noise(), 40, 1);
+    for (int i = 0; i < m_buttons.count(); ++i)
+    {
+        m_buttons.at(i)->setBgPix(m_bgPix[0].isNull()?bg:m_bgPix[0]);
+        m_buttons.at(i)->update();
+    }
+    m_brush = QBrush(bg);
     widget()->update();
     if (isPreview())
         return;

@@ -40,6 +40,7 @@ class KwinClient : public KDecoration
 {
     Q_OBJECT
 public:
+    typedef QList<Button *> Buttons;
     KwinClient(KDecorationBridge *bridge, Factory *factory);
     ~KwinClient();
 
@@ -81,6 +82,7 @@ private:
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;
+    Buttons m_buttons;
 };
 
 #endif //KWINCLIENT_H

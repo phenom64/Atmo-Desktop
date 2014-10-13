@@ -6,13 +6,14 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QImage>
+#include "xhandler.h"
 
 Button::Button(Type type, QWidget *parent)
     : QWidget(parent)
     , m_type(type)
     , m_hasPress(false)
 {
-    setAttribute(Qt::WA_NoSystemBackground);
+    setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_Hover);
     setFixedSize(16, 16);
     for (int i = 0; i < TypeCount; ++i)
@@ -40,6 +41,8 @@ void
 Button::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
+    if (!XHandler::compositingActive() && !m_bgPix.isNull())
+        p.drawTiledPixmap(rect(), m_bgPix, geometry().topLeft());
     if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])(p))
         return;
     p.end();
