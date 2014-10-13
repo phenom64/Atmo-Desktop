@@ -251,13 +251,13 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(maskRect(rect));
     const bool hasMenu(Ops::hasMenu(btn, opt));
-
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
     if (bar)
     {
         if (hasMenu && arrow.isValid())
             painter->setClipRegion(QRegion(rect)-QRegion(arrow));
 
-        QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
+
         QColor bc(option->palette.color(QPalette::Active, bg));
         if (Settings::conf.toolbtn.tint.second > -1)
             bc = Color::mid(bc, Settings::conf.toolbtn.tint.first, 100-Settings::conf.toolbtn.tint.second, Settings::conf.toolbtn.tint.second);
@@ -270,7 +270,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
             if (shadow == Render::Etched)
                 shadow = Render::Sunken;
             if (!btn->property("DSP_menupress").toBool())
-                bc = sc;
+                bc = Color::mid(bc, opt->palette.color(fg), 1, 2);
         }
         else if (option->ENABLED)
         {
@@ -362,11 +362,29 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
     {
-        const QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
+        QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
+        if (opt->SUNKEN && bar)
+        {
+            QImage img = pix.toImage();
+            img = img.convertToFormat(QImage::Format_ARGB32);
+            int size = img.width() * img.height();
+            QRgb *pixel = reinterpret_cast<QRgb *>(img.bits());
+            int r = 0, g = 0, b = 0;
+            opt->palette.color(bg).getRgb(&r, &g, &b); //foregroundcolor
+            for (int i = 0; i < size; ++i)
+                pixel[i] = qRgba(r, g, b, qBound(0, qAlpha(pixel[i]) - Color::luminosity(pixel[i]), 255));
+
+            pix = QPixmap::fromImage(img);
+        }
         drawItemPixmap(painter, inDock?widget->rect():ir, Qt::AlignCenter, pix);
     }
     if (opt->toolButtonStyle)
-        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
+    {
+        QPalette::ColorRole textRole(bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
+        if (opt->SUNKEN && bar)
+            textRole = fg;
+        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, textRole);
+    }
     painter->restore();
     return true;
 }
