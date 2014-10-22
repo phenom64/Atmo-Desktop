@@ -102,6 +102,8 @@ Settings::read()
     conf.toolbtn.shadow = s.value(READTOOLBTNSHADOW).toInt();
     conf.toolbtn.gradient = stringToGrad(s.value(READTOOLBTNGRAD).toString());
     conf.toolbtn.tint = tintColor(s.value(READTOOLBTNTINT).toString());
+    conf.toolbtn.folCol = s.value(READTOOLBTNFOLCOL).toBool();
+    conf.toolbtn.invAct = s.value(READTOOLBTNINVACT).toBool();
     //inputs
     conf.input.rnd = s.value(READINPUTRND).toInt();
     conf.input.shadow = s.value(READINPUTSHADOW).toInt();
@@ -126,6 +128,7 @@ Settings::read()
     conf.sliders.grooveShadow = s.value(READSLIDERGROOVESHAD).toInt();
     conf.sliders.grooveGrad = stringToGrad(s.value(READSLIDERGROOVE).toString());
     conf.sliders.sliderGrad = stringToGrad(s.value(READSLIDERGRAD).toString());
+    conf.sliders.fillGroove = s.value(READSLIDERFILLGROOVE).toBool();
     //scrollers
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
     //shadows

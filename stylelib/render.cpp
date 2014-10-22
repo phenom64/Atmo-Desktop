@@ -2,6 +2,7 @@
 #include <qmath.h>
 #include <QWidget>
 #include <QToolBar>
+#include <QBitmap>
 
 #include "render.h"
 #include "color.h"
@@ -239,6 +240,18 @@ Render::initShadowParts()
             {
                 p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
                 p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
+            }
+        }
+        case Strenghter:
+        {
+            p.setPen(Qt::NoPen);
+            p.setBrush(Qt::black);
+            QRect rt(pix.rect().adjusted(0, 0, 0, -1));
+            p.drawRoundedRect(rt, r, r);
+            if (r > 1)
+            {
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.drawRoundedRect(rt.adjusted(1, 1, -1, -1), r-1, r-1);
             }
         }
         default: break;
@@ -648,7 +661,7 @@ Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
 }
 
 void
-Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const QPoint &offSet)
+Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const bool needStrong, const QPoint &offSet)
 {
     if (s >= ShadowCount)
         return;
@@ -700,6 +713,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         r.sAdjust(1, 1, -1, -2);
         rnd = qMax(1, rnd-1);
     }
+
     if (mask)
         renderMask(r, p, *mask, rnd, sides, offSet);
     else if (s==Carved)
@@ -710,18 +724,21 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         renderMask(r, p, newMask, rnd, sides, offSet);
         p->setCompositionMode(mode);
     }
+
     if (s==Carved)
     {
         const int m(1);
         r.sAdjust(-m, -m, m, m);
         rnd = qMin(rnd+1, MAXRND);
-        renderShadow(Simple, r, p, rnd, sides, opacity);
+        renderShadow(Strenghter, r, p, rnd, sides, opacity);
     }
     else if (s==Sunken||s==Etched)
     {
         r.sAdjust(-1, -1, 1, 2);
         rnd = qMin(rnd+1, MAXRND);
         renderShadow(s, r, p, rnd, sides, opacity);
+        if (needStrong)
+            renderShadow(Strenghter, r, p, rnd, sides, opacity);
     }
 }
 
@@ -786,7 +803,6 @@ Render::maskWidth(const Shadow s, const int width)
     }
 }
 
-
 QRect
 Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
 {
@@ -799,5 +815,120 @@ Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
     case Carved: return r.sAdjusted(3, 3, -3, -3); break;
     default: return r;
     }
+}
+
+QPixmap
+Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const QColor &ref)
+{
+    int m(4);
+    QImage img(r.size()+QSize(m, m), QImage::Format_ARGB32);
+    m/=2;
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    int rgb(isDark?255:0);
+    int alpha(qMin(255.0f, 2*Settings::conf.shadows.opacity*255.0f));
+    p.fillRect(img.rect(), QColor(rgb, rgb, rgb, alpha));
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.drawTiledPixmap(r.translated(m, m), source);
+    p.end();
+    const QImage blur = Render::blurred(img, img.rect(), m*2);
+    QPixmap highlight(r.size());
+    highlight.fill(Qt::transparent);
+    p.begin(&highlight);
+    rgb = isDark?0:255;
+    p.fillRect(highlight.rect(), QColor(rgb, rgb, rgb, alpha));
+    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    p.drawTiledPixmap(highlight.rect(), source);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.drawTiledPixmap(highlight.rect().translated(0, -1), source);
+    p.end();
+
+//    const int y(isDark?-1:1);
+    QPixmap pix(r.size());
+    pix.fill(Qt::transparent);
+    p.begin(&pix);
+    p.drawTiledPixmap(pix.rect(), source);
+    if (!isDark)
+        p.drawTiledPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(blur), QPoint(m, m));
+    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    p.drawTiledPixmap(pix.rect(), source);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOver);
+    p.drawTiledPixmap(pix.rect().translated(0, 1), highlight);
+    p.end();
+    return pix;
+}
+
+/**
+    http://spatial-analyst.net/ILWIS/htm/ilwisapp/stretch_algorithm.htm
+    OUTVAL
+    (INVAL - INLO) * ((OUTUP-OUTLO)/(INUP-INLO)) + OUTLO
+    where:
+    OUTVAL
+    Value of pixel in output map
+    INVAL
+    Value of pixel in input map
+    INLO
+    Lower value of 'stretch from' range
+    INUP
+    Upper value of 'stretch from' range
+    OUTLO
+    Lower value of 'stretch to' range
+    OUTUP
+    Upper value of 'stretch to' range
+ */
+
+static void stretch(QImage &img, const QColor &c)
+{
+    img = img.convertToFormat(QImage::Format_ARGB32);
+    int size = img.width() * img.height();
+    QRgb *pixel = reinterpret_cast<QRgb *>(img.bits());
+    int inLo(255), inUp(0), outUp(255), outLo(0);
+    int inVal[size];
+    bool isDark(false);
+    int lowCount(0), highCount(0);
+    for (int i = 0; i < size; ++i)
+    {
+        if (!qAlpha(pixel[i]))
+            continue;
+        const int lum(Color::luminosity(pixel[i]));
+        if (lum < 128)
+            ++lowCount;
+        if (lum > 127)
+            ++highCount;
+    }
+    isDark = lowCount*2>highCount;
+    for (int i = 0; i < size; ++i)
+    {
+        const int lum(Color::luminosity(pixel[i]));
+        int a(qBound(0, isDark?qAlpha(pixel[i]) - lum:lum, 255));
+        inVal[i] = a;
+        if (a < inLo)
+            inLo = a;
+        if (a > inUp)
+            inUp = a;
+    }
+    int r,g,b;
+    c.getRgb(&r, &g, &b);
+    for (int i = 0; i < size; ++i)
+    {
+        int outVal((inVal[i]-inLo) * qRound(qreal(outUp-outLo)/qreal(inUp-inLo)) + outLo);
+//        if ( outVal > 127 )
+//            outVal = (pow(outVal / 127.5f - 1.0f, 0.6f) + 1.0f) * 127.5f;
+//        else if ( outVal < 128 && outVal > 0 )
+//            outVal = (pow(outVal / 127.5f - 1.0f, 0.6f) + 1.0f) * 127.5f;
+        pixel[i] = qRgba(r, g, b, outVal);
+    }
+}
+
+QPixmap
+Render::monochromized(const QPixmap &source, const QColor &color, const Effect effect, const bool isDark)
+{
+    QImage img = source.toImage();
+    stretch(img, color);
+
+    const QPixmap &result = QPixmap::fromImage(img);
+    if (effect == Inset)
+        return sunkenized(result.rect(), result, isDark);
+    return result;
 }
 

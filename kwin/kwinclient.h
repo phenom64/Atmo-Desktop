@@ -32,6 +32,9 @@ protected:
     bool paintShadeButton(QPainter &p);
     bool paintQuickHelpButton(QPainter &p);
 
+
+    const QColor color(const ColorRole &c) const;
+    const bool isDark() const;
 private:
     KwinClient *m_client;
 };
@@ -40,6 +43,7 @@ class KwinClient : public KDecoration
 {
     Q_OBJECT
 public:
+    enum CustomColors { Text = 0, Bg, CustColCount };
     typedef QList<Button *> Buttons;
     KwinClient(KDecorationBridge *bridge, Factory *factory);
     ~KwinClient();
@@ -72,7 +76,7 @@ protected slots:
 private:
     QHBoxLayout *m_titleLayout;
     QLinearGradient m_unoGradient;
-    QColor m_titleColor[2], m_textColor;
+    QColor m_titleColor[2], m_custcol[CustColCount];
     Factory *m_factory;
     QBrush m_brush;
     QPixmap m_pix, m_bgPix[2];

@@ -172,7 +172,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         QSize sz(contentsSize);
         bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
         sz+=QSize(hor?8:4, hor?4:8);
-        if (bar && hor && bar->toolButtonStyle() == Qt::ToolButtonIconOnly)
+        if (bar && hor && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
         {
             if (isFull)
                 sz.rwidth() += 16;

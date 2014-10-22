@@ -25,6 +25,8 @@
 #define TOOLBTNSHADOW       "toolbtn.shadow"
 #define TOOLBTNGRAD         "toolbtn.gradient"
 #define TOOLBTNTINT         "toolbtn.tinthue"
+#define TOOLBTNFOLCOL       "toolbtn.followcolors"
+#define TOOLBTNINVACT       "toolbtn.invertactive"
 
 #define INPUTRND            "input.rnd"
 #define INPUTSHADOW         "input.shadow"
@@ -49,6 +51,7 @@
 #define SLIDERGRAD          "sliders.slidergradient"
 #define SLIDERGROOVE        "sliders.groovegradient"
 #define SLIDERGROOVESHADOW  "sliders.grooveshadow"
+#define SLIDERFILLGROOVE    "sliders.fillgroove"
 
 #define SCROLLERSIZE        "scrollers.size"
 #define SHADOWOPACITY       "shadows.opacity"
@@ -92,6 +95,8 @@
 #define DEFTOOLBTNSHADOW        3
 #define DEFTOOLBTNGRAD          "0.0:5, 1.0:-5"
 #define DEFTOOLBTNTINT          "-1:0"
+#define DEFTOOLBTNFOLCOL        false
+#define DEFTOOLBTNINVACT        false
 
 #define DEFINPUTRND             8
 #define DEFINPUTSHADOW          3
@@ -116,6 +121,7 @@
 #define DEFSLIDERGRAD           "0.0:5, 1.0:-5"
 #define DEFSLIDERGROOVE         "0.0:-5, 1.0:5"
 #define DEFSLIDERGROOVESHAD     0
+#define DEFSLIDERFILLGROOVE     false
 
 
 #define DEFSCROLLERSIZE         12
@@ -141,6 +147,8 @@
 #define READTOOLBTNSHADOW       TOOLBTNSHADOW, DEFTOOLBTNSHADOW
 #define READTOOLBTNGRAD         TOOLBTNGRAD, DEFTOOLBTNGRAD
 #define READTOOLBTNTINT         TOOLBTNTINT, DEFTOOLBTNTINT
+#define READTOOLBTNFOLCOL       TOOLBTNFOLCOL, DEFTOOLBTNFOLCOL
+#define READTOOLBTNINVACT       TOOLBTNINVACT, DEFTOOLBTNINVACT
 
 #define READINPUTRND            INPUTRND, DEFINPUTRND
 #define READINPUTSHADOW         INPUTSHADOW, DEFINPUTSHADOW
@@ -165,6 +173,7 @@
 #define READSLIDERGRAD          SLIDERGRAD, DEFSLIDERGRAD
 #define READSLIDERGROOVE        SLIDERGROOVE, DEFSLIDERGROOVE
 #define READSLIDERGROOVESHAD    SLIDERGROOVESHADOW, DEFSLIDERGROOVESHAD
+#define READSLIDERFILLGROOVE    SLIDERFILLGROOVE, DEFSLIDERGROOVE
 
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
@@ -195,6 +204,7 @@ public:
     struct toolbtn
     {
         int rnd, shadow;
+        bool folCol, invAct;
         Gradient gradient;
         Tint tint;
     } toolbtn;
@@ -206,7 +216,7 @@ public:
     } input;
     struct sliders
     {
-        bool dot;
+        bool dot, fillGroove;
         int size, grooveShadow;
         Gradient grooveGrad, sliderGrad;
     } sliders;

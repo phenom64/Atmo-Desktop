@@ -100,10 +100,25 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     groove.adjust(hor*d, !hor*d, -(hor*d), -(!hor*d)); //set the proper inset for the groove in order to account for the slider shadow
 
     QColor bgc(opt->palette.color(bg));
+    const QColor grooveBg(Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
     QLinearGradient lga(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
-    lga.setStops(Settings::gradientStops(Settings::conf.sliders.grooveGrad, Color::mid(opt->palette.color(fg), opt->palette.color(bg))));
+    lga.setStops(Settings::gradientStops(Settings::conf.sliders.grooveGrad, grooveBg));
     QBrush amask(lga);
-    Render::drawClickable(gs, groove, painter, Render::All, d, Settings::conf.shadows.opacity, widget, &amask);
+    const bool ns(widget&&widget->parentWidget()&&(Color::luminosity(grooveBg) < Color::luminosity(widget->parentWidget()->palette().color(widget->parentWidget()->backgroundRole()))));
+    QRect clip(groove);
+    clip.setRight(slider.center().x());
+    if (Settings::conf.sliders.fillGroove)
+        painter->setClipRegion(QRegion(groove)-QRegion(clip));
+    Render::drawClickable(gs, groove, painter, Render::All, d, Settings::conf.shadows.opacity, widget, &amask, 0, ns);
+    if (Settings::conf.sliders.fillGroove)
+    {
+        painter->setClipRect(clip);
+        QLinearGradient lgh(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
+        lgh.setStops(Settings::gradientStops(Settings::conf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
+        QBrush hmask(lgh);
+        Render::drawClickable(gs, groove, painter, Render::All, d, Settings::conf.shadows.opacity, widget, &hmask, 0, ns);
+    }
+    painter->setClipping(false);
 
     if (opt->tickPosition)
     {

@@ -28,6 +28,30 @@ DButton::DButton(const Type &t, KwinClient *client, QWidget *parent)
 {
 }
 
+const bool
+DButton::isDark() const
+{
+    return Color::luminosity(color(Fg)) > Color::luminosity(color(Bg));
+}
+
+const QColor
+DButton::color(const ColorRole &c) const
+{
+//    if (m_client->m_textColor.isValid())
+//        return m_client->m_textColor;
+    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
+    if (m_client->m_custcol[Fg].isValid())
+        fgc = m_client->m_custcol[Fg];
+    if (c == Fg)
+        return fgc;
+    QColor bgc(m_client->options()->color(KDecoration::ColorButtonBg, m_client->isActive()));
+    if (m_client->m_custcol[Bg].isValid())
+        bgc = m_client->m_custcol[Bg];
+    if (c == Bg)
+        return bgc;
+    return Color::mid(fgc, bgc);
+}
+
 bool
 DButton::isActive()
 {
@@ -63,7 +87,7 @@ DButton::paintMaxButton(QPainter &p)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
-        const QPen pen(palette().color(m_client->maximizeMode()==KDecoration::MaximizeFull?QPalette::Highlight:foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const QPen pen(m_client->maximizeMode()==KDecoration::MaximizeFull?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
         QPixmap pix(rect().size());
         pix.fill(Qt::transparent);
@@ -75,7 +99,7 @@ DButton::paintMaxButton(QPainter &p)
         pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
         p.end();
         return true;
     }
@@ -88,7 +112,7 @@ DButton::paintOnAllDesktopsButton(QPainter &p)
 {
     const int s(rect().width()/8);
     QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(palette().color(foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
     QPixmap pix(rect().size());
     pix.fill(Qt::transparent);
@@ -102,7 +126,7 @@ DButton::paintOnAllDesktopsButton(QPainter &p)
     if (!m_client->isOnAllDesktops())
         pt.drawLine(x+w/2, y, x+w/2, y+h);
     pt.end();
-    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     p.end();
     return true;
 }
@@ -112,7 +136,7 @@ DButton::paintWindowMenuButton(QPainter &p)
 {
     const int s(rect().width()/8);
     QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(palette().color(foregroundRole()), s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    const QPen pen(color(Mid), s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
     QPixmap pix(rect().size());
     pix.fill(Qt::transparent);
@@ -124,7 +148,7 @@ DButton::paintWindowMenuButton(QPainter &p)
     for (int i = 0; i < 3; ++i)
         pt.drawLine(x, y+i*4, x+w, y+i*4);
     pt.end();
-    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     p.end();
     return true;
 }
@@ -134,7 +158,7 @@ DButton::paintKeepAboveButton(QPainter &p)
 {
     const int s(rect().width()/8);
     QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(palette().color(m_client->keepAbove()?QPalette::Highlight:foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    const QPen pen(m_client->keepAbove()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
     QPixmap pix(rect().size());
     pix.fill(Qt::transparent);
@@ -149,7 +173,7 @@ DButton::paintKeepAboveButton(QPainter &p)
     polygon.setPoints(3, points);
     pt.drawPolygon(polygon);
     pt.end();
-    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     p.end();
     return true;
 }
@@ -159,7 +183,7 @@ DButton::paintKeepBelowButton(QPainter &p)
 {
     const int s(rect().width()/8);
     QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(palette().color(m_client->keepBelow()?QPalette::Highlight:foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    const QPen pen(m_client->keepBelow()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
     QPixmap pix(rect().size());
     pix.fill(Qt::transparent);
@@ -174,7 +198,7 @@ DButton::paintKeepBelowButton(QPainter &p)
     polygon.setPoints(3, points);
     pt.drawPolygon(polygon);
     pt.end();
-    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     p.end();
     return true;
 }
@@ -190,7 +214,7 @@ DButton::paintShadeButton(QPainter &p)
 {
     const int s(rect().width()/8);
     QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(palette().color(m_client->isShade()?QPalette::Highlight:foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    const QPen pen(m_client->isShade()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
     QPixmap pix(rect().size());
     pix.fill(Qt::transparent);
@@ -201,7 +225,7 @@ DButton::paintShadeButton(QPainter &p)
     r.getRect(&x, &y, &w, &h);
     pt.drawLine(x, y+h/3, x+w, y+h/3);
     pt.end();
-    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     p.end();
     return true;
 }
@@ -228,14 +252,14 @@ DButton::paintQuickHelpButton(QPainter &p)
 
     QPainter pt(&pix);
     pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(QPen(palette().color(foregroundRole()), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    pt.setPen(QPen(color(Mid), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     pt.setBrush(Qt::NoBrush);
     pt.drawPath(path.translated(rnd, 0));
     pt.setPen(Qt::NoPen);
-    pt.setBrush(palette().color(foregroundRole()));
+    pt.setBrush(color(Mid));
     pt.drawEllipse(QPoint(x+rnd+rnd, y+rnd*4), 2, 2);
     pt.end();
-    p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     p.end();
     return true;
 }
@@ -437,8 +461,12 @@ KwinClient::paint(QPainter &p)
     else
         Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
     p.setOpacity(1.0f);
+
+    const int bgLum(Color::luminosity(m_custcol[Bg]));
+    const bool isDark(Color::luminosity(m_custcol[Text]) > bgLum);
+
     QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
-    lg.setColorAt(0.0f, QColor(255, 255, 255, 127));
+    lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
     lg.setColorAt(0.5f, Qt::transparent);
     p.setBrush(Qt::NoBrush);
     p.setPen(QPen(lg, 1.0f));
@@ -463,11 +491,12 @@ KwinClient::paint(QPainter &p)
 
     if (isActive())
     {
-        p.setPen(QColor(255, 255, 255, 127));
+        const int rgb(isDark?0:255);
+        p.setPen(QColor(rgb, rgb, rgb, 127));
         p.drawText(textRect.translated(0, 1), Qt::AlignCenter, text);
     }
-    if (m_textColor.isValid())
-        p.setPen(m_textColor);
+    if (m_custcol[Text].isValid())
+        p.setPen(m_custcol[Text]);
     else
         p.setPen(options()->color(KwinClient::ColorFont, isActive()));
 
@@ -554,7 +583,8 @@ KwinClient::reset(unsigned long changed)
     {
         m_headHeight = data->height;
         m_needSeparator = data->separator;
-        m_textColor = QColor::fromRgba(data->text);
+        m_custcol[Text] = QColor::fromRgba(data->text);
+        m_custcol[Bg] = QColor::fromRgba(data->bg);
         m_opacity = (float)data->opacity/100.0f;
         XFree(data);
     }

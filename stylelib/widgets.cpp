@@ -69,6 +69,14 @@ Button::mouseReleaseEvent(QMouseEvent *e)
     }
 }
 
+const QColor
+Button::color(const ColorRole &c) const
+{
+    if (c==Mid)
+        return Color::mid(palette().color(foregroundRole()), palette().color(backgroundRole()));
+    return palette().color(c==Fg?foregroundRole():backgroundRole());
+}
+
 /**
  * @brief Button::drawBase
  * @param c
@@ -80,6 +88,8 @@ Button::mouseReleaseEvent(QMouseEvent *e)
 void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
+    const int fgLum(Color::luminosity(color(Fg))), bgLum(Color::luminosity(color(Bg)));
+    const bool isDark(fgLum > bgLum);
     switch (Settings::conf.deco.buttons)
     {
     case 0:
@@ -98,7 +108,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     case 1:
     {
         c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
-        const QColor low(Color::mid(c, Qt::black, 5, 3));
+        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
         const QColor high(QColor(255, 255, 255, 127));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
@@ -110,7 +120,6 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         QRadialGradient rg(r.center()+QPoint(1, r.height()/2-1), r.height()-1);
         rg.setColorAt(0.0f, Color::mid(c, Qt::white));
         rg.setColorAt(0.5f, c);
-
         rg.setColorAt(1.0f, Color::mid(c, Qt::black));
         p.setBrush(rg);
         p.drawEllipse(r);
@@ -130,7 +139,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     case 2:
     {
         c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
-        const QColor low(Color::mid(c, Qt::black, 5, 3));
+        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
         const QColor high(QColor(255, 255, 255, 127));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
@@ -190,14 +199,14 @@ Button::paintCloseButton(QPainter &p)
         pt.drawLine(r.topLeft(), r.bottomRight());
         pt.drawLine(r.topRight(), r.bottomLeft());
         pt.end();
-        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix));
     }
     else
     {
         drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
         if (underMouse())
         {
-            p.setBrush(palette().color(foregroundRole()));
+            p.setBrush(QColor(0, 0, 0, 127));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
@@ -227,14 +236,14 @@ Button::paintMaxButton(QPainter &p)
         pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix));
     }
     else
     {
         drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
         if (underMouse())
         {
-            p.setBrush(palette().color(foregroundRole()));
+            p.setBrush(QColor(0, 0, 0, 127));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
@@ -263,42 +272,17 @@ Button::paintMinButton(QPainter &p)
         r.getRect(&x, &y, &w, &h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix));
     }
     else
     {
         drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
         if (underMouse())
         {
-            p.setBrush(palette().color(foregroundRole()));
+            p.setBrush(QColor(0, 0, 0, 127));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
     p.end();
     return true;
-}
-
-QPixmap
-Button::sunkenized(const QRect &r, const QPixmap &source)
-{
-    QImage img(r.size(), QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
-    QPainter p(&img);
-    p.fillRect(img.rect(), QColor(255, 255, 255, 127));
-    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    p.drawTiledPixmap(r, source);
-    p.end();
-    const QImage blur = Render::blurred(img, img.rect(), 2);
-
-    QPixmap pix(r.size());
-    pix.fill(Qt::transparent);
-    p.begin(&pix);
-    p.drawTiledPixmap(pix.rect(), source);
-    p.drawPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(blur));
-    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    p.drawPixmap(pix.rect(), source);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOver);
-    p.drawPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(img));
-    p.end();
-    return pix;
 }

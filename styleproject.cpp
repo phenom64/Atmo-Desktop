@@ -41,8 +41,7 @@ public:
 
 Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 
-StyleProject::StyleProject()
-    : QCommonStyle()
+StyleProject::StyleProject() : QCommonStyle()
 {
 //    Anim::setStyle(this);
     init();

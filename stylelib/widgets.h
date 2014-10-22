@@ -5,6 +5,7 @@
 class Q_DECL_EXPORT Button : public QWidget
 {
 public:
+    enum ColorRole { Fg = 0, Bg, Mid };
     enum Type { Close,
                 Min,
                 Max,
@@ -38,12 +39,13 @@ protected:
     virtual bool paintQuickHelpButton(QPainter &p) {return false;}
     virtual bool paintApplicationMenuButton(QPainter &p) {return false;}
 
+    virtual const QColor color(const ColorRole &c = Fg) const;
+
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 
     typedef bool (Button::*PaintEvent)(QPainter &);
     virtual bool isActive() = 0;
     virtual void onClick(QMouseEvent *e, const Type &t) = 0;
-    static QPixmap sunkenized(const QRect &r, const QPixmap &source);
 
     PaintEvent m_paintEvent[TypeCount];
     Type m_type;

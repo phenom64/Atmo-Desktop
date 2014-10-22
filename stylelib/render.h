@@ -13,8 +13,9 @@ public:
     enum SidePart { West = 0, North, East, South, SidePartCount };
     enum Pos { First = 0, Middle = 1, Last = 2, Alone = 3 };
     enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
-    enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, ShadowCount };
+    enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, Strenghter, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
+    enum Effect { Noeffect =0, Inset, Outset };
     Render();
     ~Render(){}
     typedef uint Sides, Shadow;
@@ -34,11 +35,13 @@ public:
     static QPixmap noise() { return instance()->m_noise; }
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
-    static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const QPoint &offSet = QPoint());
+    static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const bool needStrong = false, const QPoint &offSet = QPoint());
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const Shadow s, const int height);
     static int maskWidth(const Shadow s, const int width);
     static QRect maskRect(const Shadow s, const QRect &r, const Sides sides);
+    static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
+    static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, const bool isDark = false);
 
 protected:
     void _generateData();

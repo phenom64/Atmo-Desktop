@@ -156,29 +156,26 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
     else if (qobject_cast<QMainWindow *>(w))
     {
         QMainWindow *win(static_cast<QMainWindow *>(w));
+        bool needRound(true);
+        const QColor bgColor(win->palette().color(win->backgroundRole()));
+        QPainter p(win);
         if (XHandler::opacity() < 1.0f)
         {
-            bool needRound(true);
-            const QColor bgColor(win->palette().color(win->backgroundRole()));
-            QPainter p(win);
-            if (XHandler::opacity() < 1.0f)
-            {
-                QRegion r(ScrollWatcher::paintRegion(win));
-                p.setClipRegion(r);
-                if (needRound)
-                    Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
-                else
-                    p.fillRect(win->rect(), bgColor);
-            }
+            QRegion r(ScrollWatcher::paintRegion(win));
+            p.setClipRegion(r);
+            if (needRound)
+                Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
             else
                 p.fillRect(win->rect(), bgColor);
-            p.setPen(Qt::black);
-            p.setOpacity(Settings::conf.shadows.opacity);
-            if (int th = UNO::unoHeight(w, UNO::ToolBars))
-                p.drawLine(0, th, win->width(), th);
-            p.end();
-            return false;
         }
+        else
+            p.fillRect(win->rect(), bgColor);
+        p.setPen(Qt::black);
+        p.setOpacity(Settings::conf.shadows.opacity);
+        if (int th = UNO::unoHeight(w, UNO::ToolBars))
+            p.drawLine(0, th, win->width(), th);
+        p.end();
+        return false;
     }
     return QCommonStyle::eventFilter(o, e);
 }
