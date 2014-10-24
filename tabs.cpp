@@ -367,60 +367,65 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     const int size(qMin(option->rect.width(), option->rect.height())), _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
 
+//    const bool isTabBar(widget&&qobject_cast<const QTabBar *>(widget->parentWidget()));
     bool safTabs(false);
     if (widget)
         safTabs = Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget->parentWidget()));
     const bool hover(option->HOVER);
 
     const bool isSelected(option->state & State_Selected);
-    if (closer[hover].isNull())
+    QPixmap pix = QPixmap(option->rect.size());
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::black);
+    p.setRenderHint(QPainter::Antialiasing);
+    QRect l(pix.rect().adjusted(_16_, _16_, -_16_, -_16_));
+    p.drawEllipse(l);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    const int r[2] = { 45, 90 };
+    for (int i = 0; i < 2; ++i)
     {
-        QPixmap pix = QPixmap(option->rect.size());
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        p.setPen(Qt::NoPen);
-        p.setBrush(Qt::black);
-        p.setRenderHint(QPainter::Antialiasing);
-        QRect l(pix.rect().adjusted(_16_, _16_, -_16_, -_16_));
-        p.drawEllipse(l);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        const int r[2] = { 45, 90 };
-        for (int i = 0; i < 2; ++i)
-        {
-            p.translate(_2_, _2_);
-            p.rotate(r[i]);
-            p.translate(-_2_, -_2_);
-            p.drawRect(line);
-        }
-        p.end();
-
-        bool isDark(false);
-        if (widget)
-            isDark = Color::luminosity(widget->palette().color(widget->foregroundRole())) > Color::luminosity(widget->palette().color(widget->backgroundRole()));
-        int cc(isDark?0:255);
-        QPixmap tmp(pix);
-        Render::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
-        QPixmap tmp2(pix);
-        QPalette::ColorRole role(widget?widget->foregroundRole():QPalette::WindowText);
-        if (hover)
-            role = QPalette::Highlight;
-        if (!safTabs && isSelected)
-            role = QPalette::HighlightedText;
-        Render::colorizePixmap(tmp2, option->palette.color(role));
-
-        closer[hover] = QPixmap(option->rect.size());
-        closer[hover].fill(Qt::transparent);
-        p.begin(&closer[hover]);
-        p.drawTiledPixmap(closer[hover].rect().translated(0, 1), tmp);
-        p.drawTiledPixmap(closer[hover].rect(), tmp2);
-        p.end();
+        p.translate(_2_, _2_);
+        p.rotate(r[i]);
+        p.translate(-_2_, -_2_);
+        p.drawRect(line);
     }
-    painter->save();
+    p.end();
+
+    bool isDark(false);
+    QWidget *d(widget->window());
+    if (widget)
+    {
+        if (safTabs)
+        {
+            const QPalette pal(d->palette());
+            isDark = Color::luminosity(pal.color(d->foregroundRole())) > Color::luminosity(pal.color(d->backgroundRole()));
+        }
+        else
+            isDark = Color::luminosity(widget->palette().color(widget->foregroundRole())) > Color::luminosity(widget->palette().color(widget->backgroundRole()));
+    }
+    int cc(isDark?0:255);
+    QPixmap tmp(pix);
+    Render::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
+    QPixmap tmp2(pix);
+    QPalette::ColorRole role(widget?widget->foregroundRole():QPalette::WindowText);
+    if (hover)
+        role = QPalette::Highlight;
+    if (!safTabs && isSelected)
+        role = QPalette::HighlightedText;
+    Render::colorizePixmap(tmp2, safTabs?d->palette().color(QPalette::WindowText):option->palette.color(role));
+
+    QPixmap closer = QPixmap(option->rect.size());
+    closer.fill(Qt::transparent);
+    p.begin(&closer);
+    p.drawTiledPixmap(closer.rect().translated(0, 1), tmp);
+    p.drawTiledPixmap(closer.rect(), tmp2);
+    p.end();
     if (widget)
         if (castObj(const QTabBar *, bar, widget->parentWidget()))
             if (bar->tabAt(widget->geometry().center()) != bar->currentIndex())
                 painter->setOpacity(0.75f);
-    painter->drawTiledPixmap(option->rect, closer[hover]);
-    painter->restore();
+    painter->drawTiledPixmap(option->rect, closer);
     return true;
 }

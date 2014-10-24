@@ -77,6 +77,12 @@ Button::color(const ColorRole &c) const
     return palette().color(c==Fg?foregroundRole():backgroundRole());
 }
 
+const bool
+Button::isDark() const
+{
+    return Color::luminosity(palette().color(foregroundRole())) > Color::luminosity(palette().color(backgroundRole()));
+}
+
 /**
  * @brief Button::drawBase
  * @param c
@@ -109,7 +115,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     {
         c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
-        const QColor high(QColor(255, 255, 255, 127));
+        const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
         p.drawEllipse(r.translated(0, 1));
@@ -140,7 +146,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     {
         c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
-        const QColor high(QColor(255, 255, 255, 127));
+        const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
         p.drawEllipse(r.translated(0, 1));
@@ -189,7 +195,7 @@ Button::paintCloseButton(QPainter &p)
     {
         const int s(rect().width()/8);
         r = rect().adjusted(s, s, -s, -s);
-        const QPen pen(palette().color(foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
         QPixmap pix(rect().size());
         pix.fill(Qt::transparent);
@@ -199,7 +205,7 @@ Button::paintCloseButton(QPainter &p)
         pt.drawLine(r.topLeft(), r.bottomRight());
         pt.drawLine(r.topRight(), r.bottomLeft());
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     }
     else
     {
@@ -224,7 +230,7 @@ Button::paintMaxButton(QPainter &p)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
-        const QPen pen(palette().color(window()->isMaximized()?QPalette::Highlight:foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const QPen pen(window()->isMaximized()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
         QPixmap pix(rect().size());
         pix.fill(Qt::transparent);
@@ -236,7 +242,7 @@ Button::paintMaxButton(QPainter &p)
         pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     }
     else
     {
@@ -261,7 +267,7 @@ Button::paintMinButton(QPainter &p)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
-        const QPen pen(palette().color(foregroundRole()), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
         QPixmap pix(rect().size());
         pix.fill(Qt::transparent);
@@ -272,7 +278,7 @@ Button::paintMinButton(QPainter &p)
         r.getRect(&x, &y, &w, &h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix));
+        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
     }
     else
     {

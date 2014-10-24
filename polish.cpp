@@ -65,6 +65,8 @@ StyleProject::polish(QWidget *widget)
         if (qobject_cast<QMainWindow *>(widget->parentWidget()))
             connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
         installFilter(bar);
+        bar->setForegroundRole(QPalette::WindowText);
+        bar->setBackgroundRole(QPalette::Window);
     }
     if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
         widget->layout()->setContentsMargins(0, 0, 0, 0);

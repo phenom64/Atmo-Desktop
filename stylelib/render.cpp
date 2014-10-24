@@ -2,6 +2,8 @@
 #include <qmath.h>
 #include <QWidget>
 #include <QToolBar>
+#include <QCheckBox>
+#include <QRadioButton>
 #include <QBitmap>
 
 #include "render.h"
@@ -697,15 +699,27 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         if (w && w->parentWidget())
         {
             QWidget *p(w->parentWidget());
-            const QColor bg(p->palette().color(p->backgroundRole()));
-            high = bg.value()/2;
-            low = qMin(255, 280-bg.value());
+            const bool isDark(Color::luminosity(p->palette().color(p->foregroundRole())) > Color::luminosity(p->palette().color(p->backgroundRole())));
+//            const QColor bg(p->palette().color(p->backgroundRole()));
+//            high = bg.value()/2;
+//            low = qMin(255, 280-bg.value());
+            if (isDark)
+            {
+                high=32;
+                low=192;
+            }
+            else
+            {
+                high=192;
+                low=32;
+            }
         }
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
         const int m(3);
-        r.sAdjust(m, m, -m, -m);
+        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w));
+        r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(1, rnd-m);
     }
     else
@@ -727,9 +741,9 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
 
     if (s==Carved)
     {
-        const int m(1);
+        const int m(2);
         r.sAdjust(-m, -m, m, m);
-        rnd = qMin(rnd+1, MAXRND);
+        rnd = qMin(rnd+m, MAXRND);
         renderShadow(Strenghter, r, p, rnd, sides, opacity);
     }
     else if (s==Sunken||s==Etched)
@@ -877,56 +891,82 @@ Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, con
     Upper value of 'stretch to' range
  */
 
-static void stretch(QImage &img, const QColor &c)
+static QImage stretched(QImage img, const QColor &c)
 {
     img = img.convertToFormat(QImage::Format_ARGB32);
     int size = img.width() * img.height();
     QRgb *pixel = reinterpret_cast<QRgb *>(img.bits());
-    int inLo(255), inUp(0), outUp(255), outLo(0);
-    int inVal[size];
-    bool isDark(false);
+    int inLo(255), inUp(0);
+    int inVal[size], lum[size];
     int lowCount(0), highCount(0);
+    QList<int> hues;
+    bool useAlpha(false);
     for (int i = 0; i < size; ++i)
     {
         if (!qAlpha(pixel[i]))
             continue;
-        const int lum(Color::luminosity(pixel[i]));
-        if (lum < 128)
+        const int l(/*Color::luminosity*/qRed(pixel[i]));
+
+        const int hue(QColor::fromRgba(pixel[i]).hue());
+        if (!hues.contains(hue))
+            hues << hue;
+        lum[i] = l;
+        if (l < 128)
             ++lowCount;
-        if (lum > 127)
+        if (l > 127)
             ++highCount;
+        inVal[i] = l;
+        if (l < inLo)
+            inLo = l;
+        if (l > inUp)
+            inUp = l;
     }
-    isDark = lowCount*2>highCount;
-    for (int i = 0; i < size; ++i)
-    {
-        const int lum(Color::luminosity(pixel[i]));
-        int a(qBound(0, isDark?qAlpha(pixel[i]) - lum:lum, 255));
-        inVal[i] = a;
-        if (a < inLo)
-            inLo = a;
-        if (a > inUp)
-            inUp = a;
-    }
+    const bool isDark(lowCount*2>highCount);
+    if (hues.count() == 1 && inUp-inLo < 128)
+        useAlpha = true;
+    qDebug() << useAlpha << hues.count() << inUp-inLo;
+    int inLoAlpha(255), inHighAlpha(0);
+    if (useAlpha)
+        for (int i = 0; i < size; ++i)
+        {
+            const int a(qAlpha(pixel[i]));
+            if (!a)
+                continue;
+            if (a<inLoAlpha)
+                inLoAlpha=a;
+            if (a>inHighAlpha)
+                inHighAlpha=a;
+        }
     int r,g,b;
     c.getRgb(&r, &g, &b);
+    const int div(255/qMax(1, inUp-inLo));
+    const int alphaDiv(255/qMax(1, inHighAlpha-inLoAlpha));
     for (int i = 0; i < size; ++i)
     {
-        int outVal((inVal[i]-inLo) * qRound(qreal(outUp-outLo)/qreal(inUp-inLo)) + outLo);
+        if (!qAlpha(pixel[i]))
+            continue;
+
+        int outVal(0);
+        if (useAlpha)
+            outVal = qAlpha(pixel[i]) * alphaDiv;
+        else
+        {
+            const int a(qBound(0, isDark?qAlpha(pixel[i])-lum[i]:lum[i], 255));
+            outVal = (a-inLo) * div;
+        }
 //        if ( outVal > 127 )
 //            outVal = (pow(outVal / 127.5f - 1.0f, 0.6f) + 1.0f) * 127.5f;
 //        else if ( outVal < 128 && outVal > 0 )
 //            outVal = (pow(outVal / 127.5f - 1.0f, 0.6f) + 1.0f) * 127.5f;
-        pixel[i] = qRgba(r, g, b, outVal);
+        pixel[i] = qRgba(r, g, b, qBound(0, outVal, 255));
     }
+    return img;
 }
 
 QPixmap
 Render::monochromized(const QPixmap &source, const QColor &color, const Effect effect, const bool isDark)
 {
-    QImage img = source.toImage();
-    stretch(img, color);
-
-    const QPixmap &result = QPixmap::fromImage(img);
+    const QPixmap &result = QPixmap::fromImage(stretched(source.toImage(), color));
     if (effect == Inset)
         return sunkenized(result.rect(), result, isDark);
     return result;

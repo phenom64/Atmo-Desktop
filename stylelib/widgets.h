@@ -40,6 +40,7 @@ protected:
     virtual bool paintApplicationMenuButton(QPainter &p) {return false;}
 
     virtual const QColor color(const ColorRole &c = Fg) const;
+    virtual const bool isDark() const;
 
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 

@@ -230,6 +230,16 @@ static QRect maskRect(const QRect &rect)
     return r;
 }
 
+class IconCheck
+{
+public:
+    inline IconCheck(const QWidget *w, const QColor &c, const int &s) : widget(w), color(c), size(s) {}
+    inline const bool operator==(const IconCheck &check) const { return check.color==color&&check.widget==widget&&check.size==size;}
+    QColor color;
+    const QWidget *widget;
+    int size;
+};
+
 bool
 StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
@@ -372,11 +382,25 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         textRole = bar?bg:fg;
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
     {
-        const QPixmap &pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
+        QPixmap pix = opt->icon.pixmap(opt->iconSize, opt->ENABLED ? QIcon::Normal : QIcon::Disabled);
         if (!pix.isNull())
         {
             const bool isDark(opt->SUNKEN && bar && Color::luminosity(opt->palette.color(bg)) > Color::luminosity(opt->palette.color(fg)));
-            drawItemPixmap(painter, inDock?widget->rect():ir, Qt::AlignCenter, Settings::conf.toolbtn.folCol&&opt->ENABLED?Render::monochromized(pix, opt->palette.color(textRole), Render::Inset, isDark):pix);
+            if (Settings::conf.toolbtn.folCol && opt->ENABLED && bar)
+            {
+                static QList<IconCheck> s_list;
+                static QList<QPixmap> s_pix;
+                const IconCheck check(widget, opt->palette.color(textRole), opt->iconSize.height());
+                if (s_list.contains(check))
+                    pix = s_pix.at(s_list.indexOf(check));
+                else
+                {
+                    pix = Render::monochromized(pix, opt->palette.color(textRole), Render::Inset, isDark);
+                    s_list << check;
+                    s_pix << pix;
+                }
+            }
+            drawItemPixmap(painter, inDock?widget->rect():ir, Qt::AlignCenter, pix);
         }
     }
     if (opt->toolButtonStyle)
