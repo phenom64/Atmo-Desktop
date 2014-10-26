@@ -2,6 +2,7 @@
 #define UNOHANDLER_H
 
 #include <QWidget>
+#include <QSharedMemory>
 #include <QMap>
 #include "render.h"
 #include "widgets.h"
@@ -62,7 +63,6 @@ private:
     QList<QWidget *> m_menuWins;
 };
 
-
 class Q_DECL_EXPORT ScrollWatcher : public QObject
 {
     Q_OBJECT
@@ -89,6 +89,7 @@ private:
     static QMap<QWidget *, Qt::HANDLE> s_handles;
     QTimer *m_timer;
     QList<QMainWindow *> m_wins;
+    static QSharedMemory s_mem;
 };
 
 namespace UNO

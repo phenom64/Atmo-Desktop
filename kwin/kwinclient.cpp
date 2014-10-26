@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QPixmap>
 #include <QCoreApplication>
+#include <QBuffer>
 
 #include "kwinclient.h"
 #include "../stylelib/ops.h"
@@ -455,9 +456,9 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setClipRect(tr);
     p.setOpacity(m_opacity);
-    if (!m_bgPix[0].isNull())
+    if (!m_bgPix.isNull())
 //        p.drawTiledPixmap(tr, m_bgPix[0]);
-        Render::renderMask(tr, &p, m_bgPix[0], 4, Render::All & ~Render::Bottom);
+        Render::renderMask(tr, &p, m_bgPix, 4, Render::All & ~Render::Bottom);
     else
         Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
     p.setOpacity(1.0f);
@@ -472,10 +473,10 @@ KwinClient::paint(QPainter &p)
     p.setPen(QPen(lg, 1.0f));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
-    if (!m_bgPix[1].isNull())
+    if (!m_bgCont.isNull())
     {
         p.setOpacity(0.33f);
-        Render::renderMask(tr, &p, m_bgPix[1], 4, Render::All & ~Render::Bottom);
+        Render::renderMask(tr, &p, m_bgCont, 4, Render::All & ~Render::Bottom);
         p.setOpacity(1.0f);
     }
 
@@ -595,11 +596,23 @@ KwinClient::reset(unsigned long changed)
         m_needSeparator = true;
     }
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-        if (*bg && *bg != m_bgPix[0].handle())
-            m_bgPix[0] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
-    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::ContPix))
-        if (*bg && *bg != m_bgPix[1].handle())
-            m_bgPix[1] = QPixmap::fromX11Pixmap(*bg, QPixmap::ExplicitlyShared);
+        if (*bg && *bg != m_bgPix.handle())
+            m_bgPix = QPixmap::fromX11Pixmap(*bg);
+    m_mem.setKey(QString::number(windowId()));
+    if (m_mem.attach(QSharedMemory::ReadOnly))
+    {
+        QBuffer buffer;
+        QDataStream in(&buffer);
+        QImage image;
+
+        m_mem.lock();
+        buffer.setData((char*)m_mem.constData(), m_mem.size());
+        buffer.open(QBuffer::ReadOnly);
+        in >> image;
+        m_mem.unlock();
+        m_mem.detach();
+        m_bgCont = image;
+    }
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
     m_unoGradient.setColorAt(0.0f, m_titleColor[0]);
@@ -612,7 +625,7 @@ KwinClient::reset(unsigned long changed)
     const QPixmap &bg = Render::mid(p, Render::noise(), 40, 1);
     for (int i = 0; i < m_buttons.count(); ++i)
     {
-        m_buttons.at(i)->setBgPix(m_bgPix[0].isNull()?bg:m_bgPix[0]);
+        m_buttons.at(i)->setBgPix(m_bgPix.isNull()?bg:m_bgPix);
         m_buttons.at(i)->update();
     }
     m_brush = QBrush(bg);

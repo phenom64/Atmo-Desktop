@@ -1,4 +1,4 @@
-#include "unohandler.h"
+﻿#include "unohandler.h"
 #include "xhandler.h"
 #include "macros.h"
 #include "color.h"
@@ -29,6 +29,7 @@
 #include <QAbstractScrollArea>
 #include <QScrollBar>
 #include <QElapsedTimer>
+#include <QBuffer>
 
 void
 DButton::onClick(QMouseEvent *e, const Type &t)
@@ -264,6 +265,7 @@ WinHandler::canDrag(QWidget *w)
 Q_DECL_EXPORT ScrollWatcher ScrollWatcher::s_instance;
 QMap<qlonglong, QPixmap> ScrollWatcher::s_winBg;
 QMap<QWidget *, Qt::HANDLE> ScrollWatcher::s_handles;
+QSharedMemory ScrollWatcher::s_mem;
 
 ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent), m_timer(new QTimer(this))
 {
@@ -342,13 +344,30 @@ ScrollWatcher::regenBg(QMainWindow *win)
 
     QPixmap pix(QPixmap::fromImage(img));
 
-    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
-    Qt::HANDLE d(decoPix.handle());
-    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::ContPix, XHandler::Long, &d);
-    UNO::Handler::updateWindow(win->winId());
-    if (s_handles.contains(win))
-        XHandler::freePix(s_handles.value(win));
-    s_handles.insert(win, d);
+    const QImage decoImg(img.copy(0, 0, img.width(), 22));
+    s_mem.setKey(QString::number(win->winId()));
+    s_mem.detach();
+    if (s_mem.create(decoImg.width()*decoImg.height()))
+    {
+        s_mem.lock();
+        QBuffer buffer;
+        buffer.open(QBuffer::ReadWrite);
+        QDataStream out(&buffer);
+        out << decoImg;
+        int size = buffer.size();
+        char *to = (char*)s_mem.data();
+        const char *from = buffer.data().data();
+        memcpy(to, from, qMin(size, s_mem.size()));
+        s_mem.unlock();
+        UNO::Handler::updateWindow(win->winId());
+    }
+//    QPixmap decoPix = XHandler::x11Pix(pix.copy(0, 0, pix.width(), 22));
+//    Qt::HANDLE d(decoPix.handle());
+//    XHandler::setXProperty<unsigned long>(win->winId(), XHandler::ContPix, XHandler::Long, &d);
+
+//    if (s_handles.contains(win))
+//        XHandler::freePix(s_handles.value(win));
+//    s_handles.insert(win, d);
     s_winBg.insert((qlonglong)win, pix.copy(0, 22, pix.width(), height));
     s_block = false;
 //    qDebug() << "took" << t.elapsed() << "ms to gen gfx";

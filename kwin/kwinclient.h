@@ -5,6 +5,7 @@
 #include <kdecoration.h>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QSharedMemory>
 
 #include "sizegrip.h"
 #include "factory.h"
@@ -79,7 +80,8 @@ private:
     QColor m_titleColor[2], m_custcol[CustColCount];
     Factory *m_factory;
     QBrush m_brush;
-    QPixmap m_pix, m_bgPix[2];
+    QPixmap m_pix, m_bgPix;
+    QImage m_bgCont;
     float m_opacity;
     int m_headHeight, m_leftButtons, m_rightButtons;
     bool m_needSeparator;
@@ -87,6 +89,7 @@ private:
     SizeGrip *m_sizeGrip;
     friend class DButton;
     Buttons m_buttons;
+    QSharedMemory m_mem;
 };
 
 #endif //KWINCLIENT_H

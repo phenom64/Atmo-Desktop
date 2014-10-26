@@ -872,6 +872,84 @@ Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, con
     return pix;
 }
 
+//colortoalpha directly stolen from gimp
+
+void
+colortoalpha (float *a1,
+          float *a2,
+          float *a3,
+          float *a4,
+          float c1,
+          float c2,
+          float c3)
+{
+  float alpha1, alpha2, alpha3, alpha4;
+
+  alpha4 = *a4;
+
+  if ( *a1 > c1 )
+    alpha1 = (*a1 - c1)/(255.0-c1);
+  else if ( *a1 < c1 )
+    alpha1 = (c1 - *a1)/(c1);
+  else alpha1 = 0.0;
+
+  if ( *a2 > c2 )
+    alpha2 = (*a2 - c2)/(255.0-c2);
+  else if ( *a2 < c2 )
+    alpha2 = (c2 - *a2)/(c2);
+  else alpha2 = 0.0;
+
+  if ( *a3 > c3 )
+    alpha3 = (*a3 - c3)/(255.0-c3);
+  else if ( *a3 < c3 )
+    alpha3 = (c3 - *a3)/(c3);
+  else alpha3 = 0.0;
+
+  if ( alpha1 > alpha2 )
+    if ( alpha1 > alpha3 )
+      {
+    *a4 = alpha1;
+      }
+    else
+      {
+    *a4 = alpha3;
+      }
+  else
+    if ( alpha2 > alpha3 )
+      {
+    *a4 = alpha2;
+      }
+    else
+      {
+    *a4 = alpha3;
+      }
+
+  *a4 *= 255.0;
+
+  if ( *a4 < 1.0 )
+    return;
+  *a1 = 255.0 * (*a1-c1)/ *a4 + c1;
+  *a2 = 255.0 * (*a2-c2)/ *a4 + c2;
+  *a3 = 255.0 * (*a3-c3)/ *a4 + c3;
+
+  *a4 *= alpha4/255.0;
+}
+
+static int stretch(const int v, const float n = 2.0f)
+{
+    static bool isInit(false);
+    static float table[256];
+    if (!isInit)
+    {
+        for (int i = 127; i < 256; ++i)
+            table[i] = (pow(((float)i/127.5f-1.0f), (1.0f/n))+1.0f)*127.5f;
+        for (int i = 0; i < 128; ++i)
+            table[i] = 255-table[255-i];
+        isInit = true;
+    }
+    return qRound(table[v]);
+}
+
 /**
     http://spatial-analyst.net/ILWIS/htm/ilwisapp/stretch_algorithm.htm
     OUTVAL
@@ -895,71 +973,119 @@ static QImage stretched(QImage img, const QColor &c)
 {
     img = img.convertToFormat(QImage::Format_ARGB32);
     int size = img.width() * img.height();
-    QRgb *pixel = reinterpret_cast<QRgb *>(img.bits());
-    int inLo(255), inUp(0);
-    int inVal[size], lum[size];
-    int lowCount(0), highCount(0);
+    QRgb *pixels[2] = { 0, 0 };
+    pixels[0] = reinterpret_cast<QRgb *>(img.bits());
+    int r, g, b;
+    c.getRgb(&r, &g, &b); //foregroundcolor
+
+#define ENSUREALPHA if (!qAlpha(pixels[0][i])) continue
     QList<int> hues;
-    bool useAlpha(false);
     for (int i = 0; i < size; ++i)
     {
-        if (!qAlpha(pixel[i]))
-            continue;
-        const int l(/*Color::luminosity*/qRed(pixel[i]));
-
-        const int hue(QColor::fromRgba(pixel[i]).hue());
+        ENSUREALPHA;
+        const int hue(QColor::fromRgba(pixels[0][i]).hue());
         if (!hues.contains(hue))
             hues << hue;
-        lum[i] = l;
-        if (l < 128)
-            ++lowCount;
-        if (l > 127)
-            ++highCount;
-        inVal[i] = l;
-        if (l < inLo)
-            inLo = l;
-        if (l > inUp)
-            inUp = l;
     }
-    const bool isDark(lowCount*2>highCount);
-    if (hues.count() == 1 && inUp-inLo < 128)
-        useAlpha = true;
-    qDebug() << useAlpha << hues.count() << inUp-inLo;
-    int inLoAlpha(255), inHighAlpha(0);
+    const bool useAlpha(hues.count() == 1);
     if (useAlpha)
+    {
+        /**
+          * Alpha gets special treatment...
+          * we simply steal the colortoalpha
+          * function from gimp, color white to
+          * alpha, as in remove all white from
+          * the image (in case of monochrome icons
+          * add some sorta light bevel). Then simply
+          * push all remaining alpha values so the
+          * highest one is 255.
+          */
+        float alpha[size], lowAlpha(255), highAlpha(0);
         for (int i = 0; i < size; ++i)
         {
-            const int a(qAlpha(pixel[i]));
-            if (!a)
-                continue;
-            if (a<inLoAlpha)
-                inLoAlpha=a;
-            if (a>inHighAlpha)
-                inHighAlpha=a;
+            ENSUREALPHA;
+            const QRgb rgb(pixels[0][i]);
+            float val(255.0f);
+            float red(qRed(rgb)), green(qGreen(rgb)), blue(qBlue(rgb)), a(qAlpha(rgb));
+            colortoalpha(&red, &green, &blue, &a, val, val, val);
+            if (a < lowAlpha)
+                lowAlpha = a;
+            if (a > highAlpha)
+                highAlpha = a;
+            alpha[i] = a;
         }
-    int r,g,b;
-    c.getRgb(&r, &g, &b);
-    const int div(255/qMax(1, inUp-inLo));
-    const int alphaDiv(255/qMax(1, inHighAlpha-inLoAlpha));
-    for (int i = 0; i < size; ++i)
-    {
-        if (!qAlpha(pixel[i]))
-            continue;
-
-        int outVal(0);
-        if (useAlpha)
-            outVal = qAlpha(pixel[i]) * alphaDiv;
-        else
+        float add(255.0f/highAlpha);
+        for (int i = 0; i < size; ++i)
         {
-            const int a(qBound(0, isDark?qAlpha(pixel[i])-lum[i]:lum[i], 255));
-            outVal = (a-inLo) * div;
+            ENSUREALPHA;
+            pixels[0][i] = qRgba(r, g, b, stretch(qMin<int>(255, alpha[i]*add), 2.0f));
         }
-//        if ( outVal > 127 )
-//            outVal = (pow(outVal / 127.5f - 1.0f, 0.6f) + 1.0f) * 127.5f;
-//        else if ( outVal < 128 && outVal > 0 )
-//            outVal = (pow(outVal / 127.5f - 1.0f, 0.6f) + 1.0f) * 127.5f;
-        pixel[i] = qRgba(r, g, b, qBound(0, outVal, 255));
+        return img;
     }
+
+    const int br(img.width()/4);
+    QImage bg(img.size() + QSize(br*2, br*2), QImage::Format_ARGB32); //add some padding avoid 'edge folding'
+    bg.fill(Qt::transparent);
+
+    QPainter bp(&bg);
+    bp.drawPixmap(br, br, QPixmap::fromImage(img), 0, 0, img.width(), img.height());
+    bp.end();
+    Render::blurred(bg, bg.rect(), br);
+    bg = bg.copy(bg.rect().adjusted(br, br, -br, -br)); //remove padding so we can easily access relevant pixels with [i]
+
+    enum Rgba { Red = 0, Green, Blue, Alpha };
+    enum ImageType { Fg = 0, Bg }; //fg is the actual image, bg is the blurred one we use as reference for the most contrasting channel
+
+    pixels[1] = reinterpret_cast<QRgb *>(bg.bits());
+    double rgbCount[3] = { 0.0d, 0.0d, 0.0d };
+    int (*rgba[4])(QRgb rgb) = { qRed, qGreen, qBlue, qAlpha };
+    int cVal[2][4] = {{ 0, 0, 0, 0 }, {0, 0, 0, 0}};
+
+    for (int i = 0; i < size; ++i) //pass 1, determine most contrasting channel, usually RED
+    for (int it = 0; it < 2; ++it)
+    for (int d = 0; d < 4; ++d)
+    {
+        ENSUREALPHA;
+        cVal[it][d] = (*rgba[d])(pixels[it][i]);
+        if (it && d < 3)
+            rgbCount[d] += (cVal[Fg][Alpha]+cVal[Bg][Alpha]) * qAbs(cVal[Fg][d]-cVal[Bg][d]) / (2.0f * cVal[Bg][d]);
+    }
+    double count = 0;
+    int channel = 0;
+    for (int i = 0; i < 3; ++i)
+        if (rgbCount[i] > count)
+        {
+            channel = i;
+            count = rgbCount[i];
+        }
+    float values[size];
+    float inLo = 255.0f, inHi = 0.0f;
+    qulonglong loCount(0), hiCount(0);
+    for ( int i = 0; i < size; ++i ) //pass 2, store darkest/lightest pixels
+    {
+        ENSUREALPHA;
+        const float px((*rgba[channel])(pixels[Fg][i]));
+        values[i] = px;
+        if ( px > inHi )
+            inHi = px;
+        if ( px < inLo )
+            inLo = px;
+        const int a(qAlpha(pixels[Fg][i]));
+        if (px < 128)
+            loCount += a*(255-px);
+        else
+            hiCount += a*px;
+    }
+    const bool isDark(loCount>hiCount);
+    for ( int i = 0; i < size; ++i )
+    {
+        ENSUREALPHA;
+        int a(qBound<int>(0, qRound((values[i] - inLo) * (255.0f / (inHi - inLo))), 255));
+        if (isDark)
+            a = qMax(0, qAlpha(pixels[Fg][i])-a);
+        pixels[Fg][i] = qRgba(r, g, b, stretch(a));
+    }
+#undef ENSUREALPHA
     return img;
 }
 

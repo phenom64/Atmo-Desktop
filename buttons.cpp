@@ -386,8 +386,9 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
         if (!pix.isNull())
         {
             const bool isDark(opt->SUNKEN && bar && Color::luminosity(opt->palette.color(bg)) > Color::luminosity(opt->palette.color(fg)));
-            if (Settings::conf.toolbtn.folCol && opt->ENABLED && bar)
+            if (Settings::conf.toolbtn.folCol && bar)
             {
+                pix = opt->icon.pixmap(opt->iconSize, QIcon::Normal);
                 static QList<IconCheck> s_list;
                 static QList<QPixmap> s_pix;
                 const IconCheck check(widget, opt->palette.color(textRole), opt->iconSize.height());
