@@ -86,7 +86,6 @@ protected slots:
 private:
     static ScrollWatcher s_instance;
     static QMap<qlonglong, QPixmap> s_winBg;
-    static QMap<QWidget *, Qt::HANDLE> s_handles;
     QTimer *m_timer;
     QList<QMainWindow *> m_wins;
     static QSharedMemory s_mem;

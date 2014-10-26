@@ -475,7 +475,7 @@ KwinClient::paint(QPainter &p)
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
     if (!m_bgCont.isNull())
     {
-        p.setOpacity(0.33f);
+        p.setOpacity(0.1f);
         Render::renderMask(tr, &p, m_bgCont, 4, Render::All & ~Render::Bottom);
         p.setOpacity(1.0f);
     }
@@ -603,15 +603,13 @@ KwinClient::reset(unsigned long changed)
     {
         QBuffer buffer;
         QDataStream in(&buffer);
-        QImage image;
 
         m_mem.lock();
         buffer.setData((char*)m_mem.constData(), m_mem.size());
         buffer.open(QBuffer::ReadOnly);
-        in >> image;
+        in >> m_bgCont;
         m_mem.unlock();
         m_mem.detach();
-        m_bgCont = image;
     }
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
