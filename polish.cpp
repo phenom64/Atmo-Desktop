@@ -116,7 +116,7 @@ StyleProject::polish(QWidget *widget)
             widget->findChild<QTabBar *>())
         UNO::Handler::manage(widget);
 
-    if (Settings::conf.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
+    if (Settings::conf.uno.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
         ScrollWatcher::watch(static_cast<QAbstractScrollArea *>(widget));
 
     if (WinHandler::canDrag(widget))

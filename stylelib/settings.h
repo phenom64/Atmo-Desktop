@@ -10,7 +10,6 @@
 #define REMOVETITLE         "removetitlebars"
 #define TITLEPOS            "titlepos"
 #define HACKDIALOGS         "hackdialogs"
-#define CONTAWARE           "contentawareuno"
 #define COMPACTMENU         "compactmenu"
 
 #define DECOBUTTONS         "deco.buttons"
@@ -43,6 +42,9 @@
 #define UNOTINT             "uno.tinthue"
 #define UNONOISE            "uno.noisefactor"
 #define UNOHOR              "uno.horizontal"
+#define UNOCONT             "uno.contentaware"
+#define UNOFPS              "uno.contentfps"
+#define UNOOPACITY          "uno.contentopacity"
 
 #define MENUICONS           "menues.icons"
 
@@ -80,7 +82,6 @@
 #define DEFREMOVETITLE          false
 #define DEFTITLEPOS             1
 #define DEFHACKDIALOGS          false
-#define DEFCONTAWARE            QStringList() << "dfm"
 #define DEFCOMPACTMENU          false
 
 #define DEFDECOBUTTONS          0
@@ -113,6 +114,9 @@
 #define DEFUNOTINT              "-1:0"
 #define DEFUNONOISE             10
 #define DEFUNOHOR               false
+#define DEFUNOCONT              QStringList()
+#define DEFUNOFPS               20
+#define DEFUNOOPACITY           10
 
 #define DEFMENUICONS            false
 
@@ -132,7 +136,6 @@
 #define READREMOVETITLE         REMOVETITLE, DEFREMOVETITLE
 #define READTITLEPOS            TITLEPOS, DEFTITLEPOS
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
-#define READCONTAWARE           CONTAWARE, DEFCONTAWARE
 #define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
@@ -165,6 +168,9 @@
 #define READUNOTINT             UNOTINT, DEFUNOTINT
 #define READUNONOISE            UNONOISE, DEFUNONOISE
 #define READUNOHOR              UNOHOR, DEFUNOHOR
+#define READUNOCONT             UNOCONT, DEFUNOCONT
+#define READUNOFPS              UNOFPS, DEFUNOFPS
+#define READUNOOPACITY          UNOOPACITY, DEFUNOOPACITY
 
 #define READMENUICONS           MENUICONS, DEFMENUICONS
 
@@ -187,7 +193,7 @@ class Q_DECL_EXPORT Settings
 public:
     float opacity;
     QStringList blackList;
-    bool removeTitleBars, hackDialogs, contAware, compactMenu;
+    bool removeTitleBars, hackDialogs, compactMenu;
     int titlePos;
     struct deco
     {
@@ -237,8 +243,9 @@ public:
     {
         Gradient gradient;
         Tint tint;
-        unsigned int noise;
-        bool hor;
+        unsigned int noise, fps;
+        float opacity;
+        bool hor, contAware;
     } uno;
     struct menues
     {

@@ -275,7 +275,7 @@ ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent), m_timer(new QTi
 void
 ScrollWatcher::watch(QAbstractScrollArea *area)
 {
-    if (!Settings::conf.contAware)
+    if (!Settings::conf.uno.contAware)
         return;
     area->removeEventFilter(instance());
     area->installEventFilter(instance());
@@ -329,7 +329,6 @@ ScrollWatcher::regenBg(QMainWindow *win)
     QPainter p(&img);
     const int titleHeight(unoHeight(win, UNO::TitleBar));
     p.translate(0, titleHeight);
-
     QList<QAbstractScrollArea *> areas(win->findChildren<QAbstractScrollArea *>());
     for (int i = 0; i < areas.count(); ++i)
     {
@@ -396,7 +395,7 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         if (!m_wins.contains(win))
             m_wins << win;
         if (!m_timer->isActive())
-            m_timer->start(5);
+            m_timer->start(Settings::conf.uno.fps);
         return false;
     }
     return false;
@@ -716,9 +715,9 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offse
         p->setOpacity(opacity);
 
         p->drawTiledPixmap(r, s_pix.value(check).at(0), offset);
-        if (Settings::conf.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
+        if (Settings::conf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
         {
-            p->setOpacity(0.1f);
+            p->setOpacity(Settings::conf.uno.opacity);
             p->drawTiledPixmap(r, ScrollWatcher::bg((qlonglong)win), offset);
         }
         p->setOpacity(savedOpacity);

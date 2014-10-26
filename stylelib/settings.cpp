@@ -87,7 +87,6 @@ Settings::read()
     conf.removeTitleBars = s.value(READREMOVETITLE).toBool();
     conf.titlePos = conf.removeTitleBars?s.value(READTITLEPOS).toInt():-1;
     conf.hackDialogs = s.value(READHACKDIALOGS).toBool();
-    conf.contAware = s.value(READCONTAWARE).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
     conf.compactMenu = s.value(READCOMPACTMENU).toBool();
     //deco
     conf.deco.buttons = s.value(READDECOBUTTONS).toInt();
@@ -120,6 +119,9 @@ Settings::read()
     conf.uno.tint = tintColor(s.value(READUNOTINT).toString());
     conf.uno.noise = s.value(READUNONOISE).toInt();
     conf.uno.hor = s.value(READUNOHOR).toBool();
+    conf.uno.contAware = s.value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
+    conf.uno.fps = 1000/s.value(READUNOFPS).toInt();
+    conf.uno.opacity = s.value(READUNOOPACITY).toFloat()/100.0f;
     //menues
     conf.menues.icons = s.value(READMENUICONS).toBool();
     //sliders

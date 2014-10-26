@@ -475,7 +475,7 @@ KwinClient::paint(QPainter &p)
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
     if (!m_bgCont.isNull())
     {
-        p.setOpacity(0.1f);
+        p.setOpacity(Settings::conf.uno.opacity);
         Render::renderMask(tr, &p, m_bgCont, 4, Render::All & ~Render::Bottom);
         p.setOpacity(1.0f);
     }
