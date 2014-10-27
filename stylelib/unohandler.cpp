@@ -311,12 +311,22 @@ ScrollWatcher::updateWin(QMainWindow *win)
     s_block = true;
     regenBg(win);
     const QList<QToolBar *> toolBars(win->findChildren<QToolBar *>());
+    const int uno(unoHeight(win, UNO::ToolBarAndTabBar));
     for (int i = 0; i < toolBars.count(); ++i)
-        toolBars.at(i)->update();
+    {
+        QToolBar *bar(toolBars.at(i));
+        if (!bar->isVisible())
+            continue;
+
+        if (bar->geometry().bottom() < uno)
+            bar->update();
+    }
 //    if (QStatusBar *sb = win->findChild<QStatusBar *>())
 //        sb->update();
     if (QTabBar *tb = win->findChild<QTabBar *>())
-        tb->update();
+        if (tb->isVisible())
+            if (tb->mapTo(win, tb->rect().bottomLeft()).y() <=  uno)
+                tb->update();
     if (!Settings::conf.removeTitleBars)
         UNO::Handler::updateWindow(win->winId(), 64);
     s_block = false;

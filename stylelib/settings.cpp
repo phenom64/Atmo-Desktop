@@ -120,7 +120,8 @@ Settings::read()
     conf.uno.noise = s.value(READUNONOISE).toInt();
     conf.uno.hor = s.value(READUNOHOR).toBool();
     conf.uno.contAware = s.value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
-    conf.uno.fps = 1000/s.value(READUNOFPS).toInt();
+    const int fps(s.value(READUNOFPS).toInt());
+    conf.uno.fps = fps==0?0:1000/fps;
     conf.uno.opacity = s.value(READUNOOPACITY).toFloat()/100.0f;
     conf.uno.blur = s.value(READUNOCONTBLUR).toInt();
     //menues
