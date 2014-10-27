@@ -323,6 +323,7 @@ KwinClient::init()
 void
 KwinClient::postInit()
 {
+    m_mem.setKey(QString::number(windowId()));
     reset(63);
 }
 
@@ -626,7 +627,6 @@ KwinClient::reset(unsigned long changed)
 void
 KwinClient::updateContBg()
 {
-    m_mem.setKey(QString::number(windowId()));
     if (m_mem.attach(QSharedMemory::ReadOnly))
     {
         QBuffer buffer;

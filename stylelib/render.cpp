@@ -718,7 +718,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
         const int m(3);
-        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w));
+        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()!=r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(1, rnd-m);
     }

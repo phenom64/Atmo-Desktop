@@ -7,6 +7,7 @@
 #include <QMouseEvent>
 #include <QImage>
 #include "xhandler.h"
+#include "macros.h"
 
 Button::Button(Type type, QWidget *parent)
     : QWidget(parent)
@@ -160,6 +161,39 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         rg.setColorAt(1.0f, Qt::transparent);
         p.setBrush(rg);
         p.drawEllipse(r);
+        break;
+    }
+    case 3:
+    {
+        p.save();
+        QLinearGradient lg(r.topLeft(), r.bottomLeft());
+        int high(63), low(63);
+        if (isDark)
+        {
+            high=32;
+            low=192;
+        }
+        else
+        {
+            high=192;
+            low=32;
+        }
+        lg.setColorAt(0.0f, QColor(0, 0, 0, low));
+        lg.setColorAt(1.0f, QColor(255, 255, 255, high));
+        p.setBrush(lg);
+        p.setPen(Qt::NoPen);
+        p.drawEllipse(r);
+        r.shrink(3);
+        p.setBrush(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+        p.drawEllipse(r);
+        r.shrink(1);
+
+        c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
+        lg.setColorAt(0.0f, Color::mid(c, Qt::white, 5, 1));
+        lg.setColorAt(1.0f, Color::mid(c, Qt::black, 5, 1));
+        p.setBrush(lg);
+        p.drawEllipse(r);
+        p.restore();
         break;
     }
     default: break;

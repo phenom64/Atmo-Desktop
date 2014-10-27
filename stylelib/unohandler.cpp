@@ -279,8 +279,6 @@ ScrollWatcher::watch(QAbstractScrollArea *area)
         return;
     if (!Settings::conf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
         return;
-//    area->removeEventFilter(instance());
-//    area->installEventFilter(instance());
     connect(area->window(), SIGNAL(destroyed()), instance(), SLOT(removeFromQueue()));
     area->viewport()->removeEventFilter(instance());
     area->viewport()->installEventFilter(instance());
@@ -327,10 +325,10 @@ ScrollWatcher::updateWin(QMainWindow *win)
 void
 ScrollWatcher::regenBg(QMainWindow *win)
 {
-//    QElapsedTimer t;
-//    t.start();
     int uno(unoHeight(win, UNO::All));
     QImage img(win->width(), uno, QImage::Format_ARGB32);
+    if (img.isNull())
+        return;
     img.fill(Qt::transparent);
     QPainter p(&img);
     const int titleHeight(unoHeight(win, UNO::TitleBar));
@@ -353,9 +351,11 @@ ScrollWatcher::regenBg(QMainWindow *win)
         uno+=headerHeight;
         const int prevVal(area->verticalScrollBar()->value());
         const int realVal(qMax(0, prevVal-uno));
+
         area->verticalScrollBar()->setValue(realVal);
         vp->render(&p, topLeft+QPoint(0, -qMin(uno, prevVal)), QRect(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
         area->verticalScrollBar()->setValue(prevVal);
+
         uno-=headerHeight;
         vp->blockSignals(false);
         area->verticalScrollBar()->blockSignals(false);
@@ -366,9 +366,9 @@ ScrollWatcher::regenBg(QMainWindow *win)
         img = Render::blurred(img, img.rect(), blurRadius);
     s_winBg.insert((qlonglong)win, QPixmap::fromImage(img.copy(0, titleHeight, img.width(), img.height())));
     const QImage decoImg(img.copy(0, 0, img.width(), titleHeight));
+    QBuffer buffer;
     s_mem.detach();
     s_mem.setKey(QString::number(win->winId()));
-    QBuffer buffer;
     buffer.open(QBuffer::ReadWrite);
     QDataStream out(&buffer);
     out << decoImg;
@@ -380,7 +380,6 @@ ScrollWatcher::regenBg(QMainWindow *win)
         memcpy(to, from, buffer.size());
         s_mem.unlock();
     }
-//    qDebug() << "took" << t.elapsed() << "ms to gen gfx";
 }
 
 QPixmap
@@ -394,9 +393,22 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
     if (s_block)
         return false;
+
     if (e->type() == QEvent::Paint)
     {
+//        QAbstractScrollArea *area(static_cast<QAbstractScrollArea *>(o->parent()));
+//        if (!area->verticalScrollBar()->value())
+//            return false;
         QMainWindow *win(static_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
+        if (Settings::conf.uno.fps == 0)  //realtime
+        {
+            o->removeEventFilter(this);
+            QCoreApplication::sendEvent(o, e);
+            updateWin(win);
+            o->installEventFilter(this);
+            return true;
+        }
+
         if (!m_wins.contains(win))
             m_wins << win;
         if (!m_timer->isActive())

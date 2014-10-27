@@ -7,7 +7,6 @@
 
 #include "kwinclient.h"
 
-
 class Factory : public QObject, public KDecorationFactory
 {
     Q_OBJECT
