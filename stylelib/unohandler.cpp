@@ -275,10 +275,12 @@ ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent), m_timer(new QTi
 void
 ScrollWatcher::watch(QAbstractScrollArea *area)
 {
-    if (!Settings::conf.uno.contAware)
+    if (!area)
         return;
-    area->removeEventFilter(instance());
-    area->installEventFilter(instance());
+    if (!Settings::conf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
+        return;
+//    area->removeEventFilter(instance());
+//    area->installEventFilter(instance());
     connect(area->window(), SIGNAL(destroyed()), instance(), SLOT(removeFromQueue()));
     area->viewport()->removeEventFilter(instance());
     area->viewport()->installEventFilter(instance());
@@ -301,11 +303,15 @@ ScrollWatcher::updateLater()
     m_timer->stop();
 }
 
+static bool s_block;
+
 void
 ScrollWatcher::updateWin(QMainWindow *win)
 {
+    if (!win)
+        return;
+    s_block = true;
     regenBg(win);
-    UNO::Handler::updateWindow(win->winId());
     const QList<QToolBar *> toolBars(win->findChildren<QToolBar *>());
     for (int i = 0; i < toolBars.count(); ++i)
         toolBars.at(i)->update();
@@ -313,16 +319,16 @@ ScrollWatcher::updateWin(QMainWindow *win)
 //        sb->update();
     if (QTabBar *tb = win->findChild<QTabBar *>())
         tb->update();
+    if (!Settings::conf.removeTitleBars)
+        UNO::Handler::updateWindow(win->winId(), 64);
+    s_block = false;
 }
-
-static bool s_block;
 
 void
 ScrollWatcher::regenBg(QMainWindow *win)
 {
 //    QElapsedTimer t;
 //    t.start();
-    s_block = true;
     int uno(unoHeight(win, UNO::All));
     QImage img(win->width(), uno, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
@@ -348,33 +354,32 @@ ScrollWatcher::regenBg(QMainWindow *win)
         const int prevVal(area->verticalScrollBar()->value());
         const int realVal(qMax(0, prevVal-uno));
         area->verticalScrollBar()->setValue(realVal);
-        vp->render(&p, vp->mapTo(win, QPoint(0, -qMin(uno, prevVal))), QRect(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
-        uno-=headerHeight;
+        vp->render(&p, topLeft+QPoint(0, -qMin(uno, prevVal)), QRect(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
         area->verticalScrollBar()->setValue(prevVal);
+        uno-=headerHeight;
         vp->blockSignals(false);
         area->verticalScrollBar()->blockSignals(false);
         area->blockSignals(false);
     }
     p.end();
-    img = Render::blurred(img, img.rect(), 2);
+    if (int blurRadius = Settings::conf.uno.blur)
+        img = Render::blurred(img, img.rect(), blurRadius);
     s_winBg.insert((qlonglong)win, QPixmap::fromImage(img.copy(0, titleHeight, img.width(), img.height())));
     const QImage decoImg(img.copy(0, 0, img.width(), titleHeight));
     s_mem.detach();
     s_mem.setKey(QString::number(win->winId()));
-    const int size(decoImg.width()*decoImg.height());
-    if (s_mem.create(size))
+    QBuffer buffer;
+    buffer.open(QBuffer::ReadWrite);
+    QDataStream out(&buffer);
+    out << decoImg;
+    if (s_mem.create(buffer.size()))
     {
         s_mem.lock();
-        QBuffer buffer;
-        buffer.open(QBuffer::ReadWrite);
-        QDataStream out(&buffer);
-        out << decoImg;
         uchar *to = (uchar*)s_mem.data();
         const char *from = buffer.data().data();
-        memcpy(to, from, qMin(s_mem.size(), size));
+        memcpy(to, from, buffer.size());
         s_mem.unlock();
     }
-    s_block = false;
 //    qDebug() << "took" << t.elapsed() << "ms to gen gfx";
 }
 
@@ -389,9 +394,9 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
     if (s_block)
         return false;
-    if (e->type() == QEvent::Paint && qobject_cast<QAbstractScrollArea *>(o->parent()))
+    if (e->type() == QEvent::Paint)
     {
-        QMainWindow *win(qobject_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
+        QMainWindow *win(static_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
         if (!m_wins.contains(win))
             m_wins << win;
         if (!m_timer->isActive())
@@ -732,10 +737,10 @@ static QDBusMessage methodCall(const QString &method)
 }
 
 void
-Handler::updateWindow(WId window)
+Handler::updateWindow(WId window, unsigned int changed)
 {
     QDBusMessage msg = methodCall("update");
-    msg << QVariant::fromValue((unsigned int)window);
+    msg << QVariant::fromValue((unsigned int)window) << QVariant::fromValue(changed);
     QDBusConnection::sessionBus().send(msg);
 }
 

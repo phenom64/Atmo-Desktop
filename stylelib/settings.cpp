@@ -122,6 +122,7 @@ Settings::read()
     conf.uno.contAware = s.value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
     conf.uno.fps = 1000/s.value(READUNOFPS).toInt();
     conf.uno.opacity = s.value(READUNOOPACITY).toFloat()/100.0f;
+    conf.uno.blur = s.value(READUNOCONTBLUR).toInt();
     //menues
     conf.menues.icons = s.value(READMENUICONS).toBool();
     //sliders

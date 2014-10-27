@@ -63,6 +63,8 @@ public:
     void shadeChange() {}
     void reset(unsigned long changed);
 
+    void updateContBg();
+
     bool compositingActive() const;
     int buttonCornerWidth(bool left) { return left ? m_leftButtons : m_rightButtons; }
 

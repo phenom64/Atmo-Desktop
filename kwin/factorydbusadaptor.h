@@ -16,7 +16,7 @@ public:
     FactoryDbusAdaptor(Factory *f) : QDBusAbstractAdaptor(f), m_f(f){}
 
 public slots:
-    Q_NOREPLY void update(unsigned int window) { m_f->update(window); }
+    Q_NOREPLY void update(unsigned int window, unsigned int changed) { m_f->update(window, changed); }
 
 private:
     Factory *m_f;

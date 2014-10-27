@@ -114,7 +114,7 @@ public:
     static void manage(QWidget *mw);
     static void release(QWidget *mw);
     static void fixWindowTitleBar(QWidget *win);
-    static void updateWindow(WId window);
+    static void updateWindow(WId window, unsigned int changed = 63);
     static void updateToolBar(QToolBar *toolBar);
     static void fixTitleLater(QWidget *win);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset = QPoint(), float opacity = 1.0f);

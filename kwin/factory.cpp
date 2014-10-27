@@ -1,6 +1,7 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 
+#include "kwinclient.h"
 #include "factory.h"
 #include "factorydbusadaptor.h"
 #include "../stylelib/xhandler.h"
@@ -104,14 +105,18 @@ Factory::supports(Ability ability) const
 }
 
 void
-Factory::update(WId window)
+Factory::update(WId window, unsigned int changed)
 {
-    QList<KDecoration *> decos(findChildren<KDecoration *>());
+    QList<KwinClient *> decos(findChildren<KwinClient *>());
     for (int i = 0; i < decos.count(); ++i)
     {
-        KDecoration *d = decos.at(i);
+        KwinClient *d = decos.at(i);
         if (d->windowId() == window)
-            d->reset(63);
+        {
+            if (changed == 64)
+                d->updateContBg();
+            else
+                d->reset(changed);
+        }
     }
-
 }

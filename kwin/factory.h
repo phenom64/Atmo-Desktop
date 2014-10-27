@@ -17,7 +17,7 @@ public:
     KDecoration *createDecoration(KDecorationBridge *bridge);
     bool supports(Ability ability) const;
     static bool compositingActive();
-    void update(WId window);
+    void update(WId window, unsigned int changed);
 
 private:
 //    static Atom s_wmAtom;

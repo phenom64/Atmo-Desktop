@@ -45,6 +45,7 @@
 #define UNOCONT             "uno.contentaware"
 #define UNOFPS              "uno.contentfps"
 #define UNOOPACITY          "uno.contentopacity"
+#define UNOCONTBLUR         "uno.contentblurradius"
 
 #define MENUICONS           "menues.icons"
 
@@ -117,6 +118,7 @@
 #define DEFUNOCONT              QStringList()
 #define DEFUNOFPS               20
 #define DEFUNOOPACITY           10
+#define DEFUNOCONTBLUR          2
 
 #define DEFMENUICONS            false
 
@@ -171,6 +173,7 @@
 #define READUNOCONT             UNOCONT, DEFUNOCONT
 #define READUNOFPS              UNOFPS, DEFUNOFPS
 #define READUNOOPACITY          UNOOPACITY, DEFUNOOPACITY
+#define READUNOCONTBLUR         UNOCONTBLUR, DEFUNOCONTBLUR
 
 #define READMENUICONS           MENUICONS, DEFMENUICONS
 
@@ -243,7 +246,7 @@ public:
     {
         Gradient gradient;
         Tint tint;
-        unsigned int noise, fps;
+        unsigned int noise, fps, blur;
         float opacity;
         bool hor, contAware;
     } uno;

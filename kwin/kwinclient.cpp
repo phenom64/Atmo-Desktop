@@ -598,19 +598,6 @@ KwinClient::reset(unsigned long changed)
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
         if (*bg && *bg != m_bgPix.handle())
             m_bgPix = QPixmap::fromX11Pixmap(*bg);
-    m_mem.setKey(QString::number(windowId()));
-    if (m_mem.attach(QSharedMemory::ReadOnly))
-    {
-        QBuffer buffer;
-        QDataStream in(&buffer);
-
-        m_mem.lock();
-        buffer.setData((char*)m_mem.constData(), m_mem.size());
-        buffer.open(QBuffer::ReadOnly);
-        in >> m_bgCont;
-        m_mem.unlock();
-        m_mem.detach();
-    }
     QRect r(0, 0, width(), m_headHeight);
     m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
     m_unoGradient.setColorAt(0.0f, m_titleColor[0]);
@@ -634,4 +621,23 @@ KwinClient::reset(unsigned long changed)
     ShadowHandler::installShadows(windowId());
     if (!m_sizeGrip)
         m_sizeGrip = new SizeGrip(this);
+}
+
+void
+KwinClient::updateContBg()
+{
+    m_mem.setKey(QString::number(windowId()));
+    if (m_mem.attach(QSharedMemory::ReadOnly))
+    {
+        QBuffer buffer;
+        QDataStream in(&buffer);
+
+        m_mem.lock();
+        buffer.setData((char*)m_mem.constData(), m_mem.size());
+        buffer.open(QBuffer::ReadOnly);
+        in >> m_bgCont;
+        m_mem.unlock();
+        m_mem.detach();
+        widget()->update();
+    }
 }
