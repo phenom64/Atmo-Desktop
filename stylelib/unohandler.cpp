@@ -266,49 +266,37 @@ WinHandler::canDrag(QWidget *w)
 Q_DECL_EXPORT ScrollWatcher ScrollWatcher::s_instance;
 QMap<qlonglong, QPixmap> ScrollWatcher::s_winBg;
 QSharedMemory ScrollWatcher::s_mem;
+static QList<QWidget *> s_watched;
 
-ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent), m_timer(new QTimer(this))
+ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent)
 {
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(updateLater()));
 }
 
 void
 ScrollWatcher::watch(QAbstractScrollArea *area)
 {
-    if (!area)
+
+    if (!area || s_watched.contains(area->viewport()))
         return;
     if (!Settings::conf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
         return;
-    connect(area->window(), SIGNAL(destroyed()), instance(), SLOT(removeFromQueue()));
-    area->viewport()->removeEventFilter(instance());
+    s_watched << area->viewport();
+//    area->viewport()->removeEventFilter(instance());
     area->viewport()->installEventFilter(instance());
 }
 
-void
-ScrollWatcher::removeFromQueue()
-{
-    QMainWindow *mw(static_cast<QMainWindow *>(sender()));
-    if (m_wins.contains(mw))
-        m_wins.removeOne(mw);
-}
+static QMainWindow *s_win(0);
 
 void
 ScrollWatcher::updateLater()
 {
-    for (int i = 0; i < m_wins.count(); ++i)
-        updateWin(m_wins.at(i));
-    m_wins.clear();
-    m_timer->stop();
+    updateWin(s_win);
 }
-
-static bool s_block;
 
 void
 ScrollWatcher::updateWin(QMainWindow *win)
 {
-    if (!win)
-        return;
-    s_block = true;
+    blockSignals(true);
     regenBg(win);
     const QList<QToolBar *> toolBars(win->findChildren<QToolBar *>());
     const int uno(unoHeight(win, UNO::ToolBarAndTabBar));
@@ -321,15 +309,13 @@ ScrollWatcher::updateWin(QMainWindow *win)
         if (bar->geometry().bottom() < uno)
             bar->update();
     }
-//    if (QStatusBar *sb = win->findChild<QStatusBar *>())
-//        sb->update();
     if (QTabBar *tb = win->findChild<QTabBar *>())
         if (tb->isVisible())
             if (tb->mapTo(win, tb->rect().bottomLeft()).y() <=  uno)
                 tb->update();
     if (!Settings::conf.removeTitleBars)
         UNO::Handler::updateWindow(win->winId(), 64);
-    s_block = false;
+    blockSignals(false);
 }
 
 void
@@ -340,9 +326,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
     if (img.isNull())
         return;
     img.fill(Qt::transparent);
-    QPainter p(&img);
     const int titleHeight(unoHeight(win, UNO::TitleBar));
-    p.translate(0, titleHeight);
     QList<QAbstractScrollArea *> areas(win->findChildren<QAbstractScrollArea *>());
     for (int i = 0; i < areas.count(); ++i)
     {
@@ -357,24 +341,29 @@ ScrollWatcher::regenBg(QMainWindow *win)
         area->verticalScrollBar()->blockSignals(true);
         vp->blockSignals(true);
         QHeaderView *header(area->findChild<QHeaderView *>());
-        int headerHeight(header?header->height():0);
-        uno+=headerHeight;
+        const int headerHeight(header?header->height():0);
         const int prevVal(area->verticalScrollBar()->value());
         const int realVal(qMax(0, prevVal-uno));
 
         area->verticalScrollBar()->setValue(realVal);
-        vp->render(&p, topLeft+QPoint(0, -qMin(uno, prevVal)), QRect(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
-        area->verticalScrollBar()->setValue(prevVal);
+        const bool needRm(s_watched.contains(area->viewport()));
+        if (needRm)
+            area->viewport()->removeEventFilter(this);
 
-        uno-=headerHeight;
+        vp->render(&img, vp->mapTo(win, QPoint(0, titleHeight-qMin(uno+headerHeight, prevVal))), QRegion(0, 0, area->width(), uno+headerHeight));
+        area->verticalScrollBar()->setValue(prevVal);
+        if (needRm)
+            area->viewport()->installEventFilter(this);
+
         vp->blockSignals(false);
         area->verticalScrollBar()->blockSignals(false);
         area->blockSignals(false);
     }
-    p.end();
     if (int blurRadius = Settings::conf.uno.blur)
         img = Render::blurred(img, img.rect(), blurRadius);
     s_winBg.insert((qlonglong)win, QPixmap::fromImage(img.copy(0, titleHeight, img.width(), img.height())));
+    if (Settings::conf.removeTitleBars)
+        return;
     const QImage decoImg(img.copy(0, 0, img.width(), titleHeight));
     QBuffer buffer;
     s_mem.detach();
@@ -401,29 +390,21 @@ ScrollWatcher::bg(qlonglong win)
 bool
 ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
-    if (s_block)
-        return false;
-
-    if (e->type() == QEvent::Paint)
+    static bool s_block(false);
+    if (e->type() == QEvent::Paint && !s_block)
     {
-//        QAbstractScrollArea *area(static_cast<QAbstractScrollArea *>(o->parent()));
-//        if (!area->verticalScrollBar()->value())
-//            return false;
-        QMainWindow *win(static_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
-        if (Settings::conf.uno.fps == 0)  //realtime
-        {
-            o->removeEventFilter(this);
-            QCoreApplication::sendEvent(o, e);
-            updateWin(win);
-            o->installEventFilter(this);
-            return true;
-        }
-
-        if (!m_wins.contains(win))
-            m_wins << win;
-        if (!m_timer->isActive())
-            m_timer->start(Settings::conf.uno.fps);
-        return false;
+        s_win = 0;
+        QWidget *w(static_cast<QWidget *>(o));
+        if (!s_watched.contains(w))
+            return false;
+        QMainWindow *win(static_cast<QMainWindow *>(w->window()));
+        s_block = true;
+        QCoreApplication::sendEvent(o, e);
+        s_win = win;
+        if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, UNO::ToolBarAndTabBar))
+            QTimer::singleShot(0, this, SLOT(updateLater()));
+        s_block = false;
+        return true;
     }
     return false;
 }

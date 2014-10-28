@@ -182,7 +182,9 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         p.setBrush(lg);
         p.setPen(Qt::NoPen);
+        r.adjust(0, 1, 0, -1);
         p.drawEllipse(r);
+        r.adjust(0, -1, 0, 1);
         r.shrink(3);
         p.setBrush(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
         p.drawEllipse(r);
