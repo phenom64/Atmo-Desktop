@@ -191,9 +191,13 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         r.shrink(1);
 
         c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
-        lg.setColorAt(0.0f, Color::mid(c, Qt::white, 5, 1));
-        lg.setColorAt(1.0f, Color::mid(c, Qt::black, 5, 1));
-        p.setBrush(lg);
+        p.setBrush(c);
+        p.drawEllipse(r);
+        QRadialGradient rg(r.center()+QPoint(1, -r.height()*0.1f), r.height()*0.66f);
+//        rg.setColorAt(0.0f, Qt::transparent);
+        rg.setColorAt(0.0f, Qt::transparent);
+        rg.setColorAt(1.0f, QColor(0, 0, 0, 127));
+        p.setBrush(rg);
         p.drawEllipse(r);
         p.restore();
         break;
