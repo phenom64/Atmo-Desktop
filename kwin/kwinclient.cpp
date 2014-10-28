@@ -284,6 +284,8 @@ KwinClient::~KwinClient()
 {
     if (m_sizeGrip)
         delete m_sizeGrip;
+    if (m_mem.isAttached())
+        m_mem.detach();
 //    XHandler::deleteXProperty(windowId(), XHandler::DecoData);
 }
 
@@ -324,6 +326,8 @@ void
 KwinClient::postInit()
 {
     m_mem.setKey(QString::number(windowId()));
+    if (m_mem.isAttached())
+        m_mem.detach();
     reset(63);
 }
 
@@ -377,6 +381,8 @@ KwinClient::populate(const QString &buttons, bool left)
 void
 KwinClient::resize(const QSize &s)
 {
+    if (m_mem.isAttached())
+        m_mem.detach();
     widget()->resize(s);
 //    m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
     const int w(s.width()), h(s.height());
@@ -474,12 +480,22 @@ KwinClient::paint(QPainter &p)
     p.setPen(QPen(lg, 1.0f));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
-    if (!m_bgCont.isNull())
-    {
-        p.setOpacity(Settings::conf.uno.opacity);
-        Render::renderMask(tr, &p, m_bgCont, 4, Render::All & ~Render::Bottom);
-        p.setOpacity(1.0f);
-    }
+//    if (!m_bgCont.isNull())
+//    {
+//        p.setOpacity(Settings::conf.uno.opacity);
+//        Render::renderMask(tr, &p, m_bgCont, 4, Render::All & ~Render::Bottom);
+//        p.setOpacity(1.0f);
+//    }
+    if ((m_mem.isAttached() || m_mem.attach(QSharedMemory::ReadOnly)) && m_mem.size() == (widget()->width()*m_headHeight)*4)
+        if (m_mem.lock())
+        {
+            p.setOpacity(Settings::conf.uno.opacity);
+            const uchar *data(reinterpret_cast<const uchar *>(m_mem.constData()));
+            p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), tr);
+//            Render::renderMask(tr, &p, QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), 4, Render::All & ~Render::Bottom);
+            p.setOpacity(1.0f);
+            m_mem.unlock();
+        }
 
     QFont f(p.font());
     f.setBold(isActive());
@@ -583,6 +599,9 @@ KwinClient::reset(unsigned long changed)
     WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
     if (data && !isPreview())
     {
+        if (m_headHeight != data->height)
+            if (m_mem.isAttached())
+                m_mem.detach();
         m_headHeight = data->height;
         m_needSeparator = data->separator;
         m_custcol[Text] = QColor::fromRgba(data->text);
@@ -627,17 +646,18 @@ KwinClient::reset(unsigned long changed)
 void
 KwinClient::updateContBg()
 {
-    if (m_mem.attach(QSharedMemory::ReadOnly))
-    {
-        QBuffer buffer;
-        QDataStream in(&buffer);
+    widget()->update();
+//    if (m_mem.attach(QSharedMemory::ReadOnly))
+//    {
+//        QBuffer buffer;
+//        QDataStream in(&buffer);
 
-        m_mem.lock();
-        buffer.setData((char*)m_mem.constData(), m_mem.size());
-        buffer.open(QBuffer::ReadOnly);
-        in >> m_bgCont;
-        m_mem.unlock();
-        m_mem.detach();
-        widget()->update();
-    }
+//        m_mem.lock();
+//        buffer.setData((char*)m_mem.constData(), m_mem.size());
+//        buffer.open(QBuffer::ReadOnly);
+//        in >> m_bgCont;
+//        m_mem.unlock();
+//        m_mem.detach();
+//        widget()->update();
+//    }
 }

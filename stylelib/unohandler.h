@@ -71,8 +71,10 @@ public:
     static void watch(QAbstractScrollArea *area);
     static inline ScrollWatcher *instance() { return &s_instance; }
     void regenBg(QMainWindow *win);
-    static QPixmap bg(qlonglong win);
+    static QImage bg(qlonglong win);
     static QRegion paintRegion(QMainWindow *win);
+    static void detachMem(QMainWindow *win);
+    static bool hasBg(qulonglong win) { return s_winBg.contains(win); }
 
 protected:
     explicit ScrollWatcher(QObject *parent = 0);
@@ -87,8 +89,8 @@ signals:
 
 private:
     static ScrollWatcher s_instance;
-    static QMap<qlonglong, QPixmap> s_winBg;
-    static QSharedMemory s_mem;
+    static QMap<qlonglong, QImage> s_winBg;
+    static QMap<QMainWindow *, QSharedMemory *> s_mem;
 };
 
 namespace UNO

@@ -42,6 +42,7 @@ public:
     static QRect maskRect(const Shadow s, const QRect &r, const Sides sides);
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, const bool isDark = false);
+    static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
 
 protected:
     void _generateData();
