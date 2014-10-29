@@ -72,6 +72,9 @@ protected:
     bool eventFilter(QObject *, QEvent *);
     void paint(QPainter &p);
     void populate(const QString &buttons, bool left);
+    QColor bgColor() const;
+    QColor fgColor() const;
+
 
 protected slots:
     void postInit();
@@ -79,9 +82,9 @@ protected slots:
 private:
     QHBoxLayout *m_titleLayout;
     QLinearGradient m_unoGradient;
-    QColor m_titleColor[2], m_custcol[CustColCount];
+    QColor m_custcol[CustColCount];
     Factory *m_factory;
-    QBrush m_brush;
+    QBrush m_brush[2];
     QPixmap m_pix, m_bgPix;
     QImage m_bgCont;
     float m_opacity;

@@ -21,7 +21,7 @@ public:
     Button(Type type, QWidget *parent = 0);
     ~Button();
 
-    inline void setBgPix(const QPixmap &bg) {m_bgPix = bg;}
+    inline void setBgPix(const QPixmap &bg, const bool active) {m_bgPix[active] = bg;}
 
 protected:
     void paintEvent(QPaintEvent *);
@@ -51,7 +51,7 @@ protected:
     PaintEvent m_paintEvent[TypeCount];
     Type m_type;
     bool m_hasPress;
-    QPixmap m_bgPix;
+    QPixmap m_bgPix[2];
 };
 
 #endif //WIDGETS_H

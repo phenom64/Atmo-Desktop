@@ -42,8 +42,8 @@ void
 Button::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
-    if (!XHandler::compositingActive() && !m_bgPix.isNull())
-        p.drawTiledPixmap(rect(), m_bgPix, geometry().topLeft());
+    if (!XHandler::compositingActive() && !m_bgPix[isActive()].isNull())
+        p.drawTiledPixmap(rect(), m_bgPix[isActive()], geometry().topLeft());
     if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])(p))
         return;
     p.end();

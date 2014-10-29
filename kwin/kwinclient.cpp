@@ -45,7 +45,7 @@ DButton::color(const ColorRole &c) const
         fgc = m_client->m_custcol[Fg];
     if (c == Fg)
         return fgc;
-    QColor bgc(m_client->options()->color(KDecoration::ColorButtonBg, m_client->isActive()));
+    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
     if (m_client->m_custcol[Bg].isValid())
         bgc = m_client->m_custcol[Bg];
     if (c == Bg)
@@ -313,8 +313,6 @@ KwinClient::init()
     l->addLayout(m_titleLayout);
     l->addStretch();
     widget()->setLayout(l);
-    m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
-    m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
     m_needSeparator = true;
     if (isPreview())
         reset(63);
@@ -455,6 +453,22 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     return KDecoration::eventFilter(o, e);
 }
 
+QColor
+KwinClient::fgColor() const
+{
+    if (m_custcol[Text].isValid())
+        return m_custcol[Text];
+    return options()->color(ColorFont, isActive());
+}
+
+QColor
+KwinClient::bgColor() const
+{
+    if (m_custcol[Bg].isValid())
+        return m_custcol[Bg];
+    return options()->color(ColorTitleBar, isActive());
+}
+
 void
 KwinClient::paint(QPainter &p)
 {
@@ -467,11 +481,11 @@ KwinClient::paint(QPainter &p)
 //        p.drawTiledPixmap(tr, m_bgPix[0]);
         Render::renderMask(tr, &p, m_bgPix, 4, Render::All & ~Render::Bottom);
     else
-        Render::renderMask(tr, &p, m_brush, 4, Render::All & ~Render::Bottom);
+        Render::renderMask(tr, &p, m_brush[isActive()], 4, Render::All & ~Render::Bottom);
     p.setOpacity(1.0f);
 
-    const int bgLum(Color::luminosity(m_custcol[Bg]));
-    const bool isDark(Color::luminosity(m_custcol[Text]) > bgLum);
+    const int bgLum(Color::luminosity(bgColor()));
+    const bool isDark(Color::luminosity(fgColor()) > bgLum);
 
     QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
     lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
@@ -513,10 +527,8 @@ KwinClient::paint(QPainter &p)
         p.setPen(QColor(rgb, rgb, rgb, 127));
         p.drawText(textRect.translated(0, 1), Qt::AlignCenter, text);
     }
-    if (m_custcol[Text].isValid())
-        p.setPen(m_custcol[Text]);
-    else
-        p.setPen(options()->color(KwinClient::ColorFont, isActive()));
+
+    p.setPen(fgColor());
 
     p.drawText(textRect, Qt::AlignCenter, text);
     if (Settings::conf.deco.icon && !icon().isNull())
@@ -595,6 +607,9 @@ KwinClient::reset(unsigned long changed)
         populate(options()->titleButtonsRight(), false);
         m_buttons = widget()->findChildren<Button * >();
     }
+    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+        if (*bg && *bg != m_bgPix.handle())
+            m_bgPix = QPixmap::fromX11Pixmap(*bg);
     int n(0);
     WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
     if (data && !isPreview())
@@ -611,29 +626,30 @@ KwinClient::reset(unsigned long changed)
     }
     else
     {
-        m_titleColor[0] = Color::mid(options()->color(ColorTitleBar), Qt::white, 4, 1);
-        m_titleColor[1] = Color::mid(options()->color(ColorTitleBar), Qt::black, 4, 1);
+        for (int i = 0; i < 2; ++i)
+        {
+            QRect r(0, 0, width(), m_headHeight);
+            QLinearGradient lg(r.topLeft(), r.bottomLeft());
+            lg.setColorAt(0.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::white, 4, 1));
+            lg.setColorAt(1.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::black, 4, 1));
+            QPixmap p(Render::noise().size().width(), m_headHeight);
+            p.fill(Qt::transparent);
+            QPainter pt(&p);
+            pt.fillRect(p.rect(), lg);
+            pt.end();
+            const QPixmap &bg = Render::mid(p, Render::noise(), 40, 1);
+            m_brush[i] = QBrush(bg);
+        }
         m_needSeparator = true;
     }
-    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-        if (*bg && *bg != m_bgPix.handle())
-            m_bgPix = QPixmap::fromX11Pixmap(*bg);
-    QRect r(0, 0, width(), m_headHeight);
-    m_unoGradient = QLinearGradient(r.topLeft(), r.bottomLeft());
-    m_unoGradient.setColorAt(0.0f, m_titleColor[0]);
-    m_unoGradient.setColorAt(1.0f, m_titleColor[1]);
-    QPixmap p(Render::noise().size().width(), m_headHeight);
-    p.fill(Qt::transparent);
-    QPainter pt(&p);
-    pt.fillRect(p.rect(), m_unoGradient);
-    pt.end();
-    const QPixmap &bg = Render::mid(p, Render::noise(), 40, 1);
-    for (int i = 0; i < m_buttons.count(); ++i)
+
+    for (int j = 0; j < m_buttons.count(); ++j)
     {
-        m_buttons.at(i)->setBgPix(m_bgPix.isNull()?bg:m_bgPix);
-        m_buttons.at(i)->update();
+        for (int i = 0; i < 2; ++i)
+            m_buttons.at(j)->setBgPix(m_bgPix.isNull()?m_brush[i].texture():m_bgPix, i);
+        m_buttons.at(j)->update();
     }
-    m_brush = QBrush(bg);
+
     widget()->update();
     if (isPreview())
         return;
