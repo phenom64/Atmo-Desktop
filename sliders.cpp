@@ -106,7 +106,23 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     QBrush amask(lga);
     const bool ns(widget&&widget->parentWidget()&&(Color::luminosity(grooveBg) < Color::luminosity(widget->parentWidget()->palette().color(widget->parentWidget()->backgroundRole()))));
     QRect clip(groove);
-    clip.setRight(slider.center().x());
+    if (Settings::conf.sliders.fillGroove)
+    {
+        if (opt->orientation == Qt::Horizontal)
+        {
+            if (opt->upsideDown)
+                clip.setLeft(slider.center().x());
+            else
+                clip.setRight(slider.center().x());
+        }
+        else
+        {
+            if (opt->upsideDown)
+                clip.setTop(slider.center().y());
+            else
+                clip.setBottom(slider.center().y());
+        }
+    }
     if (Settings::conf.sliders.fillGroove)
         painter->setClipRegion(QRegion(groove)-QRegion(clip));
     Render::drawClickable(gs, groove, painter, Render::All, d, Settings::conf.shadows.opacity, widget, &amask, 0, ns);
