@@ -27,6 +27,7 @@
 #include <QToolButton>
 #include <qmath.h>
 #include <QAbstractScrollArea>
+#include <QAbstractItemView>
 #include <QScrollBar>
 #include <QElapsedTimer>
 #include <QBuffer>
@@ -353,10 +354,10 @@ ScrollWatcher::regenBg(QMainWindow *win)
     if (m->lock())
     {
         uchar *data = reinterpret_cast<uchar *>(m->data());
-        QImage img(data, win->width(), uno, QImage::Format_ARGB32);
+        QImage img(data, win->width(), uno, QImage::Format_ARGB32_Premultiplied);
         img.fill(Qt::transparent);
 
-        QList<QAbstractScrollArea *> areas(win->findChildren<QAbstractScrollArea *>());
+        const QList<QAbstractScrollArea *> areas(win->findChildren<QAbstractScrollArea *>());
         for (int i = 0; i < areas.count(); ++i)
         {
             QAbstractScrollArea *area(areas.at(i));
@@ -369,20 +370,32 @@ ScrollWatcher::regenBg(QMainWindow *win)
             area->blockSignals(true);
             area->verticalScrollBar()->blockSignals(true);
             vp->blockSignals(true);
-            QHeaderView *header(area->findChild<QHeaderView *>());
-            const int headerHeight(header?header->height():0);
+            const int offset(vp->mapToParent(QPoint(0, 0)).y());
+            QAbstractItemView *view = qobject_cast<QAbstractItemView *>(area);
+            QAbstractItemView::ScrollMode mode;
+            if (view)
+            {
+                mode = view->verticalScrollMode();
+                view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+            }
+
             const int prevVal(area->verticalScrollBar()->value());
-            const int realVal(qMax(0, prevVal-uno));
+            const int realVal(qMax(0, prevVal-(uno+offset)));
 
             area->verticalScrollBar()->setValue(realVal);
-            const bool needRm(s_watched.contains(area->viewport()));
+            const bool needRm(s_watched.contains(vp));
             if (needRm)
-                area->viewport()->removeEventFilter(this);
-
-            vp->render(&img, vp->mapTo(win, QPoint(0, titleHeight-qMin(uno+headerHeight, prevVal))), QRegion(0, 0, area->width(), uno+headerHeight), QWidget::DrawWindowBackground);
+                vp->removeEventFilter(this);
+            vp->render(&img, vp->mapTo(win, QPoint(0, titleHeight-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
             area->verticalScrollBar()->setValue(prevVal);
             if (needRm)
-                area->viewport()->installEventFilter(this);
+                vp->installEventFilter(this);
+
+            if (view)
+            {
+                mode = view->verticalScrollMode();
+                view->setVerticalScrollMode(mode);
+            }
 
             vp->blockSignals(false);
             area->verticalScrollBar()->blockSignals(false);
@@ -390,7 +403,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
         }
         if (int blurRadius = Settings::conf.uno.blur)
             Render::expblur(img, blurRadius);
-        s_winBg.insert((qlonglong)win, img/*QPixmap::fromImage(img.copy(0, titleHeight, img.width(), img.height()))*/);
+        s_winBg.insert((qlonglong)win, img);
         m->unlock();
     }
 }
@@ -404,10 +417,10 @@ ScrollWatcher::bg(qlonglong win)
 bool
 ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
-    if ((e->type() == QEvent::Resize || e->type() == QEvent::Close) && qobject_cast<QMainWindow *>(o))
-        detachMem(static_cast<QMainWindow *>(o));
     static bool s_block(false);
-    if (e->type() == QEvent::Paint && !s_block && qobject_cast<QAbstractScrollArea *>(o->parent()))
+    if ((e->type() == QEvent::Resize || e->type() == QEvent::Close) && qobject_cast<QMainWindow *>(o))
+        detachMem(static_cast<QMainWindow *>(o));  
+    else if (e->type() == QEvent::Paint && !s_block && qobject_cast<QAbstractScrollArea *>(o->parent()))
     {
         s_win = 0;
         QWidget *w(static_cast<QWidget *>(o));
@@ -422,6 +435,8 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         s_block = false;
         return true;
     }
+    else if (e->type() == QEvent::Hide && qobject_cast<QAbstractScrollArea *>(o->parent()))
+        updateWin(static_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
     return false;
 }
 

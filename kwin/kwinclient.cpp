@@ -491,7 +491,7 @@ KwinClient::paint(QPainter &p)
         {
             p.setOpacity(Settings::conf.uno.opacity);
             const uchar *data(reinterpret_cast<const uchar *>(m_mem.constData()));
-            p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), tr);
+            p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
 //            Render::renderMask(tr, &p, QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), 4, Render::All & ~Render::Bottom);
             p.setOpacity(1.0f);
             m_mem.unlock();
