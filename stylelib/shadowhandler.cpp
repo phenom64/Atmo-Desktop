@@ -13,6 +13,7 @@
 #include "xhandler.h"
 #include "ops.h"
 #include "render.h"
+#include "settings.h"
 
 Q_DECL_EXPORT ShadowHandler ShadowHandler::m_instance;
 
@@ -41,7 +42,7 @@ ShadowHandler::eventFilter(QObject *o, QEvent *e)
     return false;
 }
 
-static QPixmap *pix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static QPixmap *pix[2][8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
 //static QPixmap *menupix[2][8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
 //static QPixmap *(menupix[2])[8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
 static QPixmap *menupix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -63,12 +64,15 @@ static QRect part(int part, int size, int d = 1)
 }
 
 unsigned long
-*ShadowHandler::shadows(const int size)
+*ShadowHandler::shadows(bool active)
 {
-    unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow);
+    static XHandler::Value atom[2] = { XHandler::StoreInActiveShadow, XHandler::StoreActiveShadow };
+    unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), atom[active]);
     if (!shadows)
     {
-        qDebug() << "regenerating shadow data...";
+        int size(Settings::conf.deco.shadowSize);
+        if (!active)
+            size/=2;
         unsigned long *data = new unsigned long[12];
 
         int s(size*2+1);
@@ -79,8 +83,8 @@ unsigned long
         p.setRenderHint(QPainter::Antialiasing);
         p.setPen(Qt::NoPen);
         p.setBrush(Qt::NoBrush);
-        QRadialGradient rg(QRectF(img.rect()).center()+QPointF(0.0f, 0.5f), size);
-        rg.setColorAt(0.0f, QColor(0, 0, 0, 255));
+        QRadialGradient rg(QRectF(img.rect()).center(), size);
+        rg.setColorAt(0.0f, QColor(0, 0, 0, 128));
         rg.setColorAt(0.33f, QColor(0, 0, 0, 64));
         rg.setColorAt(0.66f, QColor(0, 0, 0, 16));
         rg.setColorAt(1.0f, Qt::transparent);
@@ -101,17 +105,17 @@ unsigned long
             {
                 QRect r(part(i, size));
                 Pixmap x11Pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), r.width(), r.height(), 32);
-                pix[i] = new QPixmap(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
-                pix[i]->fill(Qt::transparent);
-                QPainter pt(pix[i]);
-                pt.drawPixmap(pix[i]->rect(), QPixmap::fromImage(img).copy(r));
+                pix[active][i] = new QPixmap(QPixmap::fromX11Pixmap(x11Pix, QPixmap::ExplicitlyShared));
+                pix[active][i]->fill(Qt::transparent);
+                QPainter pt(pix[active][i]);
+                pt.drawPixmap(pix[active][i]->rect(), QPixmap::fromImage(img).copy(r));
                 pt.end();
-                data[i] = pix[i]->handle();
+                data[i] = pix[active][i]->handle();
             }
             else
                 data[i] = sd[i-8];
         }
-        XHandler::setXProperty<unsigned long>(QX11Info::appRootWindow(), XHandler::StoreShadow, XHandler::Long, data, 12);
+        XHandler::setXProperty<unsigned long>(QX11Info::appRootWindow(), atom[active], XHandler::Long, data, 12);
         shadows = data;
     }
     return shadows;
@@ -206,10 +210,10 @@ unsigned long
 
 
 void
-ShadowHandler::installShadows(WId w)
+ShadowHandler::installShadows(WId w, bool active)
 {
     if (w != QX11Info::appRootWindow())
-        XHandler::setXProperty<unsigned long>(w, XHandler::KwinShadows, XHandler::Long, shadows(), 12);
+        XHandler::setXProperty<unsigned long>(w, XHandler::KwinShadows, XHandler::Long, shadows(active), 12);
 }
 
 void
@@ -255,14 +259,16 @@ ShadowHandler::release(QWidget *w)
 void
 ShadowHandler::removeDelete()
 {
+    for (int a = 0; a < 2; ++a)
     for (int i = 0; i < 8; ++i)
     {
-        if (pix[i])
+        if (pix[a][i])
         {
-            XFreePixmap(QX11Info::display(), pix[i]->handle());
-            delete pix[i];
-            pix[i] = 0;
+            XFreePixmap(QX11Info::display(), pix[a][i]->handle());
+            delete pix[a][i];
+            pix[a][i] = 0;
         }
     }
-    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreShadow);
+    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreActiveShadow);
+    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreInActiveShadow);
 }

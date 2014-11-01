@@ -75,10 +75,6 @@ protected:
     QColor bgColor() const;
     QColor fgColor() const;
 
-
-protected slots:
-    void postInit();
-
 private:
     QHBoxLayout *m_titleLayout;
     QLinearGradient m_unoGradient;
@@ -94,7 +90,7 @@ private:
     SizeGrip *m_sizeGrip;
     friend class DButton;
     Buttons m_buttons;
-    QSharedMemory m_mem;
+    QSharedMemory *m_mem;
 };
 
 #endif //KWINCLIENT_H

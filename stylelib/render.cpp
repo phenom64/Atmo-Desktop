@@ -757,6 +757,7 @@ Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
 void
 Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const bool needStrong, const QPoint &offSet)
 {
+    rnd = qBound(1, rnd, qMin(r.height(), r.width())/2);
     if (s >= ShadowCount)
         return;
     const int o(opacity*255);
@@ -809,10 +810,13 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
-        const int m(3);
+        const int m(2);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()!=r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
-        rnd = qMax(1, rnd-m);
+        rnd = qMin(rnd-m, MAXRND);
+        renderShadow(Strenghter, r.adjusted(0, 0, 0, 1), p, rnd, sides, opacity);
+        r.sShrink(1);
+        rnd = qMax(1, rnd-1);
     }
     else
     {
@@ -831,14 +835,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         p->setCompositionMode(mode);
     }
 
-    if (s==Carved)
-    {
-        const int m(2);
-        r.sAdjust(-m, -m, m, m);
-        rnd = qMin(rnd+m, MAXRND);
-        renderShadow(Strenghter, r, p, rnd, sides, opacity);
-    }
-    else if (s==Sunken||s==Etched)
+    if (s==Sunken||s==Etched)
     {
         r.sAdjust(-1, -1, 1, 2);
         rnd = qMin(rnd+1, MAXRND);

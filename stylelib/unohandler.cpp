@@ -276,7 +276,6 @@ ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent)
 void
 ScrollWatcher::watch(QAbstractScrollArea *area)
 {
-
     if (!area || s_watched.contains(area->viewport()))
         return;
     if (!Settings::conf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
@@ -305,7 +304,8 @@ static QMainWindow *s_win(0);
 void
 ScrollWatcher::updateLater()
 {
-    updateWin(s_win);
+    if (s_win)
+        updateWin(s_win);
 }
 
 void
@@ -327,11 +327,28 @@ ScrollWatcher::updateWin(QMainWindow *win)
     if (QTabBar *tb = win->findChild<QTabBar *>())
         if (tb->isVisible())
             if (tb->mapTo(win, tb->rect().bottomLeft()).y() <=  uno)
-                tb->update();
+            {
+                if (QTabWidget *tw = qobject_cast<QTabWidget *>(tb->parentWidget()))
+                {
+                    const QList<QWidget *> kids(tw->findChildren<QWidget *>());
+                    for (int i = 0; i < kids.count(); ++i)
+                    {
+                        QWidget *kid(kids.at(i));
+                        if (kid->isVisible() && !kid->geometry().top())
+                            kid->update();
+                    }
+                }
+                else
+                    tb->update();
+            }
     if (!Settings::conf.removeTitleBars)
         UNO::Handler::updateWindow(win->winId(), 64);
     blockSignals(false);
 }
+
+#define PAINTING "DSP_painting"
+#define ISPAINTING property(PAINTING).toBool()
+#define SETPAINTING(_VAR_) setProperty(PAINTING, _VAR_);
 
 void
 ScrollWatcher::regenBg(QMainWindow *win)
@@ -361,10 +378,12 @@ ScrollWatcher::regenBg(QMainWindow *win)
         for (int i = 0; i < areas.count(); ++i)
         {
             QAbstractScrollArea *area(areas.at(i));
-            if (!area->isVisible())
+            if (!area->isVisible()
+                    || area->verticalScrollBar()->minimum() == area->verticalScrollBar()->maximum()
+                    || area->verticalScrollBar()->value() == area->verticalScrollBar()->minimum())
                 continue;
             const QPoint topLeft(area->mapTo(win, QPoint(0, 0)));
-            if (topLeft.y()-1 > (uno-unoHeight(win, UNO::TitleBar)))
+            if (topLeft.y()-1 > (uno-unoHeight(win, UNO::TitleBar)) || area->verticalScrollBar()->value() == area->verticalScrollBar()->minimum())
                 continue;
             QWidget *vp(area->viewport());
             area->blockSignals(true);
@@ -387,6 +406,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
             if (needRm)
                 vp->removeEventFilter(this);
             vp->render(&img, vp->mapTo(win, QPoint(0, titleHeight-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
+
             area->verticalScrollBar()->setValue(prevVal);
             if (needRm)
                 vp->installEventFilter(this);
@@ -424,14 +444,21 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
     {
         s_win = 0;
         QWidget *w(static_cast<QWidget *>(o));
-        if (!s_watched.contains(w))
+        QAbstractScrollArea *a(static_cast<QAbstractScrollArea *>(w->parentWidget()));
+        if (!s_watched.contains(w)
+                || a->verticalScrollBar()->minimum() == a->verticalScrollBar()->maximum())
             return false;
         QMainWindow *win(static_cast<QMainWindow *>(w->window()));
         s_block = true;
+        o->removeEventFilter(this);
+//        o->SETPAINTING(true);
         QCoreApplication::sendEvent(o, e);
         s_win = win;
         if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, UNO::ToolBarAndTabBar))
             QTimer::singleShot(0, this, SLOT(updateLater()));
+//            updateWin(win);
+//        o->SETPAINTING(false);
+        o->installEventFilter(this);
         s_block = false;
         return true;
     }
@@ -752,13 +779,11 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offse
     {
         const float savedOpacity(p->opacity());
         p->setOpacity(opacity);
-
         p->drawTiledPixmap(r, s_pix.value(check).at(0), offset);
         if (Settings::conf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
         {
             p->setOpacity(Settings::conf.uno.opacity);
-            const int add(unoHeight(win, TitleBar));
-            p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset+QPoint(0, add)));
+            p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset+QPoint(0, unoHeight(win, TitleBar))));
         }
         p->setOpacity(savedOpacity);
         return true;

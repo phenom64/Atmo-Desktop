@@ -273,8 +273,9 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_headHeight(TITLEHEIGHT)
     , m_needSeparator(true)
     , m_factory(factory)
-    , m_sizeGrip(0)
     , m_opacity(1.0f)
+    , m_sizeGrip(0)
+    , m_mem(0)
 {
     setParent(factory);
     Settings::read();
@@ -282,26 +283,25 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
 
 KwinClient::~KwinClient()
 {
+    if (m_mem && m_mem->isAttached())
+        m_mem->detach();
     if (m_sizeGrip)
+    {
         delete m_sizeGrip;
-    if (m_mem.isAttached())
-        m_mem.detach();
+        m_sizeGrip = 0;
+    }
 //    XHandler::deleteXProperty(windowId(), XHandler::DecoData);
 }
 
 void
 KwinClient::init()
 {
-    if (!isPreview())
-    {
-        unsigned char height(TITLEHEIGHT);
-        XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
-        ShadowHandler::installShadows(windowId());
-        setAlphaEnabled(true);
-    }
     createMainWidget();
     widget()->installEventFilter(this);
-    widget()->setAttribute(Qt::WA_NoSystemBackground);
+    widget()->setAttribute(Qt::WA_OpaquePaintEvent, !isPreview());
+    widget()->setAttribute(Qt::WA_NoSystemBackground, isPreview());
+//    widget()->setAttribute(Qt::WA_PaintOnScreen, !isPreview());
+    widget()->setAttribute(Qt::WA_StyledBackground, false);
     widget()->setAutoFillBackground(false);
 
     m_titleLayout = new QHBoxLayout();
@@ -314,18 +314,14 @@ KwinClient::init()
     l->addStretch();
     widget()->setLayout(l);
     m_needSeparator = true;
-    if (isPreview())
-        reset(63);
-    else
-        QTimer::singleShot(1, this, SLOT(postInit()));
-}
-
-void
-KwinClient::postInit()
-{
-    m_mem.setKey(QString::number(windowId()));
-    if (m_mem.isAttached())
-        m_mem.detach();
+    if (!isPreview() && windowId())
+    {
+        unsigned char height(TITLEHEIGHT);
+        XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
+        ShadowHandler::installShadows(windowId());
+        if (isResizable() && !m_sizeGrip)
+            m_sizeGrip = new SizeGrip(this);
+    }
     reset(63);
 }
 
@@ -379,8 +375,8 @@ KwinClient::populate(const QString &buttons, bool left)
 void
 KwinClient::resize(const QSize &s)
 {
-    if (m_mem.isAttached())
-        m_mem.detach();
+    if (m_mem && m_mem->isAttached())
+        m_mem->detach();
     widget()->resize(s);
 //    m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
     const int w(s.width()), h(s.height());
@@ -494,22 +490,21 @@ KwinClient::paint(QPainter &p)
     p.setPen(QPen(lg, 1.0f));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
-//    if (!m_bgCont.isNull())
-//    {
-//        p.setOpacity(Settings::conf.uno.opacity);
-//        Render::renderMask(tr, &p, m_bgCont, 4, Render::All & ~Render::Bottom);
-//        p.setOpacity(1.0f);
-//    }
-    if ((m_mem.isAttached() || m_mem.attach(QSharedMemory::ReadOnly)) && m_mem.size() == (widget()->width()*m_headHeight)*4)
-        if (m_mem.lock())
-        {
-            p.setOpacity(Settings::conf.uno.opacity);
-            const uchar *data(reinterpret_cast<const uchar *>(m_mem.constData()));
-            p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
-//            Render::renderMask(tr, &p, QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), 4, Render::All & ~Render::Bottom);
-            p.setOpacity(1.0f);
-            m_mem.unlock();
-        }
+    if (!isPreview())
+    {
+        if (!m_mem)
+            m_mem = new QSharedMemory(QString::number(windowId()), this);
+        if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->size() == (widget()->width()*m_headHeight)*4)
+            if (m_mem->lock())
+            {
+                p.setOpacity(Settings::conf.uno.opacity);
+                const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
+                p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
+                //            Render::renderMask(tr, &p, QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), 4, Render::All & ~Render::Bottom);
+                p.setOpacity(1.0f);
+                m_mem->unlock();
+            }
+    }
 
     QFont f(p.font());
     f.setBold(isActive());
@@ -566,11 +561,10 @@ void
 KwinClient::activeChange()
 {
     if (!isPreview())
-        ShadowHandler::installShadows(windowId());
+        ShadowHandler::installShadows(windowId(), isActive());
     widget()->update();
     for (int i = 0; i < m_buttons.count(); ++i)
         m_buttons.at(i)->update();
-    resize(widget()->size());
 }
 
 /**
@@ -590,7 +584,7 @@ KwinClient::activeChange()
 void
 KwinClient::reset(unsigned long changed)
 {
-    if ((changed & SettingButtons) || isPreview())
+    if (changed & SettingButtons)
     {
         m_buttons.clear();
         while (QLayoutItem *item = m_titleLayout->takeAt(0))
@@ -607,6 +601,7 @@ KwinClient::reset(unsigned long changed)
         populate(options()->titleButtonsRight(), false);
         m_buttons = widget()->findChildren<Button * >();
     }
+
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
         if (*bg && *bg != m_bgPix.handle())
             m_bgPix = QPixmap::fromX11Pixmap(*bg);
@@ -615,8 +610,8 @@ KwinClient::reset(unsigned long changed)
     if (data && !isPreview())
     {
         if (m_headHeight != data->height)
-            if (m_mem.isAttached())
-                m_mem.detach();
+            if (m_mem && m_mem->isAttached())
+                m_mem->detach();
         m_headHeight = data->height;
         m_needSeparator = data->separator;
         m_custcol[Text] = QColor::fromRgba(data->text);
@@ -626,6 +621,7 @@ KwinClient::reset(unsigned long changed)
     }
     else
     {
+        m_needSeparator = true;
         for (int i = 0; i < 2; ++i)
         {
             QRect r(0, 0, width(), m_headHeight);
@@ -640,23 +636,18 @@ KwinClient::reset(unsigned long changed)
             const QPixmap &bg = Render::mid(p, Render::noise(), 40, 1);
             m_brush[i] = QBrush(bg);
         }
-        m_needSeparator = true;
     }
-
-    for (int j = 0; j < m_buttons.count(); ++j)
+    for (int i = 0; i < m_buttons.count(); ++i)
     {
-        for (int i = 0; i < 2; ++i)
-            m_buttons.at(j)->setBgPix(m_bgPix.isNull()?m_brush[i].texture():m_bgPix, i);
-        m_buttons.at(j)->update();
+        //            for (int i = 0; i < 2; ++i)
+        //                m_buttons.at(j)->setBgPix(m_bgPix.isNull()?m_brush[i].texture():m_bgPix, i);
+        m_buttons.at(i)->update();
     }
+//    if (changed & SettingCompositing)
+//        for (int i = 0; i < m_buttons.count(); ++i)
+//            m_buttons.at(i)->update();
 
     widget()->update();
-    if (isPreview())
-        return;
-
-    ShadowHandler::installShadows(windowId());
-    if (!m_sizeGrip)
-        m_sizeGrip = new SizeGrip(this);
 }
 
 void

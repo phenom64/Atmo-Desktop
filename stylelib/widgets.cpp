@@ -104,7 +104,10 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.save();
         p.setPen(Qt::NoPen);
         r.adjust(2, 2, -2, -2);
-        p.setBrush(Color::mid(c, Qt::black, 4, 1));
+        QColor dark(Color::mid(c, Qt::black, 5, 3+isDark*10));
+//        dark.setAlpha(63);
+
+        p.setBrush(dark);
         p.drawEllipse(r);
         p.setBrush(c);
         r.adjust(1, 1, -1, -1);

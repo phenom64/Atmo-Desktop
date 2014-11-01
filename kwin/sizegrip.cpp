@@ -10,47 +10,43 @@
 #include "../stylelib/xhandler.h"
 
 #define SZ 16
-SizeGrip::SizeGrip(KwinClient *parent) : QWidget(0), m_client(parent), m_timer(new QTimer(this))
+SizeGrip::SizeGrip(KwinClient *client) : QWidget(/*client->widget()*/0), m_client(client) //if I parent the widget I get garbled painting when compositing active.... weird.
 {
-    if (!parent || parent->isPreview())
+    hide();
+    if (!client || client->isPreview() || !client->widget() || !client->windowId())
     {
         deleteLater();
         return;
     }
-    setCursor( Qt::SizeFDiagCursor );
+    setCursor(Qt::SizeFDiagCursor);
     setFixedSize(SZ, SZ);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_PaintOnScreen);
-    m_client->widget()->installEventFilter(this);
     const int points[] = { SZ,0, SZ,SZ/2, SZ/2,SZ, SZ,SZ, 0,SZ };
     setMask(QPolygon(5, points));
     restack();
-    repos();
-    show();
-    QTimer::singleShot(250, this, SLOT(restack()));
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(checkSize()));
+    m_client->widget()->installEventFilter(this);
+    installEventFilter(this);
 }
 
 /**
-Status XQueryTree(display, w, root_return, parent_return, children_return, nchildren_return)
-      Display *display;
-      Window w;
-      Window *root_return;
-      Window *parent_return;
-      Window **children_return;
-      unsigned int *nchildren_return;
+    Status XQueryTree(display, w, root_return, parent_return, children_return, nchildren_return)
+          Display *display;
+          Window w;
+          Window *root_return;
+          Window *parent_return;
+          Window **children_return;
+          unsigned int *nchildren_return;
 
-Arguments
-display 	Specifies the connection to the X server.
-w 	Specifies the window whose list of children, root, parent, and number of children you want to obtain.
-root_return 	Returns the root window.
-parent_return 	Returns the parent window.
-children_return 	Returns the list of children.
-nchildren_return 	Returns the number of children.
- */
+    Arguments
+    display 	Specifies the connection to the X server.
+    w 	Specifies the window whose list of children, root, parent, and number of children you want to obtain.
+    root_return 	Returns the root window.
+    parent_return 	Returns the parent window.
+    children_return 	Returns the list of children.
+    nchildren_return 	Returns the number of children.
 
-/**
-  Syntax
+    Syntax
     XReparentWindow(display, w, parent, x, y)
       Display *display;
       Window w;
@@ -61,71 +57,87 @@ nchildren_return 	Returns the number of children.
 void
 SizeGrip::restack()
 {
-    WId w(m_client->windowId());
-    if (!w)
-        return;
-    WId root_return(0);
-    WId parent_return(0);
+    if (WId w = m_client->windowId())
+    {
+        WId root_return(0);
+        WId parent_return(0);
+        WId *children_return = 0;
+        unsigned int nchildren_return;
+        XQueryTree(QX11Info::display(), w, &root_return, &parent_return, &children_return, &nchildren_return);
+        if (parent_return)
+        {
+            XReparentWindow(QX11Info::display(), winId(), parent_return, 0, 0);
+            repos();
+//            XMapWindow(QX11Info::display(), winId());
+            show();
+        }
+    }
+    else
+    {
+        hide();
+        deleteLater();
+    }
+}
 
-    WId *children_return = 0;
-    unsigned int nchildren_return;
-    XQueryTree(QX11Info::display(), w, &root_return, &parent_return, &children_return, &nchildren_return);
-    if (parent_return)
-        if (parent_return != root_return)
-            if (parent_return != w)
-                w = parent_return;
+QPoint
+SizeGrip::thePos() const
+{
+    int l,t,r,b;
+    m_client->borders(l, r, t, b);
+    int right(m_client->width()-(l+r)), bottom(m_client->height()-(t+b));
+    return QPoint(right-SZ, bottom-SZ);
+}
 
-    XReparentWindow(QX11Info::display(), winId(), w, 0, 0);
-    repos();
+int
+SizeGrip::xPos() const
+{
+    return thePos().x();
+}
+
+int
+SizeGrip::yPos() const
+{
+    return thePos().y();
 }
 
 void
 SizeGrip::repos()
 {
-    move(m_client->width()-SZ, m_client->height()-(m_client->m_titleLayout->geometry().height()+SZ));
+    move(thePos());
 }
 
-void
-SizeGrip::checkSize()
-{
-    if (m_size == m_client->widget()->size())
-    {
-        m_timer->stop();
-        restack();
-    }
-    else
-        m_size = m_client->widget()->size();
-}
 
 bool
 SizeGrip::eventFilter(QObject *o, QEvent *e)
 {
-    if (o == m_client->widget() && e->type() == QEvent::Resize || e->type() == QEvent::Show || e->type() == QEvent::ZOrderChange)
+    if (o == this && e->type() == QEvent::ZOrderChange)
     {
-        repos();
-        m_timer->start(250);
+        removeEventFilter(this);
+        restack();
+        installEventFilter(this);
+        return false;
     }
-    return QWidget::eventFilter(o, e);
+    if (o == m_client->widget() && e->type() == QEvent::Resize)
+        repos();
+    return false;
 }
 
 void
 SizeGrip::mousePressEvent(QMouseEvent *e)
 {
-    e->accept();
-//    m_client->performWindowOperation(KDecorationDefines::ResizeOp);
     XHandler::mwRes(e->globalPos(), m_client->windowId(), true);
 }
 
 void
-SizeGrip::mouseReleaseEvent(QMouseEvent *e)
+SizeGrip::mouseReleaseEvent(QMouseEvent *)
 {
-    QWidget::mouseReleaseEvent(e);
+    m_client->performWindowOperation(KDecoration::NoOp);
 }
 
 void
-SizeGrip::paintEvent(QPaintEvent *)
+SizeGrip::paintEvent(QPaintEvent *e)
 {
     QPainter p(this);
-    p.fillRect(rect(), Color::mid(m_client->options()->color(KDecoration::ColorFont), m_client->options()->color(KDecoration::ColorTitleBar)));
+    p.fillRect(rect(), Color::mid(m_client->fgColor(), m_client->bgColor()));
     p.end();
 }

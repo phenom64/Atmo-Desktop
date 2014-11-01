@@ -8,7 +8,7 @@ class SizeGrip : public QWidget
 {
     Q_OBJECT
 public:
-    SizeGrip(KwinClient *parent = 0);
+    SizeGrip(KwinClient *client = 0);
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -16,15 +16,15 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
     void paintEvent(QPaintEvent *);
     void repos();
+    int xPos() const;
+    int yPos() const;
+    QPoint thePos() const;
 
 protected slots:
     void restack();
-    void checkSize();
 
 private:
     KwinClient *m_client;
-    QTimer *m_timer;
-    QSize m_size;
 };
 
 #endif // SIZEGRIP_H

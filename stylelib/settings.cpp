@@ -78,6 +78,8 @@ Settings::read()
         append = QString("/%1.conf").arg(appName);
     settingsPath.append(append);
 
+#define READINT(_VAR_) s.value(_VAR_).toInt();
+
     QSettings s(settingsPath, QSettings::NativeFormat);
     //globals
     conf.opacity = s.value(READOPACITY).toFloat()/100.0f;
@@ -91,6 +93,7 @@ Settings::read()
     //deco
     conf.deco.buttons = s.value(READDECOBUTTONS).toInt();
     conf.deco.icon = s.value(READDECOICON).toBool();
+    conf.deco.shadowSize = READINT(READDECOSHADOWSIZE);
     //pushbuttons
     conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     conf.pushbtn.shadow = s.value(READPUSHBTNSHADOW).toInt();
@@ -135,4 +138,6 @@ Settings::read()
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
     //shadows
     conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
+
+#undef READINT
 }
