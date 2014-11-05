@@ -816,7 +816,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         rnd = qMin(rnd-m, MAXRND);
         renderShadow(Strenghter, r.adjusted(0, 0, 0, 1), p, rnd, sides, opacity);
         r.sShrink(1);
-        rnd = qMax(1, rnd-1);
+        rnd = qMin(MAXRND, rnd+1);
     }
     else
     {

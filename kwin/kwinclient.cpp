@@ -276,6 +276,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_opacity(1.0f)
     , m_sizeGrip(0)
     , m_mem(0)
+    , m_contAware(false)
 {
     setParent(factory);
     Settings::read();
@@ -473,11 +474,7 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setClipRect(tr);
     p.setOpacity(m_opacity);
-    if (!m_bgPix.isNull())
-//        p.drawTiledPixmap(tr, m_bgPix[0]);
-        Render::renderMask(tr, &p, m_bgPix, 4, Render::All & ~Render::Bottom);
-    else
-        Render::renderMask(tr, &p, m_brush[isActive()], 4, Render::All & ~Render::Bottom);
+    p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     p.setOpacity(1.0f);
 
     const int bgLum(Color::luminosity(bgColor()));
@@ -490,7 +487,7 @@ KwinClient::paint(QPainter &p)
     p.setPen(QPen(lg, 1.0f));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
-    if (!isPreview())
+    if (m_contAware)
     {
         if (!m_mem)
             m_mem = new QSharedMemory(QString::number(windowId()), this);
@@ -500,7 +497,6 @@ KwinClient::paint(QPainter &p)
                 p.setOpacity(Settings::conf.uno.opacity);
                 const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
                 p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
-                //            Render::renderMask(tr, &p, QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32), 4, Render::All & ~Render::Bottom);
                 p.setOpacity(1.0f);
                 m_mem->unlock();
             }
@@ -524,8 +520,8 @@ KwinClient::paint(QPainter &p)
     }
 
     p.setPen(fgColor());
-
     p.drawText(textRect, Qt::AlignCenter, text);
+
     if (Settings::conf.deco.icon && !icon().isNull())
     {
         QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
@@ -549,6 +545,10 @@ KwinClient::paint(QPainter &p)
         p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
         p.setClipping(false);
     }
+
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.drawTiledPixmap(QRect(QPoint(), Factory::s_topLeft.size()), Factory::s_topLeft);
+    p.drawTiledPixmap(QRect(QPoint(width()-Factory::s_topRight.size().width(), 0), Factory::s_topRight.size()), Factory::s_topRight);
 }
 
 QSize
@@ -602,16 +602,23 @@ KwinClient::reset(unsigned long changed)
         m_buttons = widget()->findChildren<Button * >();
     }
 
+    bool needBg(true);
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-        if (*bg && *bg != m_bgPix.handle())
-            m_bgPix = QPixmap::fromX11Pixmap(*bg);
+    {
+        for (int i = 0; i < 2; ++i)
+            if (*bg && *bg != m_bgPix[i].handle())
+                m_bgPix[i] = QPixmap::fromX11Pixmap(*bg);
+        needBg = false;
+    }
     int n(0);
     WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
     if (data && !isPreview())
     {
+        m_contAware = data->contAware;
+        if (m_contAware)
         if (m_headHeight != data->height)
-            if (m_mem && m_mem->isAttached())
-                m_mem->detach();
+        if (m_mem && m_mem->isAttached())
+            m_mem->detach();
         m_headHeight = data->height;
         m_needSeparator = data->separator;
         m_custcol[Text] = QColor::fromRgba(data->text);
@@ -619,7 +626,7 @@ KwinClient::reset(unsigned long changed)
         m_opacity = (float)data->opacity/100.0f;
         XFree(data);
     }
-    else
+    else if (needBg)
     {
         m_needSeparator = true;
         for (int i = 0; i < 2; ++i)
@@ -633,19 +640,11 @@ KwinClient::reset(unsigned long changed)
             QPainter pt(&p);
             pt.fillRect(p.rect(), lg);
             pt.end();
-            const QPixmap &bg = Render::mid(p, Render::noise(), 40, 1);
-            m_brush[i] = QBrush(bg);
+            m_bgPix[i] = Render::mid(p, Render::noise(), 40, 1);
         }
     }
     for (int i = 0; i < m_buttons.count(); ++i)
-    {
-        //            for (int i = 0; i < 2; ++i)
-        //                m_buttons.at(j)->setBgPix(m_bgPix.isNull()?m_brush[i].texture():m_bgPix, i);
         m_buttons.at(i)->update();
-    }
-//    if (changed & SettingCompositing)
-//        for (int i = 0; i < m_buttons.count(); ++i)
-//            m_buttons.at(i)->update();
 
     widget()->update();
 }

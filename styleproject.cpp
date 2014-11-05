@@ -96,7 +96,7 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
 //        flags &= ~Qt::AlignHCenter;
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
     if (pal.brush(bgRole).style() == Qt::SolidPattern && !pal.brush(bgRole).gradient())
-    if (pal.color(textRole).alpha() == 0xff && pal.color(bgRole).alpha())
+    if (pal.color(textRole).alpha() == 0xff /*&& pal.color(bgRole).alpha()*/)
     if (textRole != QPalette::NoRole && bgRole != QPalette::NoRole && enabled)
     {
         const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));

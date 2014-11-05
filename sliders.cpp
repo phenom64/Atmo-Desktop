@@ -311,15 +311,17 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         inv = hor?optv2->invertedAppearance:!optv2->bottomToTop;
     QPoint offSet(hor?inv?a:-a:0, !hor?inv?a:-a:0);
     painter->setClipRect(cont);
-    Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
-    QLinearGradient shadow(0, 0, 0, opt->rect.height());
-    const int o(Settings::conf.shadows.opacity*255.0f);
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
-    QBrush b(shadow);
+    QBrush b(pixmap);
+    Render::drawClickable(Settings::conf.progressbars.shadow, groove, painter, Render::All, Settings::conf.progressbars.rnd, Settings::conf.shadows.opacity, widget, &b, 0, false, offSet);
+//    Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
+//    QLinearGradient shadow(0, 0, 0, opt->rect.height());
+//    const int o(Settings::conf.shadows.opacity*255.0f);
+//    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
+//    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
+//    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
+//    QBrush b(shadow);
 
-    Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
+//    Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
     painter->restore();
     return true;
 }
@@ -332,15 +334,11 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
         return true;
 
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
-    Render::renderMask(groove, painter, opt->palette.color(Ops::bgRole(widget, QPalette::Base)), 4);
-
-    QLinearGradient shadow(0, 0, 0, opt->rect.height());
-    shadow.setColorAt(0.0f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(0.8f, QColor(0, 0, 0, 32));
-    shadow.setColorAt(1.0f, QColor(0, 0, 0, 92));
-    QBrush b(shadow);
-
-    Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
+    QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
+    painter->setClipRegion(QRegion(groove)-QRegion(cont));
+    QBrush b(opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
+    Render::drawClickable(Settings::conf.progressbars.shadow, groove, painter, Render::All, Settings::conf.progressbars.rnd, Settings::conf.shadows.opacity, widget, &b);
+    painter->setClipping(false);
     return true;
 }
 

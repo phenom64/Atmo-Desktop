@@ -57,6 +57,10 @@
 #define SLIDERFILLGROOVE    "sliders.fillgroove"
 
 #define SCROLLERSIZE        "scrollers.size"
+
+#define PROGSHADOW          "progressbars.shadow"
+#define PROGRND             "progressbars.rnd"
+
 #define SHADOWOPACITY       "shadows.opacity"
 
 //defaults
@@ -131,6 +135,10 @@
 
 
 #define DEFSCROLLERSIZE         12
+
+#define DEFPROGSHADOW           3
+#define DEFPROGRND              4
+
 #define DEFSHADOWOPACITY        33
 
 #define READOPACITY             OPACITY, DEFOPACITY
@@ -185,6 +193,10 @@
 #define READSLIDERFILLGROOVE    SLIDERFILLGROOVE, DEFSLIDERGROOVE
 
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
+
+#define READPROGSHADOW          PROGSHADOW, DEFPROGSHADOW
+#define READPROGRND             PROGRND, DEFPROGRND
+
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
 
 typedef QList<QPair<float, int> > Gradient;
@@ -233,6 +245,10 @@ public:
     {
         int size;
     } scrollers;
+    struct progressbars
+    {
+        int shadow, rnd;
+    } progressbars;
     struct shadows
     {
         float opacity;

@@ -67,6 +67,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
             drawItemText(painter, opt->rect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, fg);
 
         painter->setFont(sf);
+        painter->restore();
         return true;
     }
 

@@ -7,7 +7,7 @@
 typedef struct _WindowData
 {
     QRgb text, bg;
-    bool separator;
+    bool separator, contAware;
     unsigned int height, opacity;
 } WindowData;
 

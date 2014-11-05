@@ -17,6 +17,8 @@ public:
     bool supports(Ability ability) const;
     static bool compositingActive();
     void update(WId window, unsigned int changed);
+    void genMasks();
+    static QPixmap s_topLeft, s_topRight;
 
 private:
 //    static Atom s_wmAtom;

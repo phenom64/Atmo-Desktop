@@ -136,6 +136,9 @@ Settings::read()
     conf.sliders.fillGroove = s.value(READSLIDERFILLGROOVE).toBool();
     //scrollers
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
+    //progressbars
+    conf.progressbars.shadow = READINT(READPROGSHADOW);
+    conf.progressbars.rnd = READINT(READPROGRND);
     //shadows
     conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
 

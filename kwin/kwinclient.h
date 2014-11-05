@@ -80,12 +80,10 @@ private:
     QLinearGradient m_unoGradient;
     QColor m_custcol[CustColCount];
     Factory *m_factory;
-    QBrush m_brush[2];
-    QPixmap m_pix, m_bgPix;
-    QImage m_bgCont;
+    QPixmap m_bgPix[2];
     float m_opacity;
     int m_headHeight, m_leftButtons, m_rightButtons;
-    bool m_needSeparator;
+    bool m_needSeparator, m_contAware;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;

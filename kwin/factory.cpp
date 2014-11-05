@@ -1,5 +1,6 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QPainter>
 
 #include "kwinclient.h"
 #include "factory.h"
@@ -17,6 +18,11 @@ KDecoration
 
 //Atom Factory::s_wmAtom;
 
+#define SIZE 8
+
+QPixmap Factory::s_topLeft;
+QPixmap Factory::s_topRight;
+
 Factory::Factory()
     : QObject()
     , KDecorationFactory()
@@ -26,11 +32,30 @@ Factory::Factory()
     ShadowHandler::removeDelete();
     new FactoryDbusAdaptor(this);
     QDBusConnection::sessionBus().registerObject("/StyleProjectFactory", this);
+    genMasks();
 }
 
 Factory::~Factory()
 {
     ShadowHandler::removeDelete();
+}
+
+void
+Factory::genMasks()
+{
+    QPixmap pix(SIZE, SIZE);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::black);
+    p.fillRect(pix.rect(), Qt::black);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.drawEllipse(pix.rect());
+    p.end();
+    const int half(SIZE>>1);
+    s_topLeft = pix.copy(QRect(0, 0, half, half));
+    s_topRight = pix.copy(QRect(half, 0, half, half));
 }
 
 bool

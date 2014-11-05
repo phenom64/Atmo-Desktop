@@ -1,5 +1,7 @@
 #include <QTabBar>
 #include <QStyleOptionTabV3>
+#include <QApplication>
+#include <QMainWindow>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -12,6 +14,8 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
     {
     case SH_TabBar_Alignment:
     {
+        if (qApp->applicationFilePath().endsWith("dfm") && w && qobject_cast<QMainWindow *>(w->window()))
+            return Qt::AlignLeft;
         if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(w)))
             return Qt::AlignLeft;
         return Qt::AlignCenter;
