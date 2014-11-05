@@ -811,12 +811,12 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
         const int m(2);
-        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()!=r.height());
+        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
-        rnd = qMin(rnd-m, MAXRND);
-        renderShadow(Strenghter, r.adjusted(0, 0, 0, 1), p, rnd, sides, opacity);
+        rnd = qMax(rnd-m, 2);
+        renderMask(r, p, QColor(0, 0, 0, needStrong&&w?Color::luminosity(w->palette().color(QPalette::Active, w->foregroundRole())):255.0f*opacity), rnd, sides);
         r.sShrink(1);
-        rnd = qMin(MAXRND, rnd+1);
+        rnd = qMax(2, rnd-1);
     }
     else
     {
@@ -934,7 +934,9 @@ Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, con
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawTiledPixmap(r.translated(m, m), source);
     p.end();
-    const QImage blur = Render::blurred(img, img.rect(), m*2);
+    QImage blur(img);
+    Render::expblur(blur, m*2);
+//    const QImage blur = Render::blurred(img, img.rect(), m*2);
     QPixmap highlight(r.size());
     highlight.fill(Qt::transparent);
     p.begin(&highlight);
@@ -1076,9 +1078,21 @@ static QImage stretched(QImage img, const QColor &c)
         if (!hues.contains(hue))
             hues << hue;
     }
+
     const bool useAlpha(hues.count() == 1);
     if (useAlpha)
     {
+        int l(0), h(0);
+        for (int i = 0; i < size; ++i)
+        {
+            ENSUREALPHA;
+            const QColor c(QColor::fromRgba(pixels[0][i]));
+            if (Color::luminosity(c) < 128)
+                ++l;
+            else
+                ++h;
+        }
+        const bool dark(l*2>h);
         /**
           * Alpha gets special treatment...
           * we simply steal the colortoalpha
@@ -1094,7 +1108,7 @@ static QImage stretched(QImage img, const QColor &c)
         {
             ENSUREALPHA;
             const QRgb rgb(pixels[0][i]);
-            float val(255.0f);
+            float val(dark?255.0f:0.0f);
             float red(qRed(rgb)), green(qGreen(rgb)), blue(qBlue(rgb)), a(qAlpha(rgb));
             colortoalpha(&red, &green, &blue, &a, val, val, val);
             if (a < lowAlpha)
@@ -1179,7 +1193,7 @@ static QImage stretched(QImage img, const QColor &c)
 }
 
 QPixmap
-Render::monochromized(const QPixmap &source, const QColor &color, const Effect effect, const bool isDark)
+Render::monochromized(const QPixmap &source, const QColor &color, const Effect effect, bool isDark)
 {
     const QPixmap &result = QPixmap::fromImage(stretched(source.toImage(), color));
     if (effect == Inset)

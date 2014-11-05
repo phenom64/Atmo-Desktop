@@ -258,12 +258,13 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     const QColor h(opt->palette.color(QPalette::Highlight));
     castOpt(ProgressBarV2, optv2, option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
-    const int s(hor?cont.height():cont.width());
+    const QRect mask(Render::maskRect(Settings::conf.progressbars.shadow, cont, Render::All));
+    const int s(hor?mask.height():mask.width());
 
-    const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
+    const QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
 
-    quint64 thing = h.rgba();
-    thing |= ((quint64)s << 32);
+    quint64 thing(h.rgba());
+    thing |= (s << 32);
     static QMap<quint64, QPixmap> s_pixMap;
     if (!s_pixMap.contains(thing))
     {
@@ -313,15 +314,6 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     painter->setClipRect(cont);
     QBrush b(pixmap);
     Render::drawClickable(Settings::conf.progressbars.shadow, groove, painter, Render::All, Settings::conf.progressbars.rnd, Settings::conf.shadows.opacity, widget, &b, 0, false, offSet);
-//    Render::renderMask(groove, painter, pixmap, 4, Render::All, offSet);
-//    QLinearGradient shadow(0, 0, 0, opt->rect.height());
-//    const int o(Settings::conf.shadows.opacity*255.0f);
-//    shadow.setColorAt(0.0f, QColor(0, 0, 0, o/3));
-//    shadow.setColorAt(0.8f, QColor(0, 0, 0, o/3));
-//    shadow.setColorAt(1.0f, QColor(0, 0, 0, o));
-//    QBrush b(shadow);
-
-//    Render::renderShadow(Render::Simple, groove, painter, 4, Render::All, 1.0f, &b);
     painter->restore();
     return true;
 }
