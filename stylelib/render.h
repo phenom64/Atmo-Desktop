@@ -39,6 +39,7 @@ public:
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const Shadow s, const int height);
     static int maskWidth(const Shadow s, const int width);
+    static int shadowMargin(const Shadow s);
     static QRect maskRect(const Shadow s, const QRect &r, const Sides sides = All);
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);

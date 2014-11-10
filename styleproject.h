@@ -110,7 +110,8 @@ public:
     bool drawArrow##_VAR_(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const \
     { \
         Ops::drawArrow(painter, option->palette.color(Ops::fgRole(widget)), option->rect, Ops::_VAR_); \
-    };
+        return true; \
+    }
     DRAWARROW(Left)
     DRAWARROW(Up)
     DRAWARROW(Right)

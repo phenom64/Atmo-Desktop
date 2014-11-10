@@ -958,6 +958,20 @@ Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
     }
 }
 
+int
+Render::shadowMargin(const Shadow s)
+{
+    switch (s)
+    {
+    case Sunken:
+    case Etched:
+    case Raised: return 1; break;
+    case Simple: return 0; break;
+    case Carved: return 3; break;
+    default: return 0;
+    }
+}
+
 QPixmap
 Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const QColor &ref)
 {

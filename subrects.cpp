@@ -325,13 +325,21 @@ StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
     castOpt(ComboBox, cb, opt);
     if (!cb)
         return ret;
-    const int arrowSize(12);
+    const int arrowSize(16);
     switch (sc)
     {
     case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...
     case SC_ComboBoxFrame: ret = cb->rect; break;
-    case SC_ComboBoxArrow: ret = cb->rect.adjusted(cb->rect.width()-arrowSize, 0, 0, 0); break;
-    case SC_ComboBoxEditField: ret = cb->rect.adjusted(0, 0, -arrowSize, 0); break;
+    case SC_ComboBoxArrow: ret = cb->rect.adjusted((cb->rect.width()-Render::shadowMargin(cb->editable?Settings::conf.input.shadow:Settings::conf.pushbtn.shadow))-arrowSize, 0, 0, 0); break;
+    case SC_ComboBoxEditField:
+    {
+        QRect r(Render::maskRect(Settings::conf.input.shadow, cb->rect));
+        int h(r.height());
+        int hor(qMin(Settings::conf.input.rnd, (h/2))/2);
+        r.adjust(hor, 0, -(hor+arrowSize), 0);
+        ret = cb->rect.adjusted(hor, 0, -(hor+arrowSize), 0);
+        break;
+    }
     default: ret = QRect(); break;
     }
     return visualRect(cb->direction, cb->rect, ret);

@@ -270,7 +270,8 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         if (box->editable)
         {
             QSize sz(contentsSize);
-            sz+=QSize(16, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
+            int add(Settings::conf.input.rnd?Settings::conf.input.rnd/2:0);
+            sz+=QSize(add*2+16, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
             if (sz.height() < 23)
                 sz.setHeight(23);
             return sz;
