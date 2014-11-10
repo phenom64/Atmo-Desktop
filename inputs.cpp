@@ -51,7 +51,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
         mask = QBrush(lg);
     }
 
-    Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Render::All, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
+    Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
     return true;
 }
 
@@ -107,7 +107,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, frameRect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
         QBrush mask(lg);
-        Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Render::All, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
+        Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
 
         const int o(Settings::conf.shadows.opacity*255.0f);
 
@@ -118,7 +118,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         mask = QBrush(lga);
 
         painter->setClipRect(arrowRect);
-        Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Render::All & ~(ltr?Render::Left:Render::Right), Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
+        Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
         painter->setClipping(false);
 
         arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
@@ -147,7 +147,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
             brush = QBrush(lg);
         }
 //        drawSafariLineEdit(opt->rect, painter, brush);
-        Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Render::All, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &brush);
+        Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &brush);
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
@@ -206,7 +206,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
         lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, c));
         mask = QBrush(lg);
     }
-    Render::drawClickable(Settings::conf.input.shadow, opt->rect, painter, Render::All, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
+    Render::drawClickable(Settings::conf.input.shadow, opt->rect, painter, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
 
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down);

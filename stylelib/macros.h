@@ -24,6 +24,8 @@
 #define growed(_S_) adjust(-_S_, -_S_, _S_, _S_)
 #define grow(_S_) adjust(-_S_, -_S_, _S_, _S_)
 
+#define ISURLBTN inherits("KDEPrivate::KUrlNavigatorButton")
+
 #define ISA(_TYPE_) inherits("##_TYPE_##")
 
 #define BOLD { QFont f(painter->font());\

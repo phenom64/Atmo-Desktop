@@ -332,3 +332,11 @@ Ops::toolButtonData(const QToolButton *tbtn, const int sepext, bool &nextsel, bo
         if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
             isintop = true;
 }
+
+void
+Ops::swap(int &t1, int &t2)
+{
+    const int tmp(t1);
+    t1 = t2;
+    t2 = tmp;
+}

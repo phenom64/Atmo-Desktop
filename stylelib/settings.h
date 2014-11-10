@@ -27,6 +27,7 @@
 #define TOOLBTNTINT         "toolbtn.tinthue"
 #define TOOLBTNFOLCOL       "toolbtn.followcolors"
 #define TOOLBTNINVACT       "toolbtn.invertactive"
+#define TOOLBTNFLAT         "toolbtn.flat"
 
 #define INPUTRND            "input.rnd"
 #define INPUTSHADOW         "input.shadow"
@@ -104,6 +105,7 @@
 #define DEFTOOLBTNTINT          "-1:0"
 #define DEFTOOLBTNFOLCOL        false
 #define DEFTOOLBTNINVACT        false
+#define DEFTOOLBTNFLAT          false
 
 #define DEFINPUTRND             8
 #define DEFINPUTSHADOW          3
@@ -163,6 +165,7 @@
 #define READTOOLBTNTINT         TOOLBTNTINT, DEFTOOLBTNTINT
 #define READTOOLBTNFOLCOL       TOOLBTNFOLCOL, DEFTOOLBTNFOLCOL
 #define READTOOLBTNINVACT       TOOLBTNINVACT, DEFTOOLBTNINVACT
+#define READTOOLBTNFLAT         TOOLBTNFLAT, DEFTOOLBTNFLAT
 
 #define READINPUTRND            INPUTRND, DEFINPUTRND
 #define READINPUTSHADOW         INPUTSHADOW, DEFINPUTSHADOW
@@ -225,7 +228,7 @@ public:
     struct toolbtn
     {
         int rnd, shadow;
-        bool folCol, invAct;
+        bool folCol, invAct, flat;
         Gradient gradient;
         Tint tint;
     } toolbtn;

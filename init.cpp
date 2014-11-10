@@ -101,6 +101,10 @@ StyleProject::assignMethods()
     m_pe[PE_PanelTipLabel] = method(drawToolTip);
     m_pe[PE_IndicatorBranch] = method(drawTree);
     m_pe[PE_FrameFocusRect] = method(primitiveSkipper);
+    m_pe[PE_IndicatorArrowDown] = method(drawArrowDown);
+    m_pe[PE_IndicatorArrowLeft] = method(drawArrowLeft);
+    m_pe[PE_IndicatorArrowRight] = method(drawArrowRight);
+    m_pe[PE_IndicatorArrowUp] = method(drawArrowUp);
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);

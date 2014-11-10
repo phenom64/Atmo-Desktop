@@ -31,6 +31,7 @@
 #include "stylelib/unohandler.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/settings.h"
+#include "stylelib/color.h"
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get

@@ -21,6 +21,7 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/ops.h"
 #include "stylelib/settings.h"
+#include "stylelib/render.h"
 
 QRect
 StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
@@ -41,6 +42,14 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         return QRect();
     switch (r)
     {
+    case SE_LineEditContents:
+    {
+        QRect r(Render::maskRect(Settings::conf.input.shadow, opt->rect));
+        int h(r.height());
+        int hor(qMin(Settings::conf.input.rnd, (h/2))/2);
+        r.adjust(hor, 0, -hor, 0);
+        return r;
+    }
     case SE_HeaderArrow:
     {
         castOpt(Header, hdr, opt);

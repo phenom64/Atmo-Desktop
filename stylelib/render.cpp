@@ -5,11 +5,13 @@
 #include <QCheckBox>
 #include <QRadioButton>
 #include <QBitmap>
+#include <QSlider>
 
 #include "render.h"
 #include "color.h"
 #include "settings.h"
 #include "macros.h"
+#include "ops.h"
 
 Q_DECL_EXPORT Render Render::m_instance;
 
@@ -507,7 +509,7 @@ Render::partRect(const QRect &rect, const Part part, const int roundNess, const 
 }
 
 QRect
-Render::rect(const QRect &rect, const Part part, const int roundNess) const
+Render::rect(const QRect &rect, const Parts part, const int roundNess) const
 {
     int x, y, w, h;
     rect.getRect(&x, &y, &w, &h);
@@ -595,12 +597,12 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
     p.end();
 
     for (int i = 0; i < PartCount; ++i)
-        if (needPart((Part)i, sides))
+        if (needPart(i, sides))
         {
             if (i != CenterPart && !roundNess)
                 continue;
-            const QPixmap &partPix = genPart((Part)i, pix, roundNess, sides);
-            painter->drawPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), partPix);
+            const QPixmap &partPix = genPart(i, pix, roundNess, sides);
+            painter->drawPixmap(partRect(QRect(QPoint(0, 0), rect.size()), i, roundNess, sides).translated(rect.x(), rect.y()), partPix);
         }
 }
 
@@ -617,10 +619,10 @@ Render::_renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *p
     painter->setOpacity(opacity);
     for (int i = 0; i < PartCount; ++i)
         if (i == CenterPart || roundNess)
-            if (needPart((Part)i, sides))
+            if (needPart((Parts)i, sides))
             {
                 QPixmap pix = m_shadow[shadow][roundNess][i];
-                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Part)i, roundNess, sides).translated(rect.x(), rect.y()), pix);
+                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides).translated(rect.x(), rect.y()), pix);
             }
     painter->setOpacity(o);
 }
@@ -755,11 +757,61 @@ Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
 }
 
 void
-Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const bool needStrong, const QPoint &offSet)
+Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const Sides sides, const bool checked, const QPoint &offSet)
 {
-    rnd = qBound(1, rnd, qMin(r.height(), r.width())/2);
+    rnd = qBound(2, rnd, qMin(r.height(), r.width())/2);
     if (s >= ShadowCount)
         return;
+
+    bool needStrong(qobject_cast<const QSlider *>(w));
+    int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
+    if (w)
+    {
+        int count(0);
+//        int r(0), g(0), b(0);
+        QColor bgc(Qt::white);
+        int bgl(255);
+        if (mask && mask->gradient())
+        {
+            const QGradientStops stops(mask->gradient()->stops());
+            count = stops.count();
+
+            for (int i = 0; i < count; ++i)
+            {
+                const QColor nbgc(stops.at(i).second);
+                const int nbgl(Color::luminosity(nbgc));
+                if (nbgl < bgl)
+                {
+                    bgl = nbgl;
+                    bgc = nbgc;
+                }
+//                int tr, tg, tb;
+//                stops.at(i).second.getRgb(&tr, &tg, &tb);
+//                r+=tr;
+//                g+=tg;
+//                b+=tb;
+            }
+        }
+        //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
+        const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
+        QPalette::ColorRole bg(checked&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
+//        QPalette::ColorRole fg(checked&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
+        bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
+//        fgLum = Color::luminosity(w->palette().color(QPalette::Active, checked?bg:fg));
+//        if (checked)
+//            Ops::swap(bgLum, fgLum);
+        if (QWidget *p = w->parentWidget())
+        {
+            pbgLum = Color::luminosity(p->palette().color(QPalette::Active, p->backgroundRole()));
+//            pfgLum = Color::luminosity(p->palette().color(QPalette::Active, p->foregroundRole()));
+        }
+    }
+
+//    const bool isDark(fgLum>bgLum);
+    const bool darkerParent(bgLum-pbgLum>127);
+//    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
+    const uint diff(255-qMin(bgLum, pbgLum));
+
     const int o(opacity*255);
     if (s==Raised || s==Simple)
     {
@@ -788,25 +840,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
     else if (s==Carved)
     {
         QLinearGradient lg(0, 0, 0, r.height());
-        int high(63), low(63);
-        if (w && w->parentWidget())
-        {
-            QWidget *p(w->parentWidget());
-            const bool isDark(Color::luminosity(p->palette().color(p->foregroundRole())) > Color::luminosity(p->palette().color(p->backgroundRole())));
-//            const QColor bg(p->palette().color(p->backgroundRole()));
-//            high = bg.value()/2;
-//            low = qMin(255, 280-bg.value());
-            if (isDark)
-            {
-                high=32;
-                low=192;
-            }
-            else
-            {
-                high=192;
-                low=32;
-            }
-        }
+        int high(darkerParent?32:192), low(darkerParent?192:32);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
@@ -814,9 +848,9 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 2);
-        renderMask(r, p, QColor(0, 0, 0, needStrong&&w?Color::luminosity(w->palette().color(QPalette::Active, w->foregroundRole())):255.0f*opacity), rnd, sides);
-        r.sShrink(1);
-        rnd = qMax(2, rnd-1);
+//        renderMask(r, p, QColor(0, 0, 0, qMax<int>(255.0f*opacity, diff))/*needStrong&&w?qMax(bgLum, fgLum):255.0f*opacity)*/, rnd, sides);
+//        r.sShrink(1);
+//        rnd = qMax(2, rnd-1);
     }
     else
     {
@@ -835,6 +869,10 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides, i
         p->setCompositionMode(mode);
     }
 
+    if (s==Carved)
+    {
+        renderShadow(Strenghter, r.adjusted(0, 0, 0, 1), p, rnd, sides, opacity);
+    }
     if (s==Sunken||s==Etched)
     {
         r.sAdjust(-1, -1, 1, 2);

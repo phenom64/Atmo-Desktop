@@ -106,6 +106,7 @@ Settings::read()
     conf.toolbtn.tint = tintColor(s.value(READTOOLBTNTINT).toString());
     conf.toolbtn.folCol = s.value(READTOOLBTNFOLCOL).toBool();
     conf.toolbtn.invAct = s.value(READTOOLBTNINVACT).toBool();
+    conf.toolbtn.flat = s.value(READTOOLBTNFLAT).toBool();
     //inputs
     conf.input.rnd = s.value(READINPUTRND).toInt();
     conf.input.shadow = s.value(READINPUTSHADOW).toInt();

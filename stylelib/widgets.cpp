@@ -181,6 +181,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
             high=192;
             low=32;
         }
+
         lg.setColorAt(0.0f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         p.setBrush(lg);
@@ -189,10 +190,12 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         r.adjust(0, -1, 0, 1);
         r.shrink(3);
-        p.setBrush(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
-        p.drawEllipse(r);
-        r.shrink(1);
-
+        if (isDark)
+        {
+            p.setBrush(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+            p.drawEllipse(r);
+            r.shrink(1);
+        }
         c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
         p.setBrush(c);
         p.drawEllipse(r);
@@ -201,6 +204,23 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         rg.setColorAt(0.0f, Qt::transparent);
         rg.setColorAt(1.0f, QColor(0, 0, 0, 127));
         p.setBrush(rg);
+        p.drawEllipse(r);
+        if (!isDark)
+        {
+            p.setPen(QColor(0, 0, 0, 63));
+            p.setBrush(Qt::NoBrush);
+            p.translate(0.5f, 0.5f);
+            p.drawEllipse(r.adjusted(0, 0, -1, -1));
+        }
+        p.restore();
+        break;
+    }
+    case 4:
+    {
+        p.save();
+        p.setPen(QPen(c, 2.0f));
+        r.shrink(1);
+        p.setBrush(Qt::NoBrush);
         p.drawEllipse(r);
         p.restore();
         break;

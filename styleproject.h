@@ -3,7 +3,9 @@
 
 #include <QCommonStyle>
 #include <QEvent>
+#include <QStyleOption>
 #include "stylelib/macros.h"
+#include "stylelib/ops.h"
 
 #define DEBUG 1
 
@@ -63,6 +65,7 @@ public:
     bool drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawToolButtonBevel(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
@@ -102,6 +105,17 @@ public:
     bool drawToolTip(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+
+#define DRAWARROW(_VAR_) \
+    bool drawArrow##_VAR_(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const \
+    { \
+        Ops::drawArrow(painter, option->palette.color(Ops::fgRole(widget)), option->rect, Ops::_VAR_); \
+    };
+    DRAWARROW(Left)
+    DRAWARROW(Up)
+    DRAWARROW(Right)
+    DRAWARROW(Down)
+#undef DRAWARROW
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);

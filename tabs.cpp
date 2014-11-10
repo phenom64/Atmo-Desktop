@@ -100,8 +100,9 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         }
     if (isSelected)
     {
-        fg = QPalette::HighlightedText;
-        bg = QPalette::Highlight;
+        const QPalette::ColorRole tmpFg(fg);
+        fg = bg;
+        bg = tmpFg;
     }
 
     QColor bgc(opt->palette.color(bg));
@@ -146,7 +147,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     }
     lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, bgc));
     QBrush b(lg);
-    Render::drawClickable(Settings::conf.tabs.shadow, r, painter, sides, Settings::conf.tabs.rnd, Settings::conf.shadows.opacity, widget, &b);
+    Render::drawClickable(Settings::conf.tabs.shadow, r, painter, Settings::conf.tabs.rnd, Settings::conf.shadows.opacity, widget, &b, 0, sides, isSelected);
     const QRect mask(Render::maskRect(Settings::conf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
@@ -233,7 +234,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
     if (isSelected && !Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-        fg = QPalette::HighlightedText;
+        fg = Ops::opposingRole(fg);
 
     const QFontMetrics fm(painter->fontMetrics());
     Qt::TextElideMode elide((Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget));
@@ -369,11 +370,20 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
 
 //    const bool isTabBar(widget&&qobject_cast<const QTabBar *>(widget->parentWidget()));
     bool safTabs(false);
-    if (widget)
-        safTabs = Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget->parentWidget()));
+    const QTabBar *bar(0);
+    if (widget && widget->parentWidget())
+    {
+        bar = qobject_cast<const QTabBar *>(widget->parentWidget());
+        if (bar)
+            safTabs = Ops::isSafariTabBar(qobject_cast<const QTabBar *>(bar));
+    }
+
     const bool hover(option->HOVER);
 
-    const bool isSelected(option->state & State_Selected);
+    bool isSelected(option->state & State_Selected);
+    if (bar && bar->count() == 1)
+        isSelected = true;
+
     QPixmap pix = QPixmap(option->rect.size());
     pix.fill(Qt::transparent);
     QPainter p(&pix);
@@ -394,27 +404,33 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     p.end();
 
     bool isDark(false);
-    QWidget *d(widget->window());
-    if (widget)
+    if (bar)
     {
         if (safTabs)
         {
+            QWidget *d(widget->window());
             const QPalette pal(d->palette());
             isDark = Color::luminosity(pal.color(d->foregroundRole())) > Color::luminosity(pal.color(d->backgroundRole()));
         }
         else
-            isDark = Color::luminosity(widget->palette().color(widget->foregroundRole())) > Color::luminosity(widget->palette().color(widget->backgroundRole()));
+        {
+            isDark = Color::luminosity(option->palette.color(bar->foregroundRole())) > Color::luminosity(option->palette.color(bar->backgroundRole()));
+            if (isSelected)
+                isDark = !isDark;
+        }
     }
     int cc(isDark?0:255);
     QPixmap tmp(pix);
     Render::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
     QPixmap tmp2(pix);
-    QPalette::ColorRole role(widget?widget->foregroundRole():QPalette::WindowText);
-    if (hover)
+    QPalette::ColorRole role(Ops::fgRole(bar, QPalette::WindowText));
+    if (safTabs)
+        role = QPalette::WindowText;
+    else if (hover)
         role = QPalette::Highlight;
-    if (!safTabs && isSelected)
-        role = QPalette::HighlightedText;
-    Render::colorizePixmap(tmp2, safTabs?d->palette().color(QPalette::WindowText):option->palette.color(role));
+    else if (isSelected)
+        role = Ops::opposingRole(role);
+    Render::colorizePixmap(tmp2, option->palette.color(role));
 
     QPixmap closer = QPixmap(option->rect.size());
     closer.fill(Qt::transparent);
@@ -422,10 +438,9 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     p.drawTiledPixmap(closer.rect().translated(0, 1), tmp);
     p.drawTiledPixmap(closer.rect(), tmp2);
     p.end();
-    if (widget)
-        if (castObj(const QTabBar *, bar, widget->parentWidget()))
-            if (bar->tabAt(widget->geometry().center()) != bar->currentIndex())
-                painter->setOpacity(0.75f);
+
+    if (!isSelected)
+        painter->setOpacity(0.75f);
     painter->drawTiledPixmap(option->rect, closer);
     return true;
 }

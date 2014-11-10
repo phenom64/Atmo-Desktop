@@ -12,13 +12,13 @@ public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
     enum SidePart { West = 0, North, East, South, SidePartCount };
     enum Pos { First = 0, Middle = 1, Last = 2, Alone = 3 };
-    enum Part { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
+    enum Parts { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
     enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, Strenghter, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     enum Effect { Noeffect =0, Inset, Outset };
     Render();
     ~Render(){}
-    typedef uint Sides, Shadow;
+    typedef uint Sides, Shadow, Part;
     static Render *instance();
     static void deleteInstance();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
@@ -35,11 +35,11 @@ public:
     static QPixmap noise() { return instance()->m_noise; }
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
-    static void drawClickable(const Shadow s, QRect r, QPainter *p, const Sides sides = All, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const bool needStrong = false, const QPoint &offSet = QPoint());
+    static void drawClickable(const Shadow s, QRect r, QPainter *p, int rnd = MAXRND, const float opacity = 1.0f, const QWidget *w = 0, QBrush *mask = 0, QBrush *shadow = 0, const Sides sides = All, const bool checked = false, const QPoint &offSet = QPoint());
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const Shadow s, const int height);
     static int maskWidth(const Shadow s, const int width);
-    static QRect maskRect(const Shadow s, const QRect &r, const Sides sides);
+    static QRect maskRect(const Shadow s, const QRect &r, const Sides sides = All);
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
@@ -59,7 +59,7 @@ protected:
     bool needPart(const Part part, const Sides sides) const;
     QPixmap genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const;
     QRect partRect(const QRect &rect, const Part part, const int roundNess, const Sides sides) const;
-    QRect rect(const QRect &rect, const Part part, const int roundNess) const;
+    QRect rect(const QRect &rect, const Parts part, const int roundNess) const;
 
 private:
     static Render m_instance;

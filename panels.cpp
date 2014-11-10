@@ -175,7 +175,7 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
         QStyleOptionButton btn;
         btn.QStyleOption::operator =(*option);
         btn.rect = check;
-        drawCheckBox(&btn, painter, 0);
+        drawCheckBox(&btn, painter, widget);
     }
     if (!opt->text.isEmpty())
     {

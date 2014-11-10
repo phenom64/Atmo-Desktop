@@ -6,6 +6,7 @@
 #include <QAbstractButton>
 #include <QLayout>
 #include <QDockWidget>
+#include <Q3GroupBox>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -81,6 +82,8 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (OverLay::hasOverLay(frame))
             return 0;
+        if (qobject_cast<const QGroupBox *>(widget))
+            return 4;
 
 //        if (!qobject_cast<const QAbstractButton *>(frame) && !qstyleoption_cast<const QStyleOptionButton *>(option))
         if (frame && frame->frameShadow() == QFrame::Raised)

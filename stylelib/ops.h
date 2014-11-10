@@ -32,7 +32,7 @@ class Q_DECL_EXPORT Ops : public QObject
 {
     Q_OBJECT
 public:
-    enum Dir{ Left, Up, Right, Down };
+    enum Dir { Left, Up, Right, Down };
     typedef unsigned int Direction;
 
     static Ops *instance();
@@ -49,6 +49,13 @@ public:
     static void toolButtonData(const QToolButton *tbtn, const int sepext, bool &nextsel, bool &prevsel, bool &isintop, unsigned int &sides);
     static void updateToolBarLater(QToolBar *bar, const int time = 250);
     static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
+    static void swap(int &t1, int &t2);
+    template<typename T>static void swap(T &t1, T &t2)
+    {
+        const T tmp(t1);
+        t1 = t2;
+        t2 = tmp;
+    }
 
     template<typename T> static inline bool isOrInsideA(QWidget *widget)
     {

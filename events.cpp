@@ -15,6 +15,7 @@
 #include <QToolButton>
 #include <QTimer>
 #include <QStatusBar>
+#include <QPushButton>
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
