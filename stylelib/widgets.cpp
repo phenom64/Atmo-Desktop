@@ -170,7 +170,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     {
         p.save();
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
-        int high(63), low(63);
+        int high(0), low(0);
         if (isDark)
         {
             high=32;
@@ -190,28 +190,15 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         r.adjust(0, -1, 0, 1);
         r.shrink(3);
-        if (isDark)
-        {
-            p.setBrush(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
-            p.drawEllipse(r);
-            r.shrink(1);
-        }
-        c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
-        p.setBrush(c);
+        c.setHsv(c.hue(), qMax(164, c.saturation()), qBound(63, c.value(), 255), c.alpha());
+        p.setBrush(c.darker(200));
         p.drawEllipse(r);
-        QRadialGradient rg(r.center()+QPoint(1, -r.height()*0.1f), r.height()*0.66f);
-//        rg.setColorAt(0.0f, Qt::transparent);
-        rg.setColorAt(0.0f, Qt::transparent);
-        rg.setColorAt(1.0f, QColor(0, 0, 0, 127));
-        p.setBrush(rg);
+        r.shrink(1);
+        QLinearGradient mask(r.topLeft(), r.bottomLeft());
+        mask.setColorAt(0.0f, c.lighter(120));
+        mask.setColorAt(1.0f, c.darker(120));
+        p.setBrush(mask);
         p.drawEllipse(r);
-        if (!isDark)
-        {
-            p.setPen(QColor(0, 0, 0, 63));
-            p.setBrush(Qt::NoBrush);
-            p.translate(0.5f, 0.5f);
-            p.drawEllipse(r.adjusted(0, 0, -1, -1));
-        }
         p.restore();
         break;
     }
@@ -272,7 +259,7 @@ Button::paintCloseButton(QPainter &p)
     }
     else
     {
-        drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+        drawBase(isActive()?fcolors[m_type]:color(), p, r);
         if (underMouse())
         {
             p.setBrush(QColor(0, 0, 0, 127));
@@ -309,7 +296,7 @@ Button::paintMaxButton(QPainter &p)
     }
     else
     {
-        drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+        drawBase(isActive()?fcolors[m_type]:color(), p, r);
         if (underMouse())
         {
             p.setBrush(QColor(0, 0, 0, 127));
@@ -345,7 +332,7 @@ Button::paintMinButton(QPainter &p)
     }
     else
     {
-        drawBase(isActive()?fcolors[m_type]:QColor(127, 127, 127, 255), p, r);
+        drawBase(isActive()?fcolors[m_type]:color(), p, r);
         if (underMouse())
         {
             p.setBrush(QColor(0, 0, 0, 127));

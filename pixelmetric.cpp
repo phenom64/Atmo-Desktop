@@ -13,6 +13,7 @@
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/settings.h"
+#include "stylelib/render.h"
 
 int
 StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
@@ -95,7 +96,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
     case PM_ToolBarFrameWidth: return 2;
-    case PM_ToolBarHandleExtent: return 8;
+    case PM_ToolBarHandleExtent: return 9-Render::shadowMargin(Settings::conf.toolbtn.shadow);
 //    case PM_SliderThickness: return 12;
     case PM_ScrollBarExtent: return Settings::conf.scrollers.size;
     case PM_SliderThickness:
