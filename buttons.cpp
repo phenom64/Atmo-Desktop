@@ -228,10 +228,11 @@ static QRect maskRect(const QRect &rect)
 class IconCheck
 {
 public:
-    inline IconCheck(const QWidget *w, const QColor &c, const int &s) : widget(w), color(c), size(s) {}
-    inline const bool operator==(const IconCheck &check) const { return check.color==color&&check.widget==widget&&check.size==size;}
+    inline IconCheck(const QWidget *w, const QColor &c, const int &s, const QString &n) : widget(w), color(c), size(s), name(n) {}
+    inline const bool operator==(const IconCheck &check) const { return check.color==color&&check.widget==widget&&check.size==size&&check.name==name; }
     QColor color;
     const QWidget *widget;
+    QString name;
     int size;
 };
 
@@ -248,18 +249,11 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
 }
 
 bool
-StyleProject::drawToolButtonBevel(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ToolButton, opt, option);
     if (!opt)
         return true;
-
-    if (Settings::conf.toolbtn.flat)
-    {
-        if (option->SUNKEN)
-            Render::renderShadow(Render::Sunken, option->rect, painter, Settings::conf.toolbtn.rnd, Render::All, Settings::conf.shadows.opacity);
-        return true;
-    }
 
     painter->save();
 
@@ -267,6 +261,12 @@ StyleProject::drawToolButtonBevel(const QStyleOptionComplex *option, QPainter *p
     const QToolBar *bar(0);
     if (widget)
         bar = qobject_cast<const QToolBar *>(widget->parentWidget());
+
+    if (option->SUNKEN && (Settings::conf.toolbtn.flat||!bar))
+    {
+        Render::renderShadow(Render::Sunken, option->rect, painter, Settings::conf.toolbtn.rnd, Render::All, Settings::conf.shadows.opacity);
+        return true;
+    }
 
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
@@ -378,14 +378,16 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(maskRect(rect));
     const bool hasMenu(Ops::hasMenu(btn, opt));
-    QPalette::ColorRole bg(Ops::bgRole(Settings::conf.toolbtn.flat?bar:widget, QPalette::Button)), fg(Ops::fgRole(Settings::conf.toolbtn.flat?bar:widget, QPalette::ButtonText));
+    const bool isFlat(Settings::conf.toolbtn.flat);
+    QPalette::ColorRole bg(Ops::bgRole(isFlat?bar:widget, isFlat?QPalette::Window:QPalette::Button)),
+            fg(Ops::fgRole(Settings::conf.toolbtn.flat?bar:widget, isFlat?QPalette::WindowText:QPalette::ButtonText));
 
     if (hasMenu)
     {
         mr.setRight(arrow.left());
         painter->setPen(QColor(0, 0, 0, 32));
         painter->drawLine(mr.topRight(), mr.bottomRight());
-        Ops::drawArrow(painter, opt->palette.color(QPalette::ButtonText), arrow, Ops::Down, Qt::AlignCenter, 7);
+        Ops::drawArrow(painter, opt->palette.color(fg), arrow, Ops::Down, Qt::AlignCenter, 7);
     }
 //    const bool hor(!bar||bar->orientation() == Qt::Horizontal);
     QRect ir(mr);
@@ -419,9 +421,9 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     }
     const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
     QPalette::ColorRole textRole(bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
-    if (Settings::conf.toolbtn.flat)
+    if (isFlat || !bar)
     {
-        textRole = bar ? bar->foregroundRole() : QPalette::WindowText;
+        textRole = QPalette::WindowText;
         bg = Ops::opposingRole(textRole);
     }
     else if (opt->SUNKEN && Settings::conf.toolbtn.invAct)
@@ -441,7 +443,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
                 pix = opt->icon.pixmap(opt->iconSize, QIcon::Normal);
                 static QList<IconCheck> s_list;
                 static QList<QPixmap> s_pix;
-                const IconCheck check(widget, opt->palette.color(textRole), opt->iconSize.height());
+                const IconCheck check(widget, opt->palette.color(textRole), opt->iconSize.height(), opt->icon.name());
                 if (s_list.contains(check))
                     pix = s_pix.at(s_list.indexOf(check));
                 else

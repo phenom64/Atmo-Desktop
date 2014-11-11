@@ -38,6 +38,9 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
 //    case QEvent::HoverLeave:
 //    case QEvent::Enter:
 //    case QEvent::HoverEnter:
+//    {
+//        qDebug() << w << w->parentWidget();
+//    }
     case QEvent::ActionChanged:
     {
         if (castObj(QToolBar *, toolBar, o))

@@ -223,101 +223,6 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     return QCommonStyle::subElementRect(r, opt, widget);
 }
 
-/**
-enum SubElement {
-    SE_PushButtonContents,
-    SE_PushButtonFocusRect,
-
-    SE_CheckBoxIndicator,
-    SE_CheckBoxContents,
-    SE_CheckBoxFocusRect,
-    SE_CheckBoxClickRect,
-
-    SE_RadioButtonIndicator,
-    SE_RadioButtonContents,
-    SE_RadioButtonFocusRect,
-    SE_RadioButtonClickRect,
-
-    SE_ComboBoxFocusRect,
-
-    SE_SliderFocusRect,
-
-    SE_Q3DockWindowHandleRect,
-
-    SE_ProgressBarGroove,
-    SE_ProgressBarContents,
-    SE_ProgressBarLabel,
-
-    // ### Qt 5: These values are unused; eliminate them
-    SE_DialogButtonAccept,
-    SE_DialogButtonReject,
-    SE_DialogButtonApply,
-    SE_DialogButtonHelp,
-    SE_DialogButtonAll,
-    SE_DialogButtonAbort,
-    SE_DialogButtonIgnore,
-    SE_DialogButtonRetry,
-    SE_DialogButtonCustom,
-
-    SE_ToolBoxTabContents,
-
-    SE_HeaderLabel,
-    SE_HeaderArrow,
-
-    SE_TabWidgetTabBar,
-    SE_TabWidgetTabPane,
-    SE_TabWidgetTabContents,
-    SE_TabWidgetLeftCorner,
-    SE_TabWidgetRightCorner,
-
-    SE_ViewItemCheckIndicator,
-    SE_ItemViewItemCheckIndicator = SE_ViewItemCheckIndicator,
-
-    SE_TabBarTearIndicator,
-
-    SE_TreeViewDisclosureItem,
-
-    SE_LineEditContents,
-    SE_FrameContents,
-
-    SE_DockWidgetCloseButton,
-    SE_DockWidgetFloatButton,
-    SE_DockWidgetTitleBarText,
-    SE_DockWidgetIcon,
-
-    SE_CheckBoxLayoutItem,
-    SE_ComboBoxLayoutItem,
-    SE_DateTimeEditLayoutItem,
-    SE_DialogButtonBoxLayoutItem, // ### remove
-    SE_LabelLayoutItem,
-    SE_ProgressBarLayoutItem,
-    SE_PushButtonLayoutItem,
-    SE_RadioButtonLayoutItem,
-    SE_SliderLayoutItem,
-    SE_SpinBoxLayoutItem,
-    SE_ToolButtonLayoutItem,
-
-    SE_FrameLayoutItem,
-    SE_GroupBoxLayoutItem,
-    SE_TabWidgetLayoutItem,
-
-    SE_ItemViewItemDecoration,
-    SE_ItemViewItemText,
-    SE_ItemViewItemFocusRect,
-
-    SE_TabBarTabLeftButton,
-    SE_TabBarTabRightButton,
-    SE_TabBarTabText,
-
-    SE_ShapedFrameContents,
-
-    SE_ToolBarHandle,
-
-    // do not add any values below/greater than this
-    SE_CustomBase = 0xf0000000
-};
-*/
-
 QRect
 StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
@@ -325,21 +230,14 @@ StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
     castOpt(ComboBox, cb, opt);
     if (!cb)
         return ret;
-    const int arrowSize(16);
+    const int arrowSize(20);
+    const int m(Render::shadowMargin(cb->editable?Settings::conf.input.shadow:Settings::conf.pushbtn.shadow));
     switch (sc)
     {
     case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...
     case SC_ComboBoxFrame: ret = cb->rect; break;
-    case SC_ComboBoxArrow: ret = cb->rect.adjusted((cb->rect.width()-Render::shadowMargin(cb->editable?Settings::conf.input.shadow:Settings::conf.pushbtn.shadow))-arrowSize, 0, 0, 0); break;
-    case SC_ComboBoxEditField:
-    {
-        QRect r(Render::maskRect(Settings::conf.input.shadow, cb->rect));
-        int h(r.height());
-        int hor(qMin(Settings::conf.input.rnd, (h/2))/2);
-        r.adjust(hor, 0, -(hor+arrowSize), 0);
-        ret = cb->rect.adjusted(hor, 0, -(hor+arrowSize), 0);
-        break;
-    }
+    case SC_ComboBoxArrow: ret = cb->rect.adjusted((cb->rect.width()-m)-arrowSize, 0, -m, 0); break;
+    case SC_ComboBoxEditField: ret = cb->rect.adjusted(0, 0, -arrowSize, 0); break;
     default: ret = QRect(); break;
     }
     return visualRect(cb->direction, cb->rect, ret);
@@ -508,10 +406,29 @@ StyleProject::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const Q
     if (!sb)
         return QRect();
 
-    QRect r(QCommonStyle::subControlRect(CC_SpinBox, opt, sc, w));
-    int a(qMin(Settings::conf.input.rnd/2, r.height()/4));
-    if (sc == SC_SpinBoxEditField)
-        r.translate(sb->direction==Qt::RightToLeft?-a:a, 0);
-    return r;
+    QRect ret(sb->rect);
+    int spinSize(pixelMetric(PM_SpinBoxSliderHeight, opt, w));
+    QRect arrowUp(0, 0, spinSize, spinSize);
+    QRect arrowDown(arrowUp);
+    int sm(Render::shadowMargin(Settings::conf.input.shadow));
+    int m((qMin(Settings::conf.input.rnd, ret.height()/2)/2) + sm);
+    arrowUp.moveTopRight(ret.topRight()-QPoint(m, 0));
+    arrowDown.moveBottomRight(ret.bottomRight()-QPoint(m, 0));
+    switch (sc)
+    {
+    case SC_SpinBoxFrame:
+        break;
+    case SC_SpinBoxUp:
+        ret = arrowUp;
+        break;
+    case SC_SpinBoxDown:
+        ret = arrowDown;
+        break;
+    case SC_SpinBoxEditField:
+        ret.setRight(arrowUp.left());
+        break;
+    default: break;
+    }
+    return visualRect(sb->direction, sb->rect, ret);
 }
 

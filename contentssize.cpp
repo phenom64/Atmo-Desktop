@@ -217,6 +217,13 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             sz.setHeight(23);
         return sz;
     }
+    case CT_SpinBox:
+    {
+        QSize sz(contentsSize);
+        sz.rwidth()+=(Render::shadowMargin(Settings::conf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
+        sz.setHeight(qMax(23, sz.height()));
+        return sz;
+    }
 //        case CT_MenuItem:
     case CT_MenuBarItem:
     {
@@ -271,7 +278,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         {
             QSize sz(contentsSize);
             int add(Settings::conf.input.rnd?Settings::conf.input.rnd/2:0);
-            sz+=QSize(add*2+16, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
+            sz+=QSize(add*2+20, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
             if (sz.height() < 23)
                 sz.setHeight(23);
             return sz;

@@ -810,7 +810,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
 //    const bool isDark(fgLum>bgLum);
     const bool darkerParent(bgLum-pbgLum>127);
 //    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
-    const uint diff(255-qMin(bgLum, pbgLum));
+//    const uint diff(255-qMin(bgLum, pbgLum));
 
     const int o(opacity*255);
     if (s==Raised || s==Simple)
@@ -854,8 +854,8 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
     }
     else
     {
-        r.sAdjust(1, 1, -1, -2);
-        rnd = qMax(1, rnd-1);
+        r.sAdjust(0, 0, 0, -1);
+//        rnd = qMax(1, rnd-1);
     }
 
     if (mask)
@@ -875,8 +875,8 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
     }
     if (s==Sunken||s==Etched)
     {
-        r.sAdjust(-1, -1, 1, 2);
-        rnd = qMin(rnd+1, MAXRND);
+        r.sAdjust(0, 0, 0, 1);
+//        rnd = qMin(rnd+1, MAXRND);
         renderShadow(s, r, p, rnd, sides, opacity);
         if (needStrong)
             renderShadow(Strenghter, r, p, rnd, sides, opacity);

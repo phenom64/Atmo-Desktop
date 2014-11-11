@@ -69,6 +69,7 @@ StyleProject::assignMethods()
     m_ce[CE_HeaderSection] = method(drawHeaderSection);
     m_ce[CE_HeaderLabel] = method(drawHeaderLabel);
     m_ce[CE_DockWidgetTitle] = method(drawDockTitle);
+    m_ce[CE_ShapedFrame] = method(controlSkipper);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);
@@ -86,7 +87,6 @@ StyleProject::assignMethods()
     m_pe[PE_Frame] = method(drawFrame);
     m_pe[PE_PanelMenuBar] = method(drawMenuBar);
     m_pe[PE_IndicatorDockWidgetResizeHandle] = method(drawSplitter);
-    m_pe[PE_FrameStatusBarItem] = method(primitiveSkipper);
     m_pe[PE_PanelStatusBar] = method(drawStatusBar);
     m_pe[PE_Widget] = method(primitiveSkipper);
     m_pe[PE_FrameWindow] = method(drawWindow);
@@ -105,6 +105,8 @@ StyleProject::assignMethods()
     m_pe[PE_IndicatorArrowLeft] = method(drawArrowLeft);
     m_pe[PE_IndicatorArrowRight] = method(drawArrowRight);
     m_pe[PE_IndicatorArrowUp] = method(drawArrowUp);
+    m_pe[PE_FrameButtonTool] = method(drawToolButtonBevel);
+    m_pe[PE_PanelButtonTool] = method(drawToolButtonBevel);
 
     /* events */
     m_ev[QEvent::Paint] = method(paintEvent);

@@ -65,7 +65,7 @@ public:
     bool drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
-    bool drawToolButtonBevel(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
@@ -112,6 +112,7 @@ public:
         Ops::drawArrow(painter, option->palette.color(Ops::fgRole(widget)), option->rect, Ops::_VAR_); \
         return true; \
     }
+    /* Yes Thomas, macro-concept stolen from bespin */
     DRAWARROW(Left)
     DRAWARROW(Up)
     DRAWARROW(Right)

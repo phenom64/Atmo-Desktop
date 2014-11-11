@@ -21,6 +21,7 @@
 #include <QScrollBar>
 #include <QTextEdit>
 #include <QDialog>
+#include <QStatusBar>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -61,6 +62,7 @@ StyleProject::polish(QWidget *widget)
 //    if (widget->parentWidget())
 //        qDebug() << widget << widget->parentWidget();
 
+//    installFilter(widget);
     /* needed for mac os x lion like toolbuttons,
      * we need to repaint the toolbar when a action
      * has been triggered, otherwise we are painting
@@ -71,6 +73,11 @@ StyleProject::polish(QWidget *widget)
         if (qobject_cast<QMainWindow *>(widget->parentWidget()))
             connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
         installFilter(bar);
+        bar->setForegroundRole(QPalette::WindowText);
+        bar->setBackgroundRole(QPalette::Window);
+    }
+    if (castObj(QStatusBar *, bar, widget))
+    {
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
     }
@@ -116,6 +123,11 @@ StyleProject::polish(QWidget *widget)
     {
         Anim::ToolBtns::manage(btn);
         installFilter(btn);
+        if (!qobject_cast<QToolBar *>(btn->parentWidget()))
+        {
+            btn->setBackgroundRole(QPalette::Window);
+            btn->setForegroundRole(QPalette::WindowText);
+        }
     }
     if (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
