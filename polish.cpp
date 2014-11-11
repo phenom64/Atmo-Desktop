@@ -22,6 +22,7 @@
 #include <QTextEdit>
 #include <QDialog>
 #include <QStatusBar>
+#include <QToolBox>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -274,6 +275,12 @@ StyleProject::polish(QWidget *widget)
          * when the menu is shown.
          */
         installFilter(widget);
+    }
+    if (castObj(QToolBox *, tb, widget))
+    {
+        tb->setAutoFillBackground(false);
+        tb->setForegroundRole(QPalette::WindowText);
+        tb->setBackgroundRole(QPalette::Window);
     }
     if (widget->inherits("KTabWidget"))
     {

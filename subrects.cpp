@@ -42,6 +42,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         return QRect();
     switch (r)
     {
+    case SE_ToolBoxTabContents:
+        return opt->rect; //this is not called at all is it?
     case SE_LineEditContents:
     {
         QRect r(Render::maskRect(Settings::conf.input.shadow, opt->rect));

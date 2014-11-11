@@ -31,6 +31,7 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
     case SH_ScrollBar_ScrollWhenPointerLeavesControl: return true;
     case SH_ItemView_PaintAlternatingRowColorsForEmptyArea: return true;
     case SH_DockWidget_ButtonsHaveFrame: return false;
+    case SH_ToolBox_SelectedPageTitleBold: return true;
     default: break;
     }
     return QCommonStyle::styleHint(sh, opt, w, shret);

@@ -249,6 +249,9 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     if (!opt)
         return true;
 
+    if (opt->frameShape == QFrame::NoFrame || opt->frameShape == QFrame::HLine || opt->frameShape == QFrame::VLine)
+        return true;
+
     castObj(const QFrame *, frame, widget);
     if (OverLay::hasOverLay(frame))
         return true;

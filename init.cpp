@@ -69,7 +69,10 @@ StyleProject::assignMethods()
     m_ce[CE_HeaderSection] = method(drawHeaderSection);
     m_ce[CE_HeaderLabel] = method(drawHeaderLabel);
     m_ce[CE_DockWidgetTitle] = method(drawDockTitle);
-    m_ce[CE_ShapedFrame] = method(controlSkipper);
+    m_ce[CE_ToolBoxTab] = method(drawToolBoxTab);
+    m_ce[CE_ToolBoxTabShape] = method(drawToolBoxTabShape);
+    m_ce[CE_ToolBoxTabLabel] = method(drawToolBoxTabLabel);
+    m_ce[CE_ShapedFrame] = method(drawFrame);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);

@@ -14,6 +14,7 @@
 #include <QPaintDevice>
 #include <QPainter>
 #include <QApplication>
+#include <QStyleOptionToolBoxV2>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -442,5 +443,60 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     if (!isSelected)
         painter->setOpacity(0.75f);
     painter->drawTiledPixmap(option->rect, closer);
+    return true;
+}
+
+static bool isIdiot(true);
+
+bool
+StyleProject::drawToolBoxTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    isIdiot = false;
+    drawToolBoxTabShape(option, painter, widget);
+    drawToolBoxTabLabel(option, painter, widget);
+    isIdiot = true;
+    return true;
+}
+
+bool
+StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ToolBoxV2, opt, option);
+    if (!opt)
+        return true;
+    const QPalette pal(widget?widget->palette():opt->palette);
+    const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
+    const QPalette::ColorRole bg(isIdiot?Ops::opposingRole(Ops::bgRole(widget)):(isSelected?Ops::fgRole(widget):Ops::bgRole(widget)));
+    painter->fillRect(option->rect, pal.color(bg));
+    return true;
+}
+
+bool
+StyleProject::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(ToolBoxV2, opt, option);
+    if (!opt)
+        return true;
+
+    const QPalette pal(widget?widget->palette():opt->palette);
+    const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
+    QRect textRect(opt->rect);
+    if (!opt->icon.isNull())
+    {
+        const QSize iconSize(16, 16); //no way to get this?
+        const QPoint topLeft(opt->rect.topLeft());
+        QRect r(topLeft+QPoint(0, opt->rect.height()/2-iconSize.height()/2), iconSize);
+        opt->icon.paint(painter, r);
+        textRect.setLeft(r.right());
+    }
+    const QFont savedFont(painter->font());
+    if (isSelected)
+    {
+        QFont tmp(savedFont);
+        tmp.setBold(true);
+        painter->setFont(tmp);
+    }
+    drawItemText(painter, textRect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, isSelected?Ops::bgRole(widget):Ops::fgRole(widget));
+    painter->setFont(savedFont);
     return true;
 }
