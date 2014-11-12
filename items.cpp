@@ -27,10 +27,11 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     painter->save();
-    bool isMenuBar(qobject_cast<const QMenuBar *>(widget));
+
     painter->setRenderHint(QPainter::Antialiasing);
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
+    const bool isMenuBar(qobject_cast<const QMenuBar *>(widget));
     const bool isMenu(qobject_cast<const QMenu *>(widget));
     const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!opt->text.isEmpty());

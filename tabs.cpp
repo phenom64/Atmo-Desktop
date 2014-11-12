@@ -205,14 +205,17 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
     int trans(0);
+    bool west(false), east(false);
     switch (opt->shape)
     {
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
+        west = true;
         trans = -90;
         break;
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
+        east = true;
         trans = 90;
         break;
     default: break;
@@ -225,7 +228,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         const QRect tmp(tr);
         tr.setHeight(tmp.width());
         tr.setWidth(tmp.height());
-        tr.moveCenter(tmp.center());
+        tr.moveCenter(tmp.center()+QPoint(0, west?-1:east?-2:0)); //not sure what exactly is going on here....
     }
 
     QFont f(painter->font());
@@ -357,7 +360,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
             return true;
         }
     }
-    Render::renderShadow(Render::Sunken, rect, painter, 7, sides, 0.2f);
+    Render::renderShadow(Render::Sunken, rect, painter, 7, sides, Settings::conf.shadows.opacity*0.5f);
 //    Render::renderMask(r, painter, opt->palette.color(QPalette::Window), 4, sides);
     return true;
 }

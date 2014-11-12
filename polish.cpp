@@ -269,6 +269,11 @@ StyleProject::polish(QWidget *widget)
             widget->setForegroundRole(QPalette::Text);
             widget->setBackgroundRole(QPalette::Base);
         }
+        else
+        {
+            widget->setForegroundRole(QPalette::WindowText);
+            widget->setBackgroundRole(QPalette::Window);
+        }
         /**
          * Apparently some menues fight back and dont
          * want mousetracking, we filter and set mousetracking
