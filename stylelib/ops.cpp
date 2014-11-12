@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QMenuBar>
 #include <QLabel>
+#include <QToolBox>
 
 #include "ops.h"
 #include "xhandler.h"

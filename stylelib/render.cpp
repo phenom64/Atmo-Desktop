@@ -6,6 +6,7 @@
 #include <QRadioButton>
 #include <QBitmap>
 #include <QSlider>
+#include <QToolBox>
 
 #include "render.h"
 #include "color.h"
@@ -580,19 +581,20 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
     pix.fill(Qt::transparent);
     QPainter p(&pix);
     QRect r(pix.rect());
-    if (!offSet.isNull())
-    {
-        const int x(offSet.x()), y(offSet.y());
-        if (x < 0)
-            r.setRight(r.right()+qAbs(x));
-        else
-            r.setLeft(r.left()-qAbs(x));
-        if (y < 0)
-            r.setBottom(r.bottom()+qAbs(y));
-        else
-            r.setTop(r.top()-qAbs(y));
-        p.translate(x, y);
-    }
+//    if (!offSet.isNull())
+//    {
+//        const int x(offSet.x()), y(offSet.y());
+//        if (x < 0)
+//            r.setRight(r.right()+qAbs(x));
+//        else
+//            r.setLeft(r.left()-qAbs(x));
+//        if (y < 0)
+//            r.setBottom(r.bottom()+qAbs(y));
+//        else
+//            r.setTop(r.top()-qAbs(y));
+//        p.translate(x, y);
+//    }
+    p.setBrushOrigin(offSet);
     p.fillRect(r, brush);
     p.end();
 
@@ -840,6 +842,8 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
     else if (s==Carved)
     {
         QLinearGradient lg(0, 0, 0, r.height());
+        if (w && qobject_cast<const QToolBox *>(w->parentWidget()))
+            r = w->rect();
         int high(darkerParent?32:192), low(darkerParent?192:32);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
@@ -848,15 +852,9 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 2);
-//        renderMask(r, p, QColor(0, 0, 0, qMax<int>(255.0f*opacity, diff))/*needStrong&&w?qMax(bgLum, fgLum):255.0f*opacity)*/, rnd, sides);
-//        r.sShrink(1);
-//        rnd = qMax(2, rnd-1);
     }
     else
-    {
         r.sAdjust(0, 0, 0, -1);
-//        rnd = qMax(1, rnd-1);
-    }
 
     if (mask)
         renderMask(r, p, *mask, rnd, sides, offSet);
@@ -876,7 +874,6 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
     if (s==Sunken||s==Etched)
     {
         r.sAdjust(0, 0, 0, 1);
-//        rnd = qMin(rnd+1, MAXRND);
         renderShadow(s, r, p, rnd, sides, opacity);
         if (needStrong)
             renderShadow(Strenghter, r, p, rnd, sides, opacity);

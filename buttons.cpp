@@ -108,7 +108,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
 
     QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
 
     if (opt->state & (State_On|State_NoChange))
     {
@@ -163,7 +163,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
 
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, fg);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
 //    Render::renderShadow(Render::Raised, checkRect, painter);
 
     if (opt->state & State_On)

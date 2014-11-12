@@ -278,9 +278,13 @@ StyleProject::polish(QWidget *widget)
     }
     if (castObj(QToolBox *, tb, widget))
     {
-        tb->setAutoFillBackground(false);
-        tb->setForegroundRole(QPalette::WindowText);
         tb->setBackgroundRole(QPalette::Window);
+        tb->setForegroundRole(QPalette::WindowText);
+        if (QLayout *l = tb->layout())
+        {
+            l->setMargin(0);
+            l->setSpacing(0);
+        }
     }
     if (widget->inherits("KTabWidget"))
     {

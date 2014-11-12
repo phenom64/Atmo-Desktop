@@ -15,6 +15,7 @@
 #include <QPainter>
 #include <QApplication>
 #include <QStyleOptionToolBoxV2>
+#include <QToolBox>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -446,15 +447,13 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     return true;
 }
 
-static bool isIdiot(true);
-
 bool
 StyleProject::drawToolBoxTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    isIdiot = false;
+    if (option && widget && widget->parentWidget())
+        const_cast<QStyleOption *>(option)->palette = widget->parentWidget()->palette();
     drawToolBoxTabShape(option, painter, widget);
     drawToolBoxTabLabel(option, painter, widget);
-    isIdiot = true;
     return true;
 }
 
@@ -464,10 +463,44 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
     castOpt(ToolBoxV2, opt, option);
     if (!opt)
         return true;
-    const QPalette pal(widget?widget->palette():opt->palette);
-    const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
-    const QPalette::ColorRole bg(isIdiot?Ops::opposingRole(Ops::bgRole(widget)):(isSelected?Ops::fgRole(widget):Ops::bgRole(widget)));
-    painter->fillRect(option->rect, pal.color(bg));
+    const QPalette pal(opt->palette);
+    QRect geo(opt->rect);
+    QWidget *w(0);
+    QRect theRect(opt->rect);
+    if (castObj(const QToolBox *, box, widget))
+    {
+        if (box->frameShadow() == QFrame::Sunken)
+        {
+            painter->fillRect(option->rect, pal.button());
+            return true;
+        }
+        const QList<QWidget *> tabs(widget->findChildren<QWidget *>("qt_toolbox_toolboxbutton"));
+        for (int i = 0; i < tabs.size(); ++i)
+        {
+            QWidget *tab(tabs.at(i));
+            if (tab == painter->device())
+            {
+                w = tab;
+                geo = w->geometry();
+            }
+            if (tab->geometry().bottom() > theRect.bottom())
+                theRect.setBottom(tab->geometry().bottom());
+        }
+    }
+
+    const bool first(opt->position == QStyleOptionToolBoxV2::Beginning);
+    const bool last(opt->position == QStyleOptionToolBoxV2::End);
+    Render::Sides sides(Render::Left|Render::Right);
+    if (first)
+        sides |= Render::Top;
+    if (last)
+        sides |= Render::Bottom;
+
+    QLinearGradient lg(0, 0, 0, Render::maskRect(Settings::conf.tabs.shadow, theRect).height());
+    lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, pal.color(QPalette::Button)));
+    QBrush b(lg);
+
+    Render::drawClickable(Settings::conf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, Settings::conf.tabs.rnd), Settings::conf.shadows.opacity, w, &b, 0, sides, false, -geo.topLeft());
     return true;
 }
 
@@ -480,12 +513,12 @@ StyleProject::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter,
 
     const QPalette pal(widget?widget->palette():opt->palette);
     const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
-    QRect textRect(opt->rect);
+    QRect textRect(opt->rect.adjusted(4, 0, -4, 0));
     if (!opt->icon.isNull())
     {
         const QSize iconSize(16, 16); //no way to get this?
-        const QPoint topLeft(opt->rect.topLeft());
-        QRect r(topLeft+QPoint(0, opt->rect.height()/2-iconSize.height()/2), iconSize);
+        const QPoint topLeft(textRect.topLeft());
+        QRect r(topLeft+QPoint(0, textRect.height()/2-iconSize.height()/2), iconSize);
         opt->icon.paint(painter, r);
         textRect.setLeft(r.right());
     }
@@ -496,7 +529,20 @@ StyleProject::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter,
         tmp.setBold(true);
         painter->setFont(tmp);
     }
-    drawItemText(painter, textRect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, isSelected?Ops::bgRole(widget):Ops::fgRole(widget));
+    drawItemText(painter, textRect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, QPalette::ButtonText);
+    if (isSelected)
+    {
+        painter->setClipRegion(QRegion(opt->rect)-QRegion(itemTextRect(painter->fontMetrics(), textRect, Qt::AlignCenter, true, opt->text)));
+        int y(textRect.center().y());
+        const QPen pen(painter->pen());
+        QLinearGradient lg(textRect.topLeft(), textRect.topRight());
+        lg.setColorAt(0.0f, Qt::transparent);
+        lg.setColorAt(0.5f, pal.color(QPalette::ButtonText));
+        lg.setColorAt(1.0f, Qt::transparent);
+        painter->setPen(QPen(lg, 1.0f));
+        painter->drawLine(textRect.x(), y, textRect.right(), y);
+        painter->setPen(pen);
+    }
     painter->setFont(savedFont);
     return true;
 }

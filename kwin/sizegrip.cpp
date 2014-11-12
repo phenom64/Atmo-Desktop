@@ -22,8 +22,8 @@ SizeGrip::SizeGrip(KwinClient *client) : QWidget(/*client->widget()*/0), m_clien
     setFixedSize(SZ, SZ);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_PaintOnScreen);
-    const int points[] = { SZ,0, SZ,SZ/2, SZ/2,SZ, SZ,SZ, 0,SZ };
-    setMask(QPolygon(5, points));
+    const int points[] = { SZ,0, /*SZ,SZ/2, SZ/2,SZ,*/ SZ,SZ, 0,SZ };
+    setMask(QPolygon(3, points));
     restack();
     m_client->widget()->installEventFilter(this);
     installEventFilter(this);
