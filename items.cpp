@@ -211,23 +211,21 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
             btn.state |= (opt->checkState==Qt::PartiallyChecked?State_NoChange:State_On);
         drawCheckBox(&btn, painter, 0);
     }
-
-    int m(3);
-    QRect iconRect(subElementRect(SE_ItemViewItemDecoration, opt, widget));
-    m = m*!iconRect.isValid();
-    QRect textRect(subElementRect(SE_ItemViewItemText, opt, widget).adjusted(m, 0, -m, 0));
-
-    const QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
-    const QPixmap pix(opt->icon.pixmap(opt->decorationSize));
-    drawItemPixmap(painter, iconRect, opt->decorationAlignment, pix);
+    QRect textRect(subElementRect(SE_ItemViewItemText, opt, widget));
+    if (!opt->icon.isNull())
+    {
+        QRect iconRect(subElementRect(SE_ItemViewItemDecoration, opt, widget));
+        const QPixmap pix(opt->icon.pixmap(opt->decorationSize));
+        drawItemPixmap(painter, iconRect, opt->decorationAlignment, pix);
+    }
     if (!opt->text.isEmpty())
     {
+        const QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
         if (fg == QPalette::HighlightedText)
             BOLD;
-        const int align(opt->displayAlignment);
-        const QFontMetrics &fm(painter->fontMetrics());
+        const QFontMetrics fm(painter->fontMetrics());
         const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width()));
-        drawItemText(painter, textRect, align, opt->palette, opt->ENABLED, text, fg);
+        drawItemText(painter, textRect, opt->displayAlignment, opt->palette, opt->ENABLED, text, fg);
     }
     painter->restore();
     return true;

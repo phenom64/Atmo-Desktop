@@ -766,6 +766,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         return;
 
     bool needStrong(qobject_cast<const QSlider *>(w));
+
     int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
     if (w)
     {
@@ -805,11 +806,12 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         if (QWidget *p = w->parentWidget())
         {
             pbgLum = Color::luminosity(p->palette().color(QPalette::Active, p->backgroundRole()));
-//            pfgLum = Color::luminosity(p->palette().color(QPalette::Active, p->foregroundRole()));
+            pfgLum = Color::luminosity(p->palette().color(QPalette::Active, p->foregroundRole()));
         }
     }
 
 //    const bool isDark(fgLum>bgLum);
+    bool darkParent(pbgLum>pfgLum);
     const bool darkerParent(bgLum-pbgLum>127);
 //    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
 //    const uint diff(255-qMin(bgLum, pbgLum));
@@ -844,7 +846,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         QLinearGradient lg(0, 0, 0, r.height());
         if (w && qobject_cast<const QToolBox *>(w->parentWidget()))
             r = w->rect();
-        int high(darkerParent?32:192), low(darkerParent?192:32);
+        int high(darkParent?32:192), low(darkParent?192:32);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);

@@ -491,12 +491,15 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
         }
     }
 
+    const bool only(opt->position == QStyleOptionToolBoxV2::OnlyOneTab);
     const bool first(opt->position == QStyleOptionToolBoxV2::Beginning);
     const bool last(opt->position == QStyleOptionToolBoxV2::End);
     Render::Sides sides(Render::Left|Render::Right);
-    if (first)
+    if (only)
+        sides = Render::All;
+    else if (first)
         sides |= Render::Top;
-    if (last)
+    else if (last)
         sides |= Render::Bottom;
 
     QLinearGradient lg(0, 0, 0, Render::maskRect(Settings::conf.tabs.shadow, theRect).height());

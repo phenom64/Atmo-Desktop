@@ -16,6 +16,7 @@
 #include <QStyleOptionDockWidgetV2>
 #include <QProgressBar>
 #include <QStyleOptionToolButton>
+#include <QStyleOptionViewItemV4>
 
 #include "styleproject.h"
 #include "stylelib/progresshandler.h"
@@ -44,6 +45,60 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     {
 //    case SE_ToolBoxTabContents:
 //        return opt->rect; //this is not called at all is it?
+    case SE_ItemViewItemCheckIndicator:
+    case SE_ItemViewItemDecoration:
+    case SE_ItemViewItemText:
+    {
+        castOpt(ViewItemV4, item, opt);
+        if (!item)
+            return QRect();
+
+        const int m(2);
+        QRect textRect(item->rect.adjusted(m, 0, -m, 0)), iconRect(textRect), checkRect(textRect);
+        if (item->features & QStyleOptionViewItemV2::HasCheckIndicator)
+        {
+            int size(pixelMetric(PM_IndicatorWidth, item, widget));
+            checkRect.setWidth(size);
+            textRect.setLeft(checkRect.right()+m);
+            iconRect.setLeft(checkRect.right()+m);
+        }
+
+        QSize iconSize(16, 16);
+        if (castObj(const QAbstractItemView *, view, widget))
+            iconSize = view->iconSize();
+        if (!item->icon.isNull())
+        {
+            switch (item->decorationPosition)
+            {
+            case QStyleOptionViewItem::Left:
+                iconRect.setWidth(iconSize.width()+m);
+                textRect.setLeft(iconRect.right()+m);
+                break;
+            case QStyleOptionViewItem::Right:
+                iconRect.setWidth(iconSize.width()+m);
+                iconRect.moveLeft(item->rect.right()-(iconSize.width()+m));
+                textRect.setRight(iconRect.left()-m);
+                break;
+            case QStyleOptionViewItem::Top:
+                textRect.setHeight(opt->fontMetrics.height());
+                textRect.moveTop(item->rect.bottom()-textRect.height());
+                iconRect.setBottom(textRect.top()-m);
+                break;
+            case QStyleOptionViewItem::Bottom: // seriously? name one case?
+                textRect.setHeight(item->fontMetrics.height());
+                iconRect.setTop(textRect.bottom()+m);
+                break;
+            default : break;
+            }
+        }
+        switch (r)
+        {
+        case SE_ItemViewItemCheckIndicator: return visualRect(item->direction, item->rect, checkRect);
+        case SE_ItemViewItemDecoration: return visualRect(item->direction, item->rect, iconRect);
+        case SE_ItemViewItemText: return visualRect(item->direction, item->rect, textRect);
+        default: return QRect();
+        }
+    }
     case SE_LineEditContents:
     {
         QRect r(Render::maskRect(Settings::conf.input.shadow, opt->rect));
@@ -167,7 +222,6 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:
     case SE_ProgressBarContents: return opt->rect;
-    case SE_ViewItemCheckIndicator:
     case SE_RadioButtonIndicator:
     case SE_CheckBoxIndicator:
     {
