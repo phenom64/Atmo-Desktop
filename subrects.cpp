@@ -64,14 +64,15 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         }
 
         QSize iconSize(16, 16);
-        if (castObj(const QAbstractItemView *, view, widget))
-            iconSize = view->iconSize();
+        if (qobject_cast<const QAbstractItemView *>(widget))
+            if (static_cast<const QAbstractItemView *>(widget)->iconSize().isValid())
+                iconSize = static_cast<const QAbstractItemView *>(widget)->iconSize();
         if (!item->icon.isNull())
         {
             switch (item->decorationPosition)
             {
             case QStyleOptionViewItem::Left:
-                iconRect.setWidth(iconSize.width()+m);
+                iconRect.setWidth(iconSize.width());
                 textRect.setLeft(iconRect.right()+m);
                 break;
             case QStyleOptionViewItem::Right:

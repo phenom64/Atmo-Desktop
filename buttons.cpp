@@ -163,7 +163,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
 
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
 //    Render::renderShadow(Render::Raised, checkRect, painter);
 
     if (opt->state & State_On)

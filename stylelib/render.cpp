@@ -811,7 +811,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
     }
 
 //    const bool isDark(fgLum>bgLum);
-    bool darkParent(pbgLum>pfgLum);
+    bool darkParent(pfgLum>pbgLum);
     const bool darkerParent(bgLum-pbgLum>127);
 //    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
 //    const uint diff(255-qMin(bgLum, pbgLum));
