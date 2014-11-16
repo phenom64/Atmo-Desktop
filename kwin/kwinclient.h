@@ -21,7 +21,7 @@ public:
     ~DButton(){}
 
 protected:
-    bool isActive();
+    bool isActive() const;
     void onClick(QMouseEvent *e, const Type &t);
 
     bool paintMaxButton(QPainter &p);

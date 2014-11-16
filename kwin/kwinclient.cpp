@@ -54,7 +54,7 @@ DButton::color(const ColorRole &c) const
 }
 
 bool
-DButton::isActive()
+DButton::isActive() const
 {
     return m_client?m_client->isActive():true;
 }

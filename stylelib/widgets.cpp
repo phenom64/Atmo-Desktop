@@ -97,6 +97,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int fgLum(Color::luminosity(color(Fg))), bgLum(Color::luminosity(color(Bg)));
     const bool isDark(fgLum > bgLum);
+    const float rat(isActive()?1.5f:0.5f);
     switch (Settings::conf.deco.buttons)
     {
     case 0:
@@ -117,7 +118,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case 1:
     {
-        c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), c.value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
@@ -148,7 +149,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case 2:
     {
-        c.setHsv(c.hue(), qMax(164, c.saturation()), c.value(), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), c.value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
@@ -190,7 +191,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         r.adjust(0, -1, 0, 1);
         r.shrink(3);
-        c.setHsv(c.hue(), qMax(164, c.saturation()), qBound(63, c.value(), 255), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qBound(63, c.value(), 255), c.alpha());
         p.setBrush(c.darker(200));
         p.drawEllipse(r);
         r.shrink(1);

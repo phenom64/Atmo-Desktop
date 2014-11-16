@@ -45,7 +45,7 @@ protected:
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 
     typedef bool (Button::*PaintEvent)(QPainter &);
-    virtual bool isActive() = 0;
+    virtual bool isActive() const = 0;
     virtual void onClick(QMouseEvent *e, const Type &t) = 0;
 
     PaintEvent m_paintEvent[TypeCount];
