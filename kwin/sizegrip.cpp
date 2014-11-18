@@ -9,7 +9,8 @@
 #include "../stylelib/color.h"
 #include "../stylelib/xhandler.h"
 
-#define SZ 16
+#define SZ 8
+#define SM 4
 SizeGrip::SizeGrip(KwinClient *client) : QWidget(/*client->widget()*/0), m_client(client) //if I parent the widget I get garbled painting when compositing active.... weird.
 {
     hide();
@@ -85,7 +86,7 @@ SizeGrip::thePos() const
     int l,t,r,b;
     m_client->borders(l, r, t, b);
     int right(m_client->width()-(l+r)), bottom(m_client->height()-(t+b));
-    return QPoint(right-SZ, bottom-SZ);
+    return QPoint(right-(SZ+SM), bottom-(SZ+SM));
 }
 
 int

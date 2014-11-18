@@ -6,6 +6,10 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QImage>
+#include <QSplitterHandle>
+#include <QApplication>
+#include <QMouseEvent>
+#include <QMainWindow>S
 #include "xhandler.h"
 #include "macros.h"
 
@@ -342,4 +346,102 @@ Button::paintMinButton(QPainter &p)
     }
     p.end();
     return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+#define SSIZE 64
+
+void
+SplitterExt::manage(QWidget *sh)
+{
+    static QList<QWidget *> managed;
+    if (!sh || managed.contains(sh))
+        return;
+    managed << sh;
+    new SplitterExt(sh);
+}
+
+SplitterExt::SplitterExt(QWidget *parent)
+    : QWidget(parent->window())
+    , m_splitter(parent)
+{
+    connect(parent, SIGNAL(destroyed()), this, SLOT(deleteLater()));
+    setFixedSize(SSIZE, SSIZE);
+    setAttribute(Qt::WA_Hover);
+    hide();
+    m_splitter->installEventFilter(this);
+}
+
+bool
+SplitterExt::eventFilter(QObject *o, QEvent *e)
+{
+    if (o != m_splitter)
+        return false;
+
+    switch (e->type())
+    {
+    case QEvent::Enter:
+    {
+        const QPoint topLeft(parentWidget()->mapFromGlobal(QCursor::pos()));
+        move(topLeft-QPoint(SSIZE>>1, SSIZE>>1));
+        m_enterPoint = m_splitter->mapFromGlobal(QCursor::pos());
+        show();
+        setCursor(m_splitter->cursor());
+        return true;
+    }
+    case QEvent::Leave:
+    {
+        return true;
+    }
+    default: return false;
+    }
+    return false;
+}
+
+bool
+SplitterExt::event(QEvent *e)
+{
+    switch (e->type())
+    {
+    case QEvent::MouseButtonPress:
+    {
+        QMouseEvent me(QEvent::MouseButtonPress, m_enterPoint, QCursor::pos()/*m_splitter->mapToGlobal(cen)*/, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(m_splitter, &me);
+        return true;
+    }
+    case QEvent::MouseButtonRelease:
+    {
+        hide();
+        const QPoint cen(m_splitter->mapFromGlobal(QCursor::pos()));
+        QMouseEvent me(QEvent::MouseButtonRelease, cen, QCursor::pos(), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(m_splitter, &me);
+        return true;
+    }
+    case QEvent::Leave:
+    {
+        hide();
+        const QPoint cen(m_splitter->mapFromGlobal(QCursor::pos()));
+        QMouseEvent me(QEvent::Leave, cen, QCursor::pos(), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(m_splitter, &me);
+        return true;
+    }
+    case QEvent::MouseMove:
+    {
+        const QPoint topLeft(parentWidget()->mapFromGlobal(QCursor::pos()));
+        move(topLeft-QPoint(SSIZE>>1, SSIZE>>1));
+        const QPoint cen(m_splitter->mapFromGlobal(QCursor::pos()));
+        QMouseEvent me(QEvent::MouseMove, cen, QCursor::pos(), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(m_splitter, &me);
+        return false;
+    }
+    case QEvent::Paint:
+    {
+        QPainter p(this);
+        p.fillRect(rect(), QColor(0, 0, 0, 63));
+        p.end();
+        return false;
+    }
+    default: return false;
+    }
 }

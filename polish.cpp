@@ -82,6 +82,8 @@ StyleProject::polish(QWidget *widget)
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
     }
+    if (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget))
+        SplitterExt::manage(widget);
     if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
         widget->layout()->setContentsMargins(0, 0, 0, 0);
 #if 0

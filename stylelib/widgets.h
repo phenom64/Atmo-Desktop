@@ -2,6 +2,7 @@
 #define WIDGETS_H
 
 #include <QWidget>
+#include <QSplitterHandle>
 class Q_DECL_EXPORT Button : public QWidget
 {
 public:
@@ -53,5 +54,36 @@ protected:
     bool m_hasPress;
     QPixmap m_bgPix[2];
 };
+
+class Q_DECL_EXPORT SplitterExt : public QWidget
+{
+    Q_OBJECT
+public:
+    static void manage(QWidget *sh);
+
+protected:
+    SplitterExt(QWidget *parent = 0);
+    bool eventFilter(QObject *, QEvent *);
+    bool event(QEvent *);
+
+private:
+    QWidget *m_splitter;
+    QPoint m_enterPoint;
+};
+
+//class Q_DECL_EXPORT SplitterProxy : public QObject
+//{
+//public:
+////    explicit SplitterProxy(QObject *parent = 0) : QObject(parent){}
+////    ~SplitterProxy(){}
+//    static void manage(QSplitterHandle *sh);
+//    static SplitterProxy *instance() { return &s_instance; }
+
+//protected:
+//    bool eventFilter(QObject *, QEvent *);
+
+//private:
+//    static SplitterProxy s_instance;
+//};
 
 #endif //WIDGETS_H

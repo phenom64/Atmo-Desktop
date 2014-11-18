@@ -17,7 +17,7 @@ class DButton : public Button
 public:
     DButton(const Type &t, QWidget *parent = 0) : Button(t, parent){}
 protected:
-    bool isActive() { return window()->isActiveWindow(); }
+    bool isActive() const { return window()->isActiveWindow(); }
     void onClick(QMouseEvent *e, const Type &t);
 };
 
