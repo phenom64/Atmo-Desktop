@@ -422,6 +422,9 @@ SplitterExt::event(QEvent *e)
     case QEvent::Leave:
     {
         e->accept();
+        QMouseEvent *me(static_cast<QMouseEvent *>(e));
+        QMouseEvent m(me->type(), m_splitter->mapFromGlobal(QCursor::pos()), QCursor::pos(), me->button(), me->buttons(), me->modifiers());
+        QCoreApplication::sendEvent(m_splitter, &m);
         m_hasPress = false;
         hide();
         setParent(0);
