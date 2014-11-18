@@ -352,16 +352,6 @@ Button::paintMinButton(QPainter &p)
 
 #define SSIZE 64
 
-class ChildEater : public QObject
-{
-protected:
-    bool eventFilter(QObject *, QEvent *e)
-    {
-        return (e->type() == QEvent::ChildAdded);
-    }
-};
-
-static ChildEater s_eater;
 static SplitterExt *s_se(0);
 
 void
@@ -401,9 +391,7 @@ SplitterExt::eventFilter(QObject *o, QEvent *e)
         m_enterPoint = m_splitter->mapFromGlobal(QCursor::pos());
         Qt::CursorShape shape(m_splitter->cursor().shape());
         setCursor(shape);
-        win->installEventFilter(&s_eater);
         setParent(win);
-        win->removeEventFilter(&s_eater);
         const QPoint topLeft(win->mapFromGlobal(QCursor::pos()));
         move(topLeft-QPoint(SSIZE>>1, SSIZE>>1));
         raise();
@@ -442,6 +430,7 @@ SplitterExt::event(QEvent *e)
     }
     case QEvent::MouseMove:
     {
+        e->accept();
         if (!m_hasPress)
             return false;
         move(parentWidget()->mapFromGlobal(QCursor::pos())-QPoint(SSIZE>>1, SSIZE>>1));
