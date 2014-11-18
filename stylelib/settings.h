@@ -11,6 +11,7 @@
 #define TITLEPOS            "titlepos"
 #define HACKDIALOGS         "hackdialogs"
 #define COMPACTMENU         "compactmenu"
+#define SPLITTEREXT         "splitterext"
 
 #define DECOBUTTONS         "deco.buttons"
 #define DECOICON            "deco.icon"
@@ -89,6 +90,7 @@
 #define DEFTITLEPOS             1
 #define DEFHACKDIALOGS          false
 #define DEFCOMPACTMENU          false
+#define DEFSPLITTEREXT          false
 
 #define DEFDECOBUTTONS          0
 #define DEFDECOICON             true
@@ -149,6 +151,7 @@
 #define READTITLEPOS            TITLEPOS, DEFTITLEPOS
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
 #define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
+#define READSPLITTEREXT         SPLITTEREXT, DEFSPLITTEREXT
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
 #define READDECOICON            DECOICON, DEFDECOICON
@@ -211,7 +214,7 @@ class Q_DECL_EXPORT Settings
 public:
     float opacity;
     QStringList blackList;
-    bool removeTitleBars, hackDialogs, compactMenu;
+    bool removeTitleBars, hackDialogs, compactMenu, splitterExt;
     int titlePos;
     struct deco
     {

@@ -59,16 +59,17 @@ class Q_DECL_EXPORT SplitterExt : public QWidget
 {
     Q_OBJECT
 public:
+    SplitterExt();
     static void manage(QWidget *sh);
 
 protected:
-    SplitterExt(QWidget *parent = 0);
     bool eventFilter(QObject *, QEvent *);
     bool event(QEvent *);
 
 private:
     QWidget *m_splitter;
     QPoint m_enterPoint;
+    bool m_hasPress;
 };
 
 //class Q_DECL_EXPORT SplitterProxy : public QObject

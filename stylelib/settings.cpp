@@ -90,6 +90,7 @@ Settings::read()
     conf.titlePos = conf.removeTitleBars?s.value(READTITLEPOS).toInt():-1;
     conf.hackDialogs = s.value(READHACKDIALOGS).toBool();
     conf.compactMenu = s.value(READCOMPACTMENU).toBool();
+    conf.splitterExt = s.value(READSPLITTEREXT).toBool();
     //deco
     conf.deco.buttons = s.value(READDECOBUTTONS).toInt();
     conf.deco.icon = s.value(READDECOICON).toBool();
