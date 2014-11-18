@@ -363,7 +363,7 @@ SplitterExt::manage(QWidget *sh)
 }
 
 SplitterExt::SplitterExt(QWidget *parent)
-    : QWidget(parent->window())
+    : QWidget(parent->parentWidget())
     , m_splitter(parent)
 {
     connect(parent, SIGNAL(destroyed()), this, SLOT(deleteLater()));

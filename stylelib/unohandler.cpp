@@ -164,7 +164,8 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
                 || w->mouseGrabber()
                 || me->button() != Qt::LeftButton)
             return false;
-        XHandler::mwRes(me->globalPos(), w->window()->winId());
+        if (canDrag(w))
+            XHandler::mwRes(me->globalPos(), w->window()->winId());
         return false;
     }
     case QEvent::Paint:
