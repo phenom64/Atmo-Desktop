@@ -249,8 +249,37 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     if (!opt)
         return true;
 
-    if (opt->frameShape == QFrame::NoFrame || opt->frameShape == QFrame::HLine || opt->frameShape == QFrame::VLine)
+    if (opt->frameShape == QFrame::NoFrame /*|| opt->frameShape == QFrame::HLine || opt->frameShape == QFrame::VLine*/)
         return true;
+
+#define SAVEPEN const QPen pen(painter->pen())
+#define RESTOREPEN painter->setPen(pen)
+    if (opt->frameShape == QFrame::HLine)
+    {
+        SAVEPEN;
+        painter->setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+        int l, t, r, b, y(opt->rect.center().y());
+        opt->rect.getRect(&l, &t, &r, &b);
+        painter->drawLine(l, y, r, y);
+        painter->setPen(QColor(255, 255, 255, (Settings::conf.shadows.opacity*255.0f)/2));
+        painter->drawLine(l, y+1, r, y+1);
+        RESTOREPEN;
+        return true;
+    }
+    if (opt->frameShape == QFrame::VLine)
+    {
+        SAVEPEN;
+        painter->setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+        int l, t, r, b, x(opt->rect.center().x());
+        opt->rect.getRect(&l, &t, &r, &b);
+        painter->drawLine(x, t, x, b);
+//        painter->setPen(QColor(255, 255, 255, (Settings::conf.shadows.opacity*255.0f)/2));
+//        painter->drawLine(l, y+1, r, y+1);
+        RESTOREPEN;
+        return true;
+    }
+#undef SAVEPEN
+#undef RESTOREPEN
 
     castObj(const QFrame *, frame, widget);
     if (OverLay::hasOverLay(frame))

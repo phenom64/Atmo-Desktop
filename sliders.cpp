@@ -351,7 +351,18 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //he text label of a QProgressBar.
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
     const float w_2(groove.width()/2.0f), h_2(groove.height()/2.0f);
-#define TRANSLATE(_BOOL_) if(!hor) {painter->translate(w_2, h_2);painter->rotate(_BOOL_?-90.0f:90.0f);painter->translate(-w_2, -h_2);}
+#define TRANSLATE(_BOOL_) \
+    if(!hor) \
+    { \
+        painter->translate(w_2, h_2); \
+        painter->rotate(_BOOL_?-90.0f:90.0f); \
+        painter->translate(-w_2, -h_2); \
+        const QPoint center(label.center()); \
+        QSize lsz(label.size()); \
+        lsz.transpose(); \
+        label.setSize(lsz); \
+        label.moveCenter(center); \
+    }
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
     const bool btt(optv2 && optv2->bottomToTop);
     TRANSLATE(btt);
