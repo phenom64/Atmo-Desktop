@@ -308,13 +308,12 @@ void
 KwinClient::init()
 {
     createMainWidget();
+    widget()->setAutoFillBackground(false); // !isPreview());
+    widget()->setAttribute(Qt::WA_OpaquePaintEvent, !isPreview());
+    widget()->setAttribute(Qt::WA_NoSystemBackground, isPreview());
+    widget()->setAttribute(Qt::WA_PaintOnScreen, !isPreview());
+    widget()->setAttribute(Qt::WA_StyledBackground, false);
     widget()->installEventFilter(this);
-//    widget()->setAttribute(Qt::WA_OpaquePaintEvent, !isPreview());
-//    widget()->setAttribute(Qt::WA_NoSystemBackground, isPreview());
-//    widget()->setAttribute(Qt::WA_TranslucentBackground, !isPreview());
-//    widget()->setAttribute(Qt::WA_PaintOnScreen, !isPreview());
-//    widget()->setAttribute(Qt::WA_StyledBackground, false);
-//    widget()->setAutoFillBackground(false);
 
     m_titleLayout = new QHBoxLayout();
     m_titleLayout->setSpacing(SPACING);
