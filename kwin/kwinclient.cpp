@@ -32,25 +32,35 @@ DButton::DButton(const Type &t, KwinClient *client, QWidget *parent)
 const bool
 DButton::isDark() const
 {
-    return Color::luminosity(color(Fg)) > Color::luminosity(color(Bg));
+    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
+    if (m_client->m_custcol[Fg].isValid())
+        fgc = m_client->m_custcol[Fg];
+//    if (c == Fg)
+//        return fgc;
+    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
+    if (m_client->m_custcol[Bg].isValid())
+        bgc = m_client->m_custcol[Bg];
+//    if (c == Bg)
+//        return bgc;
+//    return Color::mid(fgc, bgc);
+    return Color::luminosity(fgc) > Color::luminosity(bgc);
 }
 
 const QColor
 DButton::color(const ColorRole &c) const
 {
-//    if (m_client->m_textColor.isValid())
-//        return m_client->m_textColor;
-    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
-    if (m_client->m_custcol[Fg].isValid())
-        fgc = m_client->m_custcol[Fg];
-    if (c == Fg)
-        return fgc;
-    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
-    if (m_client->m_custcol[Bg].isValid())
-        bgc = m_client->m_custcol[Bg];
-    if (c == Bg)
-        return bgc;
-    return Color::mid(fgc, bgc);
+    return Button::color(c);
+//    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
+//    if (m_client->m_custcol[Fg].isValid())
+//        fgc = m_client->m_custcol[Fg];
+//    if (c == Fg)
+//        return fgc;
+//    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
+//    if (m_client->m_custcol[Bg].isValid())
+//        bgc = m_client->m_custcol[Bg];
+//    if (c == Bg)
+//        return bgc;
+//    return Color::mid(fgc, bgc);
 }
 
 bool
@@ -299,11 +309,12 @@ KwinClient::init()
 {
     createMainWidget();
     widget()->installEventFilter(this);
-    widget()->setAttribute(Qt::WA_OpaquePaintEvent, !isPreview());
-    widget()->setAttribute(Qt::WA_NoSystemBackground, isPreview());
+//    widget()->setAttribute(Qt::WA_OpaquePaintEvent, !isPreview());
+//    widget()->setAttribute(Qt::WA_NoSystemBackground, isPreview());
+//    widget()->setAttribute(Qt::WA_TranslucentBackground, !isPreview());
 //    widget()->setAttribute(Qt::WA_PaintOnScreen, !isPreview());
-    widget()->setAttribute(Qt::WA_StyledBackground, false);
-    widget()->setAutoFillBackground(false);
+//    widget()->setAttribute(Qt::WA_StyledBackground, false);
+//    widget()->setAutoFillBackground(false);
 
     m_titleLayout = new QHBoxLayout();
     m_titleLayout->setSpacing(SPACING);

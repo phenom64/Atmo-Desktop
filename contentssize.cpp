@@ -96,8 +96,9 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             break;
 
         castObj(const QTabBar *, bar, widget);
+        const bool safBar(Ops::isSafariTabBar(bar));
         QSize sz(contentsSize);
-        if (Ops::isSafariTabBar(bar))
+        if (safBar)
         {
             if (bar->expanding())
             {
@@ -140,6 +141,11 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             else
                 sz.rheight() += add;
         }
+//        if (!safBar)
+//        {
+//            sz.rwidth()+=(sz.width()-Render::maskWidth(Settings::conf.tabs.shadow, sz.width()));
+//            sz.rheight()+=(sz.height()-Render::maskHeight(Settings::conf.tabs.shadow, sz.height()));
+//        }
         return sz;
     }
     case CT_ToolButton:

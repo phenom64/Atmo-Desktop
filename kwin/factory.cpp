@@ -108,7 +108,7 @@ Factory::supports(Ability ability) const
     ///  The mask is still used to define the input region and the blurred
     ///  region, when the blur plugin is enabled.
     ///  @since 4.3
-        return true;
+        return false;
     case AbilityExtendIntoClientArea: ///< The decoration respects transparentRect()
         return false;
     ///  @since 4.4
@@ -117,7 +117,7 @@ Factory::supports(Ability ability) const
         return false;
     case AbilityAnnounceAlphaChannel: ///< The decoration can tell whether it currently uses an alpha channel or not. Requires AbilityUsesAlphaChannel.
     /// @since 4.10
-        return true;
+        return false;
     // Tabbing
     case AbilityTabbing: ///< The decoration supports tabbing
     // TODO colors for individual button types

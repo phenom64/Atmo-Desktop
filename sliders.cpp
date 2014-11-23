@@ -368,17 +368,8 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
     TRANSLATE(btt);
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, fg);
     TRANSLATE(!btt);
-
     painter->setClipRegion(QRegion(cont));
     TRANSLATE(btt);
-//    QRect tr(opt->fontMetrics.boundingRect(label, Qt::AlignCenter, opt->text));
-//    int rnd(qMin(tr.height(), tr.width())/2);
-
-//    painter->setBrush(opt->palette.color(QPalette::Highlight));
-//    painter->setPen(Qt::NoPen);
-//    painter->setRenderHint(QPainter::Antialiasing);
-//    painter->drawRoundedRect(tr, rnd, rnd);
-
     drawItemText(painter, label, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, QPalette::HighlightedText);
     TRANSLATE(!btt);
     painter->restore();

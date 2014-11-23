@@ -13,7 +13,7 @@ public:
     enum SidePart { West = 0, North, East, South, SidePartCount };
     enum Pos { First = 0, Middle = 1, Last = 2, Alone = 3 };
     enum Parts { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
-    enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, Strenghter, ShadowCount };
+    enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, Spotify, Strenghter, ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     enum Effect { Noeffect =0, Inset, Outset };
     Render();

@@ -256,7 +256,9 @@ Render::initShadowParts()
             if (r > 1)
             {
                 p.setBrush(QColor(255, 255, 255, 255));
+                p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
                 p.drawRoundedRect(rect, rnd, rnd);
+                p.setClipping(false);
                 rect.setBottom(rect.bottom()-1);
             }
             p.setBrush(Qt::black);
@@ -338,6 +340,21 @@ Render::initShadowParts()
                 p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
                 p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
             }
+            break;
+        }
+        case Spotify:
+        {
+            p.setPen(Qt::NoPen);
+            p.setBrush(Qt::black);
+            QRect rt(pix.rect());
+            const int w(1);
+            p.drawRoundedRect(rt, r, r);
+            if (r > 1)
+            {
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.drawRoundedRect(rt.adjusted(w, w, -w, -w), r-w, r-w);
+            }
+            break;
         }
         case Strenghter:
         {
@@ -350,6 +367,7 @@ Render::initShadowParts()
                 p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
                 p.drawRoundedRect(rt.adjusted(1, 1, -1, -1), r-1, r-1);
             }
+            break;
         }
         default: break;
         }
@@ -811,8 +829,8 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
     }
 
 //    const bool isDark(fgLum>bgLum);
-    bool darkParent(pfgLum>pbgLum);
-    const bool darkerParent(bgLum-pbgLum>127);
+    const bool darkParent(pfgLum>pbgLum);
+//    const bool darkerParent(bgLum-pbgLum>127);
 //    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
 //    const uint diff(255-qMin(bgLum, pbgLum));
 
@@ -850,7 +868,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
-        const int m(2);
+        const int m(3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 2);
@@ -871,15 +889,17 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
 
     if (s==Carved)
     {
-        renderShadow(Strenghter, r.adjusted(0, 0, 0, 1), p, rnd, sides, opacity);
+        renderShadow(Spotify, r.adjusted(-1, -1, 1, 1), p, rnd+1, sides, qMax(bgLum/255.0f, opacity));
     }
-    if (s==Sunken||s==Etched)
+    else if (s==Sunken||s==Etched)
     {
         r.sAdjust(0, 0, 0, 1);
         renderShadow(s, r, p, rnd, sides, opacity);
         if (needStrong)
             renderShadow(Strenghter, r, p, rnd, sides, opacity);
     }
+    else if (s==Spotify)
+        renderShadow(s, r, p, rnd, sides, opacity);
 }
 
 Render::Pos

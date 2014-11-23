@@ -21,6 +21,8 @@ Button::Button(Type type, QWidget *parent)
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_Hover);
     setFixedSize(16, 16);
+    setForegroundRole(QPalette::ButtonText);
+    setBackgroundRole(QPalette::Button);
     for (int i = 0; i < TypeCount; ++i)
         m_paintEvent[i] = 0;
 
@@ -100,7 +102,6 @@ void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int fgLum(Color::luminosity(color(Fg))), bgLum(Color::luminosity(color(Bg)));
-    const bool isDark(fgLum > bgLum);
     const float rat(isActive()?1.5f:0.5f);
     switch (Settings::conf.deco.buttons)
     {
@@ -109,7 +110,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.save();
         p.setPen(Qt::NoPen);
         r.adjust(2, 2, -2, -2);
-        QColor dark(Color::mid(c, Qt::black, 5, 3+isDark*10));
+        QColor dark(Color::mid(c, Qt::black, 5, 3+isDark()*10));
 //        dark.setAlpha(63);
 
         p.setBrush(dark);
@@ -123,7 +124,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     case 1:
     {
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), c.value(), c.alpha());
-        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
+        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
@@ -154,7 +155,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     case 2:
     {
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), c.value(), c.alpha());
-        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark*10));
+        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
@@ -176,7 +177,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.save();
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         int high(0), low(0);
-        if (isDark)
+        if (isDark())
         {
             high=32;
             low=192;
@@ -264,10 +265,10 @@ Button::paintCloseButton(QPainter &p)
     }
     else
     {
-        drawBase(isActive()?fcolors[m_type]:color(), p, r);
+        drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
         if (underMouse())
         {
-            p.setBrush(QColor(0, 0, 0, 127));
+            p.setBrush(color(Fg));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
@@ -301,10 +302,10 @@ Button::paintMaxButton(QPainter &p)
     }
     else
     {
-        drawBase(isActive()?fcolors[m_type]:color(), p, r);
+        drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
         if (underMouse())
         {
-            p.setBrush(QColor(0, 0, 0, 127));
+            p.setBrush(color(Fg));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
@@ -337,10 +338,10 @@ Button::paintMinButton(QPainter &p)
     }
     else
     {
-        drawBase(isActive()?fcolors[m_type]:color(), p, r);
+        drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
         if (underMouse())
         {
-            p.setBrush(QColor(0, 0, 0, 127));
+            p.setBrush(color(Fg));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }

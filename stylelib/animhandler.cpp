@@ -471,6 +471,8 @@ ToolBtns::eventFilter(QObject *o, QEvent *e)
             || (e->type() == QEvent::HoverMove && !m_timer->isActive() && Ops::hasMenu(static_cast<const QToolButton *>(o))))
     {
         QToolButton *tb = static_cast<QToolButton *>(o);
+        if (!tb->isEnabled())
+            return false;
         if (tb->underMouse())
             m_hovered = tb;
         if (!m_vals.contains(tb))

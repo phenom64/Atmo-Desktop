@@ -255,8 +255,6 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     if (!opt)
         return true;
 
-    painter->save();
-
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
     const QToolBar *bar(0);
     if (widget)
@@ -271,6 +269,25 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     Ops::toolButtonData(btn, pixelMetric(PM_ToolBarSeparatorExtent, opt, widget), nextSelected, prevSelected, isInTopToolBar, sides);
+
+    if (Settings::conf.toolbtn.shadow == Render::Spotify)
+    {
+        const QPalette pal(bar?bar->palette():opt->palette);
+        int hl(Anim::ToolBtns::level(btn, false));
+        if (opt->SUNKEN)
+            hl = STEPS;
+        QColor bc = Color::mid(pal.foreground().color(), pal.highlight().color(), STEPS-hl, hl);
+        QBrush brush(bc);
+        if (opt->SUNKEN)
+        {
+            Render::renderMask(opt->rect.sShrinked(1), painter, brush, Settings::conf.toolbtn.rnd, sides);
+            brush = pal.foreground();
+        }
+        Render::renderShadow(Render::Spotify, opt->rect, painter, Settings::conf.toolbtn.rnd, sides, 1.0f, &brush);
+        return true;
+    }
+
+    painter->save();
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(maskRect(rect));
@@ -374,13 +391,14 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     Ops::toolButtonData(btn, pixelMetric(PM_ToolBarSeparatorExtent, opt, widget), nextSelected, prevSelected, isInTopToolBar, sides);
+
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(maskRect(rect));
     const bool hasMenu(Ops::hasMenu(btn, opt));
     const bool isFlat(Settings::conf.toolbtn.flat);
     QPalette::ColorRole bg(Ops::bgRole(isFlat?bar:widget, isFlat?QPalette::Window:QPalette::Button)),
-            fg(Ops::fgRole(Settings::conf.toolbtn.flat?bar:widget, isFlat?QPalette::WindowText:QPalette::ButtonText));
+            fg(Ops::fgRole(isFlat?bar:widget, isFlat?QPalette::WindowText:QPalette::ButtonText));
 
     if (hasMenu)
     {
@@ -430,6 +448,11 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     {
         textRole = bar?bg:fg;
         bg = Ops::opposingRole(textRole);
+    }
+    if (bar && Settings::conf.toolbtn.shadow == Render::Spotify)
+    {
+        fg = textRole = opt->SUNKEN?QPalette::HighlightedText:QPalette::WindowText;
+        bg = opt->SUNKEN?QPalette::Highlight:QPalette::Window;
     }
 
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
