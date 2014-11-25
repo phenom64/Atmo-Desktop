@@ -62,7 +62,6 @@ public:
     void resize(const QSize &s);
     void shadeChange() {}
     void reset(unsigned long changed);
-
     void updateContBg();
 
     bool compositingActive() const;
@@ -72,6 +71,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
     void paint(QPainter &p);
     void populate(const QString &buttons, bool left);
+    void updateMask();
     QColor bgColor() const;
     QColor fgColor() const;
 

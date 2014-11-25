@@ -44,7 +44,8 @@ find_package(X11)
 
 add_library(stylelib SHARED ${libSRCS} ${libHDRS} ${MOC_SRCS})
 
-target_link_libraries(stylelib ${QT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xrender_LIB})
+#${X11_Xrender_LIB}
+target_link_libraries(stylelib ${QT_LIBRARIES} ${X11_LIBRARIES})
 
 #${LIB_INSTALL_DIR}
 install(TARGETS stylelib LIBRARY DESTINATION ${LIBRARY_DIR})

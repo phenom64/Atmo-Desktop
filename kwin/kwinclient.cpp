@@ -308,11 +308,7 @@ void
 KwinClient::init()
 {
     createMainWidget();
-    widget()->setAutoFillBackground(false); // !isPreview());
-    widget()->setAttribute(Qt::WA_OpaquePaintEvent, !isPreview());
-    widget()->setAttribute(Qt::WA_NoSystemBackground, isPreview());
-    widget()->setAttribute(Qt::WA_PaintOnScreen, !isPreview());
-    widget()->setAttribute(Qt::WA_StyledBackground, false);
+    widget()->setAttribute(Qt::WA_NoSystemBackground);
     widget()->installEventFilter(this);
 
     m_titleLayout = new QHBoxLayout();
@@ -384,13 +380,9 @@ KwinClient::populate(const QString &buttons, bool left)
 }
 
 void
-KwinClient::resize(const QSize &s)
+KwinClient::updateMask()
 {
-    if (m_mem && m_mem->isAttached())
-        m_mem->detach();
-    widget()->resize(s);
-//    m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
-    const int w(s.width()), h(s.height());
+    const int w(width()), h(height());
     if (compositingActive())
     {
         if (m_opacity < 1.0f)
@@ -410,6 +402,16 @@ KwinClient::resize(const QSize &s)
         r += QRegion(2, 0, w-4, h);
         setMask(r);
     }
+    widget()->update();
+}
+
+void
+KwinClient::resize(const QSize &s)
+{
+    if (m_mem && m_mem->isAttached())
+        m_mem->detach();
+    widget()->resize(s);
+    updateMask();
 }
 
 void
@@ -425,6 +427,22 @@ void
 KwinClient::captionChange()
 {
     widget()->update();
+}
+
+QColor
+KwinClient::fgColor() const
+{
+    if (m_custcol[Text].isValid())
+        return m_custcol[Text];
+    return options()->color(ColorFont, isActive());
+}
+
+QColor
+KwinClient::bgColor() const
+{
+    if (m_custcol[Bg].isValid())
+        return m_custcol[Bg];
+    return options()->color(ColorTitleBar, isActive());
 }
 
 bool
@@ -451,39 +469,23 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     case QEvent::Wheel:
         titlebarMouseWheelOperation(static_cast<QWheelEvent *>(e)->delta());
         return true;
-//    case QEvent::Show:
-//    case QEvent::Resize:
-//        m_titleLayout->setGeometry(QRect(0, 0, width(), TITLEHEIGHT));
-//        m_stretch->setFixedHeight(widget()->height()-TITLEHEIGHT);
     default: break;
     }
     return KDecoration::eventFilter(o, e);
 }
 
-QColor
-KwinClient::fgColor() const
-{
-    if (m_custcol[Text].isValid())
-        return m_custcol[Text];
-    return options()->color(ColorFont, isActive());
-}
-
-QColor
-KwinClient::bgColor() const
-{
-    if (m_custcol[Bg].isValid())
-        return m_custcol[Bg];
-    return options()->color(ColorTitleBar, isActive());
-}
-
 void
 KwinClient::paint(QPainter &p)
 {
+    p.setCompositionMode(QPainter::CompositionMode_Source);
+    p.fillRect(widget()->rect(), Qt::transparent);
+    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    p.setBrushOrigin(widget()->rect().topLeft());
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::NoBrush);
     const QRect tr(m_titleLayout->geometry());
-    p.setClipRect(tr);
     p.setOpacity(m_opacity);
+
     p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     p.setOpacity(1.0f);
 
@@ -495,7 +497,6 @@ KwinClient::paint(QPainter &p)
     lg.setColorAt(0.5f, Qt::transparent);
     p.setBrush(Qt::NoBrush);
     p.setPen(QPen(lg, 1.0f));
-    p.setRenderHint(QPainter::Antialiasing);
     p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
     if (m_contAware)
     {
@@ -555,10 +556,15 @@ KwinClient::paint(QPainter &p)
         p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
         p.setClipping(false);
     }
-
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p.drawTiledPixmap(QRect(QPoint(), Factory::s_topLeft.size()), Factory::s_topLeft);
-    p.drawTiledPixmap(QRect(QPoint(width()-Factory::s_topRight.size().width(), 0), Factory::s_topRight.size()), Factory::s_topRight);
+    else
+    {
+//        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+//        Render::renderMask(tr, &p, Qt::black, 4, Render::All&~Render::Bottom);
+        p.setOpacity(1.0f);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        p.drawPixmap(QRect(widget()->rect().topLeft(), Factory::s_topLeft->size()), *Factory::s_topLeft);
+        p.drawPixmap(QRect(QPoint((widget()->x()+width())-Factory::s_topRight->size().width(), widget()->y()), Factory::s_topRight->size()), *Factory::s_topRight);
+    }
 }
 
 QSize
@@ -656,24 +662,11 @@ KwinClient::reset(unsigned long changed)
     for (int i = 0; i < m_buttons.count(); ++i)
         m_buttons.at(i)->update();
 
-    widget()->update();
+    updateMask();
 }
 
 void
 KwinClient::updateContBg()
 {
     widget()->update();
-//    if (m_mem.attach(QSharedMemory::ReadOnly))
-//    {
-//        QBuffer buffer;
-//        QDataStream in(&buffer);
-
-//        m_mem.lock();
-//        buffer.setData((char*)m_mem.constData(), m_mem.size());
-//        buffer.open(QBuffer::ReadOnly);
-//        in >> m_bgCont;
-//        m_mem.unlock();
-//        m_mem.detach();
-//        widget()->update();
-//    }
 }

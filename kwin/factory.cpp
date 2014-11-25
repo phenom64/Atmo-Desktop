@@ -20,8 +20,7 @@ KDecoration
 
 #define SIZE 8
 
-QPixmap Factory::s_topLeft;
-QPixmap Factory::s_topRight;
+QPixmap *Factory::s_topLeft(0), *Factory::s_topRight(0);
 
 Factory::Factory()
     : QObject()
@@ -43,19 +42,24 @@ Factory::~Factory()
 void
 Factory::genMasks()
 {
+    const int half(SIZE>>1);
+
     QPixmap pix(SIZE, SIZE);
     pix.fill(Qt::transparent);
     QPainter p(&pix);
+    p.setRenderHint(QPainter::Antialiasing);
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::black);
-    p.fillRect(pix.rect(), Qt::black);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawEllipse(pix.rect());
     p.end();
-    const int half(SIZE>>1);
-    s_topLeft = pix.copy(QRect(0, 0, half, half));
-    s_topRight = pix.copy(QRect(half, 0, half, half));
+
+    if (!s_topLeft)
+    {
+        s_topLeft = new QPixmap();
+        s_topRight = new QPixmap();
+    }
+    *s_topLeft = pix.copy(QRect(0, 0, half, half));
+    *s_topRight = pix.copy(QRect(half, 0, half, half));
 }
 
 bool
@@ -108,16 +112,16 @@ Factory::supports(Ability ability) const
     ///  The mask is still used to define the input region and the blurred
     ///  region, when the blur plugin is enabled.
     ///  @since 4.3
-        return false;
+        return true;
     case AbilityExtendIntoClientArea: ///< The decoration respects transparentRect()
-        return false;
+        return true;
     ///  @since 4.4
     case AbilityUsesBlurBehind: ///< The decoration wants the background to be blurred, when the blur plugin is enabled.
     /// @since 4.6
         return false;
     case AbilityAnnounceAlphaChannel: ///< The decoration can tell whether it currently uses an alpha channel or not. Requires AbilityUsesAlphaChannel.
     /// @since 4.10
-        return false;
+        return true;
     // Tabbing
     case AbilityTabbing: ///< The decoration supports tabbing
     // TODO colors for individual button types

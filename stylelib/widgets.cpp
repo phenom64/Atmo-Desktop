@@ -101,7 +101,7 @@ Button::isDark() const
 void
 Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
-    const int fgLum(Color::luminosity(color(Fg))), bgLum(Color::luminosity(color(Bg)));
+    const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
     switch (Settings::conf.deco.buttons)
     {
@@ -123,7 +123,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case 1:
     {
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), c.value(), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), color(Bg).value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
@@ -154,7 +154,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case 2:
     {
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), c.value(), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), color(Bg).value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
@@ -196,7 +196,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         r.adjust(0, -1, 0, 1);
         r.shrink(3);
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qBound(63, c.value(), 255), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), color(Bg).value(), c.alpha());
         p.setBrush(c.darker(200));
         p.drawEllipse(r);
         r.shrink(1);
@@ -351,7 +351,7 @@ Button::paintMinButton(QPainter &p)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#define SSIZE 64
+#define SSIZE 32
 
 static SplitterExt *s_se(0);
 
@@ -446,7 +446,13 @@ SplitterExt::event(QEvent *e)
     case QEvent::Paint:
     {
         QPainter p(this);
-        p.fillRect(rect(), QColor(0, 0, 0, 63));
+        p.setPen(Qt::NoPen);
+        QRadialGradient rg(rect().center(), SSIZE>>1);
+        rg.setColorAt(0.5f, QColor(0, 0, 0, 63));
+        rg.setColorAt(1.0f, Qt::transparent);
+        p.setBrush(rg);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.drawEllipse(rect());
         p.end();
         return false;
     }

@@ -7,6 +7,7 @@
 #include <QToolButton>
 #include <QMainWindow>
 #include <QMenuBar>
+#include <QLineEdit>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -198,36 +199,20 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_LineEdit:
     {
-//        if (widget && widget->objectName() == "qt_spinbox_lineedit")
-//            break;
-
         QSize sz(contentsSize);
-//        int add(Settings::conf.input.rnd/2);
-//        switch (Settings::conf.input.shadow)
-//        {
-//        case Render::Sunken:
-//        case Render::Etched:
-//        case Render::Raised:
-//            add+=3;
-//            break;
-//        case Render::Simple:
-//            break;
-//        case Render::Carved:
-//            add+=6;
-//            break;
-//        default: break;
-//        }
-//        sz+=QSize(add, add);
         sz+=QSize(8, pixelMetric(PM_DefaultFrameWidth, opt, widget));
         if (sz.height() < 23)
             sz.setHeight(23);
+
         return sz;
     }
     case CT_SpinBox:
     {
         QSize sz(contentsSize);
+//        castOpt(SpinBox, sp, opt);
         sz.rwidth()+=(Render::shadowMargin(Settings::conf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
         sz.setHeight(qMax(23, sz.height()));
+
         return sz;
     }
 //        case CT_MenuItem:
