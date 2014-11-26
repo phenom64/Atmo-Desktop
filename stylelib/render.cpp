@@ -735,6 +735,23 @@ Render::makeNoise()
         int v(randInt(0, 255));
         rgb[i] = QColor(v, v, v).rgb();
     }
+    if (Settings::conf.uno.noiseStyle)
+    {
+        QImage small = noise.copy(0, 0, 256, 256);
+        expblur(small, 8, Qt::Horizontal);
+        const QImage horFlip(small.mirrored(true, false));
+        const QImage verFlip(small.mirrored(false));
+        const QImage bothFlip(small.mirrored(true, true));
+
+        noise.fill(Qt::transparent);
+        QPainter p(&noise);
+        p.drawImage(QPoint(), small);
+        p.drawImage(QPoint(256, 0), horFlip);
+        p.drawImage(QPoint(0, 256), verFlip);
+        p.drawImage(QPoint(256, 256), bothFlip);
+        p.end();
+        noise = noise.copy(4, 4, noise.width()-8, noise.height()-8);
+    }
     m_noise = QPixmap::fromImage(noise);
 }
 
@@ -830,6 +847,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
 
 //    const bool isDark(fgLum>bgLum);
     const bool darkParent(pfgLum>pbgLum);
+    const bool parentContrast(qMax(pbgLum, bgLum)-qMin(pbgLum, bgLum) > 127);
 //    const bool darkerParent(bgLum-pbgLum>127);
 //    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
 //    const uint diff(255-qMin(bgLum, pbgLum));
@@ -864,11 +882,11 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         QLinearGradient lg(0, 0, 0, r.height());
         if (w && qobject_cast<const QToolBox *>(w->parentWidget()))
             r = w->rect();
-        int high(darkParent?32:192), low(darkParent?192:32);
+        int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
-        const int m(3);
+        const int m(r.height()<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 2);
@@ -889,7 +907,8 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
 
     if (s==Carved)
     {
-        renderShadow(Spotify, r.adjusted(-1, -1, 1, 1), p, rnd+1, sides, qMax(bgLum/255.0f, opacity));
+        const float o(parentContrast?qMax(pbgLum, bgLum)/255.0f:opacity);
+        renderShadow(Spotify, r, p, rnd, sides, o);
     }
     else if (s==Sunken||s==Etched)
     {

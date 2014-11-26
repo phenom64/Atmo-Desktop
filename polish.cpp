@@ -133,6 +133,30 @@ StyleProject::polish(QWidget *widget)
             btn->setForegroundRole(QPalette::WindowText);
         }
     }
+
+    if (qobject_cast<QAbstractItemView *>(widget))
+    {
+        QPalette pal(widget->palette());
+        pal.setColor(QPalette::Button, pal.color(QPalette::Window));
+        pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
+        widget->setPalette(pal);
+    }
+
+    if (QLayout *l = widget->layout())
+    {
+        int m(qMax(l->contentsMargins().top(), widget->contentsMargins().top()));
+        if (m < l->spacing() && qobject_cast<QVBoxLayout *>(l))
+        {
+            if (qobject_cast<QMainWindow *>(widget->window()))
+                l->setSpacing(m);
+            if (!widget->mapTo(widget->window(), QPoint()).y()) //at top of window, hi telepathy contactlist o/
+            {
+                int l, t, r, b;
+                widget->getContentsMargins(&l, &t, &r, &b);
+                widget->setContentsMargins(l, t+2, r, b);
+            }
+        }
+    }
     if (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
             widget->findChild<QTabBar *>())
@@ -307,14 +331,28 @@ StyleProject::polish(QWidget *widget)
 //        installFilter(tabBar);
 //        if (tabBar->documentMode())
 //            tabBar->setExpanding(true);
+        const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
+        if (safari)
+        {
+            tabBar->setBackgroundRole(QPalette::Window);
+            tabBar->setForegroundRole(QPalette::WindowText);
+        }
+        else
+        {
+            tabBar->setBackgroundRole(QPalette::Button);
+            tabBar->setForegroundRole(QPalette::ButtonText);
+        }
         Anim::Tabs::manage(tabBar);
         tabBar->setAttribute(Qt::WA_Hover);
         tabBar->setAttribute(Qt::WA_MouseTracking);
         installFilter(tabBar);
+
         if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
         {
-            if (Ops::isSafariTabBar(tabBar)) //hmmm
+            if (safari) //hmmm
             {
+                tabBar->setBackgroundRole(QPalette::Window);
+                tabBar->setForegroundRole(QPalette::WindowText);
                 QWidget *p(tabBar->parentWidget());
                 if (p)
                 {

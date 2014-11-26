@@ -44,6 +44,7 @@
 #define UNOGRAD             "uno.gradient"
 #define UNOTINT             "uno.tinthue"
 #define UNONOISE            "uno.noisefactor"
+#define UNONOISESTYLE       "uno.noisestyle"
 #define UNOHOR              "uno.horizontal"
 #define UNOCONT             "uno.contentaware"
 #define UNOOPACITY          "uno.contentopacity"
@@ -123,6 +124,7 @@
 #define DEFUNOGRAD              "0.0:5, 1.0:-5"
 #define DEFUNOTINT              "-1:0"
 #define DEFUNONOISE             10
+#define DEFUNONOISESTYLE        0
 #define DEFUNOHOR               false
 #define DEFUNOCONT              QStringList()
 #define DEFUNOOPACITY           10
@@ -184,6 +186,7 @@
 #define READUNOGRAD             UNOGRAD, DEFUNOGRAD
 #define READUNOTINT             UNOTINT, DEFUNOTINT
 #define READUNONOISE            UNONOISE, DEFUNONOISE
+#define READUNONOISESTYLE       UNONOISESTYLE, DEFUNONOISESTYLE
 #define READUNOHOR              UNOHOR, DEFUNOHOR
 #define READUNOCONT             UNOCONT, DEFUNOCONT
 #define READUNOOPACITY          UNOOPACITY, DEFUNOOPACITY
@@ -268,7 +271,7 @@ public:
     {
         Gradient gradient;
         Tint tint;
-        unsigned int noise, blur;
+        unsigned int noise, blur, noiseStyle;
         float opacity;
         bool hor, contAware;
     } uno;

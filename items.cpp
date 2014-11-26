@@ -147,46 +147,46 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!opt)
         return true;
 
+    if (!(opt->SUNKEN || opt->HOVER))
+        return true;
+
     painter->save();
     castObj(const QAbstractItemView *, abstractView, widget);
     castObj(const QTreeView *, treeView, widget);
     castObj(const QListView *, listView, widget);
     const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
-    if (opt->SUNKEN || opt->HOVER)
+    QColor h(opt->palette.color(QPalette::Highlight));
+    if (!(opt->SUNKEN))
+        h.setAlpha(64);
+
+    QBrush brush(h);
+
+    if (!multiSelection)
     {
-        QColor h(opt->palette.color(QPalette::Highlight));
-        if (!(opt->SUNKEN))
-            h.setAlpha(64);
+        QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+        lg.setColorAt(0.0f, Color::mid(h, QColor(255, 255, 255, h.alpha()), 5, 1));
+        lg.setColorAt(1.0f, h);
+        brush = lg;
+    }
 
-        QBrush brush(h);
-
-        if (!multiSelection)
+    if (listView && listView->viewMode() == QListView::IconMode)
+    {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(brush);
+        const int rnd(qMin(6, Settings::conf.input.rnd)); //too much roundness just looks silly
+        painter->drawRoundedRect(opt->rect, rnd, rnd);
+    }
+    else
+    {
+        painter->fillRect(opt->rect, brush);
+        if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
         {
-            QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-            lg.setColorAt(0.0f, Color::mid(h, QColor(255, 255, 255, h.alpha()), 5, 1));
-            lg.setColorAt(1.0f, h);
-            brush = lg;
-        }
-
-        if (listView && listView->viewMode() == QListView::IconMode)
-        {
-            painter->setPen(Qt::NoPen);
-            painter->setBrush(brush);
-            const int rnd(qMin(6, Settings::conf.input.rnd)); //too much roundness just looks silly
-            painter->drawRoundedRect(opt->rect, rnd, rnd);
-        }
-        else
-        {
-            painter->fillRect(opt->rect, brush);
-            if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
-            {
-                painter->save();
-                painter->setPen(QColor(0, 0, 0, 64));
-                painter->translate(0.0f, 0.5f);
-                painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
-                painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
-                painter->restore();
-            }
+            painter->save();
+            painter->setPen(QColor(0, 0, 0, 64));
+            painter->translate(0.0f, 0.5f);
+            painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
+            painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
+            painter->restore();
         }
     }
     painter->restore();
@@ -220,9 +220,12 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     }
     if (!opt->text.isEmpty())
     {
-        const QPalette::ColorRole fg(opt->SUNKEN ? QPalette::HighlightedText : QPalette::Text);
-        if (fg == QPalette::HighlightedText)
+        QPalette::ColorRole fg(QPalette::Text);
+        if (opt->SUNKEN)
+        {
+            fg = QPalette::HighlightedText;
             BOLD;
+        }
         const QFontMetrics fm(painter->fontMetrics());
         const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width()));
         drawItemText(painter, textRect, opt->displayAlignment, opt->palette, opt->ENABLED, text, fg);

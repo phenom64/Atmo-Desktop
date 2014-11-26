@@ -123,6 +123,7 @@ Settings::read()
     conf.uno.gradient = stringToGrad(s.value(READUNOGRAD).toString());
     conf.uno.tint = tintColor(s.value(READUNOTINT).toString());
     conf.uno.noise = s.value(READUNONOISE).toInt();
+    conf.uno.noiseStyle = s.value(READUNONOISESTYLE).toInt();
     conf.uno.hor = s.value(READUNOHOR).toBool();
     conf.uno.contAware = s.value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
     conf.uno.opacity = s.value(READUNOOPACITY).toFloat()/100.0f;

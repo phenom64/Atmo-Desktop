@@ -87,7 +87,8 @@ Button::color(const ColorRole &c) const
 const bool
 Button::isDark() const
 {
-    return Color::luminosity(palette().color(foregroundRole())) > Color::luminosity(palette().color(backgroundRole()));
+    const QWidget *w(parentWidget()?parentWidget():this);
+    return Color::luminosity(w->palette().color(w->foregroundRole())) > Color::luminosity(w->palette().color(w->backgroundRole()));
 }
 
 /**
@@ -103,6 +104,8 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
+    if (Settings::conf.deco.buttons)
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
     switch (Settings::conf.deco.buttons)
     {
     case 0:
@@ -123,7 +126,6 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case 1:
     {
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), color(Bg).value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
@@ -154,7 +156,6 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case 2:
     {
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), color(Bg).value(), c.alpha());
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
@@ -184,8 +185,8 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         }
         else
         {
-            high=192;
-            low=32;
+            high=170;
+            low=85;
         }
 
         lg.setColorAt(0.0f, QColor(0, 0, 0, low));
@@ -196,7 +197,6 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         r.adjust(0, -1, 0, 1);
         r.shrink(3);
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), color(Bg).value(), c.alpha());
         p.setBrush(c.darker(200));
         p.drawEllipse(r);
         r.shrink(1);

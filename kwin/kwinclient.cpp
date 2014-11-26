@@ -308,7 +308,6 @@ void
 KwinClient::init()
 {
     createMainWidget();
-    widget()->setAttribute(Qt::WA_NoSystemBackground);
     widget()->installEventFilter(this);
 
     m_titleLayout = new QHBoxLayout();

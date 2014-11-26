@@ -237,8 +237,11 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         f.setBold(true);
         painter->setFont(f);
     }
-    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText));
-    if (isSelected && !Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
+    const bool safari(Ops::isSafariTabBar(bar));
+    if (safari)
+        fg = QPalette::WindowText;
+    if (isSelected && !safari)
         fg = Ops::opposingRole(fg);
 
     const QFontMetrics fm(painter->fontMetrics());
