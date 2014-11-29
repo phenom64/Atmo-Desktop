@@ -41,6 +41,7 @@
 #define SAFTABRND           "tabs.safrnd"           //safaritabs roundness capped at 8 atm, might change in the future if needed
 #define TABCLOSER           "tabs.closebuttonside"
 
+#define UNOENABLED          "uno"
 #define UNOGRAD             "uno.gradient"
 #define UNOTINT             "uno.tinthue"
 #define UNONOISE            "uno.noisefactor"
@@ -121,6 +122,7 @@
 #define DEFSAFTABRND            4
 #define DEFTABCLOSER            0
 
+#define DEFUNOENABLED           true
 #define DEFUNOGRAD              "0.0:5, 1.0:-5"
 #define DEFUNOTINT              "-1:0"
 #define DEFUNONOISE             10
@@ -183,6 +185,7 @@
 #define READSAFTABRND           SAFTABRND, DEFSAFTABRND
 #define READTABCLOSER           TABCLOSER, DEFTABCLOSER
 
+#define READUNOENABLED          UNOENABLED, DEFUNOENABLED
 #define READUNOGRAD             UNOGRAD, DEFUNOGRAD
 #define READUNOTINT             UNOTINT, DEFUNOTINT
 #define READUNONOISE            UNONOISE, DEFUNONOISE
@@ -273,7 +276,7 @@ public:
         Tint tint;
         unsigned int noise, blur, noiseStyle;
         float opacity;
-        bool hor, contAware;
+        bool enabled, hor, contAware;
     } uno;
     struct menues
     {

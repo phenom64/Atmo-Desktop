@@ -14,9 +14,11 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
     {
     case SH_TabBar_Alignment:
     {
-        if (qApp->applicationFilePath().endsWith("dfm") && w && qobject_cast<QMainWindow *>(w->window()))
+        const QTabBar *tabBar = qobject_cast<const QTabBar *>(w);
+        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
+        if (Ops::isSafariTabBar(tabBar))
             return Qt::AlignLeft;
-        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(w)))
+        if ((tab && tab->documentMode) || (tabBar && tabBar->documentMode()))
             return Qt::AlignLeft;
         return Qt::AlignCenter;
     }

@@ -49,6 +49,8 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
     if (!(opt->features & QStyleOptionButton::Flat))
     {
         QColor bc(option->palette.color(bg));
+        if (option->SUNKEN)
+            bc = bc.darker(150);
         if (Settings::conf.pushbtn.tint.second > -1)
             bc = Color::mid(bc, Settings::conf.pushbtn.tint.first, 100-Settings::conf.pushbtn.tint.second, Settings::conf.pushbtn.tint.second);
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
@@ -75,6 +77,7 @@ StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter,
     castOpt(Button, opt, option);
     if (!opt)
         return true;
+
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
     if (opt->features & QStyleOptionButton::Flat)
         fg = (widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
@@ -128,7 +131,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
     QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, checkRect.height()));
     lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
     QBrush mask(lg);
-    Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, 3, Settings::conf.shadows.opacity, widget, &mask, 0, Render::All, option->state & (State_On|State_NoChange));
+    Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, 3, Settings::conf.shadows.opacity, widget, &mask, 0, Render::All, option);
 
     if (opt->state & (State_On|State_NoChange))
         Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect.shrinked(2).translated(1, -1), opt->state & State_NoChange);
@@ -184,7 +187,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, checkRect.height()));
     lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
     QBrush mask(lg);
-    Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, MAXRND, Settings::conf.shadows.opacity, widget, &mask, 0, Render::All, option->state & State_On);
+    Render::drawClickable(Settings::conf.pushbtn.shadow, checkRect, painter, MAXRND, Settings::conf.shadows.opacity, widget, &mask, 0, Render::All, option);
 
     if (opt->state & State_On)
     {
@@ -242,6 +245,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
     castOpt(ToolButton, opt, option);
     if (!opt)
         return true;
+
     drawToolButtonBevel(option, painter, widget);
     if (!(opt->icon.isNull() && opt->text.isEmpty()))
         drawToolButtonLabel(option, painter, widget);
@@ -254,6 +258,13 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     castOpt(ToolButton, opt, option);
     if (!opt)
         return true;
+
+    if (widget && widget->inherits("KMultiTabBarTab"))
+    {
+        QBrush b(opt->palette.color(QPalette::ButtonText));
+        Render::renderShadow(Render::Spotify, opt->rect.adjusted(2, 2, -2, -2), painter, 32, Render::All, Settings::conf.shadows.opacity, &b);
+        return true;
+    }
 
     if (!widget || (Settings::conf.toolbtn.flat&&option->SUNKEN))
     {
@@ -337,7 +348,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.toolbtn.shadow, rect.height()));
         lg.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bc));
         QBrush mask(lg);
-        Render::drawClickable(shadow, rect, painter, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &mask, 0, sides, opt->SUNKEN);
+        Render::drawClickable(shadow, rect, painter, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &mask, 0, sides, opt);
 
         if (hasMenu)
         {
@@ -353,7 +364,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
             QLinearGradient lga(0, 0, 0, Render::maskHeight(Settings::conf.toolbtn.shadow, rect.height()));
             lga.setStops(Settings::gradientStops(Settings::conf.toolbtn.gradient, bca));
             QBrush amask(lga);
-            Render::drawClickable(shadow, rect, painter, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &amask, 0, sides, opt->SUNKEN);
+            Render::drawClickable(shadow, rect, painter, Settings::conf.toolbtn.rnd, Settings::conf.shadows.opacity, widget, &amask, 0, sides, opt);
         }
 
         if (option->SUNKEN && Settings::conf.toolbtn.shadow == Render::Etched && Render::pos(sides, bar->orientation()) != Render::Alone)
@@ -461,6 +472,11 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     {
         fg = textRole = opt->SUNKEN?QPalette::HighlightedText:QPalette::WindowText;
         bg = opt->SUNKEN?QPalette::Highlight:QPalette::Window;
+    }
+    if (!bar && widget->parentWidget())
+    {
+        fg = textRole = widget->parentWidget()->foregroundRole();
+        bg = widget->parentWidget()->backgroundRole();
     }
 
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)

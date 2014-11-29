@@ -812,7 +812,13 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
     if (!h && !(Settings::conf.removeTitleBars && win->property("DSP_hasbuttons").toBool()))
         return 0;
-
+    if (!Settings::conf.uno.enabled)
+    {
+        needSeparator = 0;
+        if (win->property("DSP_hasbuttons").toBool())
+            return 0;
+        return *h;
+    }
     const int oldHead(unoHeight(win, All));
     int hd[HeightCount];
     hd[TitleBar] = (h?*h:0);
@@ -894,35 +900,40 @@ Handler::fixWindowTitleBar(QWidget *win)
     wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
     wd.bg = win->palette().color(win->backgroundRole()).rgba();
-    wd.contAware = Settings::conf.uno.contAware;
+    wd.contAware = Settings::conf.uno.enabled&&Settings::conf.uno.contAware;
 
     if (!wd.height)
         return;
-
-    uint check = wd.height;
-    if (Settings::conf.uno.hor)
-        check = check<<16|win->width();
-    if (!s_pix.contains(check))
-        s_pix.insert(check, unoParts(win, wd.height));
-    unsigned long handle(s_pix.value(check).at(1).handle());
     const WId id(win->winId());
-    unsigned long *h = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
-    if (!h || (h && *h != handle))
-        XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+    if (Settings::conf.uno.enabled)
+    {
+        uint check = wd.height;
+        if (Settings::conf.uno.hor)
+            check = check<<16|win->width();
+        if (!s_pix.contains(check))
+            s_pix.insert(check, unoParts(win, wd.height));
+        unsigned long handle(s_pix.value(check).at(1).handle());
+        unsigned long *h = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
+        if (!h || (h && *h != handle))
+            XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+    }
     XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 6);
     updateWindow(win->winId());
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
 
-    const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
-    for (int i = 0; i < toolBars.size(); ++i)
-        toolBars.at(i)->update();
-    if (QMenuBar *mb = win->findChild<QMenuBar *>())
-        mb->update();
-    if (QTabBar *tb = win->findChild<QTabBar *>())
-        tb->update();
-    if (QStatusBar *sb = win->findChild<QStatusBar *>())
-        sb->update();
+    if (Settings::conf.uno.enabled)
+    {
+        const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
+        for (int i = 0; i < toolBars.size(); ++i)
+            toolBars.at(i)->update();
+        if (QMenuBar *mb = win->findChild<QMenuBar *>())
+            mb->update();
+        if (QTabBar *tb = win->findChild<QTabBar *>())
+            tb->update();
+        if (QStatusBar *sb = win->findChild<QStatusBar *>())
+            sb->update();
+    }
 }
 
 void

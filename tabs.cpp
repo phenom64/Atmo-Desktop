@@ -36,80 +36,74 @@ StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidg
 }
 
 bool
-StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const
 {
-    castOpt(Tab, opt, option);
-    if (!opt)
-        return true;
-    castObj(const QTabBar *, bar, widget);
-    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
-    const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
-    const bool isLast(opt->position == QStyleOptionTab::End);
-    const bool isRtl(opt->direction == Qt::RightToLeft);
-    const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
-
-    if (Ops::isSafariTabBar(bar))
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
+            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
+            isLast(opt->position == QStyleOptionTab::End),
+            isSelected(opt->state & State_Selected),
+            isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
+    int o(pixelMetric(PM_TabBarTabOverlap, opt, bar));
+    QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
+    int leftMargin(o), rightMargin(o);
+    if (isFirst || isOnly)
+        leftMargin /= 2;
+    if ((isLast || isOnly) && bar->expanding())
+        rightMargin /= 2;
+    if (!bar->expanding())
     {
-        const bool isLeftOf(bar->tabAt(opt->rect.center()) < bar->currentIndex());
-        int o(pixelMetric(PM_TabBarTabOverlap, option, widget));
-        QRect r(opt->rect.adjusted(0, 0, 0, !isSelected));
-        int leftMargin(o), rightMargin(o);
-        if (isFirst || isOnly)
-            leftMargin /= 2;
-        if ((isLast || isOnly) && bar->expanding())
-            rightMargin /= 2;
-        if (!bar->expanding())
-        {
-            --leftMargin;
-            ++rightMargin;
-        }
-        r.setLeft(r.left()-leftMargin);
-        r.setRight(r.right()+rightMargin);
-
-        QPainterPath p;
-        Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, Settings::conf.shadows.opacity);
-        if (isSelected)
-        {
-            painter->save();
-            painter->setRenderHint(QPainter::Antialiasing);
-            painter->setPen(Qt::NoPen);
-            QPixmap pix(r.size());
-            pix.fill(Qt::transparent);
-            QPainter pt(&pix);
-            UNO::Handler::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
-            pt.end();
-            if (XHandler::opacity() < 1.0f)
-            {
-                painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                painter->setBrush(Qt::black);
-                painter->drawPath(p);
-                painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
-            }
-            painter->setBrushOrigin(r.topLeft());
-            painter->setBrush(pix);
-            painter->drawPath(p);
-            painter->restore();
-        }
-        return true;
+        --leftMargin;
+        ++rightMargin;
     }
-    Render::Sides sides = Render::All;
-    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText)), bg(Ops::bgRole(widget, QPalette::Button));
-    if (castObj(const QTabWidget *, tw, widget))
-        if (const QTabBar *bar = tw->findChild<QTabBar *>())
-        {
-            fg = bar->foregroundRole();
-            bg = bar->backgroundRole();
-        }
+    r.setLeft(r.left()-leftMargin);
+    r.setRight(r.right()+rightMargin);
+
+    QPainterPath p;
+    Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, Settings::conf.shadows.opacity);
     if (isSelected)
     {
-        const QPalette::ColorRole tmpFg(fg);
-        fg = bg;
-        bg = tmpFg;
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setPen(Qt::NoPen);
+        QPixmap pix(r.size());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        UNO::Handler::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
+        pt.end();
+        if (XHandler::opacity() < 1.0f)
+        {
+            painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            painter->setBrush(Qt::black);
+            painter->drawPath(p);
+            painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
+        painter->setBrushOrigin(r.topLeft());
+        painter->setBrush(pix);
+        painter->drawPath(p);
+        painter->restore();
     }
+    return true;
+}
+
+bool
+StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const
+{
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
+            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
+            isLast(opt->position == QStyleOptionTab::End),
+            isRtl(opt->direction == Qt::RightToLeft),
+            isSelected(opt->state & State_Selected);
+
+    Render::Sides sides(Render::All);
+    QPalette::ColorRole fg(Ops::fgRole(bar, QPalette::ButtonText)),
+            bg(Ops::bgRole(bar, QPalette::Button));
+
+    if (isSelected)
+        Ops::swap(fg, bg);
 
     QColor bgc(opt->palette.color(bg));
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-    if (option->ENABLED && !(option->state & State_On) && bar)
+    if (opt->ENABLED && !(opt->state & State_On) && bar)
     {
         int hl(Anim::Tabs::level(bar, bar->tabAt(opt->rect.center())));
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
@@ -149,7 +143,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     }
     lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, bgc));
     QBrush b(lg);
-    Render::drawClickable(Settings::conf.tabs.shadow, r, painter, Settings::conf.tabs.rnd, Settings::conf.shadows.opacity, widget, &b, 0, sides, isSelected);
+    Render::drawClickable(Settings::conf.tabs.shadow, r, painter, Settings::conf.tabs.rnd, Settings::conf.shadows.opacity, bar, &b, 0, sides, opt);
     const QRect mask(Render::maskRect(Settings::conf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
@@ -168,6 +162,46 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
         painter->drawLine(vert?mask.bottomLeft():isRtl?mask.topLeft():mask.topRight(), vert?mask.bottomRight():isRtl?mask.bottomLeft():mask.bottomRight());
         painter->setPen(pen);
     }
+    return true;
+}
+
+bool
+StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    castOpt(Tab, opt, option);
+    if (!opt)
+        return true;
+    if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
+        const_cast<QStyleOption *>(option)->state |= State_Selected;
+    castObj(const QTabBar *, bar, widget);
+    if (Ops::isSafariTabBar(bar))
+        return drawSafariTab(opt, painter, bar);
+    if (styleHint(SH_TabBar_Alignment, option, widget) == Qt::AlignCenter)
+        return drawSelector(opt, painter, bar);
+
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
+            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
+            isLast(opt->position == QStyleOptionTab::End),
+            isRtl(opt->direction == Qt::RightToLeft),
+            isSelected(opt->state & State_Selected);
+
+    painter->save();
+//    if (isSelected)
+//    {
+//        painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        painter->fillRect(option->rect, Qt::black);
+//        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+//        if (XHandler::opacity() < 1.0f)
+//        {
+//            painter->setOpacity(XHandler::opacity());
+//            painter->fillRect(opt->rect, opt->palette.color(QPalette::Window));
+//            painter->setOpacity(1.0f);
+//        }
+//    }
+    painter->setPen(QColor(0, 0, 0, 255.0f*Settings::conf.shadows.opacity));
+    painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
+    painter->restore();
+
     return true;
 }
 
@@ -197,11 +231,8 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         return true;
     castObj(const QTabBar *, bar, widget);
     painter->save();
-//    const bool isFirst(opt->position == QStyleOptionTab::Beginning);
-    const bool isOnly(opt->position == QStyleOptionTab::OnlyOneTab);
-    const bool isSelected(opt->state & State_Selected || isOnly);
-//    const bool isEnd(opt->position == QStyleOptionTab::End);
-    const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
+    const bool isSelected(opt->state & State_Selected),
+            leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
     QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
     int trans(0);
@@ -225,12 +256,12 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         painter->translate(tr.center());
         painter->rotate(trans);
         painter->translate(-tr.center());
-        const QRect tmp(tr);
-        tr.setHeight(tmp.width());
-        tr.setWidth(tmp.height());
-        tr.moveCenter(tmp.center()+QPoint(0, west?-1:east?-2:0)); //not sure what exactly is going on here....
+        QSize sz(tr.size());
+        const QPoint center(tr.center());
+        sz.transpose();
+        tr.setSize(sz);
+        tr.moveCenter(center);
     }
-
     QFont f(painter->font());
     if (isSelected)
     {
@@ -239,9 +270,9 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
     const bool safari(Ops::isSafariTabBar(bar));
-    if (safari)
+    if (safari || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
         fg = QPalette::WindowText;
-    if (isSelected && !safari)
+    else if (isSelected)
         fg = Ops::opposingRole(fg);
 
     const QFontMetrics fm(painter->fontMetrics());
@@ -256,24 +287,42 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     return true;
 }
 
-static void renderSafariBar(QPainter *p, const QTabBar *bar, const QColor &c, const Render::Sides sides, const float opacity, QRect rect = QRect())
+static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
 {
-    QRect r(rect.isValid()?rect:bar->rect());
-    if (XHandler::opacity() < 1.0f)
+    if (Ops::isSafariTabBar(bar))
     {
-        p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        p->fillRect(r, Qt::black);
-        p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        QRect r(rect.isValid()?rect:bar->rect());
+        if (XHandler::opacity() < 1.0f)
+        {
+            p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p->fillRect(r, Qt::black);
+            p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
+        const float o(p->opacity());
+        UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
+        p->setPen(Qt::black);
+        p->setOpacity(Settings::conf.shadows.opacity/2);
+        p->drawLine(r.topLeft(), r.topRight());
+        p->setOpacity(Settings::conf.shadows.opacity);
+        p->drawLine(r.bottomLeft(), r.bottomRight());
+        p->setOpacity(o);
+        Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, Settings::conf.shadows.opacity/2);
     }
-    const float o(p->opacity());
-    UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
-    p->setPen(Qt::black);
-    p->setOpacity(Settings::conf.shadows.opacity/2);
-    p->drawLine(r.topLeft(), r.topRight());
-    p->setOpacity(Settings::conf.shadows.opacity);
-    p->drawLine(r.bottomLeft(), r.bottomRight());
-    p->setOpacity(o);
-    Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, Settings::conf.shadows.opacity/2);
+    else if (bar->documentMode())
+    {
+        p->save();
+        QRect r(bar->rect());
+//        QLinearGradient lg(r.topLeft(), r.bottomLeft());
+//        lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, bar->palette().color(QPalette::Window)));
+//        p->fillRect(r, lg);
+        p->setPen(QColor(0, 0, 0, 255.0f*Settings::conf.shadows.opacity));
+        p->drawLine(r.topLeft(), r.topRight());
+        p->drawLine(r.bottomLeft(), r.bottomRight());
+        p->setPen(QColor(255, 255, 255, 127.0f*Settings::conf.shadows.opacity));
+        r.setTop(r.top()+1);
+        p->drawLine(r.topLeft(), r.topRight());
+        p->restore();
+    }
 }
 
 bool
@@ -282,21 +331,19 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
     if (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTabWidget"))
         return true;
 
-
     castOpt(TabBarBaseV2, opt, option);
     if (!opt)
         return true;
 
-    Render::Sides sides = Render::checkedForWindowEdges(widget);
     if (const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget))
     {
-        if (Ops::isSafariTabBar(tabBar))
+        if (Ops::isSafariTabBar(tabBar) || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
         {
             QRect r(tabBar->rect());
             if (opt->rect.width() > r.width())
                 r = opt->rect;
 
-            renderSafariBar(painter, tabBar, Color::mid((QColor)Color::titleBarColors()[1], Qt::black, 20, 1), sides, XHandler::opacity(), r);
+            drawDocTabBar(painter, tabBar, r);
             return true;
         }
     }
@@ -359,12 +406,12 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         if (Ops::isSafariTabBar(tabBar))
         {
-            renderSafariBar(painter, tabBar, Color::mid((QColor)Color::titleBarColors()[1], Qt::black, 20, 1), sides, XHandler::opacity(), barRect);
+            drawDocTabBar(painter, tabBar, barRect);
             return true;
         }
     }
-    Render::renderShadow(Render::Sunken, rect, painter, 7, sides, Settings::conf.shadows.opacity*0.5f);
-//    Render::renderMask(r, painter, opt->palette.color(QPalette::Window), 4, sides);
+    if (!tabWidget->documentMode())
+        Render::renderShadow(Render::Sunken, rect, painter, 7, sides, Settings::conf.shadows.opacity*0.5f);
     return true;
 }
 
@@ -414,7 +461,7 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     bool isDark(false);
     if (bar)
     {
-        if (safTabs)
+        if (safTabs || bar->documentMode())
         {
             QWidget *d(widget->window());
             const QPalette pal(d->palette());
@@ -432,7 +479,7 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     Render::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
     QPixmap tmp2(pix);
     QPalette::ColorRole role(Ops::fgRole(bar, QPalette::WindowText));
-    if (safTabs)
+    if (safTabs || (bar && bar->documentMode()))
         role = QPalette::WindowText;
     else if (hover)
         role = QPalette::Highlight;

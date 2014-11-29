@@ -27,51 +27,54 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
     if (!widget || !widget->window() || !painter->isActive() || widget->palette().color(widget->backgroundRole()) != widget->window()->palette().color(QPalette::Window))
         return true;
 
-    Render::Sides sides = Render::All;
-    QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
-    QRect winRect = widget->window()->rect();
-    QRect widgetRect = QRect(topLeft, widget->size());
-
-    if (widgetRect.left() <= winRect.left())
-        sides &= ~Render::Left;
-    if (widgetRect.right() >= winRect.right())
-        sides &= ~Render::Right;
-    if (widgetRect.bottom() >= winRect.bottom())
-        sides &= ~Render::Bottom;
-
-    if (sides & (Render::Left|Render::Right))
-    {
-        painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
-        return true;
-    }
     const QRect r(widget->rect());
-    if (sides & Render::Bottom)
+    if (Settings::conf.uno.enabled)
     {
-        UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());;
-    }
-    else
-    {
-        QPixmap pix(r.size());
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        UNO::Handler::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
-        p.end();
-        Render::renderMask(r, painter, pix, 4, Render::Bottom|Render::Left|Render::Right);
-    }
+        Render::Sides sides = Render::All;
+        QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
+        QRect winRect = widget->window()->rect();
+        QRect widgetRect = QRect(topLeft, widget->size());
 
-    painter->save();
-    painter->setPen(Qt::black);
-    painter->setOpacity(Settings::conf.shadows.opacity);
-    painter->drawLine(r.topLeft(), r.topRight());
-    if (sides & Render::Bottom)
-        painter->drawLine(r.bottomLeft(), r.bottomRight());
-    painter->restore();
+        if (widgetRect.left() <= winRect.left())
+            sides &= ~Render::Left;
+        if (widgetRect.right() >= winRect.right())
+            sides &= ~Render::Right;
+        if (widgetRect.bottom() >= winRect.bottom())
+            sides &= ~Render::Bottom;
+
+        if (sides & (Render::Left|Render::Right))
+        {
+            painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
+            return true;
+        }
+        if (sides & Render::Bottom)
+        {
+            UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());;
+        }
+        else
+        {
+            QPixmap pix(r.size());
+            pix.fill(Qt::transparent);
+            QPainter p(&pix);
+            UNO::Handler::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
+            p.end();
+            Render::renderMask(r, painter, pix, 4, Render::Bottom|Render::Left|Render::Right);
+        }
+        painter->save();
+        painter->setPen(Qt::black);
+        painter->setOpacity(Settings::conf.shadows.opacity);
+        painter->drawLine(r.topLeft(), r.topRight());
+//        if (sides & Render::Bottom)
+//            painter->drawLine(r.bottomLeft(), r.bottomRight());
+        painter->restore();
+    }
     return true;
 }
 
 bool
 StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (Settings::conf.uno.enabled)
     if (widget && !qobject_cast<const QToolBar *>(widget->parentWidget()))
     if (option->rect.width() == 1 || option->rect.height() == 1)
         painter->fillRect(option->rect, QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
@@ -81,6 +84,7 @@ StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (Settings::conf.uno.enabled)
     if (widget && option)
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
     {
@@ -114,6 +118,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (Settings::conf.uno.enabled)
     if (widget)
     if (castObj(const QMainWindow *, win, widget->parentWidget()))
         UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
@@ -123,6 +128,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    // is this ever called???
     return true;
 }
 
@@ -210,24 +216,26 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 //    const QRect cr(subElementRect(SE_DockWidgetCloseButton, opt, widget));
 //    const QRect fr(subElementRect(SE_DockWidgetFloatButton, opt, widget));
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
-    castObj(const QDockWidget *, dock, widget);
-
-    painter->save();
-    painter->setOpacity(Settings::conf.shadows.opacity);
-    painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));
-    QRect l(tr);
-    l.setLeft(0);
-    l.setBottom(l.bottom()+1);
-    painter->drawLine(l.bottomLeft(), l.bottomRight());
-    if (dock && !dock->isFloating())
+    if (Settings::conf.uno.enabled)
     {
-        const bool left(dock->geometry().x() < dock->window()->width() - dock->geometry().right());
-        if (left && dock->geometry().x() > 0)
-            painter->drawLine(dock->rect().topLeft(), dock->rect().bottomLeft());
-        if (!left && dock->geometry().right()+1 < dock->window()->rect().right())
-            painter->drawLine(dock->rect().topRight(), dock->rect().bottomRight());
+        castObj(const QDockWidget *, dock, widget);
+        painter->save();
+        painter->setOpacity(Settings::conf.shadows.opacity);
+        painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));
+        QRect l(tr);
+        l.setLeft(0);
+        l.setBottom(l.bottom()+1);
+        painter->drawLine(l.bottomLeft(), l.bottomRight());
+        if (dock && !dock->isFloating())
+        {
+            const bool left(dock->geometry().x() < dock->window()->width() - dock->geometry().right());
+            if (left && dock->geometry().x() > 0)
+                painter->drawLine(dock->rect().topLeft(), dock->rect().bottomLeft());
+            if (!left && dock->geometry().right()+1 < dock->window()->rect().right())
+                painter->drawLine(dock->rect().topRight(), dock->rect().bottomRight());
+        }
+        painter->restore();
     }
-    painter->restore();
 
     const QFont f(painter->font());
     QFont bold(f);

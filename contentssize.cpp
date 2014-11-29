@@ -8,6 +8,7 @@
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QLineEdit>
+#include <QApplication>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -99,7 +100,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         castObj(const QTabBar *, bar, widget);
         const bool safBar(Ops::isSafariTabBar(bar));
         QSize sz(contentsSize);
-        if (safBar)
+        if (safBar || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
         {
             if (bar->expanding())
             {
@@ -128,10 +129,10 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
         }
-        if (bar && !bar->expanding())
+        if (styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignCenter)
         {
             const QString s(tab->text);
-            QFont f(bar->font());
+            QFont f(bar?bar->font():qApp->font());
             int nonBoldWidth(QFontMetrics(f).boundingRect(s).width());
             f.setBold(true);
             int boldWidth(QFontMetrics(f).boundingRect(s).width());

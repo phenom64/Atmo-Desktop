@@ -31,7 +31,7 @@ OverLay::OverLay(QFrame *parent, int opacity)
     connect(m_timer, SIGNAL(timeout()), this, SLOT(updateOverlay()));
     m_timer->setInterval(50);
     foreach (QStackedWidget *stack, m_frame->window()->findChildren<QStackedWidget *>())
-        stack->installEventFilter(this);
+    stack->installEventFilter(this);
 }
 
 OverLay::~OverLay()
@@ -186,10 +186,8 @@ OverLay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        const bool isSplitter(qobject_cast<QSplitterHandle *>(w) && qMin(w->width(), w->height()) < 8);
-
-        if (w->objectName() == "qt_qmainwindow_extended_splitter"
-                || Ops::isOrInsideA<QStatusBar *>(w)
+        const bool isSplitter(qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter");
+        if ( Ops::isOrInsideA<QStatusBar *>(w)
                 || (l[i] == Top && qobject_cast<QTabBar *>(w))
                 || isSplitter
                 )
@@ -199,7 +197,7 @@ OverLay::updateOverlay()
         else if (QFrame *f = getFrameForWidget(w, pos[i]))
         {
             if (OverLay *lay = f->findChild<OverLay*>())
-//                if (lay->size() == f->size())
+                if (lay->parentWidget() == f)
                     if (lay->lines() & wl[i])
                         sides &= ~l[i];
                     else
@@ -226,6 +224,7 @@ OverLay::updateOverlay()
 bool
 OverLay::manage(QFrame *frame, int opacity)
 {
+    qDebug() << "trying to manage frame" << frame;
     if (!frame || hasOverLay(frame))
         return false;
     if (frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)

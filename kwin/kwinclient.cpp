@@ -485,7 +485,10 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setOpacity(m_opacity);
 
-    p.drawTiledPixmap(tr, m_bgPix[isActive()]);
+    if (Settings::conf.uno.enabled)
+        p.drawTiledPixmap(tr, m_bgPix[isActive()]);
+    else
+        p.fillRect(tr, bgColor());
     p.setOpacity(1.0f);
 
     const int bgLum(Color::luminosity(bgColor()));
@@ -643,19 +646,22 @@ KwinClient::reset(unsigned long changed)
     }
     else if (needBg)
     {
-        m_needSeparator = true;
-        for (int i = 0; i < 2; ++i)
+        if (Settings::conf.uno.enabled)
         {
-            QRect r(0, 0, width(), m_headHeight);
-            QLinearGradient lg(r.topLeft(), r.bottomLeft());
-            lg.setColorAt(0.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::white, 4, 1));
-            lg.setColorAt(1.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::black, 4, 1));
-            QPixmap p(Render::noise().size().width(), m_headHeight);
-            p.fill(Qt::transparent);
-            QPainter pt(&p);
-            pt.fillRect(p.rect(), lg);
-            pt.end();
-            m_bgPix[i] = Render::mid(p, Render::noise(), 40, 1);
+            m_needSeparator = true;
+            for (int i = 0; i < 2; ++i)
+            {
+                QRect r(0, 0, width(), m_headHeight);
+                QLinearGradient lg(r.topLeft(), r.bottomLeft());
+                lg.setColorAt(0.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::white, 4, 1));
+                lg.setColorAt(1.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::black, 4, 1));
+                QPixmap p(Render::noise().size().width(), m_headHeight);
+                p.fill(Qt::transparent);
+                QPainter pt(&p);
+                pt.fillRect(p.rect(), lg);
+                pt.end();
+                m_bgPix[i] = Render::mid(p, Render::noise(), 40, 1);
+            }
         }
     }
     for (int i = 0; i < m_buttons.count(); ++i)

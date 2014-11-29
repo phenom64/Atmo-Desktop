@@ -60,6 +60,8 @@ QWidget
 bool
 Ops::isSafariTabBar(const QTabBar *tabBar)
 {
+    if (!Settings::conf.uno.enabled)
+        return false;
     if (!tabBar || !(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth) || !tabBar->documentMode())
         return false;
 

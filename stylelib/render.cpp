@@ -7,6 +7,7 @@
 #include <QBitmap>
 #include <QSlider>
 #include <QToolBox>
+#include <QStyleOption>
 
 #include "render.h"
 #include "color.h"
@@ -737,8 +738,9 @@ Render::makeNoise()
     }
     if (Settings::conf.uno.noiseStyle)
     {
+        const int b(32);
         QImage small = noise.copy(0, 0, 256, 256);
-        expblur(small, 8, Qt::Horizontal);
+        expblur(small, b, Qt::Horizontal);
         const QImage horFlip(small.mirrored(true, false));
         const QImage verFlip(small.mirrored(false));
         const QImage bothFlip(small.mirrored(true, true));
@@ -750,7 +752,7 @@ Render::makeNoise()
         p.drawImage(QPoint(0, 256), verFlip);
         p.drawImage(QPoint(256, 256), bothFlip);
         p.end();
-        noise = noise.copy(4, 4, noise.width()-8, noise.height()-8);
+        noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
     }
     m_noise = QPixmap::fromImage(noise);
 }
@@ -794,13 +796,24 @@ Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
 }
 
 void
-Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float opacity, const QWidget *w, QBrush *mask, QBrush *shadow, const Sides sides, const bool checked, const QPoint &offSet)
+Render::drawClickable(const Shadow s,
+                      QRect r,
+                      QPainter *p,
+                      int rnd,
+                      const float opacity,
+                      const QWidget *w,
+                      QBrush *mask,
+                      QBrush *shadow,
+                      const Sides sides,
+                      const QStyleOption *opt,
+                      const QPoint &offSet)
 {
     rnd = qBound(2, rnd, qMin(r.height(), r.width())/2);
     if (s >= ShadowCount)
         return;
 
     bool needStrong(qobject_cast<const QSlider *>(w));
+    const bool checked(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
 
     int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
     if (w)
@@ -886,7 +899,7 @@ Render::drawClickable(const Shadow s, QRect r, QPainter *p, int rnd, const float
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
         renderMask(r, p, lg, rnd, sides, offSet);
-        const int m(r.height()<9?2:3);
+        const int m(qMin(r.height(), r.width())<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 2);

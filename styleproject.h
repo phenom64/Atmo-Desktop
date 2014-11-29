@@ -109,6 +109,10 @@ public:
     bool drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
+    /* custom drawRoutines */
+    bool drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const;
+    bool drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const;
+
 #define DRAWARROW(_VAR_) \
     bool drawArrow##_VAR_(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const \
     { \

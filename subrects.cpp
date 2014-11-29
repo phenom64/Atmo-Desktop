@@ -159,7 +159,9 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide);
         const bool closable(bar && bar->tabsClosable());
 
-        if (tab->leftButtonSize.isValid() || ((closable && !leftClose && tab->rightButtonSize.isValid()) || !tab->icon.isNull()))
+        if (tab->cornerWidgets & QStyleOptionTab::LeftCornerWidget ||
+                tab->leftButtonSize.isValid() ||
+                (!leftClose && !tab->icon.isNull()))
         {
             const QSize sz(tab->leftButtonSize.isValid()?tab->leftButtonSize:tab->iconSize);
             leftRect.setSize(sz);
@@ -183,7 +185,9 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         }
 
         QRect rightRect;
-        if (tab->rightButtonSize.isValid() || (closable && leftClose && tab->leftButtonSize.isValid() && !tab->icon.isNull()))
+        if (tab->cornerWidgets & QStyleOptionTab::RightCornerWidget ||
+                tab->rightButtonSize.isValid() ||
+                (closable && leftClose && !tab->icon.isNull()))
         {
             const QSize sz(tab->leftButtonSize.isValid()?tab->leftButtonSize:tab->iconSize);
             rightRect.setSize(sz);

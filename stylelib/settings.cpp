@@ -120,6 +120,7 @@ Settings::read()
     conf.tabs.safrnd = qMin(s.value(READSAFTABRND).toInt(), 8);
     conf.tabs.closeButtonSide = s.value(READTABCLOSER).toInt();
     //uno
+    conf.uno.enabled = s.value(READUNOENABLED).toBool();
     conf.uno.gradient = stringToGrad(s.value(READUNOGRAD).toString());
     conf.uno.tint = tintColor(s.value(READUNOTINT).toString());
     conf.uno.noise = s.value(READUNONOISE).toInt();

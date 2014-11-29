@@ -21,6 +21,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/unohandler.h"
 #include "stylelib/settings.h"
+#include "overlay.h"
 
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
@@ -165,19 +166,54 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QPainter p(win);
         if (XHandler::opacity() < 1.0f)
         {
-            QRegion r(ScrollWatcher::paintRegion(win));
-            p.setClipRegion(r);
-            if (needRound)
-                Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
+            if (Settings::conf.uno.enabled)
+            {
+                QRegion r(ScrollWatcher::paintRegion(win));
+                p.setClipRegion(r);
+                if (needRound)
+                    Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
+                else
+                    p.fillRect(win->rect(), bgColor);
+            }
             else
-                p.fillRect(win->rect(), bgColor);
+            {
+                p.setOpacity(XHandler::opacity());
+                if (win->property("DSP_hasbuttons").toBool())
+                {
+                    p.setRenderHint(QPainter::Antialiasing);
+                    p.setBrush(bgColor);
+                    p.setPen(Qt::NoPen);
+                    p.drawRoundedRect(win->rect(), 4, 4);
+                }
+                else
+                    Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
+                p.setOpacity(1.0f);
+            }
         }
         else
             p.fillRect(win->rect(), bgColor);
         p.setPen(Qt::black);
         p.setOpacity(Settings::conf.shadows.opacity);
+        if (Settings::conf.uno.enabled)
         if (int th = UNO::unoHeight(w, UNO::ToolBars))
             p.drawLine(0, th, win->width(), th);
+        p.end();
+        return false;
+    }
+    else if (w->inherits("KMultiTabBarInternal"))
+    {
+        QPainter p(w);
+        QRect r(w->rect());
+        p.fillRect(r, w->palette().color(QPalette::Button));
+//        p.setBrush(Qt::NoBrush);
+        qDebug() << OverLay::hasOverLay(static_cast<QFrame *>(w));
+
+////        const bool hor(w->width()>w->height());
+//        p.setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+//        p.drawRect(r);
+//        r.shrink(1);
+//        p.setPen(QColor(255, 255, 255, Settings::conf.shadows.opacity*127.0f));
+//        p.drawRect(r);
         p.end();
         return false;
     }

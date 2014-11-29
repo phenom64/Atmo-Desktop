@@ -50,7 +50,7 @@
  * pretty much any way here.
  */
 
-#define installFilter(_VAR_) _VAR_->removeEventFilter(this); _VAR_->installEventFilter(this)
+#define installFilter(_VAR_) { _VAR_->removeEventFilter(this); _VAR_->installEventFilter(this); }
 
 void
 StyleProject::polish(QWidget *widget)
@@ -77,6 +77,16 @@ StyleProject::polish(QWidget *widget)
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
     }
+    if (widget->inherits("KMultiTabBarTab"))
+        if (QFrame *frame = qobject_cast<QFrame *>(widget->parentWidget()))
+        {
+            frame->setFrameShadow(QFrame::Sunken);
+            frame->setFrameShape(QFrame::StyledPanel);
+            OverLay::manage(frame, 255.0f*Settings::conf.shadows.opacity);
+            installFilter(frame);
+        }
+
+
     if (castObj(QStatusBar *, bar, widget))
     {
         bar->setForegroundRole(QPalette::WindowText);
@@ -137,8 +147,10 @@ StyleProject::polish(QWidget *widget)
     if (qobject_cast<QAbstractItemView *>(widget))
     {
         QPalette pal(widget->palette());
-        pal.setColor(QPalette::Button, pal.color(QPalette::Window));
-        pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
+        const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
+        QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
+        pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
+        pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
         widget->setPalette(pal);
     }
 
@@ -148,18 +160,21 @@ StyleProject::polish(QWidget *widget)
         if (m < l->spacing() && qobject_cast<QVBoxLayout *>(l))
         {
             if (qobject_cast<QMainWindow *>(widget->window()))
-                l->setSpacing(m);
-            if (!widget->mapTo(widget->window(), QPoint()).y()) //at top of window, hi telepathy contactlist o/
             {
-                int l, t, r, b;
-                widget->getContentsMargins(&l, &t, &r, &b);
-                widget->setContentsMargins(l, t+2, r, b);
+                l->setSpacing(m);
+//                if (!widget->mapTo(widget->window(), QPoint()).y()) //at top of window, hi telepathy contactlist o/
+//                {
+//                    int l, t, r, b;
+//                    widget->getContentsMargins(&l, &t, &r, &b);
+//                    widget->setContentsMargins(l, t+2, r, b);
+//                }
             }
         }
     }
-    if (qobject_cast<QMainWindow *>(widget) ||
+    if (Settings::conf.uno.enabled &&
+            (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
-            widget->findChild<QTabBar *>())
+            widget->findChild<QTabBar *>()))
         UNO::Handler::manage(widget);
 
     if (Settings::conf.uno.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
@@ -168,26 +183,29 @@ StyleProject::polish(QWidget *widget)
     if (WinHandler::canDrag(widget))
         WinHandler::manage(widget);
 
-    if (castObj(QMainWindow *, win, widget))
+    if (/*castObj(QMainWindow *, win, widget)*/widget->isWindow())
     {
-        if (Settings::conf.compactMenu && win->menuBar())
-            WinHandler::addCompactMenu(win);
-        if (XHandler::opacity() < 1.0f && !win->parentWidget())
+        if (!(Settings::conf.uno.enabled && !qobject_cast<QMainWindow *>(widget)))
         {
-            unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(win->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-            const QIcon icn = widget->windowIcon();
-            const bool wasVisible= widget->isVisible();
-            const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
-            if (wasVisible)
-              widget->hide();
-            widget->setAttribute(Qt::WA_TranslucentBackground);
-            widget->setWindowIcon(icn);
-            widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
-            widget->setVisible(wasVisible);
-            QTimer::singleShot(0, widget, SLOT(update()));
+            if (Settings::conf.compactMenu && widget->findChild<QMenuBar *>())
+                WinHandler::addCompactMenu(widget);
+            if (XHandler::opacity() < 1.0f && !widget->parentWidget())
+            {
+                const QIcon icn = widget->windowIcon();
+                const bool wasVisible= widget->isVisible();
+                const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
+                if (wasVisible)
+                    widget->hide();
+                widget->setAttribute(Qt::WA_TranslucentBackground);
+                widget->setWindowIcon(icn);
+                widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
+                widget->setVisible(wasVisible);
+                QTimer::singleShot(0, widget, SLOT(update()));
+                unsigned int d(0);
+                XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+            }
         }
-        installFilter(win);
+        installFilter(widget);
     }
 
     if (castObj(QHeaderView *, hw, widget))
@@ -230,6 +248,17 @@ StyleProject::polish(QWidget *widget)
      */
     if (widget->isWindow())
     {
+        if (!Settings::conf.uno.enabled)
+        {
+            UNO::Handler::fixTitleLater(widget);
+//            if (XHandler::opacity() < 1.0f)
+//            {
+//                widget->setAttribute(Qt::WA_TranslucentBackground);
+//                UNO::Handler::fixTitleLater(widget);
+//                unsigned int d(0);
+//                XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+//            }
+        }
         installFilter(widget);
         bool needShadows(false);
         if (widget->windowType() == Qt::ToolTip && widget->inherits("QTipLabel"))
@@ -271,6 +300,7 @@ StyleProject::polish(QWidget *widget)
     if (widget->inherits("KUrlNavigator"))
         if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
             widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be an idiot... oh well
+    if (Settings::conf.uno.enabled)
     if (castObj(QFrame *, frame, widget))
     {
         if (frame->frameShadow() == QFrame::Sunken
@@ -319,9 +349,7 @@ StyleProject::polish(QWidget *widget)
         }
     }
     if (widget->inherits("KTabWidget"))
-    {
         installFilter(widget);
-    }
     if (castObj(QTabBar *, tabBar, widget))
     {
 //        tabBar->setTabsClosable(true);
@@ -332,7 +360,7 @@ StyleProject::polish(QWidget *widget)
 //        if (tabBar->documentMode())
 //            tabBar->setExpanding(true);
         const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
-        if (safari)
+        if (safari || tabBar->documentMode())
         {
             tabBar->setBackgroundRole(QPalette::Window);
             tabBar->setForegroundRole(QPalette::WindowText);
@@ -351,8 +379,6 @@ StyleProject::polish(QWidget *widget)
         {
             if (safari) //hmmm
             {
-                tabBar->setBackgroundRole(QPalette::Window);
-                tabBar->setForegroundRole(QPalette::WindowText);
                 QWidget *p(tabBar->parentWidget());
                 if (p)
                 {
