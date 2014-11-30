@@ -8,6 +8,9 @@
 #include <QDockWidget>
 #include <Q3GroupBox>
 #include <QDebug>
+#include <QProgressBar>
+#include <QLabel>
+#include <QStackedWidget>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -20,6 +23,48 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 {
     switch (metric)
     {
+    case PM_DefaultTopLevelMargin:
+        return 4;
+    case PM_DefaultChildMargin:
+        return 4;
+    case PM_DefaultLayoutSpacing:
+        return 8;
+    case PM_LayoutLeftMargin:
+    case PM_LayoutTopMargin:
+    case PM_LayoutRightMargin:
+    case PM_LayoutBottomMargin:
+    case PM_LayoutHorizontalSpacing:
+    case PM_LayoutVerticalSpacing:
+    {
+        if (Settings::conf.uno.enabled && widget && widget->layout())
+        if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
+        if (QWidget *cw = mw->centralWidget())
+        if (cw->isAncestorOf(widget))
+        {
+            bool hasClickables(false);
+            const QList<QWidget *> kids(widget->findChildren<QWidget *>());
+            for (int i = 0; i < kids.count(); ++i)
+            {
+                const QWidget *w = kids.at(i);
+                if (!w->isVisibleTo(cw) || w->parentWidget() != widget)
+                    continue;
+                hasClickables |= qobject_cast<const QAbstractButton *>(w) ||
+                        qobject_cast<const QComboBox *>(w) ||
+                        qobject_cast<const QAbstractSlider *>(w) ||
+                        qobject_cast<const QGroupBox *>(w) ||
+                        qobject_cast<const QLineEdit *>(w) ||
+                        qobject_cast<const QProgressBar *>(w) ||
+                        qobject_cast<const QLabel *>(w) ||
+                        qobject_cast<const QTabWidget *>(w) ||
+                        w->inherits("KTitleWidget");
+                if (hasClickables) //one is enough
+                    break;
+            }
+            if (!hasClickables)
+                return 0;
+        }
+        return 8;
+    }
     case PM_HeaderMarkSize:
         return 9;
     case PM_ButtonMargin:
@@ -65,22 +110,22 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_DockWidgetSeparatorExtent: return 1;
     case PM_SplitterWidth:
     {
-        if (!widget)
-            return 1;
-        const QWidget *parent = widget->parentWidget();
-        if (!parent)
-            return 1;
+//        if (!widget)
+//            return 1;
+//        const QWidget *parent = widget->parentWidget();
+//        if (!parent)
+//            return 1;
 
-        const QMargins m(parent->layout()?parent->layout()->contentsMargins():parent->contentsMargins());
-        if (m.left() || m.right() || m.top() || m.bottom())
-            return 8;
+//        const QMargins m(/*parent->layout()?parent->layout()->contentsMargins():*/parent->contentsMargins());
+//        if (m.left() || m.right() || m.top() || m.bottom())
+//            return 8;
         return 1;
     }
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
         if (!widget)
-            return 2;
+            return 0;
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (OverLay::hasOverLay(frame))
             return 0;
@@ -91,6 +136,14 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
             return 8;
         if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
+
+        if (Settings::conf.uno.enabled)
+        if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
+        if (mw->centralWidget()->isAncestorOf(widget))
+        if (!static_cast<const QFrame *>(widget)->frameStyle())
+        {
+            return 0;
+        }
         return 2;
     }
     case PM_ToolBarItemSpacing: return 0;

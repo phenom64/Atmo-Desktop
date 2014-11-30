@@ -78,6 +78,8 @@ StyleProject::polish(QWidget *widget)
         bar->setBackgroundRole(QPalette::Window);
     }
     if (widget->inherits("KMultiTabBarTab"))
+    {
+        installFilter(widget);
         if (QFrame *frame = qobject_cast<QFrame *>(widget->parentWidget()))
         {
             frame->setFrameShadow(QFrame::Sunken);
@@ -85,7 +87,7 @@ StyleProject::polish(QWidget *widget)
             OverLay::manage(frame, 255.0f*Settings::conf.shadows.opacity);
             installFilter(frame);
         }
-
+    }
 
     if (castObj(QStatusBar *, bar, widget))
     {
@@ -95,38 +97,9 @@ StyleProject::polish(QWidget *widget)
     if (Settings::conf.splitterExt)
     if (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget))
         SplitterExt::manage(widget);
-    if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
-        widget->layout()->setContentsMargins(0, 0, 0, 0);
-#if 0
-    if (castObj(QMainWindow *, win, widget))
-    {
-//        qDebug() << "we are a mainwindow... w/ the centralwidget" << win->centralWidget();
-        if (QWidget *cw = win->centralWidget())
-        {
-//            qDebug() << "setting margins on cw..." << cw->contentsMargins();
-            cw->setContentsMargins(0, 0, 0, 0);
-            if (QLayout *l = cw->layout())
-            {
-//                qDebug() << "cw has layout" << l->contentsMargins();
-                l->setContentsMargins(0, 0, 0, 0);
-            }
-            QList<QWidget *> children = cw->findChildren<QWidget *>();
-            for (int i = 0; i < children.count(); ++i)
-            {
-                QWidget *w(children.at(i));
-                QLayout *l(w->layout());
-                if (w->parentWidget() == cw)
-                {
-                    w->setContentsMargins(0, 0, 0, 0);
-                    if (l)
-                        l->setContentsMargins(0, 0, 0, 0);
-                }
-            }
-        }
-    }
-#endif
+//    if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
+//        widget->layout()->setContentsMargins(0, 0, 0, 0);
 
-//    qDebug() << widget << widget->parentWidget() << widget->contentsMargins() << (widget->layout()?widget->layout()->contentsMargins():QMargins());
     if (qobject_cast<QPushButton *>(widget) ||
             qobject_cast<QCheckBox *>(widget) ||
             qobject_cast<QRadioButton *>(widget) ||

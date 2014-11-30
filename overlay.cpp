@@ -224,7 +224,6 @@ OverLay::updateOverlay()
 bool
 OverLay::manage(QFrame *frame, int opacity)
 {
-    qDebug() << "trying to manage frame" << frame;
     if (!frame || hasOverLay(frame))
         return false;
     if (frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)

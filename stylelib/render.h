@@ -31,6 +31,7 @@ public:
     static inline void renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path = 0, const float o = 1.0f)
     { instance()->_renderTab(r, p, t, path, o); }
     static Sides checkedForWindowEdges(const QWidget *w, Sides from = All);
+    static Sides checkedForParentEdges(const QWidget *w, Sides from = All);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
     static QPixmap colorized(QPixmap pix, const QBrush &b);
     static QPixmap noise() { return instance()->m_noise; }

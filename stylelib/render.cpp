@@ -685,6 +685,24 @@ Render::checkedForWindowEdges(const QWidget *w, Sides from)
     return from;
 }
 
+Render::Sides
+Render::checkedForParentEdges(const QWidget *w, Sides from)
+{
+    if (!w || !w->parentWidget())
+        return from;
+
+    if (!w->geometry().x())
+        from &= ~Render::Left;
+    if (w->geometry().right() >= w->parentWidget()->rect().right())
+        from &= ~Render::Right;
+    if (w->geometry().bottom() >= w->parentWidget()->rect().bottom())
+        from &= ~Render::Bottom;
+    if (!w->geometry().y())
+        from &= ~Render::Top;
+    return from;
+}
+
+
 void
 Render::colorizePixmap(QPixmap &pix, const QBrush &b)
 {

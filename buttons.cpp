@@ -261,8 +261,26 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
 
     if (widget && widget->inherits("KMultiTabBarTab"))
     {
-        QBrush b(opt->palette.color(QPalette::ButtonText));
-        Render::renderShadow(Render::Spotify, opt->rect.adjusted(2, 2, -2, -2), painter, 32, Render::All, Settings::conf.shadows.opacity, &b);
+        const int hl(Anim::Basic::level(widget));
+        if (opt->SUNKEN || opt->HOVER || hl)
+        {
+            QColor c(opt->palette.color(QPalette::ButtonText));
+
+            c.setAlpha(opt->SUNKEN?63:(63.0f/STEPS)*hl);
+            painter->fillRect(opt->rect, c);
+        }
+        painter->save();
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+//        if (widget->geometry().y())
+//            painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
+        if (widget->geometry().bottom() != widget->parentWidget()->rect().bottom())
+            painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
+//        if (widget->geometry().x())
+//            painter->drawLine(opt->rect.topLeft(), opt->rect.bottomLeft());
+        if (widget->geometry().right() != widget->parentWidget()->rect().right())
+            painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
+        painter->restore();
         return true;
     }
 

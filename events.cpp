@@ -22,6 +22,7 @@
 #include "stylelib/unohandler.h"
 #include "stylelib/settings.h"
 #include "overlay.h"
+#include "stylelib/animhandler.h"
 
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
@@ -204,18 +205,27 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
     {
         QPainter p(w);
         QRect r(w->rect());
-        p.fillRect(r, w->palette().color(QPalette::Button));
-//        p.setBrush(Qt::NoBrush);
-        qDebug() << OverLay::hasOverLay(static_cast<QFrame *>(w));
-
-////        const bool hor(w->width()>w->height());
-//        p.setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
-//        p.drawRect(r);
-//        r.shrink(1);
-//        p.setPen(QColor(255, 255, 255, Settings::conf.shadows.opacity*127.0f));
-//        p.drawRect(r);
+        const bool hor(w->width()>w->height());
+        QLinearGradient lg(r.topLeft(), hor?r.topRight():r.bottomLeft());
+        lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, w->palette().color(QPalette::Button)));
+        p.fillRect(r, lg);
         p.end();
         return false;
+    }
+    else if (w->inherits("KMultiTabBarTab"))
+    {
+        if (w->underMouse() || static_cast<QPushButton *>(w)->isChecked())
+            return false;
+        QPainter p(w);
+        QStyleOptionToolButton opt;
+        opt.initFrom(w);
+        drawToolButtonBevel(&opt, &p, w);
+        p.end();
+
+        w->removeEventFilter(this);
+        QCoreApplication::sendEvent(o, e);
+        w->installEventFilter(this);
+        return true;
     }
     return QCommonStyle::eventFilter(o, e);
 }
