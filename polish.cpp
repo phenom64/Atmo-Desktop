@@ -260,14 +260,18 @@ StyleProject::polish(QWidget *widget)
     if (widget->inherits("KTitleWidget"))
     {
         installFilter(widget);
-        QList<QWidget *> children = widget->findChildren<QWidget *>();
+        QList<QFrame *> children = widget->findChildren<QFrame *>();
         for (int i = 0; i < children.size(); ++i)
         {
-            children.at(i)->setAutoFillBackground(false);
-            if (castObj(QFrame *, f, children.at(i)))
-                f->setFrameStyle(0);
-            if (castObj(QLabel *, l, children.at(i)))
+            QFrame *f(children.at(i));
+            if (f->autoFillBackground())
+                f->setFrameStyle(QFrame::Sunken|QFrame::StyledPanel);
+            if (QLabel *l = qobject_cast<QLabel *>(f))
+            {
                 l->setAlignment(Qt::AlignCenter);
+                l->setProperty("DSP_KTitleLabel", true);
+                installFilter(l);
+            }
         }
     }
     if (widget->inherits("KUrlNavigator"))

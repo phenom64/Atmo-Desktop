@@ -85,6 +85,20 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
                 UNO::Handler::fixWindowTitleBar(w->window());
         }
     }
+    case QEvent::LayoutRequest:
+    {
+        if (w->inherits("KTitleWidget"))
+        {
+            QList<QLabel *> lbls = w->findChildren<QLabel *>();
+            for (int i = 0; i < lbls.count(); ++i)
+                lbls.at(i)->setAlignment(Qt::AlignCenter);
+        }
+    }
+    case QEvent::MetaCall:
+    {
+        if (w->property("DSP_KTitleLabel").toBool())
+            static_cast<QLabel *>(w)->setAlignment(Qt::AlignCenter);
+    }
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
@@ -233,20 +247,15 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
 bool
 StyleProject::resizeEvent(QObject *o, QEvent *e)
 {
-//    QResizeEvent *re = static_cast<QResizeEvent *>(e);
-//    if (castObj(QTabBar *, tb, o))
-//    {
-//        QToolButton *addTab = tb->findChild<QToolButton *>("tab-new");
-//        QToolButton *closeTab = tb->findChild<QToolButton *>("tab-close");
-//        if (!addTab || !closeTab)
-//            return false;
-
-//        int x, y, w, h;
-//        tb->rect().getRect(&x, &y, &w, &h);
-//        int cy = y+(h/2-addTab->height()/2);
-//        addTab->move(x, cy);
-//        closeTab->move(w-closeTab->width(), cy);
-//    }
+    if (!o->isWidgetType())
+        return false;
+    QWidget *w(static_cast<QWidget *>(o));
+    if (w->inherits("KTitleWidget"))
+    {
+        QList<QLabel *> lbls = w->findChildren<QLabel *>();
+        for (int i = 0; i < lbls.count(); ++i)
+            lbls.at(i)->setAlignment(Qt::AlignCenter);
+    }
     return QCommonStyle::eventFilter(o, e);
 }
 
@@ -266,13 +275,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
             XHandler::setXProperty<unsigned int>(static_cast<QMenu *>(o)->winId(), XHandler::KwinBlur, XHandler::Long, &d);
         }
     }
-    if (w->inherits("KTitleWidget"))
-    {
-        QList<QLabel *> children = w->findChildren<QLabel *>();
-        for (int i = 0; i < children.size(); ++i)
-            children.at(i)->setAlignment(Qt::AlignCenter);
-    }
-    if (castObj(QToolButton *, toolButton, o))
+    else if (castObj(QToolButton *, toolButton, o))
     {
         castObj(QToolBar *, toolBar, toolButton->parentWidget());
         if (!toolBar)
@@ -280,15 +283,21 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         //below simply to trigger an event that forces the toolbar to call sizeFromContents again
         Ops::updateToolBarLater(toolBar, 500);
     }
-    if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
+    else if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
     {
 //        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
         QTimer::singleShot(500, w, SLOT(update()));
     }
-    if (qobject_cast<QTabBar *>(w))
+    else if (qobject_cast<QTabBar *>(w))
     {
         if (Ops::isSafariTabBar(static_cast<QTabBar *>(w)))
             UNO::Handler::fixWindowTitleBar(w->window());
+    }
+    else if (w->inherits("KTitleWidget"))
+    {
+        QList<QLabel *> lbls = w->findChildren<QLabel *>();
+        for (int i = 0; i < lbls.count(); ++i)
+            lbls.at(i)->setAlignment(Qt::AlignCenter);
     }
     return QCommonStyle::eventFilter(o, e);
 }

@@ -56,7 +56,8 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
                         qobject_cast<const QProgressBar *>(w) ||
                         qobject_cast<const QLabel *>(w) ||
                         qobject_cast<const QTabWidget *>(w) ||
-                        w->inherits("KTitleWidget");
+                        w->inherits("KTitleWidget") ||
+                        qobject_cast<const QBoxLayout *>(w->layout()); //widget w/ possible clickables...
                 if (hasClickables) //one is enough
                     break;
             }
@@ -107,20 +108,9 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_MenuBarPanelWidth:
     case PM_MenuPanelWidth: return 0;
     case PM_MenuBarItemSpacing: return 8;
-    case PM_DockWidgetSeparatorExtent: return 1;
+    case PM_DockWidgetSeparatorExtent:;
     case PM_SplitterWidth:
-    {
-//        if (!widget)
-//            return 1;
-//        const QWidget *parent = widget->parentWidget();
-//        if (!parent)
-//            return 1;
-
-//        const QMargins m(/*parent->layout()?parent->layout()->contentsMargins():*/parent->contentsMargins());
-//        if (m.left() || m.right() || m.top() || m.bottom())
-//            return 8;
-        return 1;
-    }
+        return Settings::conf.uno.enabled?1:8;
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {

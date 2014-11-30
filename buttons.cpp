@@ -290,16 +290,15 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         return true;
     }
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
-    const QToolBar *bar(0);
+    const QToolBar *bar = qobject_cast<const QToolBar *>(widget->parentWidget());
     int hover[2];
-    bar = qobject_cast<const QToolBar *>(widget->parentWidget());
     for (int i = 0; i < 2; ++i)
         hover[i] = Anim::ToolBtns::level(btn, i);
 
     if (Settings::conf.toolbtn.flat||!bar)
     {
-        if (hover[0])
-            Render::renderShadow(Render::Etched, option->rect, painter, Settings::conf.toolbtn.rnd, Render::All, (Settings::conf.shadows.opacity/STEPS)*hover[0]);
+        if (hover[0] || opt->SUNKEN)
+            Render::renderShadow(opt->SUNKEN?Render::Sunken:Render::Etched, option->rect, painter, Settings::conf.toolbtn.rnd, Render::All, (Settings::conf.shadows.opacity/STEPS)*hover[0]);
         return true;
     }
 
