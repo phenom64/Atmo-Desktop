@@ -265,11 +265,13 @@ StyleProject::polish(QWidget *widget)
         {
             QFrame *f(children.at(i));
             if (f->autoFillBackground())
-                f->setFrameStyle(QFrame::Sunken|QFrame::StyledPanel);
+            {
+                f->setAutoFillBackground(false);
+                f->setFrameStyle(0);
+            }
             if (QLabel *l = qobject_cast<QLabel *>(f))
             {
                 l->setAlignment(Qt::AlignCenter);
-                l->setProperty("DSP_KTitleLabel", true);
                 installFilter(l);
             }
         }

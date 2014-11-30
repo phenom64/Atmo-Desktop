@@ -164,8 +164,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!multiSelection)
     {
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setColorAt(0.0f, Color::mid(h, QColor(255, 255, 255, h.alpha()), 5, 1));
-        lg.setColorAt(1.0f, h);
+        lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, h));
         brush = lg;
     }
 
@@ -306,8 +305,7 @@ StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, c
 
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(bg));
-    lg.setColorAt(0.0f, Color::mid(b, QColor(255, 255, 255, b.alpha()), 5, 1));
-    lg.setColorAt(1.0f, b);
+    lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, b));
     painter->fillRect(opt->rect, lg);
 
     const QPen pen(painter->pen());
