@@ -140,6 +140,8 @@ Settings::read()
     conf.sliders.fillGroove = s.value(READSLIDERFILLGROOVE).toBool();
     //scrollers
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
+    //views
+    conf.views.treelines = s.value(READVIEWTREELINES).toBool();
     //progressbars
     conf.progressbars.shadow = READINT(READPROGSHADOW);
     conf.progressbars.rnd = READINT(READPROGRND);

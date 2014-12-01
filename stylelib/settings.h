@@ -62,6 +62,8 @@
 
 #define SCROLLERSIZE        "scrollers.size"
 
+#define VIEWTREELINES       "views.treelines"
+
 #define PROGSHADOW          "progressbars.shadow"
 #define PROGRND             "progressbars.rnd"
 
@@ -141,8 +143,9 @@
 #define DEFSLIDERGROOVESHAD     0
 #define DEFSLIDERFILLGROOVE     false
 
-
 #define DEFSCROLLERSIZE         12
+
+#define DEFVIEWTREELINES        true
 
 #define DEFPROGSHADOW           3
 #define DEFPROGRND              4
@@ -205,6 +208,8 @@
 #define READSLIDERFILLGROOVE    SLIDERFILLGROOVE, DEFSLIDERGROOVE
 
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
+
+#define READVIEWTREELINES       VIEWTREELINES, DEFVIEWTREELINES
 
 #define READPROGSHADOW          PROGSHADOW, DEFPROGSHADOW
 #define READPROGRND             PROGRND, DEFPROGRND
@@ -282,6 +287,10 @@ public:
     {
         bool icons;
     } menues;
+    struct views
+    {
+        bool treelines;
+    } views;
 
     static Settings conf;
 

@@ -254,31 +254,39 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
     QPalette::ColorRole fg(option->state & State_Selected ? QPalette::HighlightedText : QPalette::Text),
             bg(option->state & State_Selected ? QPalette::Highlight : QPalette::Base);
 
-    QColor fgc(Color::mid(option->palette.color(fg), option->palette.color(bg)));
+    QColor fgc(Color::mid(option->palette.color(fg), option->palette.color(bg), 1, 2));
     painter->setPen(fgc);
     int mid_h = option->rect.center().x();
     int mid_v = option->rect.center().y();
 
-    if (option->state & State_Item)
+    if (Settings::conf.views.treelines)
     {
-        if (option->direction == Qt::RightToLeft)
-            painter->drawLine(option->rect.left(), mid_v, mid_h, mid_v);
-        else
-            painter->drawLine(mid_h, mid_v, option->rect.right(), mid_v);
+        if (option->state & State_Item)
+        {
+            if (option->direction == Qt::RightToLeft)
+                painter->drawLine(option->rect.left(), mid_v, mid_h, mid_v);
+            else
+                painter->drawLine(mid_h, mid_v, option->rect.right(), mid_v);
+        }
+        if (option->state & State_Sibling)
+            painter->drawLine(mid_h, mid_v, mid_h, option->rect.bottom());
+        if (option->state & (State_Open | State_Children | State_Item | State_Sibling))
+            painter->drawLine(mid_h, option->rect.y(), mid_h, mid_v);
     }
-    if (option->state & State_Sibling)
-        painter->drawLine(mid_h, mid_v, mid_h, option->rect.bottom());
-    if (option->state & (State_Open | State_Children | State_Item | State_Sibling))
-        painter->drawLine(mid_h, option->rect.y(), mid_h, mid_v);
 
     if (option->state & State_Children)
     {
         if (option->state & State_MouseOver && !(option->state & State_Selected))
             fgc = option->palette.color(QPalette::Highlight);
         else
+        {
+
             fgc = option->palette.color(fg);
+            if (!Settings::conf.views.treelines)
+                fgc = Color::mid(fgc, option->palette.color(bg));
+        }
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
-        Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, 9);
+        Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, Settings::conf.views.treelines?7:9);
     }
 
     painter->restore();
