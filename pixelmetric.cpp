@@ -128,8 +128,9 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
             return 0;
 
         if (Settings::conf.uno.enabled)
+        if (qobject_cast<const QTabWidget *>(widget))
         if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
-        if (mw->centralWidget()->isAncestorOf(widget))
+        if (mw->centralWidget() && mw->centralWidget()->isAncestorOf(widget))
         if (!static_cast<const QFrame *>(widget)->frameStyle())
         {
             return 0;
