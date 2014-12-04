@@ -84,7 +84,7 @@ StyleProject::polish(QWidget *widget)
         {
             frame->setFrameShadow(QFrame::Sunken);
             frame->setFrameShape(QFrame::StyledPanel);
-            OverLay::manage(frame, 255.0f*Settings::conf.shadows.opacity);
+            OverLay::manage(frame, 255.0f*dConf.shadows.opacity);
             installFilter(frame);
         }
     }
@@ -94,7 +94,7 @@ StyleProject::polish(QWidget *widget)
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
     }
-    if (Settings::conf.splitterExt)
+    if (dConf.splitterExt)
     if (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget))
         SplitterExt::manage(widget);
 //    if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
@@ -144,13 +144,13 @@ StyleProject::polish(QWidget *widget)
             }
         }
     }
-    if (Settings::conf.uno.enabled &&
+    if (dConf.uno.enabled &&
             (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
             widget->findChild<QTabBar *>()))
         UNO::Handler::manage(widget);
 
-    if (Settings::conf.uno.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
+    if (dConf.uno.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
         ScrollWatcher::watch(static_cast<QAbstractScrollArea *>(widget));
 
     if (WinHandler::canDrag(widget))
@@ -158,9 +158,9 @@ StyleProject::polish(QWidget *widget)
 
     if (/*castObj(QMainWindow *, win, widget)*/widget->isWindow())
     {
-        if (!(Settings::conf.uno.enabled && !qobject_cast<QMainWindow *>(widget)))
+        if (!(dConf.uno.enabled && !qobject_cast<QMainWindow *>(widget)))
         {
-            if (Settings::conf.compactMenu && widget->findChild<QMenuBar *>())
+            if (dConf.compactMenu && widget->findChild<QMenuBar *>())
                 WinHandler::addCompactMenu(widget);
             if (XHandler::opacity() < 1.0f && !widget->parentWidget())
             {
@@ -221,7 +221,7 @@ StyleProject::polish(QWidget *widget)
      */
     if (widget->isWindow())
     {
-        if (!Settings::conf.uno.enabled)
+        if (!dConf.uno.enabled)
         {
             UNO::Handler::fixTitleLater(widget);
 //            if (XHandler::opacity() < 1.0f)
@@ -239,7 +239,7 @@ StyleProject::polish(QWidget *widget)
             widget->setAttribute(Qt::WA_TranslucentBackground);
             needShadows = true;
         }
-        if (Settings::conf.hackDialogs && qobject_cast<QDialog *>(widget))
+        if (dConf.hackDialogs && qobject_cast<QDialog *>(widget))
         {
             WinHandler::manage(widget);
             needShadows = true;
@@ -247,7 +247,7 @@ StyleProject::polish(QWidget *widget)
         if (qobject_cast<QMenu *>(widget)
                 || qobject_cast<QDockWidget *>(widget)
                 || qobject_cast<QToolBar *>(widget)
-                || (qobject_cast<QMainWindow *>(widget) && Settings::conf.removeTitleBars))
+                || (qobject_cast<QMainWindow *>(widget) && dConf.removeTitleBars))
             needShadows = true;
         if (needShadows)
             ShadowHandler::manage(widget);
@@ -279,12 +279,12 @@ StyleProject::polish(QWidget *widget)
     if (widget->inherits("KUrlNavigator"))
         if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
             widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be an idiot... oh well
-    if (Settings::conf.uno.enabled)
+    if (dConf.uno.enabled)
     if (castObj(QFrame *, frame, widget))
     {
         if (frame->frameShadow() == QFrame::Sunken
                 && qobject_cast<QMainWindow *>(frame->window()))
-            OverLay::manage(frame, Settings::conf.shadows.opacity*255.0f);
+            OverLay::manage(frame, dConf.shadows.opacity*255.0f);
     }
     if (castObj(QAbstractItemView *, view, widget))
     {

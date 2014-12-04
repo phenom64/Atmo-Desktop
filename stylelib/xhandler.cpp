@@ -101,7 +101,7 @@ float
 XHandler::opacity()
 {
     if (compositingActive())
-        return Settings::conf.opacity;
+        return dConf.opacity;
     else
         return 1.0f;
 }

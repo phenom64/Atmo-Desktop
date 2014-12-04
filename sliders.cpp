@@ -88,8 +88,8 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 
 
     const bool hor(opt->orientation==Qt::Horizontal);
-    const Render::Shadow gs(Settings::conf.sliders.grooveShadow);
-    int d(/*gs==Render::Carved?12:*/Settings::conf.sliders.size/2); //shadow size for slider and groove 'extent'
+    const Render::Shadow gs(dConf.sliders.grooveShadow);
+    int d(/*gs==Render::Carved?12:*/dConf.sliders.size/2); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
         groove.setHeight(d);
@@ -102,11 +102,11 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     QColor bgc(opt->palette.color(bg));
     const QColor grooveBg(Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
     QLinearGradient lga(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
-    lga.setStops(Settings::gradientStops(Settings::conf.sliders.grooveGrad, grooveBg));
+    lga.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, grooveBg));
     QBrush amask(lga);
 
     QRect clip(groove);
-    if (Settings::conf.sliders.fillGroove)
+    if (dConf.sliders.fillGroove)
     {
         if (opt->orientation == Qt::Horizontal)
         {
@@ -123,16 +123,16 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
                 clip.setBottom(slider.center().y());
         }
     }
-    if (Settings::conf.sliders.fillGroove)
+    if (dConf.sliders.fillGroove)
         painter->setClipRegion(QRegion(groove)-QRegion(clip));
-    Render::drawClickable(gs, groove, painter, d, Settings::conf.shadows.opacity, widget, &amask);
-    if (Settings::conf.sliders.fillGroove)
+    Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, &amask);
+    if (dConf.sliders.fillGroove)
     {
         painter->setClipRect(clip);
         QLinearGradient lgh(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
-        lgh.setStops(Settings::gradientStops(Settings::conf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
+        lgh.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
         QBrush hmask(lgh);
-        Render::drawClickable(gs, groove, painter, d, Settings::conf.shadows.opacity, widget, &hmask);
+        Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, &hmask);
     }
     painter->setClipping(false);
 
@@ -174,12 +174,12 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
 
-    QLinearGradient lg(0, 0, 0, Render::maskHeight(Render::Raised, Settings::conf.sliders.size));
-    lg.setStops(Settings::gradientStops(Settings::conf.sliders.sliderGrad, bgc));
+    QLinearGradient lg(0, 0, 0, Render::maskHeight(Render::Raised, dConf.sliders.size));
+    lg.setStops(Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
     QBrush mask(lg);
-    Render::drawClickable(Render::Raised, slider, painter, Settings::conf.sliders.size/2, Settings::conf.shadows.opacity, widget, &mask);
+    Render::drawClickable(Render::Raised, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, &mask);
 
-    if (Settings::conf.sliders.dot)
+    if (dConf.sliders.dot)
     {
         const int ds(slider.height()/3);
         const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
@@ -258,7 +258,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     const QColor h(opt->palette.color(QPalette::Highlight));
     castOpt(ProgressBarV2, optv2, option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
-    const QRect mask(Render::maskRect(Settings::conf.progressbars.shadow, cont, Render::All));
+    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, Render::All));
     const quint64 s((hor?mask.height():mask.width())+2);
 
     const QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
@@ -311,10 +311,10 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     if (optv2)
         inv = hor?optv2->invertedAppearance:!optv2->bottomToTop;
     QPoint offSet(hor?inv?a:-a:0, !hor?inv?a:-a:0);
-//    offSet += Render::maskRect(Settings::conf.progressbars.shadow, groove).topLeft();
+//    offSet += Render::maskRect(dConf.progressbars.shadow, groove).topLeft();
     painter->setClipRect(cont);
     QBrush b(pixmap);
-    Render::drawClickable(Settings::conf.progressbars.shadow, groove, painter, Settings::conf.progressbars.rnd, Settings::conf.shadows.opacity, widget, &b, 0, Render::All, false, offSet);
+    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, &b, 0, Render::All, false, offSet);
     painter->restore();
     return true;
 }
@@ -330,7 +330,7 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
     QBrush b(opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
-    Render::drawClickable(Settings::conf.progressbars.shadow, groove, painter, Settings::conf.progressbars.rnd, Settings::conf.shadows.opacity, widget, &b);
+    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, &b);
     painter->setClipping(false);
     return true;
 }

@@ -49,7 +49,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 
     if (isSeparator)
     {
-        painter->setPen(QColor(0, 0, 0, Settings::conf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         painter->translate(0, 0.5f);
         const int top(opt->rect.top());
         const int y(top+(h/2));
@@ -87,11 +87,11 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         bg = QPalette::Highlight;
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
-        const int rnd(isMenuBar*(qMin(qMin(h, opt->rect.width())/2, Settings::conf.pushbtn.rnd)));
+        const int rnd(isMenuBar*(qMin(qMin(h, opt->rect.width())/2, dConf.pushbtn.rnd)));
         painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
 
-    if (Settings::conf.menues.icons && isMenu)
+    if (dConf.menues.icons && isMenu)
     {
         QAction *a(static_cast<const QMenu *>(widget)->actionAt(opt->rect.topLeft()));
         if (a && !a->icon().isNull())
@@ -109,7 +109,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
 
     if (hasMenu)
-        Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right, Qt::AlignCenter, 9);
+        Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right, dConf.arrowSize);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
@@ -164,7 +164,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!multiSelection)
     {
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, h));
+        lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, h));
         brush = lg;
     }
 
@@ -172,7 +172,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     {
         painter->setPen(Qt::NoPen);
         painter->setBrush(brush);
-        const int rnd(qMin(6, Settings::conf.input.rnd)); //too much roundness just looks silly
+        const int rnd(qMin(6, dConf.input.rnd)); //too much roundness just looks silly
         painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
     else
@@ -259,7 +259,7 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
     int mid_h = option->rect.center().x();
     int mid_v = option->rect.center().y();
 
-    if (Settings::conf.views.treelines)
+    if (dConf.views.treelines)
     {
         if (option->state & State_Item)
         {
@@ -282,11 +282,11 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
         {
 
             fgc = option->palette.color(fg);
-            if (!Settings::conf.views.treelines)
+            if (!dConf.views.treelines)
                 fgc = Color::mid(fgc, option->palette.color(bg));
         }
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
-        Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, Qt::AlignCenter, Settings::conf.views.treelines?7:9);
+        Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, dConf.views.treelines?7:dConf.arrowSize);
     }
 
     painter->restore();
@@ -313,7 +313,7 @@ StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, c
 
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(bg));
-    lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, b));
+    lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, b));
     painter->fillRect(opt->rect, lg);
 
     const QPen pen(painter->pen());
@@ -348,7 +348,7 @@ StyleProject::drawHeaderLabel(const QStyleOption *option, QPainter *painter, con
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
 //        Ops::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, 7);
-        Ops::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, pixelMetric(PM_HeaderMarkSize));
+        Ops::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, pixelMetric(PM_HeaderMarkSize));
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));

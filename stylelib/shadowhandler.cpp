@@ -70,7 +70,7 @@ unsigned long
     unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), atom[active]);
     if (!shadows)
     {
-        int size(Settings::conf.deco.shadowSize);
+        int size(dConf.deco.shadowSize);
         if (!active)
             size/=2;
         unsigned long *data = new unsigned long[12];
@@ -164,7 +164,7 @@ unsigned long
     int center(size+(tb->width()/2-arrow.width()/2));
     arrow.moveLeft(center);
 
-    Ops::drawArrow(&p, p.brush().color(), arrow, up?Ops::Up:Ops::Down, Qt::AlignCenter);
+    Ops::drawArrow(&p, p.brush().color(), arrow, up?Ops::Up:Ops::Down, 9000);
     p.end();
 
     QPixmap pix(mask.size());

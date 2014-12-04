@@ -85,7 +85,7 @@ TitleWidget::paintEvent(QPaintEvent *)
     f.setPointSize(f.pointSize()*1.2f);
     p.setFont(f);
     int align(Qt::AlignVCenter);
-    switch (Settings::conf.titlePos)
+    switch (dConf.titlePos)
     {
     case Left:
         align |= Qt::AlignLeft;
@@ -187,7 +187,7 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::Show:
     {
-        if (Settings::conf.hackDialogs)
+        if (dConf.hackDialogs)
         if (qobject_cast<QDialog *>(w)
                 && w->isModal())
         {
@@ -215,7 +215,7 @@ WinHandler::eventFilter(QObject *o, QEvent *e)
             int x(p->mapToGlobal(p->rect().center()).x()-(w->width()/2));
             w->move(x, y);
         }
-        if (Settings::conf.compactMenu && w->testAttribute(Qt::WA_WState_Created) && qobject_cast<QMainWindow *>(w) && m_menuWins.contains(w))
+        if (dConf.compactMenu && w->testAttribute(Qt::WA_WState_Created) && qobject_cast<QMainWindow *>(w) && m_menuWins.contains(w))
         {
             QMainWindow *mw(static_cast<QMainWindow *>(w));
             mw->menuBar()->hide();
@@ -279,7 +279,7 @@ ScrollWatcher::watch(QAbstractScrollArea *area)
 {
     if (!area || s_watched.contains(area->viewport()))
         return;
-    if (!Settings::conf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
+    if (!dConf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
         return;
     s_watched << area->viewport();
 //    area->viewport()->removeEventFilter(instance());
@@ -342,7 +342,7 @@ ScrollWatcher::updateWin(QMainWindow *win)
                 else
                     tb->update();
             }
-    if (!Settings::conf.removeTitleBars)
+    if (!dConf.removeTitleBars)
         UNO::Handler::updateWindow(win->winId(), 64);
     blockSignals(false);
 }
@@ -422,7 +422,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
             area->verticalScrollBar()->blockSignals(false);
             area->blockSignals(false);
         }
-        if (int blurRadius = Settings::conf.uno.blur)
+        if (int blurRadius = dConf.uno.blur)
             Render::expblur(img, blurRadius);
         s_winBg.insert((qlonglong)win, img);
         m->unlock();
@@ -584,7 +584,7 @@ static void applyMask(QWidget *widget)
     if (XHandler::opacity() < 1.0f)
     {
         widget->clearMask();
-        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && Settings::conf.removeTitleBars)
+        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && dConf.removeTitleBars)
         {
             widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
             widget->show();
@@ -682,7 +682,7 @@ Handler::setupNoTitleBarWindow(QToolBar *toolBar)
         TitleWidget *title(t?t:new TitleWidget(toolBar));
         title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         QAction *a(0);
-        if (Settings::conf.titlePos == TitleWidget::Center)
+        if (dConf.titlePos == TitleWidget::Center)
         {
             int at(qFloor((float)toolBar->actions().count()/2.0f));
             int i(at);
@@ -702,7 +702,7 @@ Handler::setupNoTitleBarWindow(QToolBar *toolBar)
                     a = actions.at(--i);
             }
         }
-        else if (Settings::conf.titlePos == TitleWidget::Left)
+        else if (dConf.titlePos == TitleWidget::Left)
             a = toolBar->actions().at(1);
         if (ta)
             toolBar->insertAction(a, ta);
@@ -774,16 +774,16 @@ Handler::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offse
 
     const int allUno(unoHeight(win, All));
     uint check = allUno;
-    if (Settings::conf.uno.hor)
+    if (dConf.uno.hor)
         check = check<<16|win->width();
     if (s_pix.contains(check))
     {
         const float savedOpacity(p->opacity());
         p->setOpacity(opacity);
         p->drawTiledPixmap(r, s_pix.value(check).at(0), offset);
-        if (Settings::conf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
+        if (dConf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
         {
-            p->setOpacity(Settings::conf.uno.opacity);
+            p->setOpacity(dConf.uno.opacity);
             p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset+QPoint(0, unoHeight(win, TitleBar))));
         }
         p->setOpacity(savedOpacity);
@@ -810,9 +810,9 @@ unsigned int
 Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
 {
     unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
-    if (!h && !(Settings::conf.removeTitleBars && win->property("DSP_hasbuttons").toBool()))
+    if (!h && !(dConf.removeTitleBars && win->property("DSP_hasbuttons").toBool()))
         return 0;
-    if (!Settings::conf.uno.enabled)
+    if (!dConf.uno.enabled)
     {
         needSeparator = 0;
         if (win->property("DSP_hasbuttons").toBool())
@@ -868,13 +868,13 @@ Handler::getHeadHeight(QWidget *win, unsigned int &needSeparator)
 
 static QVector<QPixmap> unoParts(QWidget *win, int h)
 {
-    const bool hor(Settings::conf.uno.hor);
+    const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
     QColor bc(win->palette().color(win->backgroundRole()));
-    bc = Color::mid(bc, Settings::conf.uno.tint.first, 100-Settings::conf.uno.tint.second, Settings::conf.uno.tint.second);
-    lg.setStops(Settings::gradientStops(Settings::conf.uno.gradient, bc));
+    bc = Color::mid(bc, dConf.uno.tint.first, 100-dConf.uno.tint.second, dConf.uno.tint.second);
+    lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
 
-    const unsigned int n(Settings::conf.uno.noise);
+    const unsigned int n(dConf.uno.noise);
     const int w(hor?win->width():(n?Render::noise().width():1));
     QPixmap p(w, h);
     p.fill(Qt::transparent);
@@ -897,18 +897,18 @@ Handler::fixWindowTitleBar(QWidget *win)
     WindowData wd;
     wd.height = getHeadHeight(win, ns);
     wd.separator = ns;
-    wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(Settings::conf.opacity*100.0f):100;
+    wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(dConf.opacity*100.0f):100;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
     wd.bg = win->palette().color(win->backgroundRole()).rgba();
-    wd.contAware = Settings::conf.uno.enabled&&Settings::conf.uno.contAware;
+    wd.contAware = dConf.uno.enabled&&dConf.uno.contAware;
 
     if (!wd.height)
         return;
     const WId id(win->winId());
-    if (Settings::conf.uno.enabled)
+    if (dConf.uno.enabled)
     {
         uint check = wd.height;
-        if (Settings::conf.uno.hor)
+        if (dConf.uno.hor)
             check = check<<16|win->width();
         if (!s_pix.contains(check))
             s_pix.insert(check, unoParts(win, wd.height));
@@ -922,7 +922,7 @@ Handler::fixWindowTitleBar(QWidget *win)
 //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
 //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
 
-    if (Settings::conf.uno.enabled)
+    if (dConf.uno.enabled)
     {
         const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
         for (int i = 0; i < toolBars.size(); ++i)

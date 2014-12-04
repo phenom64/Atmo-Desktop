@@ -414,7 +414,7 @@ static const int ts(4); //tab shadow...
 void
 Render::initTabs()
 {
-    const int tr(Settings::conf.tabs.safrnd);
+    const int tr(dConf.tabs.safrnd);
     int hsz = (tr*4)+(ts*4);
     int vsz = hsz/2;
     ++hsz;
@@ -486,7 +486,7 @@ Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path,
     p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), m_tab[BottomMidPart]);
 
     if (path)
-        *path = tab(r.adjusted(ts, 0, -ts, 0), Settings::conf.tabs.safrnd);
+        *path = tab(r.adjusted(ts, 0, -ts, 0), dConf.tabs.safrnd);
     p->restore();
 }
 
@@ -754,7 +754,7 @@ Render::makeNoise()
         int v(randInt(0, 255));
         rgb[i] = QColor(v, v, v).rgb();
     }
-    if (Settings::conf.uno.noiseStyle)
+    if (dConf.uno.noiseStyle)
     {
         const int b(32);
         QImage small = noise.copy(0, 0, 256, 256);
@@ -1050,7 +1050,7 @@ Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, con
     img.fill(Qt::transparent);
     QPainter p(&img);
     int rgb(isDark?255:0);
-    int alpha(qMin(255.0f, 2*Settings::conf.shadows.opacity*255.0f));
+    int alpha(qMin(255.0f, 2*dConf.shadows.opacity*255.0f));
     p.fillRect(img.rect(), QColor(rgb, rgb, rgb, alpha));
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawTiledPixmap(r.translated(m, m), source);

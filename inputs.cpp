@@ -44,14 +44,14 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     if (mask.style() == Qt::SolidPattern || mask.style() == Qt::NoBrush)
     {
         QColor c(mask.color());
-        if (Settings::conf.input.tint.second > -1)
-            c = Color::mid(c, Settings::conf.input.tint.first, 100-Settings::conf.input.tint.second, Settings::conf.input.tint.second);
-        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.input.shadow, option->rect.height()));
-        lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, c));
+        if (dConf.input.tint.second > -1)
+            c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, option->rect.height()));
+        lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
 
-    Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
+    Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, &mask);
     return true;
 }
 
@@ -101,30 +101,30 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
             int hl(Anim::Basic::level(widget));
             bgc = Color::mid(bgc, sc, STEPS-hl, hl);
         }
-        if (Settings::conf.pushbtn.tint.second > -1)
-            bgc = Color::mid(bgc, Settings::conf.pushbtn.tint.first, 100-Settings::conf.pushbtn.tint.second, Settings::conf.pushbtn.tint.second);
+        if (dConf.pushbtn.tint.second > -1)
+            bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
         painter->setClipRegion(QRegion(frameRect)-QRegion(arrowRect));
-        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, frameRect.height()));
-        lg.setStops(Settings::gradientStops(Settings::conf.pushbtn.gradient, bgc));
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, frameRect.height()));
+        lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
         QBrush mask(lg);
-        Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask);
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &mask);
 
-        const int o(Settings::conf.shadows.opacity*255.0f);
+        const int o(dConf.shadows.opacity*255.0f);
 
         const QColor hc(opt->palette.color(QPalette::Highlight));
-        QLinearGradient lga(0, 0, 0, Render::maskHeight(Settings::conf.pushbtn.shadow, opt->rect.height()));
+        QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
         lga.setColorAt(0.0f, Color::mid(hc, Qt::white, 10, 1));
         lga.setColorAt(1.0f, Color::mid(hc, Qt::black, 10, 1));
         mask = QBrush(lga);
 
         painter->setClipRect(arrowRect);
-        Render::drawClickable(Settings::conf.pushbtn.shadow, opt->rect, painter, Settings::conf.pushbtn.rnd, Settings::conf.shadows.opacity, widget, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
         painter->setClipping(false);
 
         arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
         painter->setPen(QColor(0, 0, 0, o/3));
         const float op(painter->opacity());
-        painter->setOpacity(Settings::conf.shadows.opacity);
+        painter->setOpacity(dConf.shadows.opacity);
         if (ltr)
             painter->drawLine(arrowRect.topLeft()/*-QPoint(1, 0)*/, arrowRect.bottomLeft()-QPoint(1, 0));
         else
@@ -140,14 +140,14 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         if (brush.style() < 2)
         {
             QColor c(brush.color());
-            if (Settings::conf.input.tint.second > -1)
-                c = Color::mid(c, Settings::conf.input.tint.first, 100-Settings::conf.input.tint.second, Settings::conf.input.tint.second);
-            QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.input.shadow, option->rect.height()));
-            lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, c));
+            if (dConf.input.tint.second > -1)
+                c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
+            QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, option->rect.height()));
+            lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
             brush = QBrush(lg);
         }
 //        drawSafariLineEdit(opt->rect, painter, brush);
-        Render::drawClickable(Settings::conf.input.shadow, option->rect, painter, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &brush);
+        Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, &brush);
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
@@ -155,8 +155,8 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     const QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText));
     QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2));
     QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0));
-    Ops::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Up, Qt::AlignCenter, 7);
-    Ops::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Down, Qt::AlignCenter, 7);
+    Ops::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Up, 7);
+    Ops::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Down, 7);
     return true;
 }
 
@@ -200,15 +200,15 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
     if (mask.style() < 2)
     {
         QColor c(mask.color());
-        if (Settings::conf.input.tint.second > -1)
-            c = Color::mid(c, Settings::conf.input.tint.first, 100-Settings::conf.input.tint.second, Settings::conf.input.tint.second);
-        QLinearGradient lg(0, 0, 0, Render::maskHeight(Settings::conf.input.shadow, opt->rect.height()));
-        lg.setStops(Settings::gradientStops(Settings::conf.input.gradient, c));
+        if (dConf.input.tint.second > -1)
+            c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
+        QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, opt->rect.height()));
+        lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
-    Render::drawClickable(Settings::conf.input.shadow, opt->rect, painter, Settings::conf.input.rnd, Settings::conf.shadows.opacity, widget, &mask);
+    Render::drawClickable(dConf.input.shadow, opt->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, &mask);
 
-    Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up);
-    Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down);
+    Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up, dConf.arrowSize);
+    Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down, dConf.arrowSize);
     return true;
 }

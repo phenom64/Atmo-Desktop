@@ -12,6 +12,7 @@
 #define HACKDIALOGS         "hackdialogs"
 #define COMPACTMENU         "compactmenu"
 #define SPLITTEREXT         "splitterext"
+#define ARROWSIZE           "maxarrowsize"
 
 #define DECOBUTTONS         "deco.buttons"
 #define DECOICON            "deco.icon"
@@ -95,6 +96,7 @@
 #define DEFHACKDIALOGS          false
 #define DEFCOMPACTMENU          false
 #define DEFSPLITTEREXT          false
+#define DEFARROWSIZE            9
 
 #define DEFDECOBUTTONS          0
 #define DEFDECOICON             true
@@ -159,6 +161,7 @@
 #define READHACKDIALOGS         HACKDIALOGS, DEFHACKDIALOGS
 #define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
 #define READSPLITTEREXT         SPLITTEREXT, DEFSPLITTEREXT
+#define READARROWSIZE           ARROWSIZE, DEFARROWSIZE
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
 #define READDECOICON            DECOICON, DEFDECOICON
@@ -220,13 +223,15 @@ typedef QList<QPair<float, int> > Gradient;
 typedef QPair<float, int> GradientStop;
 typedef QPair<QColor, int> Tint;
 
+#define dConf Settings::conf
+
 class Q_DECL_EXPORT Settings
 {
 public:
     float opacity;
     QStringList blackList;
     bool removeTitleBars, hackDialogs, compactMenu, splitterExt;
-    int titlePos;
+    int titlePos, arrowSize;
     struct deco
     {
         int buttons, shadowSize;

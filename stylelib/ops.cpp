@@ -60,7 +60,7 @@ QWidget
 bool
 Ops::isSafariTabBar(const QTabBar *tabBar)
 {
-    if (!Settings::conf.uno.enabled)
+    if (!dConf.uno.enabled)
         return false;
     if (!tabBar || !(tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth) || !tabBar->documentMode())
         return false;
@@ -99,7 +99,7 @@ Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
 }
 
 void
-Ops::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, const Qt::Alignment align, int size)
+Ops::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align)
 {
     const QPalette::ColorRole bgRole(Ops::opposingRole(role));
     if (pal.color(role).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
@@ -110,22 +110,22 @@ Ops::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal,
             const bool isDark(Color::luminosity(pal.color(role)) > Color::luminosity(pal.color(bgRole)));
             const int rgb(isDark?0:255);
             const QColor bevel(rgb, rgb, rgb, 127);
-            drawArrow(p, bevel, r.translated(0, 1), d, align, size);
+            drawArrow(p, bevel, r.translated(0, 1), d, size, align);
         }
         const QColor c(pal.color(enabled ? QPalette::Active : QPalette::Disabled, role));
-        drawArrow(p, c, r, d, align, size);
+        drawArrow(p, c, r, d, size, align);
     }
 }
 
 void
-Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, const Qt::Alignment align, int size)
+Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align)
 {
     p->save();
     p->setPen(Qt::NoPen);
     p->setRenderHint(QPainter::Antialiasing);
     p->setBrush(c);
 
-    if (!size)
+    if (!size || size > qMax(r.width(), r.height()))
         size = qMin(r.width(), r.height());
     size &= ~1;
 
@@ -234,7 +234,7 @@ Ops::updateToolBar()
     }
     t->stop();
     t->deleteLater();
-    if (Settings::conf.removeTitleBars
+    if (dConf.removeTitleBars
             && bar->geometry().topLeft() == QPoint(0, 0)
             && bar->orientation() == Qt::Horizontal
             && qobject_cast<QMainWindow *>(bar->parentWidget()))

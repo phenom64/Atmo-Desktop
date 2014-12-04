@@ -104,9 +104,9 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
-    if (Settings::conf.deco.buttons)
+    if (dConf.deco.buttons)
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
-    switch (Settings::conf.deco.buttons)
+    switch (dConf.deco.buttons)
     {
     case 0:
     {
@@ -247,7 +247,7 @@ Button::paintCloseButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    if (Settings::conf.deco.buttons == -1)
+    if (dConf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         r = rect().adjusted(s, s, -s, -s);
@@ -282,7 +282,7 @@ Button::paintMaxButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    if (Settings::conf.deco.buttons == -1)
+    if (dConf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
@@ -319,7 +319,7 @@ Button::paintMinButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(rect());
-    if (Settings::conf.deco.buttons == -1)
+    if (dConf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);

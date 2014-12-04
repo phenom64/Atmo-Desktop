@@ -102,9 +102,9 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     }
     case SE_LineEditContents:
     {
-        QRect r(Render::maskRect(Settings::conf.input.shadow, opt->rect));
+        QRect r(Render::maskRect(dConf.input.shadow, opt->rect));
         int h(r.height());
-        int hor(qMin(Settings::conf.input.rnd, (h/2))/2);
+        int hor(qMin(dConf.input.rnd, (h/2))/2);
         r.adjust(hor, 0, -hor, 0);
         return r;
     }
@@ -147,7 +147,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
             return QRect();
 
         const bool safBar(Ops::isSafariTabBar(bar));
-        int o(safBar?Settings::conf.tabs.safrnd:4);
+        int o(safBar?dConf.tabs.safrnd:4);
         int ladd((safBar && tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)*o);
         int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
         QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));
@@ -290,7 +290,7 @@ StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
     if (!cb)
         return ret;
     const int arrowSize(20);
-    const int m(Render::shadowMargin(cb->editable?Settings::conf.input.shadow:Settings::conf.pushbtn.shadow));
+    const int m(Render::shadowMargin(cb->editable?dConf.input.shadow:dConf.pushbtn.shadow));
     switch (sc)
     {
     case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...
@@ -469,8 +469,8 @@ StyleProject::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const Q
     int spinSize(pixelMetric(PM_SpinBoxSliderHeight, opt, w));
     QRect arrowUp(0, 0, spinSize, spinSize);
     QRect arrowDown(arrowUp);
-    int sm(Render::shadowMargin(Settings::conf.input.shadow));
-    int m((qMin(Settings::conf.input.rnd, ret.height()/2)/2) + sm);
+    int sm(Render::shadowMargin(dConf.input.shadow));
+    int m((qMin(dConf.input.rnd, ret.height()/2)/2) + sm);
     arrowUp.moveTopRight(ret.topRight()-QPoint(m, 0));
     arrowDown.moveBottomRight(ret.bottomRight()-QPoint(m, 0));
     switch (sc)

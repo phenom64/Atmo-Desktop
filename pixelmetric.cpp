@@ -36,7 +36,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_LayoutHorizontalSpacing:
     case PM_LayoutVerticalSpacing:
     {
-        if (Settings::conf.uno.enabled && widget && widget->layout())
+        if (dConf.uno.enabled && widget && widget->layout())
         if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
         if (QWidget *cw = mw->centralWidget())
         if (cw->isAncestorOf(widget))
@@ -78,7 +78,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_TabCloseIndicatorWidth:
         return 16;
     case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
-        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?Settings::conf.tabs.safrnd+4:0;
+        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?dConf.tabs.safrnd+4:0;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
 //        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
 //        {
@@ -110,7 +110,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent:;
     case PM_SplitterWidth:
-        return Settings::conf.uno.enabled?1:8;
+        return dConf.uno.enabled?1:8;
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
@@ -127,7 +127,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
-        if (Settings::conf.uno.enabled)
+        if (dConf.uno.enabled)
         if (qobject_cast<const QTabWidget *>(widget))
         if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
         if (mw->centralWidget() && mw->centralWidget()->isAncestorOf(widget))
@@ -140,12 +140,12 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
     case PM_ToolBarFrameWidth: return 2;
-    case PM_ToolBarHandleExtent: return 9-Render::shadowMargin(Settings::conf.toolbtn.shadow);
+    case PM_ToolBarHandleExtent: return 9-Render::shadowMargin(dConf.toolbtn.shadow);
 //    case PM_SliderThickness: return 12;
-    case PM_ScrollBarExtent: return Settings::conf.scrollers.size;
+    case PM_ScrollBarExtent: return dConf.scrollers.size;
     case PM_SliderThickness:
     case PM_SliderLength:
-    case PM_SliderControlThickness: return Settings::conf.sliders.size/*qMin(option->rect.height(), option->rect.width())*/;
+    case PM_SliderControlThickness: return dConf.sliders.size/*qMin(option->rect.height(), option->rect.width())*/;
     case PM_SliderTickmarkOffset: return 8;
     case PM_ScrollBarSliderMin: return 32;
     case PM_ToolTipLabelFrameWidth:

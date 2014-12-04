@@ -94,7 +94,7 @@ DButton::onClick(QMouseEvent *e, const Type &t)
 bool
 DButton::paintMaxButton(QPainter &p)
 {
-    if (Settings::conf.deco.buttons == -1)
+    if (dConf.deco.buttons == -1)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
@@ -485,7 +485,7 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setOpacity(m_opacity);
 
-    if (Settings::conf.uno.enabled)
+    if (dConf.uno.enabled)
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
@@ -507,7 +507,7 @@ KwinClient::paint(QPainter &p)
         if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->size() == (widget()->width()*m_headHeight)*4)
             if (m_mem->lock())
             {
-                p.setOpacity(Settings::conf.uno.opacity);
+                p.setOpacity(dConf.uno.opacity);
                 const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
                 p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
                 p.setOpacity(1.0f);
@@ -520,7 +520,7 @@ KwinClient::paint(QPainter &p)
     p.setFont(f);
 
     QString text(caption());
-    const QRect textRect(tr.adjusted(Settings::conf.deco.icon&&!icon().isNull()*20, 0, 0, 0));
+    const QRect textRect(tr.adjusted(dConf.deco.icon&&!icon().isNull()*20, 0, 0, 0));
     const int maxW(textRect.width()-(qMax(m_leftButtons, m_rightButtons)*2));
     if (p.fontMetrics().width(text) > maxW)
         text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
@@ -535,7 +535,7 @@ KwinClient::paint(QPainter &p)
     p.setPen(fgColor());
     p.drawText(textRect, Qt::AlignCenter, text);
 
-    if (Settings::conf.deco.icon && !icon().isNull())
+    if (dConf.deco.icon && !icon().isNull())
     {
         QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
         if (ir.left() > m_leftButtons)
@@ -586,7 +586,7 @@ KwinClient::activeChange()
 }
 
 /**
- * These flags specify which settings changed when rereading Settings::conf.
+ * These flags specify which settings changed when rereading dConf.
  * Each setting in class KDecorationOptions specifies its matching flag.
  */
 /**
@@ -646,7 +646,7 @@ KwinClient::reset(unsigned long changed)
     }
     else if (needBg)
     {
-        if (Settings::conf.uno.enabled)
+        if (dConf.uno.enabled)
         {
             m_needSeparator = true;
             for (int i = 0; i < 2; ++i)

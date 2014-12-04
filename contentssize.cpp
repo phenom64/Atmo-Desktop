@@ -51,7 +51,7 @@ static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, Q
         return cs;
 
     cs += QSize((item->menuHasCheckableItems?32:6)+32, 0); //just to add some decent width to the menu
-    if (Settings::conf.menues.icons)
+    if (dConf.menues.icons)
         cs.rwidth()+= 20;
     const bool isSeparator(item->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!item->text.isEmpty());
@@ -145,8 +145,8 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         }
 //        if (!safBar)
 //        {
-//            sz.rwidth()+=(sz.width()-Render::maskWidth(Settings::conf.tabs.shadow, sz.width()));
-//            sz.rheight()+=(sz.height()-Render::maskHeight(Settings::conf.tabs.shadow, sz.height()));
+//            sz.rwidth()+=(sz.width()-Render::maskWidth(dConf.tabs.shadow, sz.width()));
+//            sz.rheight()+=(sz.height()-Render::maskHeight(dConf.tabs.shadow, sz.height()));
 //        }
         return sz;
     }
@@ -185,7 +185,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             if (isFull)
                 sz.rwidth() += 16;
             else if (sides & (Render::Left|Render::Right))
-                sz.rwidth() += (2+(Settings::conf.toolbtn.shadow==Render::Carved)*2);
+                sz.rwidth() += (2+(dConf.toolbtn.shadow==Render::Carved)*2);
             if (btn && btn->group())
                 sz.rwidth() += 8;
             if (btn && btn->isCheckable() && !isFull)
@@ -211,7 +211,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     {
         QSize sz(contentsSize);
 //        castOpt(SpinBox, sp, opt);
-        sz.rwidth()+=(Render::shadowMargin(Settings::conf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
+        sz.rwidth()+=(Render::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
         sz.setHeight(qMax(23, sz.height()));
 
         return sz;
@@ -269,7 +269,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         if (box->editable)
         {
             QSize sz(contentsSize);
-            int add(Settings::conf.input.rnd?Settings::conf.input.rnd/2:0);
+            int add(dConf.input.rnd?dConf.input.rnd/2:0);
             sz+=QSize(add*2+20, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
             if (sz.height() < 23)
                 sz.setHeight(23);

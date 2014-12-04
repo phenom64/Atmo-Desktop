@@ -181,7 +181,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QPainter p(win);
         if (XHandler::opacity() < 1.0f)
         {
-            if (Settings::conf.uno.enabled)
+            if (dConf.uno.enabled)
             {
                 QRegion r(ScrollWatcher::paintRegion(win));
                 p.setClipRegion(r);
@@ -208,8 +208,8 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         else
             p.fillRect(win->rect(), bgColor);
         p.setPen(Qt::black);
-        p.setOpacity(Settings::conf.shadows.opacity);
-        if (Settings::conf.uno.enabled)
+        p.setOpacity(dConf.shadows.opacity);
+        if (dConf.uno.enabled)
         if (int th = UNO::unoHeight(w, UNO::ToolBars))
             p.drawLine(0, th, win->width(), th);
         p.end();
@@ -221,7 +221,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QRect r(w->rect());
         const bool hor(w->width()>w->height());
         QLinearGradient lg(r.topLeft(), hor?r.topRight():r.bottomLeft());
-        lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, w->palette().color(QPalette::Button)));
+        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
         p.fillRect(r, lg);
         p.end();
         return false;

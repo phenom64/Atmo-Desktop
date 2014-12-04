@@ -6,6 +6,7 @@
 #include <QStyleOption>
 #include "stylelib/macros.h"
 #include "stylelib/ops.h"
+#include "stylelib/settings.h"
 
 #define DEBUG 1
 
@@ -116,7 +117,7 @@ public:
 #define DRAWARROW(_VAR_) \
     bool drawArrow##_VAR_(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const \
     { \
-        Ops::drawArrow(painter, option->palette.color(Ops::fgRole(widget)), option->rect, Ops::_VAR_); \
+        Ops::drawArrow(painter, option->palette.color(Ops::fgRole(widget)), option->rect, Ops::_VAR_, dConf.arrowSize); \
         return true; \
     }
     /* Yes Thomas, macro-concept stolen from bespin */

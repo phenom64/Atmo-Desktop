@@ -23,7 +23,7 @@ StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w,
         return Qt::AlignCenter;
     }
 //    case SH_TabBar_PreferNoArrows: return true;
-    case SH_TabBar_CloseButtonPosition: return Settings::conf.tabs.closeButtonSide;
+    case SH_TabBar_CloseButtonPosition: return dConf.tabs.closeButtonSide;
     case SH_TabBar_ElideMode: //WHAT THE FUCK?!!?!?!?!?!?!?!?! how the fuck does qt calculate the vertical tabbars?!?!?!?!?!?!?!?!?!
         //vertical tabs elided text gets somewhy calculated from the HORIZONTAL FKN SIZE??!?!?!? REALLY?!?!?!?!?!?!?!
         if (!opt || !w)

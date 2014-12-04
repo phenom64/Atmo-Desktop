@@ -59,7 +59,7 @@ StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const
     r.setRight(r.right()+rightMargin);
 
     QPainterPath p;
-    Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, Settings::conf.shadows.opacity);
+    Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, dConf.shadows.opacity);
     if (isSelected)
     {
         painter->save();
@@ -117,7 +117,7 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
     case QTabBar::TriangularNorth:
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
-        lg = QLinearGradient(0, 0, 0, Render::maskHeight(Settings::conf.tabs.shadow, r.height()));
+        lg = QLinearGradient(0, 0, 0, Render::maskHeight(dConf.tabs.shadow, r.height()));
         if (isOnly)
             break;
         if (isRtl)
@@ -127,12 +127,12 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
-        lg = QLinearGradient(0, 0, Render::maskWidth(Settings::conf.tabs.shadow, r.width()), 0);
+        lg = QLinearGradient(0, 0, Render::maskWidth(dConf.tabs.shadow, r.width()), 0);
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
         {
-            lg = QLinearGradient(Render::maskWidth(Settings::conf.tabs.shadow, r.width()), 0, 0, 0);
+            lg = QLinearGradient(Render::maskWidth(dConf.tabs.shadow, r.width()), 0, 0, 0);
         }
         vert = true;
         if (isOnly)
@@ -141,10 +141,10 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
         break;
     default: break;
     }
-    lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, bgc));
+    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, bgc));
     QBrush b(lg);
-    Render::drawClickable(Settings::conf.tabs.shadow, r, painter, Settings::conf.tabs.rnd, Settings::conf.shadows.opacity, bar, &b, 0, sides, opt);
-    const QRect mask(Render::maskRect(Settings::conf.tabs.shadow, r, sides));
+    Render::drawClickable(dConf.tabs.shadow, r, painter, dConf.tabs.rnd, dConf.shadows.opacity, bar, &b, 0, sides, opt);
+    const QRect mask(Render::maskRect(dConf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
         const QPen pen(painter->pen());
@@ -198,7 +198,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 //            painter->setOpacity(1.0f);
 //        }
 //    }
-    painter->setPen(QColor(0, 0, 0, 255.0f*Settings::conf.shadows.opacity));
+    painter->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
     painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
     painter->restore();
 
@@ -301,24 +301,24 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
         const float o(p->opacity());
         UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
         p->setPen(Qt::black);
-        p->setOpacity(Settings::conf.shadows.opacity/2);
+        p->setOpacity(dConf.shadows.opacity/2);
         p->drawLine(r.topLeft(), r.topRight());
-        p->setOpacity(Settings::conf.shadows.opacity);
+        p->setOpacity(dConf.shadows.opacity);
         p->drawLine(r.bottomLeft(), r.bottomRight());
         p->setOpacity(o);
-        Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, Settings::conf.shadows.opacity/2);
+        Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, dConf.shadows.opacity/2);
     }
     else if (bar->documentMode())
     {
         p->save();
         QRect r(bar->rect());
 //        QLinearGradient lg(r.topLeft(), r.bottomLeft());
-//        lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, bar->palette().color(QPalette::Window)));
+//        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, bar->palette().color(QPalette::Window)));
 //        p->fillRect(r, lg);
-        p->setPen(QColor(0, 0, 0, 255.0f*Settings::conf.shadows.opacity));
+        p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
         p->drawLine(r.topLeft(), r.topRight());
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        p->setPen(QColor(255, 255, 255, 127.0f*Settings::conf.shadows.opacity));
+        p->setPen(QColor(255, 255, 255, 127.0f*dConf.shadows.opacity));
         r.setTop(r.top()+1);
         p->drawLine(r.topLeft(), r.topRight());
         p->restore();
@@ -411,7 +411,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
     }
     if (!tabWidget->documentMode())
-        Render::renderShadow(Render::Sunken, rect, painter, 7, sides, Settings::conf.shadows.opacity*0.5f);
+        Render::renderShadow(Render::Sunken, rect, painter, 7, sides, dConf.shadows.opacity*0.5f);
     return true;
 }
 
@@ -552,11 +552,11 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
     else if (last)
         sides |= Render::Bottom;
 
-    QLinearGradient lg(0, 0, 0, Render::maskRect(Settings::conf.tabs.shadow, theRect).height());
-    lg.setStops(Settings::gradientStops(Settings::conf.tabs.gradient, pal.color(QPalette::Button)));
+    QLinearGradient lg(0, 0, 0, Render::maskRect(dConf.tabs.shadow, theRect).height());
+    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
     QBrush b(lg);
 
-    Render::drawClickable(Settings::conf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, Settings::conf.tabs.rnd), Settings::conf.shadows.opacity, w, &b, 0, sides, false, -geo.topLeft());
+    Render::drawClickable(dConf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), dConf.shadows.opacity, w, &b, 0, sides, false, -geo.topLeft());
     return true;
 }
 
