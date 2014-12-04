@@ -244,9 +244,7 @@ Render::initShadowParts()
         QPixmap pix(size, size);
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-//        p.setOpacity(OPACITY);
         p.setRenderHint(QPainter::Antialiasing);
-        float add(r>4?(float)r/100.0f:0);
         switch (s)
         {
         case Sunken:
@@ -265,38 +263,52 @@ Render::initShadowParts()
             p.setBrush(Qt::black);
             p.drawRoundedRect(rect, rnd, rnd);
 
-            int steps(qBound(1, qMax(0, r-1), 3));
-            int alpha(300/steps);
-            for (int i = 1; i < steps+1; ++i)
+
+            static const int table[4] = { 0, 127, 170, 255 };
+            p.setPen(Qt::NoPen);
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            for (int i = 0; i < 4; ++i)
             {
                 int sides(qMin(i, 2));
                 QRect ret(rect.adjusted(sides, i, -sides, -qMin(i, 1)));
-                p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-                p.setBrush(Qt::black);
-                p.drawRoundedRect(ret, rnd, rnd);
-                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                p.setBrush(QColor(0, 0, 0, qMin(255, alpha*i)));
+                p.setBrush(QColor(0, 0, 0, table[i]));
+                int rnd(r-(sides));
                 p.drawRoundedRect(ret, rnd, rnd);
             }
+//            int steps(qBound(1, qMax(0, r-1), 3));
+//            int alpha(300/steps);
+//            for (int i = 1; i < steps+1; ++i)
+//            {
+//                int sides(qMin(i, 2));
+//                QRect ret(rect.adjusted(sides, i, -sides, -qMin(i, 1)));
+//                p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+//                p.setBrush(Qt::black);
+//                p.drawRoundedRect(ret, rnd, rnd);
+//                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//                p.setBrush(QColor(0, 0, 0, qMin(255, alpha*i)));
+//                p.drawRoundedRect(ret, rnd, rnd);
+//            }
             break;
         }
         case Raised:
         {
-//            QRadialGradient rg(pix.rect().center()+QPointF(0, add), size/2.0f);
-//            rg.setColorAt(0.6f, Qt::black);
-//            rg.setColorAt(0.9f, Qt::transparent);
-//            rg.setColorAt(1.0f, Qt::transparent);
-//            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
-//            p.fillRect(pix.rect(), rg);
+#if 0 //doesnt work well on little roundness cause the pixmap is too small...
+            QRadialGradient rg(pix.rect().center(), size/2.0f);
+            rg.setColorAt(0.7f, QColor(0, 0, 0, 255));
+            rg.setColorAt(0.8f, QColor(0, 0, 0, 63));
+            rg.setColorAt(0.9f, QColor(0, 0, 0, 15));
+            rg.setColorAt(1.0f, QColor(0, 0, 0, 0));
+            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
+            p.fillRect(pix.rect(), rg);
+#endif
             p.setPen(Qt::NoPen);
-            int n(3);
-            int a(255/n);
-            for (int i = 1; i <= n; ++i)
+            static const int table[3] = { 255, 127-31, 31 };
+            for (int i = 2; i >= 0; --i)
             {
-                p.setBrush(QColor(0, 0, 0, a*i));
-                int a(qMax(0, i-1));
-                int rnd(r-a);
-                p.drawRoundedRect(pix.rect().adjusted(a, a, -a, -a), rnd, rnd);
+                p.setBrush(QColor(0, 0, 0, table[i]));
+                const int m(3-(i+1));
+                int rnd(r-(m-1));
+                p.drawRoundedRect(pix.rect().adjusted(m, m, -m, -m), rnd, rnd);
             }
             break;
         }
@@ -713,16 +725,16 @@ Render::colorizePixmap(QPixmap &pix, const QBrush &b)
     p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
     p.fillRect(tmp.rect(), pix);
     p.end();
-    pix = QPixmap::fromImage(tmp);
 
     QImage img = pix.toImage().convertToFormat(QImage::Format_ARGB32);
-    QRgb *tmpColors = reinterpret_cast<QRgb *>(tmp.bits());
+    const QRgb *tmpColors = reinterpret_cast<const QRgb *>(tmp.constBits());
     QRgb *pixColors = reinterpret_cast<QRgb *>(img.bits());
     const int s(pix.height()*pix.width());
     for (int i = 0; i < s; ++i)
     {
-        QColor c(tmpColors[i]);
-        c.setAlpha(qAlpha(pixColors[i]));
+        QColor c(QColor::fromRgba(tmpColors[i]));
+        if (c.alpha() > qAlpha(pixColors[i]))
+            c.setAlpha(qAlpha(pixColors[i]));
         pixColors[i] = c.rgba();
     }
     pix = QPixmap::fromImage(img);
@@ -886,8 +898,6 @@ Render::drawClickable(const Shadow s,
     const int o(opacity*255);
     if (s==Raised || s==Simple)
     {
-        if (s==Raised)
-            r.sAdjust(1, 1, -1, 0);
         if (s==Simple && !shadow)
         {
             QLinearGradient lg(0, 0, 0, r.height());
@@ -900,13 +910,13 @@ Render::drawClickable(const Shadow s,
         else
             renderShadow(s, r, p, rnd, sides, opacity, shadow);
         const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
-        const int m(1);
+        const int m(2);
         if (s==Simple)
-            r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -m);
+            r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
         else
             r.sAdjust(m, m, -m, -(m+1));
         if (!inToolBar || s==Raised)
-            rnd = qMax(1, rnd-m);
+            rnd = qMax(2, rnd-m);
     }
     else if (s==Carved)
     {
@@ -947,6 +957,14 @@ Render::drawClickable(const Shadow s,
         renderShadow(s, r, p, rnd, sides, opacity);
         if (needStrong)
             renderShadow(Strenghter, r, p, rnd, sides, opacity);
+    }
+    else if (s==Raised)
+    {
+//        QLinearGradient lg(0, 0, 0, r.height());
+//        lg.setColorAt(0.0f, QColor(255, 255, 255, dConf.shadows.opacity*255.0f));
+//        lg.setColorAt(1.0f, QColor(255, 255, 255, dConf.shadows.opacity*127.0f));
+        QBrush b(QColor(255, 255, 255, dConf.shadows.opacity*63.0f));
+        renderShadow(Spotify, r, p, rnd, sides, 0.1f, &b);
     }
     else if (s==Spotify)
         renderShadow(s, r, p, rnd, sides, opacity);
