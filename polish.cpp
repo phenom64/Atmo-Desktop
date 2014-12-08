@@ -257,6 +257,14 @@ StyleProject::polish(QWidget *widget)
     if (castObj(QScrollBar *, sb, widget))
         sb->setAttribute(Qt::WA_Hover);
 
+//    if (QLayout *l = widget->layout())
+//    if ((!l->spacing() || !l->contentsMargins().top()))
+//    if (int s = layoutSpacingAndMargins(widget))
+//    {
+//        l->setSpacing(s);
+//        l->setContentsMargins(s, s, s, s);
+//    }
+
     if (widget->inherits("KTitleWidget"))
     {
         installFilter(widget);

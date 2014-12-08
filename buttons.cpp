@@ -66,7 +66,7 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
         lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bc));
         QBrush m(lg);
         const bool ns(Color::luminosity(bc)<Color::luminosity(option->palette.color(fg)));
-        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &m, 0, Render::All, option);
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &m);
     }
     return true;
 }
@@ -131,7 +131,7 @@ StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const 
     QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, checkRect.height()));
     lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
     QBrush mask(lg);
-    Render::drawClickable(dConf.pushbtn.shadow, checkRect, painter, 3, dConf.shadows.opacity, widget, &mask, 0, Render::All, option);
+    Render::drawClickable(dConf.pushbtn.shadow, checkRect, painter, 3, dConf.shadows.opacity, widget, option, &mask);
 
     if (opt->state & (State_On|State_NoChange))
         Ops::drawCheckMark(painter, opt->palette.color(fg), checkRect.shrinked(2).translated(1, -1), opt->state & State_NoChange);
@@ -187,7 +187,7 @@ StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, con
     QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, checkRect.height()));
     lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
     QBrush mask(lg);
-    Render::drawClickable(dConf.pushbtn.shadow, checkRect, painter, MAXRND, dConf.shadows.opacity, widget, &mask, 0, Render::All, option);
+    Render::drawClickable(dConf.pushbtn.shadow, checkRect, painter, MAXRND, dConf.shadows.opacity, widget, option, &mask);
 
     if (opt->state & State_On)
     {
@@ -205,27 +205,6 @@ bool
 StyleProject::drawRadioButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     return false;
-}
-
-static QRect maskRect(const QRect &rect)
-{
-    QRect r(rect);
-    switch (dConf.toolbtn.shadow)
-    {
-    case Render::Sunken:
-    case Render::Etched:
-    case Render::Raised:
-        r.adjust(0, 1, 0, -2);
-        break;
-    case Render::Yosemite:
-        r.adjust(0, 0, 0, -1);
-        break;
-    case Render::Carved:
-        r.adjust(0, 3, 0, -3);
-        break;
-    default: break;
-    }
-    return r;
 }
 
 class IconCheck
@@ -272,12 +251,8 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         painter->save();
         painter->setBrush(Qt::NoBrush);
         painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
-//        if (widget->geometry().y())
-//            painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
         if (widget->geometry().bottom() != widget->parentWidget()->rect().bottom())
             painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
-//        if (widget->geometry().x())
-//            painter->drawLine(opt->rect.topLeft(), opt->rect.bottomLeft());
         if (widget->geometry().right() != widget->parentWidget()->rect().right())
             painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
         painter->restore();
@@ -326,7 +301,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     painter->save();
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
-    QRect mr(maskRect(rect));
+    QRect mr(Render::maskRect(dConf.toolbtn.shadow, rect, sides));
     const bool hasMenu(Ops::hasMenu(btn, opt));
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button)), fg(Ops::fgRole(widget, QPalette::ButtonText));
     if (bar)
@@ -365,7 +340,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
         lg.setStops(Settings::gradientStops(dConf.toolbtn.gradient, bc));
         QBrush mask(lg);
-        Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, &mask, 0, sides, opt);
+        Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, &mask, 0, sides);
 
         if (hasMenu)
         {
@@ -381,7 +356,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
             QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
             lga.setStops(Settings::gradientStops(dConf.toolbtn.gradient, bca));
             QBrush amask(lga);
-            Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, &amask, 0, sides, opt);
+            Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, &amask, 0, sides);
         }
 
         if (option->SUNKEN && dConf.toolbtn.shadow == Render::Etched && Render::pos(sides, bar->orientation()) != Render::Alone)
@@ -430,7 +405,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
 
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
-    QRect mr(maskRect(rect));
+    QRect mr(Render::maskRect(dConf.toolbtn.shadow, rect, sides));
     const bool hasMenu(Ops::hasMenu(btn, opt));
     const bool isFlat(dConf.toolbtn.flat);
     QPalette::ColorRole bg(Ops::bgRole(isFlat?bar:widget, isFlat?QPalette::Window:QPalette::Button)),

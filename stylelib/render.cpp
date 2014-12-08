@@ -236,7 +236,7 @@ void
 Render::initShadowParts()
 {
     for (int s = 0; s < ShadowCount; ++s)
-    for (int r = 0; r < MAXRND+1; ++r)
+    for (int r = 2; r < MAXRND+1; ++r)
     {
         if (!r)
             continue;
@@ -251,65 +251,65 @@ Render::initShadowParts()
         {
             QRect rect(pix.rect());
             p.setPen(Qt::NoPen);
-            const int rnd(bool(r>2)?r:1);
-            if (r > 1)
-            {
-                p.setBrush(QColor(255, 255, 255, 255));
-                p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
-                p.drawRoundedRect(rect, rnd, rnd);
-                p.setClipping(false);
-                rect.setBottom(rect.bottom()-1);
-            }
+            float rnd(r);
+            p.setBrush(QColor(255, 255, 255, 255));
+            p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
+            p.drawRoundedRect(rect, rnd, rnd);
+            p.setClipping(false);
+            rect.setBottom(rect.bottom()-1);
             p.setBrush(Qt::black);
             p.drawRoundedRect(rect, rnd, rnd);
-
-
-            static const int table[4] = { 0, 127, 170, 255 };
-            p.setPen(Qt::NoPen);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            for (int i = 0; i < 4; ++i)
+            if (r > 2)
             {
-                int sides(qMin(i, 2));
-                QRect ret(rect.adjusted(sides, i, -sides, -qMin(i, 1)));
-                p.setBrush(QColor(0, 0, 0, table[i]));
-                int rnd(r-(sides));
-                p.drawRoundedRect(ret, rnd, rnd);
+                QImage img(pix.size(), QImage::Format_ARGB32);
+                img.fill(Qt::transparent);
+                QPainter pt(&img);
+                pt.setRenderHint(QPainter::Antialiasing);
+                pt.setPen(Qt::NoPen);
+                pt.setBrush(Qt::black);
+                QRectF rt(rect);
+                rt.adjust(1.0f, 1.5f, -1.0f, -0.75f);
+                rnd-=1.5f;
+                pt.drawRoundedRect(rt, rnd, rnd);
+                pt.end();
+
+                expblur(img, 2);
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.fillRect(pix.rect(), img);
+                const int a(r-1);
+                p.drawRoundedRect(rect.adjusted(a, a, -a, -a), rnd, rnd);
             }
-//            int steps(qBound(1, qMax(0, r-1), 3));
-//            int alpha(300/steps);
-//            for (int i = 1; i < steps+1; ++i)
-//            {
-//                int sides(qMin(i, 2));
-//                QRect ret(rect.adjusted(sides, i, -sides, -qMin(i, 1)));
-//                p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-//                p.setBrush(Qt::black);
-//                p.drawRoundedRect(ret, rnd, rnd);
-//                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-//                p.setBrush(QColor(0, 0, 0, qMin(255, alpha*i)));
-//                p.drawRoundedRect(ret, rnd, rnd);
-//            }
+            else
+            {
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.drawRoundedRect(rect.adjusted(1, 1, -1, -1), 2, 2);
+            }
             break;
         }
         case Raised:
         {
-#if 0 //doesnt work well on little roundness cause the pixmap is too small...
-            QRadialGradient rg(pix.rect().center(), size/2.0f);
-            rg.setColorAt(0.7f, QColor(0, 0, 0, 255));
-            rg.setColorAt(0.8f, QColor(0, 0, 0, 63));
-            rg.setColorAt(0.9f, QColor(0, 0, 0, 15));
-            rg.setColorAt(1.0f, QColor(0, 0, 0, 0));
-            p.translate(0.5f, 0.5f); //...and this is needed.... whyyy?
-            p.fillRect(pix.rect(), rg);
-#endif
-            p.setPen(Qt::NoPen);
-            static const int table[3] = { 255, 127-31, 31 };
-            for (int i = 2; i >= 0; --i)
-            {
-                p.setBrush(QColor(0, 0, 0, table[i]));
-                const int m(3-(i+1));
-                int rnd(r-(m-1));
-                p.drawRoundedRect(pix.rect().adjusted(m, m, -m, -m), rnd, rnd);
-            }
+            QImage img(pix.size(), QImage::Format_ARGB32);
+            img.fill(Qt::transparent);
+            QPainter pt(&img);
+            pt.setRenderHint(QPainter::Antialiasing);
+            pt.setPen(Qt::NoPen);
+            pt.setBrush(Qt::black);
+            QRectF rf(img.rect());
+            float f(1.0f);
+            rf.adjust(f, f, -f, -f);
+            pt.drawRoundedRect(rf.translated(0.0f, 0.5f), r, r);
+            pt.end();
+            expblur(img, 1);
+            p.fillRect(pix.rect(), img);
+
+//            static const int table[3] = { 255, 127-31, 31 };
+//            for (int i = 2; i >= 0; --i)
+//            {
+//                p.setBrush(QColor(0, 0, 0, table[i]));
+//                const int m(3-(i+1));
+//                int rnd(r-(m-1));
+//                p.drawRoundedRect(pix.rect().adjusted(m, m, -m, -m), rnd, rnd);
+//            }
             break;
         }
         case Etched:
@@ -804,23 +804,24 @@ Render::drawClickable(Shadow s,
                       QRect r,
                       QPainter *p,
                       int rnd,
-                      const float opacity,
+                      float opacity,
                       const QWidget *w,
+                      const QStyleOption *opt,
                       QBrush *mask,
                       QBrush *shadow,
                       const Sides sides,
-                      const QStyleOption *opt,
                       const QPoint &offSet)
 {
     rnd = qBound(2, rnd, qMin(r.height(), r.width())/2);
     if (s >= ShadowCount)
         return;
 
+    const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool sunken(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
-    if (opt && opt->SUNKEN && s != Carved)
+    if (opt && opt->SUNKEN && s != Carved && !isToolBox)
     {
         if (s == Raised)
-            r.sShrink(1);
+            r.sAdjust(1, 1, -1, 0);
         s = Sunken;   
     }
     bool needStrong(qobject_cast<const QSlider *>(w));
@@ -855,9 +856,9 @@ Render::drawClickable(Shadow s,
         //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
         const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
         QPalette::ColorRole bg(sunken&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
-//        QPalette::ColorRole fg(checked&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
+        QPalette::ColorRole fg(sunken&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
         bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
-//        fgLum = Color::luminosity(w->palette().color(QPalette::Active, checked?bg:fg));
+        fgLum = Color::luminosity(w->palette().color(QPalette::Active, fg));
 //        if (checked)
 //            Ops::swap(bgLum, fgLum);
         if (QWidget *p = w->parentWidget())
@@ -865,15 +866,24 @@ Render::drawClickable(Shadow s,
             pbgLum = Color::luminosity(p->palette().color(QPalette::Active, p->backgroundRole()));
             pfgLum = Color::luminosity(p->palette().color(QPalette::Active, p->foregroundRole()));
         }
+        else
+        {
+            pbgLum = bgLum;
+            pfgLum = fgLum;
+        }
     }
 
 //    const bool isDark(fgLum>bgLum);
     const bool darkParent(pfgLum>pbgLum);
     const bool parentContrast(qMax(pbgLum, bgLum)-qMin(pbgLum, bgLum) > 127);
-//    const bool darkerParent(bgLum-pbgLum>127);
-//    const uint diff(qMax(0, qMax(fgLum, pfgLum)-qMin(bgLum, pbgLum)));
-//    const uint diff(255-qMin(bgLum, pbgLum));
+    if (bgLum > pbgLum && !darkParent)
+        opacity = qMin(1.0f, opacity+((bgLum-pbgLum)/255.0f));
 
+    if (opt && !(opt->ENABLED) && !qstyleoption_cast<const QStyleOptionToolButton *>(opt))
+        opacity/=2.0f;
+
+    if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
+        r = w->rect();
     const int o(opacity*255);
     if (s==Raised || s==Yosemite)
     {
@@ -893,14 +903,14 @@ Render::drawClickable(Shadow s,
         if (s==Yosemite)
             r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
         else
-            r.sAdjust(m, m, -m, -(m+(r.height()!=r.width())));
+            r.sAdjust(m, m, -m, -m);
         if (!inToolBar || s==Raised)
             rnd = qMax(2, rnd-m);
     }
     else if (s==Carved)
     {
         QLinearGradient lg(0, 0, 0, r.height());
-        if (w && qobject_cast<const QToolBox *>(w->parentWidget()))
+        if (isToolBox)
             r = w->rect();
         int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
@@ -937,7 +947,7 @@ Render::drawClickable(Shadow s,
         r.sAdjust(0, 0, 0, 1);
         renderShadow(s, r, p, rnd, sides, opacity);
     }
-    else if (s==Raised)
+    else if (s==Raised && !isToolBox)
     {
         QLinearGradient lg(0, 0, 0, r.height());
         lg.setColorAt(0.0f, QColor(255, 255, 255, dConf.shadows.opacity*255.0f));
@@ -983,8 +993,9 @@ Render::maskHeight(const Shadow s, const int height)
     {
     case Render::Sunken:
     case Render::Etched:
-    case Render::Raised:
         return height-3;
+    case Render::Raised:
+        return height-4;
     case Render::Yosemite:
         return height-1;
     case Render::Carved:
@@ -1017,7 +1028,7 @@ Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
     {
     case Sunken:
     case Etched:
-    case Raised: return r.sAdjusted(1, 1, -1, -2); break;
+    case Raised: return r.sAdjusted(2, 2, -2, -(2+(r.height()!=r.width()))); break;
     case Yosemite: return r.sAdjusted(0, 0, 0, -1); break;
     case Carved: return r.sAdjusted(3, 3, -3, -3); break;
     default: return r;

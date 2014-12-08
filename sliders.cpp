@@ -125,14 +125,14 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     }
     if (dConf.sliders.fillGroove)
         painter->setClipRegion(QRegion(groove)-QRegion(clip));
-    Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, &amask);
+    Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, option, &amask);
     if (dConf.sliders.fillGroove)
     {
         painter->setClipRect(clip);
         QLinearGradient lgh(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
         lgh.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
         QBrush hmask(lgh);
-        Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, &hmask);
+        Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, option, &hmask);
     }
     painter->setClipping(false);
 
@@ -177,7 +177,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     QLinearGradient lg(0, 0, 0, Render::maskHeight(Render::Raised, dConf.sliders.size));
     lg.setStops(Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
     QBrush mask(lg);
-    Render::drawClickable(Render::Raised, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, &mask);
+    Render::drawClickable(Render::Raised, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
 
     if (dConf.sliders.dot)
     {
@@ -314,7 +314,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
 //    offSet += Render::maskRect(dConf.progressbars.shadow, groove).topLeft();
     painter->setClipRect(cont);
     QBrush b(pixmap);
-    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, &b, 0, Render::All, false, offSet);
+    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, option, &b, 0, Render::All, offSet);
     painter->restore();
     return true;
 }
@@ -330,7 +330,7 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
     QBrush b(opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
-    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, &b);
+    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, option, &b);
     painter->setClipping(false);
     return true;
 }

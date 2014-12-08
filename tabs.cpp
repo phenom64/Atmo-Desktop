@@ -143,7 +143,7 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
     }
     lg.setStops(Settings::gradientStops(dConf.tabs.gradient, bgc));
     QBrush b(lg);
-    Render::drawClickable(dConf.tabs.shadow, r, painter, dConf.tabs.rnd, dConf.shadows.opacity, bar, &b, 0, sides, opt);
+    Render::drawClickable(dConf.tabs.shadow, r, painter, dConf.tabs.rnd, dConf.shadows.opacity, bar, opt, &b, 0, sides);
     const QRect mask(Render::maskRect(dConf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
@@ -520,11 +520,20 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
     QRect geo(opt->rect);
     QWidget *w(0);
     QRect theRect(opt->rect);
+    const bool first(opt->position == QStyleOptionToolBoxV2::Beginning);
+    const bool last(opt->position == QStyleOptionToolBoxV2::End);
     if (castObj(const QToolBox *, box, widget))
     {
         if (box->frameShadow() == QFrame::Sunken)
         {
             painter->fillRect(option->rect, pal.button());
+            const QPen saved(painter->pen());
+            painter->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
+            if (option->SUNKEN || !last)
+                painter->drawLine(theRect.bottomLeft(), theRect.bottomRight());
+            if (opt->selectedPosition == QStyleOptionToolBoxV2::PreviousIsSelected)
+                painter->drawLine(theRect.topLeft(), theRect.topRight());
+            painter->setPen(saved);
             return true;
         }
         const QList<QWidget *> tabs(widget->findChildren<QWidget *>("qt_toolbox_toolboxbutton"));
@@ -541,22 +550,17 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
         }
     }
 
-    const bool only(opt->position == QStyleOptionToolBoxV2::OnlyOneTab);
-    const bool first(opt->position == QStyleOptionToolBoxV2::Beginning);
-    const bool last(opt->position == QStyleOptionToolBoxV2::End);
-    Render::Sides sides(Render::Left|Render::Right);
-    if (only)
-        sides = Render::All;
-    else if (first)
-        sides |= Render::Top;
-    else if (last)
-        sides |= Render::Bottom;
+    Render::Sides sides(Render::All);
+    if (!first)
+        sides &= ~Render::Top;
+    if (!last)
+        sides &= ~Render::Bottom;
 
     QLinearGradient lg(0, 0, 0, Render::maskRect(dConf.tabs.shadow, theRect).height());
     lg.setStops(Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
     QBrush b(lg);
 
-    Render::drawClickable(dConf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), dConf.shadows.opacity, w, &b, 0, sides, false, -geo.topLeft());
+    Render::drawClickable(dConf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), dConf.shadows.opacity, w, option, &b, 0, sides, -geo.topLeft());
     return true;
 }
 

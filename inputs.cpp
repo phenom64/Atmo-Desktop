@@ -51,7 +51,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
         mask = QBrush(lg);
     }
 
-    Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, &mask);
+    Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
     return true;
 }
 
@@ -107,29 +107,28 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, frameRect.height()));
         lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
         QBrush mask(lg);
-        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &mask);
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask);
 
         const int o(dConf.shadows.opacity*255.0f);
 
         const QColor hc(opt->palette.color(QPalette::Highlight));
         QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
-        lga.setColorAt(0.0f, Color::mid(hc, Qt::white, 10, 1));
-        lga.setColorAt(1.0f, Color::mid(hc, Qt::black, 10, 1));
+        lga.setStops(Settings::gradientStops(dConf.pushbtn.gradient, hc));
         mask = QBrush(lga);
 
         painter->setClipRect(arrowRect);
-        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
         painter->setClipping(false);
 
-        arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
-        painter->setPen(QColor(0, 0, 0, o/3));
-        const float op(painter->opacity());
-        painter->setOpacity(dConf.shadows.opacity);
-        if (ltr)
-            painter->drawLine(arrowRect.topLeft()/*-QPoint(1, 0)*/, arrowRect.bottomLeft()-QPoint(1, 0));
-        else
-            painter->drawLine(arrowRect.topRight()/*+QPoint(1, 0)*/, arrowRect.bottomRight()+QPoint(1, 0));
-        painter->setOpacity(op);
+//        arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
+//        painter->setPen(QColor(0, 0, 0, o/3));
+//        const float op(painter->opacity());
+//        painter->setOpacity(dConf.shadows.opacity);
+//        if (ltr)
+//            painter->drawLine(arrowRect.topLeft()/*-QPoint(1, 0)*/, arrowRect.bottomLeft()-QPoint(1, 0));
+//        else
+//            painter->drawLine(arrowRect.topRight()/*+QPoint(1, 0)*/, arrowRect.bottomRight()+QPoint(1, 0));
+//        painter->setOpacity(op);
     }
     else
     {
@@ -147,7 +146,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
             brush = QBrush(lg);
         }
 //        drawSafariLineEdit(opt->rect, painter, brush);
-        Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, &brush);
+        Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &brush);
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
@@ -206,7 +205,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
         lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
-    Render::drawClickable(dConf.input.shadow, opt->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, &mask);
+    Render::drawClickable(dConf.input.shadow, opt->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
 
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up, dConf.arrowSize);
     Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down, dConf.arrowSize);

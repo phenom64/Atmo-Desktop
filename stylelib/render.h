@@ -47,12 +47,12 @@ public:
                               QRect r,
                               QPainter *p,
                               int rnd = MAXRND,
-                              const float opacity = 1.0f,
+                              float opacity = 1.0f,
                               const QWidget *w = 0,
+                              const QStyleOption *o = 0,
                               QBrush *mask = 0,
                               QBrush *shadow = 0,
                               const Sides sides = All,
-                              const QStyleOption *o = 0,
                               const QPoint &offSet = QPoint());
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const Shadow s, const int height);

@@ -113,6 +113,7 @@ OverLay::eventFilter(QObject *o, QEvent *e)
             resize(m_frame->size());
             repaint();
             setMask(mask());
+            updateOverlay();
             m_timer->start();
             return false;
         case QEvent::Resize:

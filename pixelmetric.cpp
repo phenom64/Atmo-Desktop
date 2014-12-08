@@ -11,12 +11,54 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QStackedWidget>
+#include <QAbstractScrollArea>
+#include <QSplitter>
 
 #include "styleproject.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/settings.h"
 #include "stylelib/render.h"
+
+int
+StyleProject::layoutSpacingAndMargins(const QWidget *w)
+{
+    if (dConf.uno.enabled && w && w->layout())
+    if (QMainWindow *mw = qobject_cast<QMainWindow *>(w->window()))
+    if (QWidget *cw = mw->centralWidget())
+    if (cw->isAncestorOf(w))
+    {
+        if (qobject_cast<const QAbstractScrollArea *>(w) ||
+                qobject_cast<const QSplitter *>(w) ||
+                (qobject_cast<const QHBoxLayout *>(w->layout()) && w->findChild<const QSplitter *>() && w->children().count() == 2))
+            return 0;
+#if 0
+        bool hasClickables(false);
+        const QList<QWidget *> kids(widget->findChildren<QWidget *>());
+        for (int i = 0; i < kids.count(); ++i)
+        {
+            const QWidget *w = kids.at(i);
+            if (!w->isVisibleTo(cw) || w->parentWidget() != widget)
+                continue;
+            hasClickables |= qobject_cast<const QAbstractButton *>(w) ||
+                    qobject_cast<const QComboBox *>(w) ||
+                    qobject_cast<const QAbstractSlider *>(w) ||
+                    qobject_cast<const QGroupBox *>(w) ||
+                    qobject_cast<const QLineEdit *>(w) ||
+                    qobject_cast<const QProgressBar *>(w) ||
+                    qobject_cast<const QLabel *>(w) ||
+                    qobject_cast<const QTabWidget *>(w) ||
+                    w->inherits("KTitleWidget") ||
+                    qobject_cast<const QBoxLayout *>(w->layout()); //widget w/ possible clickables...
+            if (hasClickables) //one is enough
+                break;
+        }
+        if (!hasClickables)
+            return 0;
+#endif
+    }
+    return 8;
+}
 
 int
 StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
@@ -35,37 +77,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_LayoutBottomMargin:
     case PM_LayoutHorizontalSpacing:
     case PM_LayoutVerticalSpacing:
-    {
-        if (dConf.uno.enabled && widget && widget->layout())
-        if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
-        if (QWidget *cw = mw->centralWidget())
-        if (cw->isAncestorOf(widget))
-        {
-            bool hasClickables(false);
-            const QList<QWidget *> kids(widget->findChildren<QWidget *>());
-            for (int i = 0; i < kids.count(); ++i)
-            {
-                const QWidget *w = kids.at(i);
-                if (!w->isVisibleTo(cw) || w->parentWidget() != widget)
-                    continue;
-                hasClickables |= qobject_cast<const QAbstractButton *>(w) ||
-                        qobject_cast<const QComboBox *>(w) ||
-                        qobject_cast<const QAbstractSlider *>(w) ||
-                        qobject_cast<const QGroupBox *>(w) ||
-                        qobject_cast<const QLineEdit *>(w) ||
-                        qobject_cast<const QProgressBar *>(w) ||
-                        qobject_cast<const QLabel *>(w) ||
-                        qobject_cast<const QTabWidget *>(w) ||
-                        w->inherits("KTitleWidget") ||
-                        qobject_cast<const QBoxLayout *>(w->layout()); //widget w/ possible clickables...
-                if (hasClickables) //one is enough
-                    break;
-            }
-            if (!hasClickables)
-                return 0;
-        }
-        return 8;
-    }
+        return layoutSpacingAndMargins(widget);
     case PM_HeaderMarkSize:
         return 9;
     case PM_ButtonMargin:
