@@ -342,7 +342,7 @@ Render::initShadowParts()
             p.drawTiledPixmap(black.rect(), black);
             break;
         }
-        case Simple:
+        case Yosemite:
         {
             p.setPen(Qt::NoPen);
             p.setBrush(Qt::black);
@@ -355,7 +355,7 @@ Render::initShadowParts()
             }
             break;
         }
-        case Spotify:
+        case Rect:
         {
             p.setPen(Qt::NoPen);
             p.setBrush(Qt::black);
@@ -366,19 +366,6 @@ Render::initShadowParts()
             {
                 p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
                 p.drawRoundedRect(rt.adjusted(w, w, -w, -w), r-w, r-w);
-            }
-            break;
-        }
-        case Strenghter:
-        {
-            p.setPen(Qt::NoPen);
-            p.setBrush(Qt::black);
-            QRect rt(pix.rect().adjusted(0, 0, 0, -1));
-            p.drawRoundedRect(rt, r, r);
-            if (r > 1)
-            {
-                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                p.drawRoundedRect(rt.adjusted(1, 1, -1, -1), r-1, r-1);
             }
             break;
         }
@@ -718,26 +705,13 @@ Render::checkedForParentEdges(const QWidget *w, Sides from)
 void
 Render::colorizePixmap(QPixmap &pix, const QBrush &b)
 {
-    QImage tmp(pix.size(), QImage::Format_ARGB32);
-    tmp.fill(Qt::transparent);
-    QPainter p(&tmp);
-    p.fillRect(tmp.rect(), b);
+    QPixmap copy(pix);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.fillRect(pix.rect(), b);
     p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    p.fillRect(tmp.rect(), pix);
+    p.drawPixmap(pix.rect(), copy);
     p.end();
-
-    QImage img = pix.toImage().convertToFormat(QImage::Format_ARGB32);
-    const QRgb *tmpColors = reinterpret_cast<const QRgb *>(tmp.constBits());
-    QRgb *pixColors = reinterpret_cast<QRgb *>(img.bits());
-    const int s(pix.height()*pix.width());
-    for (int i = 0; i < s; ++i)
-    {
-        QColor c(QColor::fromRgba(tmpColors[i]));
-        if (c.alpha() > qAlpha(pixColors[i]))
-            c.setAlpha(qAlpha(pixColors[i]));
-        pixColors[i] = c.rgba();
-    }
-    pix = QPixmap::fromImage(img);
 }
 
 QPixmap
@@ -826,7 +800,7 @@ Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
 }
 
 void
-Render::drawClickable(const Shadow s,
+Render::drawClickable(Shadow s,
                       QRect r,
                       QPainter *p,
                       int rnd,
@@ -842,9 +816,14 @@ Render::drawClickable(const Shadow s,
     if (s >= ShadowCount)
         return;
 
+    const bool sunken(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
+    if (opt && opt->SUNKEN && s != Carved)
+    {
+        if (s == Raised)
+            r.sShrink(1);
+        s = Sunken;   
+    }
     bool needStrong(qobject_cast<const QSlider *>(w));
-    const bool checked(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
-
     int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
     if (w)
     {
@@ -875,7 +854,7 @@ Render::drawClickable(const Shadow s,
         }
         //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
         const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
-        QPalette::ColorRole bg(checked&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
+        QPalette::ColorRole bg(sunken&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
 //        QPalette::ColorRole fg(checked&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
         bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
 //        fgLum = Color::luminosity(w->palette().color(QPalette::Active, checked?bg:fg));
@@ -896,9 +875,9 @@ Render::drawClickable(const Shadow s,
 //    const uint diff(255-qMin(bgLum, pbgLum));
 
     const int o(opacity*255);
-    if (s==Raised || s==Simple)
+    if (s==Raised || s==Yosemite)
     {
-        if (s==Simple && !shadow)
+        if (s==Yosemite && !shadow)
         {
             QLinearGradient lg(0, 0, 0, r.height());
             lg.setColorAt(0.0f, QColor(0, 0, 0, o/3));
@@ -911,10 +890,10 @@ Render::drawClickable(const Shadow s,
             renderShadow(s, r, p, rnd, sides, opacity, shadow);
         const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
         const int m(2);
-        if (s==Simple)
+        if (s==Yosemite)
             r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
         else
-            r.sAdjust(m, m, -m, -(m+1));
+            r.sAdjust(m, m, -m, -(m+(r.height()!=r.width())));
         if (!inToolBar || s==Raised)
             rnd = qMax(2, rnd-m);
     }
@@ -949,24 +928,24 @@ Render::drawClickable(const Shadow s,
     if (s==Carved)
     {
         const float o(parentContrast?qMax(pbgLum, bgLum)/255.0f:opacity);
-        renderShadow(Spotify, r, p, rnd, sides, o);
+        renderShadow(Rect, r, p, rnd, sides, o);
     }
     else if (s==Sunken||s==Etched)
     {
+        if (needStrong)
+            renderShadow(Rect, r, p, rnd, sides, opacity);
         r.sAdjust(0, 0, 0, 1);
         renderShadow(s, r, p, rnd, sides, opacity);
-        if (needStrong)
-            renderShadow(Strenghter, r, p, rnd, sides, opacity);
     }
     else if (s==Raised)
     {
-//        QLinearGradient lg(0, 0, 0, r.height());
-//        lg.setColorAt(0.0f, QColor(255, 255, 255, dConf.shadows.opacity*255.0f));
-//        lg.setColorAt(1.0f, QColor(255, 255, 255, dConf.shadows.opacity*127.0f));
-        QBrush b(QColor(255, 255, 255, dConf.shadows.opacity*63.0f));
-        renderShadow(Spotify, r, p, rnd, sides, 0.1f, &b);
+        QLinearGradient lg(0, 0, 0, r.height());
+        lg.setColorAt(0.0f, QColor(255, 255, 255, dConf.shadows.opacity*255.0f));
+        lg.setColorAt(0.5f, Qt::transparent);
+        QBrush b(lg);
+        renderShadow(Rect, r, p, rnd, sides, 1.0f, &b);
     }
-    else if (s==Spotify)
+    else if (s==Rect)
         renderShadow(s, r, p, rnd, sides, opacity);
 }
 
@@ -1006,7 +985,7 @@ Render::maskHeight(const Shadow s, const int height)
     case Render::Etched:
     case Render::Raised:
         return height-3;
-    case Render::Simple:
+    case Render::Yosemite:
         return height-1;
     case Render::Carved:
         return height-6;
@@ -1023,7 +1002,7 @@ Render::maskWidth(const Shadow s, const int width)
     case Render::Etched:
     case Render::Raised:
         return width-2;
-    case Render::Simple:
+    case Render::Yosemite:
         return width;
     case Render::Carved:
         return width-6;
@@ -1039,7 +1018,7 @@ Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
     case Sunken:
     case Etched:
     case Raised: return r.sAdjusted(1, 1, -1, -2); break;
-    case Simple: return r.sAdjusted(0, 0, 0, -1); break;
+    case Yosemite: return r.sAdjusted(0, 0, 0, -1); break;
     case Carved: return r.sAdjusted(3, 3, -3, -3); break;
     default: return r;
     }
@@ -1053,7 +1032,7 @@ Render::shadowMargin(const Shadow s)
     case Sunken:
     case Etched:
     case Raised: return 1; break;
-    case Simple: return 0; break;
+    case Yosemite: return 0; break;
     case Carved: return 3; break;
     default: return 0;
     }

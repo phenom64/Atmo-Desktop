@@ -66,7 +66,7 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
         lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bc));
         QBrush m(lg);
         const bool ns(Color::luminosity(bc)<Color::luminosity(option->palette.color(fg)));
-        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &m);
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, &m, 0, Render::All, option);
     }
     return true;
 }
@@ -217,7 +217,7 @@ static QRect maskRect(const QRect &rect)
     case Render::Raised:
         r.adjust(0, 1, 0, -2);
         break;
-    case Render::Simple:
+    case Render::Yosemite:
         r.adjust(0, 0, 0, -1);
         break;
     case Render::Carved:
@@ -306,7 +306,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     Ops::toolButtonData(btn, pixelMetric(PM_ToolBarSeparatorExtent, opt, widget), nextSelected, prevSelected, isInTopToolBar, sides);
 
-    if (dConf.toolbtn.shadow == Render::Spotify)
+    if (dConf.toolbtn.shadow == Render::Rect)
     {
         const QPalette pal(bar?bar->palette():opt->palette);
         int hl(Anim::ToolBtns::level(btn, false));
@@ -319,7 +319,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
             Render::renderMask(opt->rect.sShrinked(1), painter, brush, dConf.toolbtn.rnd, sides);
             brush = pal.foreground();
         }
-        Render::renderShadow(Render::Spotify, opt->rect, painter, dConf.toolbtn.rnd, sides, 1.0f, &brush);
+        Render::renderShadow(Render::Rect, opt->rect, painter, dConf.toolbtn.rnd, sides, 1.0f, &brush);
         return true;
     }
 
@@ -485,7 +485,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
         textRole = bar?bg:fg;
         bg = Ops::opposingRole(textRole);
     }
-    if (bar && dConf.toolbtn.shadow == Render::Spotify)
+    if (bar && dConf.toolbtn.shadow == Render::Rect)
     {
         fg = textRole = opt->SUNKEN?QPalette::HighlightedText:QPalette::WindowText;
         bg = opt->SUNKEN?QPalette::Highlight:QPalette::Window;

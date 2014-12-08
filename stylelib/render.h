@@ -14,7 +14,13 @@ public:
     enum SidePart { West = 0, North, East, South, SidePartCount };
     enum Pos { First = 0, Middle = 1, Last = 2, Alone = 3 };
     enum Parts { TopLeftPart = 0, TopMidPart, TopRightPart, LeftPart, CenterPart, RightPart, BottomLeftPart, BottomMidPart, BottomRightPart, PartCount };
-    enum ShadowType { Sunken = 0, Etched, Raised, Simple, Carved, Spotify, Strenghter, ShadowCount };
+    enum ShadowType { Sunken = 0,
+                      Etched,   //maclike toolbar shadow pre-yosemite
+                      Raised,   //pretty much a normal pushbutton like shadow
+                      Yosemite, //yosemite simple shadow that reacts differently if widget inside toolbar...
+                      Carved,   //rhino like
+                      Rect,     //simple rounded rectangle, no honky-ponky
+                      ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     enum Effect { Noeffect =0, Inset, Outset };
     Render();
@@ -37,7 +43,7 @@ public:
     static QPixmap noise() { return instance()->m_noise; }
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
-    static void drawClickable(const Shadow s,
+    static void drawClickable(Shadow s,
                               QRect r,
                               QPainter *p,
                               int rnd = MAXRND,

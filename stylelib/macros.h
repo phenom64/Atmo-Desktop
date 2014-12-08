@@ -6,9 +6,9 @@
 #define PESize PE_PanelMenu+1
 #define EVSize QEvent::PlatformPanel+1
 
-#define SUNKEN state & (State_Sunken | State_Selected | State_On)
-#define HOVER state & State_MouseOver
-#define ENABLED state & State_Enabled
+#define SUNKEN state & (QStyle::State_Sunken | QStyle::State_Selected | QStyle::State_On)
+#define HOVER state & QStyle::State_MouseOver
+#define ENABLED state & QStyle::State_Enabled
 
 #define castOpt(_Type_, _varName_, _fromVar_) const QStyleOption##_Type_ *_varName_ = qstyleoption_cast<const QStyleOption##_Type_ *>(_fromVar_)
 #define castObj(_Type_, _varName_, _fromVar_) _Type_ _varName_ = qobject_cast<_Type_>(_fromVar_)
