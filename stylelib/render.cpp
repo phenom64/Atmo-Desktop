@@ -818,7 +818,7 @@ Render::drawClickable(Shadow s,
 
     const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool sunken(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
-    if (opt && opt->SUNKEN && s != Carved && !isToolBox)
+    if (opt && opt->state & (QStyle::State_Sunken /*| QStyle::State_Selected*/ | QStyle::State_On) && s != Carved && !isToolBox)
     {
         if (s == Raised)
             r.sAdjust(1, 1, -1, 0);

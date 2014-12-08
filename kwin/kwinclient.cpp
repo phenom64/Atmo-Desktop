@@ -298,7 +298,7 @@ KwinClient::~KwinClient()
         m_mem->detach();
     if (m_sizeGrip)
     {
-        delete m_sizeGrip;
+        m_sizeGrip->deleteLater();
         m_sizeGrip = 0;
     }
 //    XHandler::deleteXProperty(windowId(), XHandler::DecoData);

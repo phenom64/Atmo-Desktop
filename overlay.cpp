@@ -120,7 +120,7 @@ OverLay::eventFilter(QObject *o, QEvent *e)
             resize(m_frame->size());
             repaint();
             setMask(mask());
-            m_timer->start(300);
+            m_timer->start();
             return false;
         case QEvent::FocusIn:
             m_hasFocus = true;
