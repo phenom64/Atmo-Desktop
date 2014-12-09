@@ -235,12 +235,11 @@ Render::initMaskParts()
 void
 Render::initShadowParts()
 {
-    for (int s = 0; s < ShadowCount; ++s)
-    for (int r = 2; r < MAXRND+1; ++r)
+    for (Shadow s = 0; s < ShadowCount; ++s)
+    for (int r = 0; r < MAXRND+1; ++r)
     {
-        if (!r)
-            continue;
-        const int size = r*2+1;
+        const int cornerSize(qMax(3, r));
+        const int size = cornerSize*2+1;
         QPixmap pix(size, size);
         pix.fill(Qt::transparent);
         QPainter p(&pix);
@@ -251,15 +250,15 @@ Render::initShadowParts()
         {
             QRect rect(pix.rect());
             p.setPen(Qt::NoPen);
-            float rnd(r);
-            p.setBrush(QColor(255, 255, 255, 255));
+            p.setBrush(QColor(255, 255, 255, 192));
             p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
-            p.drawRoundedRect(rect, rnd, rnd);
+            p.drawRoundedRect(rect, r, r);
             p.setClipping(false);
             rect.setBottom(rect.bottom()-1);
             p.setBrush(Qt::black);
-            p.drawRoundedRect(rect, rnd, rnd);
-            if (r > 2)
+            p.drawRoundedRect(rect, r, r);
+
+            if (r)
             {
                 QImage img(pix.size(), QImage::Format_ARGB32);
                 img.fill(Qt::transparent);
@@ -269,20 +268,28 @@ Render::initShadowParts()
                 pt.setBrush(Qt::black);
                 QRectF rt(rect);
                 rt.adjust(1.0f, 1.5f, -1.0f, -0.75f);
-                rnd-=1.5f;
+                int rnd(r);
+                if (rnd)
+                    --rnd;
                 pt.drawRoundedRect(rt, rnd, rnd);
                 pt.end();
 
-                expblur(img, 2);
+                expblur(img, r>4?2:1);
+
                 p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
                 p.fillRect(pix.rect(), img);
-                const int a(r-1);
-                p.drawRoundedRect(rect.adjusted(a, a, -a, -a), rnd, rnd);
             }
             else
             {
                 p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                p.drawRoundedRect(rect.adjusted(1, 1, -1, -1), 2, 2);
+                QRectF rf(rect);
+                rf.adjust(0.5f, 1.0f, -0.5f, -0.5f);
+                p.fillRect(rf, Qt::black);
+                p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                QLinearGradient lg(rf.topLeft(), rf.bottomLeft());
+                lg.setColorAt(0.0f, QColor(0, 0, 0, 170));
+                lg.setColorAt(0.5f, Qt::transparent);
+                p.fillRect(rf, lg);
             }
             break;
         }
@@ -301,28 +308,19 @@ Render::initShadowParts()
             pt.end();
             expblur(img, 1);
             p.fillRect(pix.rect(), img);
-
-//            static const int table[3] = { 255, 127-31, 31 };
-//            for (int i = 2; i >= 0; --i)
-//            {
-//                p.setBrush(QColor(0, 0, 0, table[i]));
-//                const int m(3-(i+1));
-//                int rnd(r-(m-1));
-//                p.drawRoundedRect(pix.rect().adjusted(m, m, -m, -m), rnd, rnd);
-//            }
             break;
         }
         case Etched:
         {
-//            QRect rect(pix.rect());
             QPixmap white(pix.size()-QSize(0, 1));
             white.fill(Qt::transparent);
             QPainter pt(&white);
             pt.setRenderHint(QPainter::Antialiasing);
-            pt.setBrush(QColor(255, 255, 255, 255));
+            pt.setBrush(QColor(255, 255, 255, 192));
             pt.setPen(Qt::NoPen);
             pt.drawRoundedRect(white.rect(), r, r);
             pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            pt.setBrush(Qt::black);
             pt.drawRoundedRect(white.rect().adjusted(1, 1, -1, -1), r-1, r-1);
             pt.end();
 
@@ -347,12 +345,8 @@ Render::initShadowParts()
             p.setPen(Qt::NoPen);
             p.setBrush(Qt::black);
             p.drawRoundedRect(pix.rect(), r, r);
-
-            if (r > 1)
-            {
-                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
-            }
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
             break;
         }
         case Rect:
@@ -362,32 +356,30 @@ Render::initShadowParts()
             QRect rt(pix.rect());
             const int w(1);
             p.drawRoundedRect(rt, r, r);
-            if (r > 1)
-            {
-                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                p.drawRoundedRect(rt.adjusted(w, w, -w, -w), r-w, r-w);
-            }
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p.drawRoundedRect(rt.adjusted(w, w, -w, -w), r-w, r-w);
             break;
         }
         default: break;
         }
         p.end();
-        splitShadowParts((Shadow)s, r, size, pix);
+        splitShadowParts(s, r, size, pix);
     }
 }
 
 void
-Render::splitShadowParts(const Shadow shadow, int roundNess, const int size, const QPixmap &source)
+Render::splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source)
 {
-    m_shadow[shadow][roundNess][TopLeftPart] = source.copy(0, 0, roundNess, roundNess);
-    m_shadow[shadow][roundNess][TopMidPart] = source.copy(roundNess, 0, size-roundNess*2, roundNess);
-    m_shadow[shadow][roundNess][TopRightPart] = source.copy(size-roundNess, 0, roundNess, roundNess);
-    m_shadow[shadow][roundNess][LeftPart] = source.copy(0, roundNess, roundNess, size-roundNess*2);
-    m_shadow[shadow][roundNess][CenterPart] = source.copy(roundNess, roundNess, size-roundNess*2, size-roundNess*2);
-    m_shadow[shadow][roundNess][RightPart] = source.copy(size-roundNess, roundNess, roundNess, size-roundNess*2);
-    m_shadow[shadow][roundNess][BottomLeftPart] = source.copy(0, size-roundNess, roundNess, roundNess);
-    m_shadow[shadow][roundNess][BottomMidPart] = source.copy(roundNess, size-roundNess, size-roundNess*2, roundNess);
-    m_shadow[shadow][roundNess][BottomRightPart] = source.copy(size-roundNess, size-roundNess, roundNess, roundNess);
+    int cornerSize(qMax(3, roundNess));
+    m_shadow[shadow][roundNess][TopLeftPart] = source.copy(0, 0, cornerSize, cornerSize);
+    m_shadow[shadow][roundNess][TopMidPart] = source.copy(cornerSize, 0, size-cornerSize*2, cornerSize);
+    m_shadow[shadow][roundNess][TopRightPart] = source.copy(size-cornerSize, 0, cornerSize, cornerSize);
+    m_shadow[shadow][roundNess][LeftPart] = source.copy(0, cornerSize, cornerSize, size-cornerSize*2);
+    m_shadow[shadow][roundNess][CenterPart] = source.copy(cornerSize, cornerSize, size-cornerSize*2, size-cornerSize*2);
+    m_shadow[shadow][roundNess][RightPart] = source.copy(size-cornerSize, cornerSize, cornerSize, size-cornerSize*2);
+    m_shadow[shadow][roundNess][BottomLeftPart] = source.copy(0, size-cornerSize, cornerSize, cornerSize);
+    m_shadow[shadow][roundNess][BottomMidPart] = source.copy(cornerSize, size-cornerSize, size-cornerSize*2, cornerSize);
+    m_shadow[shadow][roundNess][BottomRightPart] = source.copy(size-cornerSize, size-cornerSize, cornerSize, cornerSize);
 }
 
 static QPainterPath tab(const QRect &r, int rnd)
@@ -490,8 +482,10 @@ Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path,
 }
 
 QRect
-Render::partRect(const QRect &rect, const Part part, const int roundNess, const Sides sides) const
+Render::partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow) const
 {
+    if (isShadow && roundNess < 3)
+        roundNess = 3;
     int x, y, w, h;
     rect.getRect(&x, &y, &w, &h);
 
@@ -527,28 +521,6 @@ Render::partRect(const QRect &rect, const Part part, const int roundNess, const 
     }
 }
 
-QRect
-Render::rect(const QRect &rect, const Parts part, const int roundNess) const
-{
-    int x, y, w, h;
-    rect.getRect(&x, &y, &w, &h);
-    int midWidth = w-(roundNess*2);
-    int midHeight = h-(roundNess*2);
-    switch (part)
-    {
-    case TopLeftPart: return QRect(0, 0, roundNess, roundNess);
-    case TopMidPart: return QRect(roundNess, 0, midWidth, roundNess);
-    case TopRightPart: return QRect(w-roundNess, 0, roundNess, roundNess);
-    case LeftPart: return QRect(0, roundNess, roundNess, midHeight);
-    case CenterPart: return QRect(roundNess, roundNess, midWidth, midHeight);
-    case RightPart: return QRect(w-roundNess, roundNess, roundNess, midHeight);
-    case BottomLeftPart: return QRect(0, h-roundNess, roundNess, roundNess);
-    case BottomMidPart: return QRect(roundNess, h-roundNess, midWidth, roundNess);
-    case BottomRightPart: return QRect(w-roundNess, h-roundNess, roundNess, roundNess);
-    default: return QRect();
-    }
-}
-
 bool
 Render::isCornerPart(const Part part) const
 {
@@ -559,7 +531,7 @@ QPixmap
 Render::genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const
 {
     QPixmap rt = source.copy(partRect(source.rect(), part, roundNess, sides));
-    if (!isCornerPart(part))
+    if (!isCornerPart(part) || !roundNess)
         return rt;
     QPainter p(&rt);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -592,26 +564,11 @@ Render::_renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, i
     if (!rect.isValid())
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
-    if (!roundNess)
-        roundNess = 1;
 
     QPixmap pix(rect.size());
     pix.fill(Qt::transparent);
     QPainter p(&pix);
     QRect r(pix.rect());
-//    if (!offSet.isNull())
-//    {
-//        const int x(offSet.x()), y(offSet.y());
-//        if (x < 0)
-//            r.setRight(r.right()+qAbs(x));
-//        else
-//            r.setLeft(r.left()-qAbs(x));
-//        if (y < 0)
-//            r.setBottom(r.bottom()+qAbs(y));
-//        else
-//            r.setTop(r.top()-qAbs(y));
-//        p.translate(x, y);
-//    }
     p.setBrushOrigin(offSet);
     p.fillRect(r, brush);
     p.end();
@@ -632,17 +589,15 @@ Render::_renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *p
     if (!rect.isValid())
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
-    if (!roundNess)
-        roundNess = 1;
 
     const float o(painter->opacity());
     painter->setOpacity(opacity);
     for (int i = 0; i < PartCount; ++i)
-        if (i == CenterPart || roundNess)
+        if (i != CenterPart)
             if (needPart((Parts)i, sides))
             {
                 QPixmap pix = m_shadow[shadow][roundNess][i];
-                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides).translated(rect.x(), rect.y()), pix);
+                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides, true).translated(rect.x(), rect.y()), pix);
             }
     painter->setOpacity(o);
 }
@@ -812,18 +767,21 @@ Render::drawClickable(Shadow s,
                       const Sides sides,
                       const QPoint &offSet)
 {
-    rnd = qBound(2, rnd, qMin(r.height(), r.width())/2);
+    rnd = qMin(rnd, qMin(r.height(), r.width())/2);
     if (s >= ShadowCount)
         return;
 
     const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool sunken(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
-    if (opt && opt->state & (QStyle::State_Sunken /*| QStyle::State_Selected*/ | QStyle::State_On) && s != Carved && !isToolBox)
+    if (opt
+            && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
+            && s != Carved && s != Yosemite && !isToolBox)
     {
         if (s == Raised)
             r.sAdjust(1, 1, -1, 0);
         s = Sunken;   
     }
+
     bool needStrong(qobject_cast<const QSlider *>(w));
     int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
     if (w)
@@ -905,7 +863,7 @@ Render::drawClickable(Shadow s,
         else
             r.sAdjust(m, m, -m, -m);
         if (!inToolBar || s==Raised)
-            rnd = qMax(2, rnd-m);
+            rnd = qMax(0, rnd-m);
     }
     else if (s==Carved)
     {
@@ -919,7 +877,7 @@ Render::drawClickable(Shadow s,
         const int m(qMin(r.height(), r.width())<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
-        rnd = qMax(rnd-m, 2);
+        rnd = qMax(rnd-m, 0);
     }
     else
         r.sAdjust(0, 0, 0, -1);

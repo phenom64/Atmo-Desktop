@@ -270,6 +270,9 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     for (int i = 0; i < 2; ++i)
         hover[i] = Anim::ToolBtns::level(btn, i);
 
+    if (opt->SUNKEN)
+        hover[0] = STEPS;
+
     if (dConf.toolbtn.flat||!bar)
     {
         if (hover[0] || opt->SUNKEN)

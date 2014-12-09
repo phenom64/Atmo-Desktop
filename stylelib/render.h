@@ -73,12 +73,11 @@ protected:
     void initShadowParts();
     void initTabs();
     void makeNoise();
-    void splitShadowParts(const Shadow shadow, int roundNess, const int size, const QPixmap &source);
+    void splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source);
     bool isCornerPart(const Part part) const;
     bool needPart(const Part part, const Sides sides) const;
     QPixmap genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const;
-    QRect partRect(const QRect &rect, const Part part, const int roundNess, const Sides sides) const;
-    QRect rect(const QRect &rect, const Parts part, const int roundNess) const;
+    QRect partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow = false) const;
 
 private:
     static Render m_instance;

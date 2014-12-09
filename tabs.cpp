@@ -411,7 +411,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
     }
     if (!tabWidget->documentMode())
-        Render::renderShadow(Render::Sunken, rect, painter, 7, sides, dConf.shadows.opacity*0.5f);
+        Render::renderShadow(Render::Sunken, rect, painter, 7, sides, dConf.shadows.opacity);
     return true;
 }
 

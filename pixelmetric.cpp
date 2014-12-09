@@ -30,7 +30,7 @@ StyleProject::layoutSpacingAndMargins(const QWidget *w)
     {
         if (qobject_cast<const QAbstractScrollArea *>(w) ||
                 qobject_cast<const QSplitter *>(w) ||
-                (qobject_cast<const QHBoxLayout *>(w->layout()) && w->findChild<const QSplitter *>() && w->children().count() == 2))
+                (qobject_cast<const QHBoxLayout *>(w->layout()) && w->findChild<const QSplitter *>() && w->children().count() == 2)) // <- maclike lego bricking for keepassx
             return 0;
 #if 0
         bool hasClickables(false);

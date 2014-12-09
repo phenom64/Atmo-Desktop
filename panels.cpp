@@ -11,6 +11,7 @@
 #include <QMap>
 #include <QToolButton>
 #include <QDockWidget>
+#include <QAbstractScrollArea>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -175,7 +176,7 @@ StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
-    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, dConf.shadows.opacity*0.5f);
+    Render::renderShadow(Render::Sunken, cont, painter, 8, Render::All, dConf.shadows.opacity);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -293,24 +294,24 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     if (OverLay::hasOverLay(frame))
         return true;
 
-    int roundNess(2);
     QRect r(option->rect);
+    const bool isView(qobject_cast<const QAbstractScrollArea *>(widget));
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, roundNess, Render::All, dConf.shadows.opacity*0.5f);
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, !isView*7, Render::All, dConf.shadows.opacity);
 
     if (opt->state & State_Raised)
     {
         QPixmap pix(frame->rect().size());
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-        Render::renderShadow(Render::Raised, pix.rect(), &p, 8, Render::All, dConf.shadows.opacity*0.5f);
+        Render::renderShadow(Render::Raised, pix.rect(), &p, 8, Render::All, dConf.shadows.opacity);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Render::renderMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
         p.end();
         painter->drawTiledPixmap(frame->rect(), pix);
     }
     if (frame && frame->frameShadow() == QFrame::Plain)
-        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, dConf.shadows.opacity*0.5f);
+        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, dConf.shadows.opacity);
     return true;
 }
