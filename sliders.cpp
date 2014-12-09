@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QSlider>
 #include <QAbstractScrollArea>
+#include <QTextEdit>
 #include <QProgressBar>
 #include <QStyleOptionProgressBar>
 #include <QStyleOptionProgressBarV2>
@@ -20,58 +21,123 @@
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Slider, opt, option);
+//    castOpt(Slider, opt, option);
+    const QStyleOptionSlider *opt = qstyleoption_cast<const QStyleOptionSlider *>(option);
     if (!opt)
         return true;
-    const QWidget *w = Ops::getAncestor<const QAbstractScrollArea *>(widget);
-    QPalette::ColorRole fg(Ops::fgRole(w, QPalette::WindowText)), bg(Ops::bgRole(w, QPalette::Window));
-    //not used atm
-    //QRect up(subControlRect(CC_ScrollBar, option, SC_ScrollBarSubLine, widget));
-    //QRect down(subControlRect(CC_ScrollBar, option, SC_ScrollBarAddLine, widget));
-    const int m(2);
-    QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget).adjusted(m, m, -m, -m));
-    QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
 
-    castObj(const QScrollBar *, bar, widget);
-//    if (widget && (hitTestComplexControl(CC_ScrollBar, opt, widget->mapFromGlobal(QCursor::pos()), widget) == SC_ScrollBarSlider
-//                   || (bar && bar->isSliderDown())))
-//        fg = QPalette::Highlight;
-    QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
-    Color::ensureContrast(bgc, fgc);
-    painter->fillRect(groove, bgc);
-    if (bg == QPalette::Base)
+    int level(Anim::Basic::level(widget));
+    QRect up(subControlRect(CC_ScrollBar, option, SC_ScrollBarSubLine, widget));
+    QRect down(subControlRect(CC_ScrollBar, option, SC_ScrollBarAddLine, widget));
+    QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget));
+    QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
+    const QScrollBar *bar = qobject_cast<const QScrollBar *>(widget);
+    const QAbstractScrollArea *w = Ops::getAncestor<const QAbstractScrollArea *>(widget);
+    if (dConf.scrollers.style == 0)
     {
-        QLine l(groove.topLeft(), groove.bottomLeft());
-        if (opt->orientation == Qt::Horizontal)
+        QPalette::ColorRole fg(Ops::fgRole(w, QPalette::WindowText)), bg(Ops::bgRole(w, QPalette::Window));
+        const int m(2);
+        slider.adjust(m, m, -m, -m);
+        QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
+        Color::ensureContrast(bgc, fgc);
+        painter->fillRect(groove, bgc);
+        if (bg == QPalette::Base)
         {
-            l.setPoints(groove.topLeft(), groove.topRight());
-            slider.setBottom(slider.bottom()+1);
+            QLine l(groove.topLeft(), groove.bottomLeft());
+            if (opt->orientation == Qt::Horizontal)
+            {
+                l.setPoints(groove.topLeft(), groove.topRight());
+                slider.setBottom(slider.bottom()+1);
+            }
+            else
+                slider.setRight(slider.right()+1);
+            const QPen saved(painter->pen());
+            painter->setPen(QColor(0, 0, 0, 32));
+            painter->drawLine(l);
+            painter->setPen(saved);
         }
-        else
-            slider.setRight(slider.right()+1);
-        const QPen saved(painter->pen());
-        painter->setPen(QColor(0, 0, 0, 32));
-        painter->drawLine(l);
-        painter->setPen(saved);
+        const int o(painter->opacity());
+
+        const float add(0.5f/(float)STEPS);
+        if (bar && !bar->isSliderDown())
+            painter->setOpacity(0.5f+add*level);
+        Render::renderMask(slider, painter, fgc);
+        painter->setOpacity(o);
     }
-//    const bool hor(opt->orientation==Qt::Horizontal);
-//    const int m(1); //margin
-//    slider.adjust(!hor*m, hor*m, -!hor*m, hor*m);
-    const int o(painter->opacity());
-    const int level(Anim::Basic::level(widget));
-    const float add(0.5f/(float)STEPS);
-    if (bar && !bar->isSliderDown())
-        painter->setOpacity(0.5f+add*level);
-    Render::renderMask(slider, painter, fgc);
-    painter->setOpacity(o);
+    else if (dConf.scrollers.style == 1)
+    {
+        if (opt->SUNKEN)
+            level = STEPS;
+        const QColor bgColor(Color::mid(opt->palette.color(QPalette::Highlight), opt->palette.color(QPalette::Window), level, STEPS-level)),
+                fgColor(Color::mid(opt->palette.color(QPalette::HighlightedText), opt->palette.color(QPalette::WindowText), level, STEPS-level));
+
+        const bool hor(opt->orientation == Qt::Horizontal),
+                ltr(opt->direction == Qt::LeftToRight);
+
+        const bool inView((w && w->viewport()->autoFillBackground()) ||
+                          (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
+
+        QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
+        const QGradientStops sliderStops(Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
+        lg.setStops(sliderStops);
+        painter->fillRect(opt->rect, lg);
+
+        Ops::drawArrow(painter, fgColor, up, hor?Ops::Left:Ops::Up, 7);
+        Ops::drawArrow(painter, fgColor, down, hor?Ops::Right:Ops::Down, 7);
+
+        groove.setBottom(groove.bottom()+1);
+        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, opt->palette.color(QPalette::Base)));
+        QBrush bg(lg);
+        Render::drawClickable(Render::Sunken,
+                              groove.adjusted(-!hor, -hor, !hor, hor),
+                              painter,
+                              32,
+                              dConf.shadows.opacity,
+                              widget,
+                              opt,
+                              &bg);
+        lg.setStops(sliderStops);
+        Render::renderShadow(Render::Raised, slider.adjusted(-1, -1, 1, 1), painter, 32, Render::All, dConf.shadows.opacity);
+        Render::renderMask(slider.adjusted(!(inView && ltr && !hor), 1, -!(inView && ltr && !hor), -(!hor*2)), painter, lg);
+
+        const QPen pen(painter->pen());
+        for (int i = 0; i < 2; ++i)
+        {
+            if (!i)
+                painter->setPen(opt->palette.color(QPalette::Window));
+            else
+                painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+
+            if (inView)
+            {
+                if (hor)
+                    painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
+                else if (ltr)
+                    painter->drawLine(opt->rect.topLeft(), opt->rect.bottomLeft());
+                else
+                    painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
+            }
+            else
+            {
+                const QBrush brush(painter->brush());
+                painter->setBrush(Qt::NoBrush);
+                painter->drawRect(opt->rect.adjusted(0, 0, -1, -1));
+                painter->setBrush(brush);
+            }
+        }
+        painter->setPen(pen);
+    }
     return true;
 }
 
 bool
 StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
-    painter->fillRect(option->rect, option->palette.color(bg));
+    if (dConf.scrollers.style == 0)
+    {
+        const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
+        painter->fillRect(option->rect, option->palette.color(bg));
+    }
     return true;
 }
 

@@ -141,6 +141,9 @@ Settings::read()
     conf.sliders.fillGroove = s.value(READSLIDERFILLGROOVE).toBool();
     //scrollers
     conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
+    conf.scrollers.style = READINT(READSCROLLERSTYLE);
+    conf.scrollers.grooveGrad = stringToGrad(s.value(READSCROLLERGROOVE).toString());
+    conf.scrollers.sliderGrad = stringToGrad(s.value(READSCROLLERGRAD).toString());
     //views
     conf.views.treelines = s.value(READVIEWTREELINES).toBool();
     //progressbars

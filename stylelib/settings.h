@@ -62,6 +62,9 @@
 #define SLIDERFILLGROOVE    "sliders.fillgroove"
 
 #define SCROLLERSIZE        "scrollers.size"
+#define SCROLLERSTYLE       "scrollers.style"
+#define SCROLLERGRAD        "scrollers.slidergradient"
+#define SCROLLERGROOVE      "scrollers.groovegradient"
 
 #define VIEWTREELINES       "views.treelines"
 
@@ -146,6 +149,9 @@
 #define DEFSLIDERFILLGROOVE     false
 
 #define DEFSCROLLERSIZE         12
+#define DEFSCROLLERSTYLE        0
+#define DEFSCROLLERGRAD         "0.0:5, 1.0:-5"
+#define DEFSCROLLERGROOVE       "0.0:5, 0.5:-5, 1.0:5"
 
 #define DEFVIEWTREELINES        true
 
@@ -211,6 +217,9 @@
 #define READSLIDERFILLGROOVE    SLIDERFILLGROOVE, DEFSLIDERGROOVE
 
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
+#define READSCROLLERSTYLE       SCROLLERSTYLE, DEFSCROLLERSTYLE
+#define READSCROLLERGRAD        SCROLLERGRAD, DEFSCROLLERGRAD
+#define READSCROLLERGROOVE      SCROLLERGROOVE, DEFSCROLLERGROOVE
 
 #define READVIEWTREELINES       VIEWTREELINES, DEFVIEWTREELINES
 
@@ -265,7 +274,8 @@ public:
     } sliders;
     struct scrollers
     {
-        int size;
+        int size, style;
+        Gradient grooveGrad, sliderGrad;
     } scrollers;
     struct progressbars
     {

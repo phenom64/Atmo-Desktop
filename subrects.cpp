@@ -306,20 +306,20 @@ QRect
 StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
-    castOpt(Slider, slider, opt);
+//    castOpt(Slider, slider, opt);
+    const QStyleOptionSlider *slider = qstyleoption_cast<const QStyleOptionSlider *>(opt);
     if (!slider)
         return ret;
 
     QRect r(slider->rect);
-    switch (sc)
-    {
-    case SC_ScrollBarAddLine:
-    case SC_ScrollBarSubLine:
-        return ret;
-    default: break;
-    }
 
+    const int buttonSize(bool(dConf.scrollers.style)*16);
     bool hor(slider->orientation == Qt::Horizontal);
+    if (hor)
+        r.adjust(buttonSize, 0, -buttonSize, 0);
+    else
+        r.adjust(0, buttonSize, 0, -buttonSize);
+
     int grooveSize(hor ? r.width() : r.height());
     unsigned int range(slider->maximum-slider->minimum);
     int gs((int)((slider->pageStep*grooveSize)));
@@ -333,23 +333,35 @@ StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const
 
     switch (sc)
     {
+    case SC_ScrollBarAddLine:
+        if (hor)
+            ret = slider->rect.adjusted(slider->rect.width()-buttonSize, 0, 0, 0);
+        else
+            ret = slider->rect.adjusted(0, slider->rect.height()-buttonSize, 0, 0);
+        break;
+    case SC_ScrollBarSubLine:
+        if (hor)
+            ret = slider->rect.adjusted(0, 0, -(slider->rect.width()-buttonSize), 0);
+        else
+            ret = slider->rect.adjusted(0, 0, 0, -(slider->rect.height()-buttonSize));
+        break;
     case SC_ScrollBarGroove: ret = r; break;
     case SC_ScrollBarSlider:
     {
         if (!range)
             break;
         if (hor)
-            ret = QRect(pos, 0, sliderSize, r.height());
+            ret = QRect(r.left()+pos, 0, sliderSize, r.height());
         else
-            ret = QRect(0, pos, r.width(), sliderSize);
+            ret = QRect(0, r.top()+pos, r.width(), sliderSize);
         break;
     }
     case SC_ScrollBarLast:
     case SC_ScrollBarAddPage:
         if (hor)
-            ret = QRect(pos+sliderSize, 0, r.width()-(pos+sliderSize), r.height());
+            ret = QRect(r.left()+pos+sliderSize, 0, r.width()-(pos+sliderSize), r.height());
         else
-            ret = QRect(0, pos+sliderSize, r.width(), r.height()-(pos+sliderSize));
+            ret = QRect(0, r.top()+pos+sliderSize, r.width(), r.height()-(pos+sliderSize));
         break;
     case SC_ScrollBarFirst:
     case SC_ScrollBarSubPage:

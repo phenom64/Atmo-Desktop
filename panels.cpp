@@ -296,22 +296,25 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
 
     QRect r(option->rect);
     const bool isView(qobject_cast<const QAbstractScrollArea *>(widget));
+    float o(dConf.shadows.opacity);
+    if (!opt->ENABLED)
+        o/=2;
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, !isView*7, Render::All, dConf.shadows.opacity);
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, !isView*7, Render::All, o);
 
     if (opt->state & State_Raised)
     {
         QPixmap pix(frame->rect().size());
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-        Render::renderShadow(Render::Raised, pix.rect(), &p, 8, Render::All, dConf.shadows.opacity);
+        Render::renderShadow(Render::Raised, pix.rect(), &p, 8, Render::All, o);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Render::renderMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
         p.end();
         painter->drawTiledPixmap(frame->rect(), pix);
     }
     if (frame && frame->frameShadow() == QFrame::Plain)
-        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, dConf.shadows.opacity);
+        Render::renderShadow(Render::Etched, r, painter, 6, Render::All, o);
     return true;
 }
