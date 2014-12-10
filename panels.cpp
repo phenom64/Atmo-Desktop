@@ -36,21 +36,21 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
         QRect winRect = widget->window()->rect();
         QRect widgetRect = QRect(topLeft, widget->size());
 
+        if (widgetRect.bottom() >= winRect.bottom())
+            sides &= ~Render::Bottom;
         if (widgetRect.left() <= winRect.left())
             sides &= ~Render::Left;
         if (widgetRect.right() >= winRect.right())
             sides &= ~Render::Right;
-        if (widgetRect.bottom() >= winRect.bottom())
-            sides &= ~Render::Bottom;
 
         if (sides & (Render::Left|Render::Right))
         {
             painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
-            return true;
+//            return true;
         }
         if (sides & Render::Bottom)
         {
-            UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());;
+//            UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
         }
         else
         {

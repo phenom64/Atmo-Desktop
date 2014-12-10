@@ -9,6 +9,7 @@
 #include <QProgressBar>
 #include <QStyleOptionProgressBar>
 #include <QStyleOptionProgressBarV2>
+#include <QTextBrowser>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -32,10 +33,10 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     QRect slider(subControlRect(CC_ScrollBar, option, SC_ScrollBarSlider, widget));
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
     const QScrollBar *bar = qobject_cast<const QScrollBar *>(widget);
-    const QAbstractScrollArea *w = Ops::getAncestor<const QAbstractScrollArea *>(widget);
+    const QAbstractScrollArea *area = Ops::getAncestor<const QAbstractScrollArea *>(widget);
     if (dConf.scrollers.style == 0)
     {
-        QPalette::ColorRole fg(Ops::fgRole(w, QPalette::WindowText)), bg(Ops::bgRole(w, QPalette::Window));
+        QPalette::ColorRole fg(Ops::fgRole(area, QPalette::WindowText)), bg(Ops::bgRole(area, QPalette::Window));
         const int m(2);
         slider.adjust(m, m, -m, -m);
         QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
@@ -74,7 +75,9 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         const bool hor(opt->orientation == Qt::Horizontal),
                 ltr(opt->direction == Qt::LeftToRight);
 
-        const bool inView((w && w->viewport()->autoFillBackground()) ||
+        const bool inView((area && area->viewport()->autoFillBackground()) ||
+                          qobject_cast<const QTextBrowser *>(area) ||
+                          qobject_cast<const QTextEdit *>(area) ||
                           (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
 
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
@@ -138,6 +141,22 @@ StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter
         const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
         painter->fillRect(option->rect, option->palette.color(bg));
     }
+    else if (dConf.scrollers.style == 1)
+        if (const QAbstractScrollArea *area = Ops::getAncestor<const QAbstractScrollArea *>(widget))
+        {
+            const bool bothVisible(area->verticalScrollBar()->isVisible() && area->horizontalScrollBar()->isVisible());
+            if (!bothVisible)
+                return true;
+            const QPen pen(painter->pen());
+            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+            const QBrush brush(painter->brush());
+            painter->setBrush(Qt::NoBrush);
+            painter->setClipRect(option->rect.adjusted(0, 0, -1, -1));
+            painter->drawRect(option->rect);
+            painter->setClipping(false);
+            painter->setPen(pen);
+            painter->setBrush(brush);
+        }
     return true;
 }
 
@@ -320,13 +339,12 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
 
     painter->save();
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
-    QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
+    const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
     castOpt(ProgressBarV2, optv2, option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
-    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, Render::All));
-    const quint64 s((hor?mask.height():mask.width())+2);
-
+//    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, Render::All));
+    const quint64 s((hor?groove.height():groove.width())+2);
     const QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
 
     quint64 thing(h.rgba());
@@ -338,8 +356,9 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         pix.fill(Qt::transparent);
         QPainter p(&pix);
         QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
-        lg.setColorAt(0.0f, Color::mid(opt->palette.color(QPalette::Highlight), Qt::white, 5, 1));
-        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
+        lg.setStops(Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Highlight)));
+//        lg.setColorAt(0.0f, Color::mid(opt->palette.color(QPalette::Highlight), Qt::white, 5, 1));
+//        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
         p.fillRect(pix.rect(), lg);
         const int penWidth(12);
         lg.setColorAt(0.0f, Color::mid(opt->palette.color(bg), opt->palette.color(QPalette::Highlight)));
@@ -388,14 +407,17 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
 bool
 StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBar, opt, option);
+    castOpt(ProgressBarV2, opt, option);
     if (!opt)
         return true;
 
-    QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
+    const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
-    QBrush b(opt->palette.color(Ops::bgRole(widget, QPalette::Base)));
+    const bool hor(opt->orientation == Qt::Horizontal);
+    QLinearGradient lg(0, 0, !hor*groove.width(), hor*cont.height());
+    lg.setStops(Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
+    QBrush b(lg);
     Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, option, &b);
     painter->setClipping(false);
     return true;
@@ -411,7 +433,7 @@ StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter
 
     painter->save();
 
-    const QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
+    const QPalette::ColorRole fg(QPalette::Text), bg(QPalette::Base);
     QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //he text label of a QProgressBar.

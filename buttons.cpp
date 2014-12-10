@@ -28,7 +28,7 @@
 bool
 StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Button, opt, option);
+    const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
     if (!opt)
         return true;
 
@@ -42,7 +42,7 @@ StyleProject::drawPushButton(const QStyleOption *option, QPainter *painter, cons
 bool
 StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Button, opt, option);
+    const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
     if (!opt)
         return true;
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
@@ -62,10 +62,11 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
             int hl(Anim::Basic::level(widget));
             bc = Color::mid(bc, sc, STEPS-hl, hl);
         }
-        QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
+
+        const QRect maskRect(Render::maskRect(dConf.pushbtn.shadow, opt->rect));
+        QLinearGradient lg(0, 0, 0, maskRect.height());
         lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bc));
         QBrush m(lg);
-        const bool ns(Color::luminosity(bc)<Color::luminosity(option->palette.color(fg)));
         Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &m);
     }
     return true;
@@ -74,7 +75,7 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
 bool
 StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Button, opt, option);
+    const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
     if (!opt)
         return true;
 
@@ -95,7 +96,7 @@ StyleProject::drawPushButtonLabel(const QStyleOption *option, QPainter *painter,
 bool
 StyleProject::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Button, opt, option);
+    const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
     if (!opt)
         return true;
 
@@ -150,7 +151,7 @@ StyleProject::drawCheckBoxLabel(const QStyleOption *option, QPainter *painter, c
 bool
 StyleProject::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Button, opt, option);
+    const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
     if (!opt)
         return true;
 

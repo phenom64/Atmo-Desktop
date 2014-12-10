@@ -187,14 +187,11 @@ OverLay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        const bool isSplitter(qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter");
-        if ( Ops::isOrInsideA<QStatusBar *>(w)
-                || (l[i] == Top && qobject_cast<QTabBar *>(w))
-                || isSplitter
-                )
-        {
+        const bool isSplitter((qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter") && w->style()->pixelMetric(QStyle::PM_SplitterWidth) == 1);
+        const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
+        const bool isTabBar(l[i] == Top && qobject_cast<QTabBar *>(w));
+        if ( isStatusBar || isSplitter || isTabBar )
             sides &= ~l[i];
-        }
         else if (QFrame *f = getFrameForWidget(w, pos[i]))
         {
             if (OverLay *lay = f->findChild<OverLay*>())

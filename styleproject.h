@@ -152,6 +152,7 @@ public:
 protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
     static int layoutSpacingAndMargins(const QWidget *w);
+    void hackLayout(QWidget *w);
 
 protected slots:
     void fixMainWindowToolbar();

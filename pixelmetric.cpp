@@ -57,7 +57,7 @@ StyleProject::layoutSpacingAndMargins(const QWidget *w)
             return 0;
 #endif
     }
-    return 8;
+    return 4;
 }
 
 int
@@ -70,18 +70,19 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_DefaultChildMargin:
         return 4;
     case PM_DefaultLayoutSpacing:
-        return 8;
+        return 4;
     case PM_LayoutLeftMargin:
     case PM_LayoutTopMargin:
     case PM_LayoutRightMargin:
     case PM_LayoutBottomMargin:
+        return layoutSpacingAndMargins(widget);
     case PM_LayoutHorizontalSpacing:
     case PM_LayoutVerticalSpacing:
-        return layoutSpacingAndMargins(widget);
+        return 4;
     case PM_HeaderMarkSize:
         return 9;
     case PM_ButtonMargin:
-        return 2;
+        return 4;
     case PM_SpinBoxFrameWidth:
         return 0;
     case PM_SpinBoxSliderHeight:
@@ -122,7 +123,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent:;
     case PM_SplitterWidth:
-        return dConf.uno.enabled?1:8;
+        return dConf.uno.enabled&&dConf.app!=Settings::Eiskalt?1:8;
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
@@ -149,6 +150,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         }
         return 2;
     }
+    case PM_ComboBoxFrameWidth: return 0;
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
     case PM_ToolBarFrameWidth: return 2;

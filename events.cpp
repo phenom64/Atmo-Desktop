@@ -220,7 +220,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QPainter p(w);
         QRect r(w->rect());
         const bool hor(w->width()>w->height());
-        QLinearGradient lg(r.topLeft(), hor?r.topRight():r.bottomLeft());
+        QLinearGradient lg(r.topLeft(), !hor?r.topRight():r.bottomLeft());
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
         p.fillRect(r, lg);
         p.end();

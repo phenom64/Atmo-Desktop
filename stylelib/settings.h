@@ -237,6 +237,9 @@ typedef QPair<QColor, int> Tint;
 class Q_DECL_EXPORT Settings
 {
 public:
+    enum AppName { Eiskalt, Konversation, None }; //app specific hacks should be avoided when possible.
+    typedef uint App;
+    App app;
     float opacity;
     QStringList blackList;
     bool removeTitleBars, hackDialogs, compactMenu, splitterExt;
@@ -308,7 +311,6 @@ public:
     } views;
 
     static Settings conf;
-
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
     static void read();

@@ -778,7 +778,7 @@ Render::drawClickable(Shadow s,
             && s != Carved && s != Yosemite && !isToolBox)
     {
         if (s == Raised)
-            r.sAdjust(1, 1, -1, 0);
+            r.sAdjust(1, 2, -1, -1);
         s = Sunken;   
     }
 
@@ -912,6 +912,23 @@ Render::drawClickable(Shadow s,
         lg.setColorAt(0.5f, Qt::transparent);
         QBrush b(lg);
         renderShadow(Rect, r, p, rnd, sides, 1.0f, &b);
+
+        if (sides & (Left|Right))
+        {
+            QLinearGradient edges(0, 0, r.width(), 0);
+            const QColor edge(QColor(0, 0, 0, dConf.shadows.opacity*127.0f));
+            if (sides & Left)
+            {
+                edges.setColorAt(0.0f, edge);
+                edges.setColorAt(0.1f, Qt::transparent);
+            }
+            if (sides & Right)
+            {
+                edges.setColorAt(0.9f, Qt::transparent);
+                edges.setColorAt(1.0f, edge);
+            }
+            renderMask(r, p, edges, rnd, sides);
+        }
     }
     else if (s==Rect)
         renderShadow(s, r, p, rnd, sides, opacity);
@@ -951,7 +968,7 @@ Render::maskHeight(const Shadow s, const int height)
     {
     case Render::Sunken:
     case Render::Etched:
-        return height-3;
+        return height-1;
     case Render::Raised:
         return height-4;
     case Render::Yosemite:
@@ -969,10 +986,10 @@ Render::maskWidth(const Shadow s, const int width)
     {
     case Render::Sunken:
     case Render::Etched:
-    case Render::Raised:
-        return width-2;
     case Render::Yosemite:
         return width;
+    case Render::Raised:
+        return width-2;
     case Render::Carved:
         return width-6;
     default: return 0;
@@ -982,12 +999,13 @@ Render::maskWidth(const Shadow s, const int width)
 QRect
 Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
 {
+    //sides needed for sAdjusted macro even if seemingly unused
     switch (s)
     {
+    case Yosemite:
     case Sunken:
-    case Etched:
+    case Etched: return r.sAdjusted(0, 0, 0, -1); break;
     case Raised: return r.sAdjusted(2, 2, -2, -(2+(r.height()!=r.width()))); break;
-    case Yosemite: return r.sAdjusted(0, 0, 0, -1); break;
     case Carved: return r.sAdjusted(3, 3, -3, -3); break;
     default: return r;
     }

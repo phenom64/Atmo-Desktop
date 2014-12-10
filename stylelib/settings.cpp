@@ -72,6 +72,13 @@ Settings::read()
     const QString appName(QFileInfo(qApp->applicationFilePath()).fileName());
     QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
 
+    if (appName == "eiskaltdcpp-qt")
+        conf.app = Eiskalt;
+    else if (appName == "konversation")
+        conf.app = Konversation;
+    else
+        conf.app = None;
+
     const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(appName)));
     QString append("/dsp.conf");
     if (presetFile.exists())

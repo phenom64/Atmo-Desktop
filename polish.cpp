@@ -59,17 +59,17 @@ StyleProject::polish(QWidget *widget)
         return;
 
 
-//    qDebug() << widget;
 //    if (widget->parentWidget())
 //        qDebug() << widget << widget->parentWidget();
 
 //    installFilter(widget);
+
     /* needed for mac os x lion like toolbuttons,
      * we need to repaint the toolbar when a action
      * has been triggered, otherwise we are painting
      * errors
      */
-    if (castObj(QToolBar *, bar, widget))
+    if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
     {
         if (qobject_cast<QMainWindow *>(widget->parentWidget()))
             connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
@@ -86,19 +86,13 @@ StyleProject::polish(QWidget *widget)
             frame->setFrameShape(QFrame::StyledPanel);
             OverLay::manage(frame, 255.0f*dConf.shadows.opacity);
             installFilter(frame);
+            frame->setContentsMargins(0, 0, 0, 0);
         }
     }
 
-    if (castObj(QStatusBar *, bar, widget))
-    {
-        bar->setForegroundRole(QPalette::WindowText);
-        bar->setBackgroundRole(QPalette::Window);
-    }
     if (dConf.splitterExt)
     if (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget))
         SplitterExt::manage(widget);
-//    if (widget->layout() && (qobject_cast<QDockWidget *>(widget)||qobject_cast<QDockWidget *>(widget->parentWidget())))
-//        widget->layout()->setContentsMargins(0, 0, 0, 0);
 
     if (qobject_cast<QPushButton *>(widget) ||
             qobject_cast<QCheckBox *>(widget) ||
@@ -106,44 +100,6 @@ StyleProject::polish(QWidget *widget)
             qobject_cast<QSlider *>(widget) ||
             qobject_cast<QScrollBar *>(widget))
         Anim::Basic::manage(widget);
-    if (castObj(QToolButton *, btn, widget))
-    {
-        Anim::ToolBtns::manage(btn);
-        installFilter(btn);
-        if (!qobject_cast<QToolBar *>(btn->parentWidget()))
-        {
-            btn->setBackgroundRole(QPalette::Window);
-            btn->setForegroundRole(QPalette::WindowText);
-        }
-    }
-
-    if (qobject_cast<QAbstractItemView *>(widget))
-    {
-        QPalette pal(widget->palette());
-        const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
-        QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
-        pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
-        pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
-        widget->setPalette(pal);
-    }
-
-    if (QLayout *l = widget->layout())
-    {
-        int m(qMax(l->contentsMargins().top(), widget->contentsMargins().top()));
-        if (m < l->spacing() && qobject_cast<QVBoxLayout *>(l))
-        {
-            if (qobject_cast<QMainWindow *>(widget->window()))
-            {
-                l->setSpacing(m);
-//                if (!widget->mapTo(widget->window(), QPoint()).y()) //at top of window, hi telepathy contactlist o/
-//                {
-//                    int l, t, r, b;
-//                    widget->getContentsMargins(&l, &t, &r, &b);
-//                    widget->setContentsMargins(l, t+2, r, b);
-//                }
-            }
-        }
-    }
     if (dConf.uno.enabled &&
             (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
@@ -156,7 +112,12 @@ StyleProject::polish(QWidget *widget)
     if (WinHandler::canDrag(widget))
         WinHandler::manage(widget);
 
-    if (/*castObj(QMainWindow *, win, widget)*/widget->isWindow())
+    if (dConf.app == Settings::Konversation && qobject_cast<QMainWindow *>(widget->window()))
+    if (qobject_cast<QHBoxLayout *>(widget->layout())||qobject_cast<QVBoxLayout *>(widget->layout()))
+    if (QBoxLayout *l = static_cast<QBoxLayout *>(widget->layout()))
+        l->setSpacing(0);
+
+    if (widget->isWindow()) //this segment needs serious cleaning still...
     {
         if (!(dConf.uno.enabled && !qobject_cast<QMainWindow *>(widget)))
         {
@@ -179,60 +140,9 @@ StyleProject::polish(QWidget *widget)
             }
         }
         installFilter(widget);
-    }
 
-    if (castObj(QHeaderView *, hw, widget))
-    {
-        hw->viewport()->setBackgroundRole(QPalette::Base);
-        hw->viewport()->setForegroundRole(QPalette::Text);
-    }
-
-    if (castObj(QProgressBar *, pBar, widget))
-        ProgressHandler::manage(pBar);
-
-    if (castObj(QComboBox *, cBox, widget))
-        if (!cBox->isEditable())
-        {
-            Anim::Basic::manage(cBox);
-            cBox->setForegroundRole(QPalette::ButtonText);
-            cBox->setBackgroundRole(QPalette::Button);
-        }
-
-//    if (castObj(QMainWindow *, mwin, widget))
-//    {
-//        if (QWidget *c = mwin->centralWidget())
-//        {
-//            c->setContentsMargins(0, 0, 0, 0);
-//            if (QLayout *l = c->layout())
-//            {
-//                l->setContentsMargins(0, 0, 0, 0);
-//                l->setSpacing(0);
-//            }
-//        }
-//    }
-
-    /** TODO:
-     *  Now the shadowhandler handles *ALL*
-     *  windows... that we dont want, we
-     *  dont want desktop panels etc to have a
-     *  shadow... fix.
-     *
-     * EDIT: started working on it
-     */
-    if (widget->isWindow())
-    {
         if (!dConf.uno.enabled)
-        {
             UNO::Handler::fixTitleLater(widget);
-//            if (XHandler::opacity() < 1.0f)
-//            {
-//                widget->setAttribute(Qt::WA_TranslucentBackground);
-//                UNO::Handler::fixTitleLater(widget);
-//                unsigned int d(0);
-//                XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-//            }
-        }
-        installFilter(widget);
         bool needShadows(false);
         if (widget->windowType() == Qt::ToolTip && widget->inherits("QTipLabel"))
         {
@@ -252,59 +162,69 @@ StyleProject::polish(QWidget *widget)
         if (needShadows)
             ShadowHandler::manage(widget);
     }
-    if (castObj(QDockWidget *,dock, widget))
-        dock->setAutoFillBackground(false);
-    if (castObj(QScrollBar *, sb, widget))
-        sb->setAttribute(Qt::WA_Hover);
 
-//    if (QLayout *l = widget->layout())
-//    if ((!l->spacing() || !l->contentsMargins().top()))
-//    if (int s = layoutSpacingAndMargins(widget))
-//    {
-//        l->setSpacing(s);
-//        l->setContentsMargins(s, s, s, s);
-//    }
-
-    if (widget->inherits("KTitleWidget"))
+    //main if segment for all widgets
+    if (QToolButton *btn = qobject_cast<QToolButton *>(widget))
     {
-        installFilter(widget);
-        QList<QFrame *> children = widget->findChildren<QFrame *>();
-        for (int i = 0; i < children.size(); ++i)
+        Anim::ToolBtns::manage(btn);
+        installFilter(btn);
+        if (!qobject_cast<QToolBar *>(btn->parentWidget()))
         {
-            QFrame *f(children.at(i));
-            if (f->autoFillBackground())
-            {
-                f->setAutoFillBackground(false);
-                f->setFrameStyle(0);
-            }
-            if (QLabel *l = qobject_cast<QLabel *>(f))
-            {
-                l->setAlignment(Qt::AlignCenter);
-                installFilter(l);
-            }
+            btn->setBackgroundRole(QPalette::Window);
+            btn->setForegroundRole(QPalette::WindowText);
         }
     }
-    if (widget->inherits("KUrlNavigator"))
-        if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
-            widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be an idiot... oh well
-    if (dConf.uno.enabled)
-    if (castObj(QFrame *, frame, widget))
+    else if (QHeaderView *hw = qobject_cast<QHeaderView *>(widget))
     {
-        if (frame->frameShadow() == QFrame::Sunken
-                && qobject_cast<QMainWindow *>(frame->window()))
-            OverLay::manage(frame, dConf.shadows.opacity*255.0f);
+        hw->viewport()->setBackgroundRole(QPalette::Base);
+        hw->viewport()->setForegroundRole(QPalette::Text);
     }
-    if (castObj(QAbstractItemView *, view, widget))
+    else if (QProgressBar *pBar = qobject_cast<QProgressBar *>(widget))
+    {
+        pBar->setBackgroundRole(QPalette::Base);
+        pBar->setForegroundRole(QPalette::Text);
+        ProgressHandler::manage(pBar);
+    }
+    else if (QComboBox *cBox = qobject_cast<QComboBox *>(widget))
+    {
+        if (!cBox->isEditable())
+        {
+            Anim::Basic::manage(cBox);
+            cBox->setForegroundRole(QPalette::ButtonText);
+            cBox->setBackgroundRole(QPalette::Button);
+        }
+        else if (QLineEdit *l = cBox->findChild<QLineEdit *>())
+            connect(l, SIGNAL(textChanged(QString)), cBox, SLOT(update()));
+    }
+    else if (qobject_cast<QDockWidget *>(widget))
+    {
+        widget->setAutoFillBackground(false);
+    }
+    else if (qobject_cast<QScrollBar *>(widget))
+    {
+        widget->setAttribute(Qt::WA_Hover);
+    }
+    else if (QAbstractItemView *view = qobject_cast<QAbstractItemView *>(widget))
     {
         view->viewport()->setAttribute(Qt::WA_Hover);
         view->setAttribute(Qt::WA_MouseTracking);
         installFilter(view);
+
+        //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example, idiot gay....)
+        QPalette pal(widget->palette());
+        const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
+        QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
+        pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
+        pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
+        widget->setPalette(pal);
     }
-    if (castObj(QComboBox *, box, widget))
-        if (QLineEdit *l = box->findChild<QLineEdit *>())
-            connect(l, SIGNAL(textChanged(QString)), box, SLOT(update()));
-    if (qobject_cast<QMenu *>(widget)||qobject_cast<QMenuBar *>(widget))
-    {     
+    else if (qobject_cast<QStatusBar *>(widget))
+    {
+        widget->setForegroundRole(QPalette::WindowText);
+        widget->setBackgroundRole(QPalette::Window);
+    }
+    else if (qobject_cast<QMenu *>(widget)||qobject_cast<QMenuBar *>(widget))
+    {
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
         if (qobject_cast<QMenu *>(widget))
@@ -325,27 +245,18 @@ StyleProject::polish(QWidget *widget)
          */
         installFilter(widget);
     }
-    if (castObj(QToolBox *, tb, widget))
+    else if (qobject_cast<QToolBox *>(widget))
     {
-        tb->setBackgroundRole(QPalette::Window);
-        tb->setForegroundRole(QPalette::WindowText);
-        if (QLayout *l = tb->layout())
+        widget->setBackgroundRole(QPalette::Window);
+        widget->setForegroundRole(QPalette::WindowText);
+        if (QLayout *l = widget->layout())
         {
             l->setMargin(0);
             l->setSpacing(0);
         }
     }
-    if (widget->inherits("KTabWidget"))
-        installFilter(widget);
-    if (castObj(QTabBar *, tabBar, widget))
+    else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
-//        tabBar->setTabsClosable(true);
-//        QFont f(tabBar->font());
-//        f.setBold(true);
-//        tabBar->setFont(f);
-//        installFilter(tabBar);
-//        if (tabBar->documentMode())
-//            tabBar->setExpanding(true);
         const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
         if (safari || tabBar->documentMode())
         {
@@ -375,9 +286,45 @@ StyleProject::polish(QWidget *widget)
             }
         }
     }
+    else if (widget->inherits("KTitleWidget"))
+    {
+        installFilter(widget);
+        QList<QFrame *> children = widget->findChildren<QFrame *>();
+        for (int i = 0; i < children.size(); ++i)
+        {
+            QFrame *f(children.at(i));
+            if (f->autoFillBackground())
+            {
+                f->setAutoFillBackground(false);
+                f->setFrameStyle(0);
+            }
+            if (QLabel *l = qobject_cast<QLabel *>(f))
+            {
+                l->setAlignment(Qt::AlignCenter);
+                installFilter(l);
+            }
+        }
+    }
+    else if (widget->inherits("KUrlNavigator"))
+    {
+        if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
+            widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be an idiot... oh well
+    }
+    else if (widget->inherits("KTabWidget"))
+    {
+        installFilter(widget);
+    }
+
+    if (dConf.uno.enabled)
+    if (QFrame *frame = qobject_cast<QFrame *>(widget))
+    {
+        if (frame->frameShadow() == QFrame::Sunken
+                && qobject_cast<QMainWindow *>(frame->window()))
+            OverLay::manage(frame, dConf.shadows.opacity*255.0f);
+    }
 
 #if !defined(QT_NO_DBUS)
-    if (castObj(QMenuBar *, menuBar, widget))
+    if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         Bespin::MacMenu::manage(menuBar);
 #endif
     QCommonStyle::polish(widget);
@@ -394,18 +341,55 @@ StyleProject::unpolish(QWidget *widget)
     Anim::Basic::release(widget);
     UNO::Handler::release(widget);
     WinHandler::release(widget);
-    if (castObj(QProgressBar *, pb, widget))
+    if (QProgressBar *pb = qobject_cast<QProgressBar *>(widget))
         ProgressHandler::release(pb);
-    if (castObj(QTabBar *, tb, widget))
+    else if (QTabBar *tb = qobject_cast<QTabBar *>(widget))
         Anim::Tabs::release(tb);
-    if (castObj(QFrame *, f, widget))
+    else if (QFrame *f = qobject_cast<QFrame *>(widget))
         OverLay::release(f);
-    if (castObj(QToolButton *, tb, widget))
+    else if (QToolButton *tb = qobject_cast<QToolButton *>(widget))
         Anim::ToolBtns::release(tb);
-
 #if !defined(QT_NO_DBUS)
-    if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
+    else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         Bespin::MacMenu::release(menuBar);
 #endif
     QCommonStyle::unpolish(widget);
+}
+
+void
+StyleProject::hackLayout(QWidget *w)
+{
+    if (qobject_cast<QTabWidget *>(w) || qobject_cast<QSplitter *>(w))
+        return;
+    QBoxLayout *l(static_cast<QBoxLayout *>(w->layout()));
+
+    const QList<QWidget *> kids(w->findChildren<QWidget *>());
+    QList<const QWidget *> clickable;
+    for (int i = 0; i < kids.count(); ++i)
+    {
+        const QWidget *kid = kids.at(i);
+        if (kid->parentWidget() != w && !kid->isVisibleTo(w))
+            continue;
+        const bool isClickable = qobject_cast<const QAbstractButton *>(kid) ||
+                qobject_cast<const QComboBox *>(kid) ||
+                qobject_cast<const QAbstractSlider *>(kid) ||
+//                qobject_cast<const QGroupBox *>(kid) ||
+                qobject_cast<const QLineEdit *>(kid) ||
+                qobject_cast<const QProgressBar *>(kid) ||
+//                qobject_cast<const QLabel *>(kid) ||
+//                qobject_cast<const QTabWidget *>(kid) ||
+                kid->inherits("KTitleWidget")
+                ; //widget w/ possible clickables...
+        if (isClickable)
+            clickable << kid;
+//        if (hasClickables) //one is enough
+//            break;
+    }
+    if (!clickable.isEmpty())
+    {
+//        qDebug() << "adjusting layout" << l << l->spacing() << l->contentsMargins() << w->contentsMargins();
+        const int m(pixelMetric(PM_DefaultLayoutSpacing));
+        l->setSpacing(m);
+        l->setContentsMargins(m, m, m, m);
+    }
 }
