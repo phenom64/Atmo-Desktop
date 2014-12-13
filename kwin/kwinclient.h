@@ -83,7 +83,7 @@ private:
     QPixmap m_bgPix[2];
     float m_opacity;
     int m_headHeight, m_leftButtons, m_rightButtons;
-    bool m_needSeparator, m_contAware;
+    bool m_needSeparator, m_contAware, m_uno;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;

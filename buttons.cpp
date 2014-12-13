@@ -18,6 +18,7 @@
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/settings.h"
+#include "stylelib/handlers.h"
 
 /*
  * This here paints the button, in order to override
@@ -222,7 +223,7 @@ public:
 bool
 StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ToolButton, opt, option);
+    const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
     if (!opt)
         return true;
 
@@ -235,7 +236,7 @@ StyleProject::drawToolButton(const QStyleOptionComplex *option, QPainter *painte
 bool
 StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ToolButton, opt, option);
+    const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
     if (!opt)
         return true;
 
@@ -307,6 +308,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(Render::maskRect(dConf.toolbtn.shadow, rect, sides));
     const bool hasMenu(Ops::hasMenu(btn, opt));
+    const bool arrowPress(Handlers::ToolBar::isArrowPressed(btn));
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button)), fg(Ops::fgRole(widget, QPalette::ButtonText));
     if (bar)
     {
@@ -325,7 +327,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         {
             if (shadow == Render::Etched)
                 shadow = Render::Sunken;
-            if (!btn->property("DSP_menupress").toBool())
+            if (!arrowPress)
             {
                 if (dConf.toolbtn.invAct)
                     bc = Color::mid(bc, opt->palette.color(fg), 1, 2);
@@ -348,7 +350,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
 
         if (hasMenu)
         {
-            if (option->SUNKEN && btn->property("DSP_menupress").toBool())
+            if (option->SUNKEN && arrowPress)
                 bca = sc;
             else
             {
@@ -392,7 +394,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
 bool
 StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ToolButton, opt, option);
+    const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
     if (!opt)
         return true;
 
@@ -414,6 +416,8 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     const bool isFlat(dConf.toolbtn.flat);
     QPalette::ColorRole bg(Ops::bgRole(isFlat?bar:widget, isFlat?QPalette::Window:QPalette::Button)),
             fg(Ops::fgRole(isFlat?bar:widget, isFlat?QPalette::WindowText:QPalette::ButtonText));
+
+    const bool arrowPress(Handlers::ToolBar::isArrowPressed(btn));
 
     if (hasMenu)
     {
@@ -459,7 +463,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
         textRole = QPalette::WindowText;
         bg = Ops::opposingRole(textRole);
     }
-    else if (opt->SUNKEN && dConf.toolbtn.invAct)
+    else if (opt->SUNKEN && dConf.toolbtn.invAct && (!btn || !arrowPress))
     {
         textRole = bar?bg:fg;
         bg = Ops::opposingRole(textRole);

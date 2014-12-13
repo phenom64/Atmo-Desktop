@@ -17,7 +17,7 @@
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
-#include "stylelib/unohandler.h"
+#include "stylelib/handlers.h"
 #include "overlay.h"
 #include "stylelib/settings.h"
 #include "stylelib/xhandler.h"
@@ -57,7 +57,7 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
             QPixmap pix(r.size());
             pix.fill(Qt::transparent);
             QPainter p(&pix);
-            UNO::Handler::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
+            Handlers::Window::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
             p.end();
             Render::renderMask(r, painter, pix, 4, Render::Bottom|Render::Left|Render::Right);
         }
@@ -87,9 +87,9 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
 {
     if (dConf.uno.enabled)
     if (widget && option)
-    if (castObj(const QMainWindow *, win, widget->parentWidget()))
+    if (const QMainWindow *win = qobject_cast<const QMainWindow *>(widget->parentWidget()))
     {
-        painter->save();
+//        painter->save();
         if (dConf.removeTitleBars && XHandler::opacity() < 1.0f && win->windowFlags() & Qt::FramelessWindowHint)
         {
             Render::Sides sides(Render::checkedForWindowEdges(widget));
@@ -97,12 +97,12 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
             QPixmap p(option->rect.size());
             p.fill(Qt::transparent);
             QPainter pt(&p);
-            UNO::Handler::drawUnoPart(&pt, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
+            Handlers::Window::drawUnoPart(&pt, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
             pt.end();
             Render::renderMask(option->rect, painter, p, 4, sides);
         }
         else
-            UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
+            Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
 //        painter->drawTiledPixmap(option->rect, bg, widget->geometry().topLeft());
 //        int hh(UNO::unoHeight(win, UNO::ToolBars));
 //        if (hh == widget->geometry().bottom()+1)
@@ -111,7 +111,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
 //            painter->setOpacity(dConf.shadows.opacity);
 //            painter->drawLine(option->rect.bottomLeft(), option->rect.bottomRight());
 //        }
-        painter->restore();
+//        painter->restore();
     }
     return true;
 }
@@ -119,10 +119,8 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (dConf.uno.enabled)
-    if (widget)
-    if (castObj(const QMainWindow *, win, widget->parentWidget()))
-        UNO::Handler::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
+    if (dConf.uno.enabled && widget && qobject_cast<const QMainWindow *>(widget->parentWidget()))
+        Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
     return true;
 }
 
@@ -147,19 +145,6 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
     painter->setPen(Qt::NoPen);
     painter->setBrush(bgc);
     painter->drawRoundedRect(option->rect, 4, 4);
-#if 0
-    if (dConf.menues.icons)
-    {
-        const QRect ir(option->rect.adjusted(0, 0, -(option->rect.width()-28), 0));
-        painter->setClipRect(ir);
-        painter->setBrush(QColor(0, 0, 0, 32));
-        painter->drawRoundedRect(option->rect, 4, 4);
-        painter->setBrush(Qt::NoBrush);
-        painter->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
-        painter->translate(0.5f, 0);
-        painter->drawLine(ir.topRight(), ir.bottomRight());
-    }
-#endif
     painter->restore();
     return true;
 }

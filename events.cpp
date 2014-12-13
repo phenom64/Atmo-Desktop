@@ -19,7 +19,7 @@
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
-#include "stylelib/unohandler.h"
+#include "stylelib/handlers.h"
 #include "stylelib/settings.h"
 #include "overlay.h"
 #include "stylelib/animhandler.h"
@@ -43,47 +43,13 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
 //    {
 //        qDebug() << w << w->parentWidget();
 //    }
-    case QEvent::ActionChanged:
-    {
-        if (castObj(QToolBar *, toolBar, o))
-            toolBar->update();
-        break;
-    }
-    case QEvent::Close:
-        if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
-            XHandler::deleteXProperty(w->winId(), XHandler::KwinBlur);
-    case QEvent::MouseButtonPress:
-    {
-        if (QToolButton *tb = qobject_cast<QToolButton *>(w))
-            if (Ops::hasMenu(tb))
-        {
-            QStyleOptionToolButton option;
-            option.initFrom(tb);
-            option.features = QStyleOptionToolButton::None;
-            if (tb->popupMode() == QToolButton::MenuButtonPopup) {
-                option.subControls |= QStyle::SC_ToolButtonMenu;
-                option.features |= QStyleOptionToolButton::MenuButtonPopup;
-            }
-            if (tb->arrowType() != Qt::NoArrow)
-                option.features |= QStyleOptionToolButton::Arrow;
-            if (tb->popupMode() == QToolButton::DelayedPopup)
-                option.features |= QStyleOptionToolButton::PopupDelay;
-            if (tb->menu())
-                option.features |= QStyleOptionToolButton::HasMenu;
-            QRect r = subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
-            if (r.contains(static_cast<QMouseEvent *>(e)->pos()))
-                tb->setProperty("DSP_menupress", true);
-            else
-                tb->setProperty("DSP_menupress", false);
-        }
-    }
+//    case QEvent::Close:
+//        if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
+//            XHandler::deleteXProperty(w->winId(), XHandler::KwinBlur);
     case QEvent::Hide:
     {
-        if (qobject_cast<QTabBar *>(w))
-        {
-            if (Ops::isSafariTabBar(static_cast<QTabBar *>(w)))
-                UNO::Handler::fixWindowTitleBar(w->window());
-        }
+        if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
+            Handlers::Window::fixWindowTitleBar(w->window());
     }
     case QEvent::LayoutRequest:
     {
@@ -93,6 +59,8 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
             for (int i = 0; i < lbls.count(); ++i)
                 lbls.at(i)->setAlignment(Qt::AlignCenter);
         }
+        else if (dConf.uno.enabled && qobject_cast<QMenuBar *>(w))
+            Handlers::Window::fixWindowTitleBar(w->window());
     }
     case QEvent::MetaCall:
     {
@@ -102,37 +70,6 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
-}
-
-static void paintTab(QTabBar *tb, const int i, QStyle *style, QPainter &p)
-{
-    if (!tb->tabRect(i).isValid())
-        return;
-    const bool isFirst(i==0), isLast(i==tb->count()-1), isSelected(i==tb->currentIndex());
-    const int ol(style->pixelMetric(QStyle::PM_TabBarTabOverlap, 0, tb));
-    QStyleOptionTabV3 tab;
-    tab.initFrom(tb);
-    if (isSelected)
-        tab.state |= QStyle::State_Selected;
-    tab.rect = tb->tabRect(i).adjusted(isFirst?0:-ol, 0, isLast?0:ol, 0);
-    tab.text = tb->tabText(i);
-    tab.icon = tb->tabIcon(i);
-    tab.iconSize = tb->iconSize();
-    if (QWidget *w = tb->tabButton(i, QTabBar::RightSide))
-    {
-        tab.rightButtonSize = w->size();
-        tab.cornerWidgets |= QStyleOptionTab::RightCornerWidget;
-    }
-    if (QWidget *w = tb->tabButton(i, QTabBar::LeftSide))
-    {
-        tab.leftButtonSize = w->size();
-        tab.cornerWidgets |= QStyleOptionTab::LeftCornerWidget;
-    }
-
-    if (!tb->isEnabled())
-        tab.palette.setCurrentColorGroup(QPalette::Disabled);
-
-    style->drawControl(QStyle::CE_TabBarTab, &tab, &p, tb);
 }
 
 bool
@@ -172,48 +109,6 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         drawTabBar(&opt, &p, tb);
         p.end();
         return true;
-    }
-    else if (qobject_cast<QMainWindow *>(w))
-    {
-        QMainWindow *win(static_cast<QMainWindow *>(w));
-        bool needRound(true);
-        const QColor bgColor(win->palette().color(win->backgroundRole()));
-        QPainter p(win);
-        if (XHandler::opacity() < 1.0f)
-        {
-            if (dConf.uno.enabled)
-            {
-                QRegion r(ScrollWatcher::paintRegion(win));
-                p.setClipRegion(r);
-                if (needRound)
-                    Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
-                else
-                    p.fillRect(win->rect(), bgColor);
-            }
-            else
-            {
-                p.setOpacity(XHandler::opacity());
-                if (win->property("DSP_hasbuttons").toBool())
-                {
-                    p.setRenderHint(QPainter::Antialiasing);
-                    p.setBrush(bgColor);
-                    p.setPen(Qt::NoPen);
-                    p.drawRoundedRect(win->rect(), 4, 4);
-                }
-                else
-                    Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
-                p.setOpacity(1.0f);
-            }
-        }
-        else
-            p.fillRect(win->rect(), bgColor);
-        p.setPen(Qt::black);
-        p.setOpacity(dConf.shadows.opacity);
-        if (dConf.uno.enabled)
-        if (int th = UNO::unoHeight(w, UNO::ToolBars))
-            p.drawLine(0, th, win->width(), th);
-        p.end();
-        return false;
     }
     else if (w->inherits("KMultiTabBarInternal"))
     {
@@ -267,31 +162,14 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     QWidget *w(static_cast<QWidget *>(o));
     if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
     {
-        static_cast<QWidget *>(o)->setMouseTracking(true);
-        static_cast<QWidget *>(o)->setAttribute(Qt::WA_Hover);
-        if (qobject_cast<QMenu *>(o))
-        {
-            unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(static_cast<QMenu *>(o)->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-        }
-    }
-    else if (castObj(QToolButton *, toolButton, o))
-    {
-        castObj(QToolBar *, toolBar, toolButton->parentWidget());
-        if (!toolBar)
-            return false;
-        //below simply to trigger an event that forces the toolbar to call sizeFromContents again
-        Ops::updateToolBarLater(toolBar, 500);
-    }
-    else if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
-    {
-//        Ops::callLater(static_cast<QWidget *>(o), &QWidget::update);
-        QTimer::singleShot(500, w, SLOT(update()));
+        w->setMouseTracking(true);
+        w->setAttribute(Qt::WA_Hover);
+        if (dConf.uno.enabled && qobject_cast<QMenuBar*>(o))
+            Handlers::Window::fixWindowTitleBar(w->window());
     }
     else if (qobject_cast<QTabBar *>(w))
     {
-        if (Ops::isSafariTabBar(static_cast<QTabBar *>(w)))
-            UNO::Handler::fixWindowTitleBar(w->window());
+        Handlers::Window::fixWindowTitleBar(w->window());
     }
     else if (w->inherits("KTitleWidget"))
     {

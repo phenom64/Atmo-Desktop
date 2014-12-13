@@ -24,7 +24,7 @@
 #include "stylelib/animhandler.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/settings.h"
-#include "stylelib/unohandler.h"
+#include "stylelib/handlers.h"
 
 bool
 StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -68,7 +68,7 @@ StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const
         QPixmap pix(r.size());
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
-        UNO::Handler::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
+        Handlers::Window::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
         pt.end();
         if (XHandler::opacity() < 1.0f)
         {
@@ -168,22 +168,22 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
 bool
 StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Tab, opt, option);
+    const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
     if (!opt)
         return true;
     if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
         const_cast<QStyleOption *>(option)->state |= State_Selected;
-    castObj(const QTabBar *, bar, widget);
+    const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
     if (Ops::isSafariTabBar(bar))
         return drawSafariTab(opt, painter, bar);
     if (styleHint(SH_TabBar_Alignment, option, widget) == Qt::AlignCenter)
         return drawSelector(opt, painter, bar);
 
-    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
-            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
-            isLast(opt->position == QStyleOptionTab::End),
-            isRtl(opt->direction == Qt::RightToLeft),
-            isSelected(opt->state & State_Selected);
+//    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
+//            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
+//            isLast(opt->position == QStyleOptionTab::End),
+//            isRtl(opt->direction == Qt::RightToLeft),
+//            isSelected(opt->state & State_Selected);
 
     painter->save();
 //    if (isSelected)
@@ -226,10 +226,10 @@ StyleProject::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
 bool
 StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(TabV3, opt, option);
+    const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
     if (!opt)
         return true;
-    castObj(const QTabBar *, bar, widget);
+    const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
     painter->save();
     const bool isSelected(opt->state & State_Selected),
             leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
@@ -299,7 +299,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
             p->setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
         const float o(p->opacity());
-        UNO::Handler::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
+        Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
         p->setPen(Qt::black);
         p->setOpacity(dConf.shadows.opacity/2);
         p->drawLine(r.topLeft(), r.topRight());
@@ -331,7 +331,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
     if (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTabWidget"))
         return true;
 
-    castOpt(TabBarBaseV2, opt, option);
+    const QStyleOptionTabBarBaseV2 *opt = qstyleoption_cast<const QStyleOptionTabBarBaseV2 *>(option);
     if (!opt)
         return true;
 
@@ -354,8 +354,8 @@ bool
 StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     Render::Sides sides = Render::checkedForWindowEdges(widget);
-    castObj(const QTabWidget *, tabWidget, widget);
-    castOpt(TabWidgetFrame, opt, option);
+    const QTabWidget *tabWidget = qobject_cast<const QTabWidget *>(widget);
+    const QStyleOptionTabWidgetFrame *opt = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(option);
 
     if (!tabWidget || !opt)
         return true;
@@ -414,8 +414,6 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         Render::renderShadow(Render::Sunken, rect, painter, 7, sides, dConf.shadows.opacity);
     return true;
 }
-
-static QPixmap closer[2];
 
 bool
 StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -513,7 +511,7 @@ StyleProject::drawToolBoxTab(const QStyleOption *option, QPainter *painter, cons
 bool
 StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ToolBoxV2, opt, option);
+    const QStyleOptionToolBoxV2 *opt = qstyleoption_cast<const QStyleOptionToolBoxV2 *>(option);
     if (!opt)
         return true;
     const QPalette pal(opt->palette);
@@ -522,7 +520,7 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
     QRect theRect(opt->rect);
     const bool first(opt->position == QStyleOptionToolBoxV2::Beginning);
     const bool last(opt->position == QStyleOptionToolBoxV2::End);
-    if (castObj(const QToolBox *, box, widget))
+    if (const QToolBox *box = qobject_cast<const QToolBox *>(widget))
     {
         if (box->frameShadow() == QFrame::Sunken)
         {
@@ -567,7 +565,7 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
 bool
 StyleProject::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ToolBoxV2, opt, option);
+    const QStyleOptionToolBoxV2 *opt = qstyleoption_cast<const QStyleOptionToolBoxV2 *>(option);
     if (!opt)
         return true;
 

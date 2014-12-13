@@ -24,7 +24,7 @@
 #include "stylelib/shadowhandler.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
-#include "stylelib/unohandler.h"
+#include "stylelib/handlers.h"
 #include "stylelib/settings.h"
 
 class ProjectStylePlugin : public QStylePlugin
@@ -200,10 +200,4 @@ StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) c
     else if (flags & Qt::AlignBottom)
         ret.moveBottom(r.bottom());
     return ret;
-}
-
-void
-StyleProject::fixMainWindowToolbar()
-{
-    UNO::Handler::updateToolBar(static_cast<QToolBar *>(sender()));
 }

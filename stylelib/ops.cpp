@@ -25,7 +25,7 @@
 #include "color.h"
 #include "render.h"
 #include "settings.h"
-#include "unohandler.h"
+#include "handlers.h"
 
 Q_DECL_EXPORT Ops *Ops::s_instance = 0;
 Q_DECL_EXPORT QQueue<QueueItem> Ops::m_laterQueue;
@@ -71,8 +71,6 @@ Ops::isSafariTabBar(const QTabBar *tabBar)
     const QPoint &checkPoint(tabBar->mapTo(win, QPoint(1, -1)));
     return isOrInsideA<const QToolBar *>(win->childAt(checkPoint));
 }
-
-
 
 void
 Ops::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
@@ -189,64 +187,12 @@ Ops::updateGeoFromSender()
     qApp->sendEvent(w, &e);
 }
 
-void
-Ops::updateToolBarLater(QToolBar *bar, const int time)
-{
-    QTimer *t(bar->findChild<QTimer *>("DSP_toolbartimer"));
-    if (!t)
-    {
-        t = new QTimer(bar);
-        t->setObjectName("DSP_toolbartimer");
-        connect(t, SIGNAL(timeout()), instance(), SLOT(updateToolBar()));
-//        t->setProperty("DSP_childcount", bar->actions().count());
-    }
-    t->start(time);
-}
-
-void
-Ops::updateToolBar()
-{
-    QTimer *t(qobject_cast<QTimer *>(sender()));
-    if (!t)
-        return;
-    QToolBar *bar(qobject_cast<QToolBar *>(t->parent()));
-    if (!bar)
-        return;
-
-    const QSize &iconSize(bar->iconSize());
-    bar->setIconSize(iconSize - QSize(1, 1));
-    bar->setIconSize(iconSize);
-    for (int i = 0; i < bar->actions().count(); ++i)
-    {
-        QAction *a(bar->actions().at(i));
-        if (QWidget *w = bar->widgetForAction(a))
-        {
-            bool prevIsToolBtn(false);
-            QAction *prev(0);
-            if (i)
-                prev = bar->actions().at(i-1);
-            if (!prev)
-                continue;
-            prevIsToolBtn = qobject_cast<QToolButton *>(bar->widgetForAction(prev));
-            if (!prevIsToolBtn && !prev->isSeparator() && !a->isSeparator())
-                bar->insertSeparator(a);
-        }
-    }
-    t->stop();
-    t->deleteLater();
-    if (dConf.removeTitleBars
-            && bar->geometry().topLeft() == QPoint(0, 0)
-            && bar->orientation() == Qt::Horizontal
-            && qobject_cast<QMainWindow *>(bar->parentWidget()))
-        UNO::Handler::setupNoTitleBarWindow(bar);
-}
-
 QPalette::ColorRole
 Ops::bgRole(const QWidget *w, const QPalette::ColorRole fallBack)
 {
     if (!w)
         return fallBack;
-    if (castObj(const QAbstractScrollArea *, area, w))
+    if (const QAbstractScrollArea *area = qobject_cast<const QAbstractScrollArea *>(w))
         if (area->viewport()->autoFillBackground())
             return area->viewport()->backgroundRole();
     return w->backgroundRole();
@@ -257,7 +203,7 @@ Ops::fgRole(const QWidget *w, const QPalette::ColorRole fallBack)
 {
     if (!w)
         return fallBack;
-    if (castObj(const QAbstractScrollArea *, area, w))
+    if (const QAbstractScrollArea *area = qobject_cast<const QAbstractScrollArea *>(w))
         if (area->viewport()->autoFillBackground())
             return area->viewport()->foregroundRole();
     return w->foregroundRole();
@@ -299,7 +245,7 @@ Ops::toolButtonData(const QToolButton *tbtn, const int sepext, bool &nextsel, bo
 {
     if (!tbtn)
         return;
-    castObj(const QToolBar *, bar, tbtn->parentWidget());
+    const QToolBar *bar = qobject_cast<const QToolBar *>(tbtn->parentWidget());
     if (!bar)
         return;
     const QRect geo = tbtn->geometry();

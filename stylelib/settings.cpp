@@ -91,7 +91,7 @@ Settings::read()
     //globals
     conf.opacity = s.value(READOPACITY).toFloat()/100.0f;
     conf.blackList = s.value(READBLACKLIST).toStringList();
-    if (conf.blackList.contains(appName))
+    if (conf.blackList.contains(appName) || appName == "kwin")
         conf.opacity = 1.0f;
     conf.removeTitleBars = s.value(READREMOVETITLE).toBool();
     conf.titlePos = conf.removeTitleBars?s.value(READTITLEPOS).toInt():-1;

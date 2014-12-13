@@ -917,14 +917,15 @@ Render::drawClickable(Shadow s,
         {
             QLinearGradient edges(0, 0, r.width(), 0);
             const QColor edge(QColor(0, 0, 0, dConf.shadows.opacity*127.0f));
+            const float position(5.0f/r.width());
             if (sides & Left)
             {
                 edges.setColorAt(0.0f, edge);
-                edges.setColorAt(0.1f, Qt::transparent);
+                edges.setColorAt(position, Qt::transparent);
             }
             if (sides & Right)
             {
-                edges.setColorAt(0.9f, Qt::transparent);
+                edges.setColorAt(1.0f-position, Qt::transparent);
                 edges.setColorAt(1.0f, edge);
             }
             renderMask(r, p, edges, rnd, sides);

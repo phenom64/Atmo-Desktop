@@ -154,9 +154,6 @@ protected:
     static int layoutSpacingAndMargins(const QWidget *w);
     void hackLayout(QWidget *w);
 
-protected slots:
-    void fixMainWindowToolbar();
-
 private:
     StyleComplexControl m_cc[CCSize];
     StyleControl m_ce[CESize];

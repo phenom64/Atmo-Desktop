@@ -30,7 +30,7 @@
 #include "stylelib/shadowhandler.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
-#include "stylelib/unohandler.h"
+#include "stylelib/handlers.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/settings.h"
 #include "stylelib/color.h"
@@ -58,40 +58,14 @@ StyleProject::polish(QWidget *widget)
     if (!widget)
         return;
 
+#if 0
+    if (widget->parentWidget())
+        qDebug() << widget << widget->parentWidget();
 
-//    if (widget->parentWidget())
-//        qDebug() << widget << widget->parentWidget();
+    installFilter(widget);
+#endif
 
-//    installFilter(widget);
-
-    /* needed for mac os x lion like toolbuttons,
-     * we need to repaint the toolbar when a action
-     * has been triggered, otherwise we are painting
-     * errors
-     */
-    if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
-    {
-        if (qobject_cast<QMainWindow *>(widget->parentWidget()))
-            connect(bar, SIGNAL(topLevelChanged(bool)), this, SLOT(fixMainWindowToolbar()));
-        installFilter(bar);
-        bar->setForegroundRole(QPalette::WindowText);
-        bar->setBackgroundRole(QPalette::Window);
-    }
-    if (widget->inherits("KMultiTabBarTab"))
-    {
-        installFilter(widget);
-        if (QFrame *frame = qobject_cast<QFrame *>(widget->parentWidget()))
-        {
-            frame->setFrameShadow(QFrame::Sunken);
-            frame->setFrameShape(QFrame::StyledPanel);
-            OverLay::manage(frame, 255.0f*dConf.shadows.opacity);
-            installFilter(frame);
-            frame->setContentsMargins(0, 0, 0, 0);
-        }
-    }
-
-    if (dConf.splitterExt)
-    if (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget))
+    if (dConf.splitterExt && (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget)))
         SplitterExt::manage(widget);
 
     if (qobject_cast<QPushButton *>(widget) ||
@@ -100,17 +74,17 @@ StyleProject::polish(QWidget *widget)
             qobject_cast<QSlider *>(widget) ||
             qobject_cast<QScrollBar *>(widget))
         Anim::Basic::manage(widget);
-    if (dConf.uno.enabled &&
+    if (/*dConf.uno.enabled &&*/
             (qobject_cast<QMainWindow *>(widget) ||
             widget->findChild<QToolBar *>() ||
             widget->findChild<QTabBar *>()))
-        UNO::Handler::manage(widget);
+        Handlers::Window::manage(widget);
 
     if (dConf.uno.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
-        ScrollWatcher::watch(static_cast<QAbstractScrollArea *>(widget));
+        Handlers::ScrollWatcher::watch(static_cast<QAbstractScrollArea *>(widget));
 
-    if (WinHandler::canDrag(widget))
-        WinHandler::manage(widget);
+    if (Handlers::Drag::canDrag(widget))
+        Handlers::Drag::manage(widget);
 
     if (dConf.app == Settings::Konversation && qobject_cast<QMainWindow *>(widget->window()))
     if (qobject_cast<QHBoxLayout *>(widget->layout())||qobject_cast<QVBoxLayout *>(widget->layout()))
@@ -119,55 +93,62 @@ StyleProject::polish(QWidget *widget)
 
     if (widget->isWindow()) //this segment needs serious cleaning still...
     {
-        if (!(dConf.uno.enabled && !qobject_cast<QMainWindow *>(widget)))
-        {
-            if (dConf.compactMenu && widget->findChild<QMenuBar *>())
-                WinHandler::addCompactMenu(widget);
-            if (XHandler::opacity() < 1.0f && !widget->parentWidget())
-            {
-                const QIcon icn = widget->windowIcon();
-                const bool wasVisible= widget->isVisible();
-                const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
-                if (wasVisible)
-                    widget->hide();
-                widget->setAttribute(Qt::WA_TranslucentBackground);
-                widget->setWindowIcon(icn);
-                widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
-                widget->setVisible(wasVisible);
-                QTimer::singleShot(0, widget, SLOT(update()));
-                unsigned int d(0);
-                XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
-            }
-        }
-        installFilter(widget);
+        if (dConf.compactMenu && widget->findChild<QMenuBar *>())
+            Handlers::Window::addCompactMenu(widget);
 
-        if (!dConf.uno.enabled)
-            UNO::Handler::fixTitleLater(widget);
+        const bool hasTitle(!(widget->windowFlags() & Qt::FramelessWindowHint)||widget->property("DSP_hasbuttons").toBool());
+        const bool needTrans(hasTitle&&(dConf.uno.enabled?bool(qobject_cast<QMainWindow *>(widget)):true));
+        if (XHandler::opacity() < 1.0f && !widget->parentWidget() && needTrans)
+        {
+            const QIcon icn = widget->windowIcon();
+            const bool wasVisible= widget->isVisible();
+            const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
+            if (wasVisible)
+                widget->hide();
+            widget->setAttribute(Qt::WA_TranslucentBackground);
+            widget->setWindowIcon(icn);
+            widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
+            widget->setVisible(wasVisible);
+            QTimer::singleShot(0, widget, SLOT(update()));
+            unsigned int d(0);
+            XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        }
         bool needShadows(false);
+
         if (widget->windowType() == Qt::ToolTip && widget->inherits("QTipLabel"))
         {
-            widget->setAttribute(Qt::WA_TranslucentBackground);
+            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
+                widget->setAttribute(Qt::WA_TranslucentBackground);
             needShadows = true;
         }
+
         if (dConf.hackDialogs && qobject_cast<QDialog *>(widget))
         {
-            WinHandler::manage(widget);
+            Handlers::Window::manage(widget);
             needShadows = true;
         }
+
         if (qobject_cast<QMenu *>(widget)
                 || qobject_cast<QDockWidget *>(widget)
                 || qobject_cast<QToolBar *>(widget)
-                || (qobject_cast<QMainWindow *>(widget) && dConf.removeTitleBars))
+                || hasTitle)
             needShadows = true;
+
         if (needShadows)
             ShadowHandler::manage(widget);
     }
 
     //main if segment for all widgets
-    if (QToolButton *btn = qobject_cast<QToolButton *>(widget))
+    if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
+    {
+        Handlers::ToolBar::manage(bar);
+        bar->setForegroundRole(QPalette::WindowText);
+        bar->setBackgroundRole(QPalette::Window);
+    }
+    else if (QToolButton *btn = qobject_cast<QToolButton *>(widget))
     {
         Anim::ToolBtns::manage(btn);
-        installFilter(btn);
+        Handlers::ToolBar::manage(btn);
         if (!qobject_cast<QToolBar *>(btn->parentWidget()))
         {
             btn->setBackgroundRole(QPalette::Window);
@@ -229,7 +210,8 @@ StyleProject::polish(QWidget *widget)
         widget->setAttribute(Qt::WA_Hover);
         if (qobject_cast<QMenu *>(widget))
         {
-            widget->setAttribute(Qt::WA_TranslucentBackground);
+            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
+                widget->setAttribute(Qt::WA_TranslucentBackground);
             widget->setForegroundRole(QPalette::Text);
             widget->setBackgroundRole(QPalette::Base);
         }
@@ -314,6 +296,18 @@ StyleProject::polish(QWidget *widget)
     {
         installFilter(widget);
     }
+    else if (widget->inherits("KMultiTabBarTab"))
+    {
+        installFilter(widget);
+        if (QFrame *frame = qobject_cast<QFrame *>(widget->parentWidget()))
+        {
+            frame->setFrameShadow(QFrame::Sunken);
+            frame->setFrameShape(QFrame::StyledPanel);
+            OverLay::manage(frame, 255.0f*dConf.shadows.opacity);
+            installFilter(frame);
+            frame->setContentsMargins(0, 0, 0, 0);
+        }
+    }
 
     if (dConf.uno.enabled)
     if (QFrame *frame = qobject_cast<QFrame *>(widget))
@@ -339,8 +333,7 @@ StyleProject::unpolish(QWidget *widget)
     widget->removeEventFilter(this);
     ShadowHandler::release(widget);
     Anim::Basic::release(widget);
-    UNO::Handler::release(widget);
-    WinHandler::release(widget);
+    Handlers::Window::release(widget);
     if (QProgressBar *pb = qobject_cast<QProgressBar *>(widget))
         ProgressHandler::release(pb);
     else if (QTabBar *tb = qobject_cast<QTabBar *>(widget))

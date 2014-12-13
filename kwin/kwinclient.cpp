@@ -287,6 +287,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_sizeGrip(0)
     , m_mem(0)
     , m_contAware(false)
+    , m_uno(true)
 {
     setParent(factory);
     Settings::read();
@@ -485,7 +486,7 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setOpacity(m_opacity);
 
-    if (dConf.uno.enabled)
+    if (m_uno)
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
@@ -642,11 +643,12 @@ KwinClient::reset(unsigned long changed)
         m_custcol[Text] = QColor::fromRgba(data->text);
         m_custcol[Bg] = QColor::fromRgba(data->bg);
         m_opacity = (float)data->opacity/100.0f;
+        m_uno = data->uno;
         XFree(data);
     }
     else if (needBg)
     {
-        if (dConf.uno.enabled)
+        if (m_uno)
         {
             m_needSeparator = true;
             for (int i = 0; i < 2; ++i)
