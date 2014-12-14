@@ -75,10 +75,9 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         const bool hor(opt->orientation == Qt::Horizontal),
                 ltr(opt->direction == Qt::LeftToRight);
 
-        const bool inView((area && area->viewport()->autoFillBackground()) ||
-                          qobject_cast<const QTextBrowser *>(area) ||
-                          qobject_cast<const QTextEdit *>(area) ||
-                          (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
+        const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
+                          || qobject_cast<const QTextEdit *>(area)
+                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
 
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
         const QGradientStops sliderStops(Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));

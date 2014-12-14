@@ -239,7 +239,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
     if (!widget)
         return true;
 
-    castOpt(FrameV3, opt, option);
+    const QStyleOptionFrameV3 *opt = qstyleoption_cast<const QStyleOptionFrameV3 *>(option);
     if (!opt)
         return true;
 
@@ -275,7 +275,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
 #undef SAVEPEN
 #undef RESTOREPEN
 
-    castObj(const QFrame *, frame, widget);
+    const QFrame *frame = qobject_cast<const QFrame *>(widget);
     if (OverLay::hasOverLay(frame))
         return true;
 
@@ -286,7 +286,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
         o/=2;
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, !isView*7, Render::All, o);
+        Render::renderShadow(Render::Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, Render::All, o);
 
     if (opt->state & State_Raised)
     {

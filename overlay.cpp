@@ -154,6 +154,12 @@ OverLay::eventFilter(QObject *o, QEvent *e)
 void
 OverLay::updateOverlay()
 {
+    if (!(m_frame->frameShape() == QFrame::StyledPanel && m_frame->frameShadow() == QFrame::Sunken))
+    {
+        hide();
+        deleteLater();
+        return;
+    }
     static QMap<QFrame *, QSize> sm;
     if (sm.value(m_frame, QSize()) != m_frame->size())
     {
@@ -224,6 +230,7 @@ OverLay::manage(QFrame *frame, int opacity)
 {
     if (!frame || hasOverLay(frame))
         return false;
+
     if (frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
     {
         new OverLay(frame, opacity);

@@ -219,6 +219,7 @@ ToolBar::forceButtonSizeReRead(QToolBar *bar)
     const QSize &iconSize(bar->iconSize());
     bar->setIconSize(iconSize - QSize(1, 1));
     bar->setIconSize(iconSize);
+#if 0
     for (int i = 0; i < bar->actions().count(); ++i)
     {
         QAction *a(bar->actions().at(i));
@@ -235,12 +236,62 @@ ToolBar::forceButtonSizeReRead(QToolBar *bar)
                 bar->insertSeparator(a);
         }
     }
+#endif
 
     if (dConf.removeTitleBars
             && bar->geometry().topLeft() == QPoint(0, 0)
             && bar->orientation() == Qt::Horizontal
             && qobject_cast<QMainWindow *>(bar->parentWidget()))
         setupNoTitleBarWindow(bar);
+}
+
+void
+ToolBar::adjustMargins(QToolBar *toolBar)
+{
+    QMainWindow *win = qobject_cast<QMainWindow *>(toolBar->parentWidget());
+    if (!win || !toolBar || toolBar->actions().isEmpty())
+      return;
+    if (toolBar->isWindow() && toolBar->isFloating())
+    {
+        toolBar->setContentsMargins(0, 0, 0, 0);
+        if (toolBar->layout())
+            toolBar->layout()->setContentsMargins(4, 4, 4, 4);
+    }
+    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea && toolBar->layout())
+    {
+        if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
+        {
+            if (win->windowFlags() & Qt::FramelessWindowHint || !win->mask().isEmpty())
+            {
+//                toolBar->setMovable(false);
+                const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
+                toolBar->layout()->setContentsMargins(pm, pm, pm, pm);
+                toolBar->setContentsMargins(0, 0, 0, 0);
+            }
+            else
+            {
+//                toolBar->setMovable(dConf.uno.enabled);
+                toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+                toolBar->QWidget::setContentsMargins(0, 0, dConf.uno.enabled*toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
+                if (!win->property(CSDBUTTONS).toBool() && !toolBar->property(TOOLPADDING).toBool())
+                {
+                    qDebug() << "adding spacer to toolBar" << toolBar;
+                    QWidget *w(new QWidget(toolBar));
+                    w->setFixedSize(4, 4);
+                    toolBar->insertWidget(toolBar->actions().first(), w);
+                    toolBar->setProperty(TOOLPADDING, true);
+                }
+            }
+        }
+        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
+        {
+            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+            toolBar->setMovable(false);
+        }
+        else
+            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
+    }
+    Window::updateWindowDataLater(toolBar->window());
 }
 
 void
@@ -254,6 +305,7 @@ ToolBar::updateToolBar()
         return;
 
     forceButtonSizeReRead(bar);
+    adjustMargins(bar);
 
     t->stop();
     t->deleteLater();
@@ -267,13 +319,13 @@ ToolBar::manage(QToolBar *tb)
     tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
     if (qobject_cast<QMainWindow *>(tb->parentWidget()))
-        connect(tb, SIGNAL(topLevelChanged(bool)), ToolBar::instance(), SLOT(unoFyToolBarSlot()));
+        connect(tb, SIGNAL(topLevelChanged(bool)), ToolBar::instance(), SLOT(adjustMarginsSlot()));
 }
 
 void
-ToolBar::unoFyToolBarSlot()
+ToolBar::adjustMarginsSlot()
 {
-    unoFyToolBar(static_cast<QToolBar *>(sender()));
+    adjustMargins(static_cast<QToolBar *>(sender()));
 }
 
 bool
@@ -295,13 +347,13 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
 //                setupNoTitleBarWindow(static_cast<QToolBar *>(tbn->parentWidget()));
         }
         else if (tb && dConf.uno.enabled)
-            Window::fixWindowTitleBar(tb->window());
+            Window::updateWindowData(tb->window());
         return false;
     }
     case QEvent::Hide:
     {
         if (tb && dConf.uno.enabled)
-            Window::fixWindowTitleBar(tb->window());
+            Window::updateWindowDataLater(tb->window());
         return false;
     }
     case QEvent::MouseButtonPress:
@@ -316,19 +368,10 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             tb->update();
         return false;
     }
-//    case QEvent::Resize: //is this needed at all?
-//    {
-//        if (qobject_cast<QMainWindow *>(tb->parentWidget()))
-//            unoFyToolBar(tb);
-//        return false;
-//    }
     default: return false;
     }
     return false;
 }
-
-#define HASSTRETCH "DSP_hasstretch"
-#define HASBUTTONS "DSP_hasbuttons"
 
 static TitleWidget *canAddTitle(QToolBar *toolBar, bool &canhas)
 {
@@ -367,7 +410,7 @@ static void applyMask(QWidget *widget)
     if (XHandler::opacity() < 1.0f)
     {
         widget->clearMask();
-        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && widget->property(HASBUTTONS).toBool())
+        if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint) && widget->property(CSDBUTTONS).toBool())
         {
             widget->setWindowFlags(widget->windowFlags()|Qt::FramelessWindowHint);
             widget->show();
@@ -403,7 +446,7 @@ ToolBar::setupNoTitleBarWindow(QToolBar *toolBar)
     {
         toolBar->insertWidget(toolBar->actions().first(), new Buttons(toolBar));
         toolBar->window()->installEventFilter(instance());
-        toolBar->window()->setProperty(HASBUTTONS, true);
+        toolBar->window()->setProperty(CSDBUTTONS, true);
     }
     else
     {
@@ -462,53 +505,16 @@ ToolBar::setupNoTitleBarWindow(QToolBar *toolBar)
 //    {
 
 //    }
-    unoFyToolBar(toolBar);
+    adjustMargins(toolBar);
 //    fixTitleLater(toolBar->parentWidget());
-}
-
-void
-ToolBar::unoFyToolBar(QToolBar *toolBar)
-{
-    QMainWindow *win = static_cast<QMainWindow *>(toolBar->parentWidget());
-    if (toolBar->isWindow() && toolBar->isFloating())
-    {
-        toolBar->setContentsMargins(0, 0, 0, 0);
-        if (toolBar->layout())
-            toolBar->layout()->setContentsMargins(4, 4, 4, 4);
-    }
-    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea && toolBar->layout())
-    {
-        if (toolBar->geometry().top() <= win->rect().top() && !toolBar->isWindow())
-        {
-            if (win->windowFlags() & Qt::FramelessWindowHint || !win->mask().isEmpty())
-            {
-                toolBar->setMovable(false);
-                const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
-                toolBar->layout()->setContentsMargins(pm, pm, pm, pm);
-                toolBar->setContentsMargins(0, 0, 0, 0);
-            }
-            else
-            {
-                toolBar->setMovable(true);
-                toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-                toolBar->setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
-            }
-        }
-        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
-        {
-            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            toolBar->setMovable(false);
-        }
-        else
-            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
-    }
 }
 
 //-------------------------------------------------------------------------------------------------
 
-Q_DECL_EXPORT Window Window::s_instance;
-Q_DECL_EXPORT QMap<uint, QVector<QPixmap> > Window::s_pix;
-Q_DECL_EXPORT QMap<QWidget *, Handlers::Data> Window::s_unoData;
+Window Window::s_instance;
+QMap<uint, QVector<QPixmap> > Window::s_unoPix;
+QMap<QWidget *, Handlers::Data> Window::s_unoData;
+QPixmap Window::s_bgPix;
 
 Window::Window(QObject *parent)
     : QObject(parent)
@@ -586,40 +592,31 @@ Window::eventFilter(QObject *o, QEvent *e)
             p.end();
             return true;
         }
-        else if (qobject_cast<QMainWindow *>(w) || (w->isWindow() && w->testAttribute(Qt::WA_TranslucentBackground)))
+        else if (w->isWindow())
         {
-            QMainWindow *win = qobject_cast<QMainWindow *>(w);
-            bool needRound(true);
             const QColor bgColor(w->palette().color(w->backgroundRole()));
             QPainter p(w);
-            if (XHandler::opacity() < 1.0f)
+            p.setOpacity(XHandler::opacity());
+            Render::Sides sides(Render::All);
+            if (!w->property(CSDBUTTONS).toBool())
+                sides &= ~Render::Top;
+            QBrush b;
+            if (dConf.uno.enabled)
             {
-                if (dConf.uno.enabled && win)
+                if (XHandler::opacity() < 1.0f && qobject_cast<QMainWindow *>(w))
                 {
-                    QRegion r(paintRegion(win));
-                    p.setClipRegion(r);
-                    if (needRound)
-                        Render::renderMask(win->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
-                    else
-                        p.fillRect(win->rect(), bgColor);
-                }
-                else
-                {
-                    p.setOpacity(XHandler::opacity());
-                    if (w->property("DSP_hasbuttons").toBool())
-                    {
-                        p.setRenderHint(QPainter::Antialiasing);
-                        p.setBrush(bgColor);
-                        p.setPen(Qt::NoPen);
-                        p.drawRoundedRect(w->rect(), 4, 4);
-                    }
-                    else
-                        Render::renderMask(w->rect(), &p, bgColor, 4, Render::Bottom|Render::Left|Render::Right);
                     p.setOpacity(1.0f);
+                    p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
                 }
+                b = bgColor;
             }
             else
-                p.fillRect(w->rect(), bgColor);
+            {
+                unsigned char *addV(XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoData));
+                if (addV)
+                    b = s_bgPix.copy(0, *addV, s_bgPix.width(), s_bgPix.height()-*addV);
+            }
+            Render::renderMask(w->rect(), &p, b, 4, sides);
             p.setPen(Qt::black);
             p.setOpacity(dConf.shadows.opacity);
             if (dConf.uno.enabled)
@@ -660,7 +657,7 @@ Window::eventFilter(QObject *o, QEvent *e)
         }
         else
         {
-            fixTitleLater(w);
+            updateWindowDataLater(w);
             if (qobject_cast<QMainWindow *>(w) && XHandler::opacity() < 1.0f && !w->parentWidget())
             {
                 unsigned int d(0);
@@ -694,8 +691,8 @@ Window::eventFilter(QObject *o, QEvent *e)
     {
         if (w->isWindow())
         {
-            fixWindowTitleBar(w);
-            if (qobject_cast<QMainWindow *>(w) && w->property(HASBUTTONS).toBool())
+            updateWindowData(w);
+            if (qobject_cast<QMainWindow *>(w) && w->property(CSDBUTTONS).toBool())
                 applyMask(w);
         }
         return false;
@@ -787,8 +784,47 @@ static QVector<QPixmap> unoParts(QWidget *win, int h)
     return values;
 }
 
+static QPixmap bgPix(QWidget *win)
+{
+    const bool hor(dConf.windows.hor);
+    QLinearGradient lg(0, 0, hor*win->width(), !hor*win->height());
+    QColor bc(win->palette().color(win->backgroundRole()));
+    lg.setStops(Settings::gradientStops(dConf.windows.gradient, bc));
+
+    unsigned char *addV(XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData));
+    if (!addV)
+        return QPixmap();
+    const unsigned int n(dConf.windows.noise);
+    const int w(hor?win->width():(n?Render::noise().width():1));
+    const int h(!hor?win->height()+*addV:(n?Render::noise().height():1));
+    QPixmap p(w, h);
+    p.fill(Qt::transparent);
+    QPainter pt(&p);
+    pt.fillRect(p.rect(), lg);
+
+    if (n)
+//        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
+    {
+        pt.setOpacity(n*0.01f);
+        pt.drawTiledPixmap(p.rect(), Render::noise());
+    }
+    pt.end();
+    if (Window::s_bgPix.handle())
+        Window::s_bgPix.detach();
+    Window::s_bgPix = XHandler::x11Pix(p);
+    return Window::s_bgPix;
+}
+
+template<typename T> static void updateChildren(QWidget *win)
+{
+    const QList<T> kids = win->findChildren<T>();
+    const int size(kids.size());
+    for (int i = 0; i < size; ++i)
+        kids.at(i)->update();
+}
+
 void
-Window::fixWindowTitleBar(QWidget *win)
+Window::updateWindowData(QWidget *win)
 {
     if (!win || !win->isWindow())
         return;
@@ -805,27 +841,32 @@ Window::fixWindowTitleBar(QWidget *win)
     if (!wd.height && dConf.uno.enabled)
         return;
     const WId id(win->winId());
+    unsigned long handle(0);
     if (dConf.uno.enabled)
     {
         uint check = wd.height;
         if (dConf.uno.hor)
             check = check<<16|win->width();
-        if (!s_pix.contains(check))
-            s_pix.insert(check, unoParts(win, wd.height));
-        unsigned long handle(s_pix.value(check).at(1).handle());
-        unsigned long *h = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
-        if (!h || (h && *h != handle))
-            XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
-        const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
-        for (int i = 0; i < toolBars.size(); ++i)
-            toolBars.at(i)->update();
-        if (QMenuBar *mb = win->findChild<QMenuBar *>())
-            mb->update();
-        if (QTabBar *tb = win->findChild<QTabBar *>())
-            tb->update();
-        if (QStatusBar *sb = win->findChild<QStatusBar *>())
-            sb->update();
+        if (!s_unoPix.contains(check))
+            s_unoPix.insert(check, unoParts(win, wd.height));
+        handle = s_unoPix.value(check).at(1).handle();
     }
+    else
+        handle = bgPix(win).handle();
+
+    unsigned long *h = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
+    if (!h || (h && *h != handle))
+        XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+
+    if (dConf.uno.enabled)
+    {
+        updateChildren<QToolBar *>(win);
+        updateChildren<QMenuBar *>(win);
+        updateChildren<QTabBar *>(win);
+        updateChildren<QStatusBar *>(win);
+    }
+    else
+        win->update();
     //    qDebug() << ((c & 0xff000000) >> 24) << ((c & 0xff0000) >> 16) << ((c & 0xff00) >> 8) << (c & 0xff);
     //    qDebug() << QColor(c).alpha() << QColor(c).red() << QColor(c).green() << QColor(c).blue();
     XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 7);
@@ -865,11 +906,11 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset
     uint check = allUno;
     if (dConf.uno.hor)
         check = check<<16|win->width();
-    if (s_pix.contains(check))
+    if (s_unoPix.contains(check))
     {
         const float savedOpacity(p->opacity());
         p->setOpacity(opacity);
-        p->drawTiledPixmap(r, s_pix.value(check).at(0), offset);
+        p->drawTiledPixmap(r, s_unoPix.value(check).at(0), offset);
         if (dConf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
         {
             p->setOpacity(dConf.uno.opacity);
@@ -882,24 +923,24 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset
 }
 
 void
-Window::fixTitleLater(QWidget *win)
+Window::updateWindowDataLater(QWidget *win)
 {
     if (!win)
         return;
     QTimer *t = new QTimer(win);
-    connect(t, SIGNAL(timeout()), instance(), SLOT(fixTitle()));
+    connect(t, SIGNAL(timeout()), instance(), SLOT(updateWindowDataSlot()));
     t->start(250);
 }
 
 void
-Window::fixTitle()
+Window::updateWindowDataSlot()
 {
     if (QTimer *t = qobject_cast<QTimer *>(sender()))
     if (t->parent()->isWidgetType())
     if (QWidget *w = static_cast<QWidget *>(t->parent()))
     if (w->isWindow())
     {
-        fixWindowTitleBar(w);
+        updateWindowData(w);
         t->stop();
         t->deleteLater();
     }
@@ -921,13 +962,13 @@ Window::updateWindow(WId window, unsigned int changed)
 void
 Window::cleanUp()
 {
-    QMapIterator<uint, QVector<QPixmap> > i(s_pix);
+    QMapIterator<uint, QVector<QPixmap> > i(s_unoPix);
     while (i.hasNext())
     {
         QVector<QPixmap> pix(i.next().value());
         XHandler::freePix(pix[1]);
     }
-    s_pix.clear();
+    s_unoPix.clear();
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -13,6 +13,10 @@ class QAbstractScrollArea;
 class QTabBar;
 class QToolButton;
 
+#define HASSTRETCH  "DSP_hasstretch"
+#define CSDBUTTONS  "DSP_hasbuttons"
+#define TOOLPADDING "DSP_toolpadder"
+
 class DButton : public Button
 {
 public:
@@ -55,7 +59,7 @@ public:
     static void updateToolBarLater(QToolBar *bar, const int time = 250);
     static bool isArrowPressed(const QToolButton *tb);
     static void setupNoTitleBarWindow(QToolBar *toolBar);
-    static void unoFyToolBar(QToolBar *toolBar);
+    static void adjustMargins(QToolBar *toolBar);
 
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
@@ -64,7 +68,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 protected slots:
-    void unoFyToolBarSlot();
+    void adjustMarginsSlot();
     void updateToolBar();
 
 private:
@@ -93,18 +97,19 @@ class Q_DECL_EXPORT Window : public QObject
     Q_OBJECT
 public:
     static QMap<QWidget *, Handlers::Data> s_unoData;
+    static QPixmap s_bgPix;
     ~Window(){}
     static Window *instance();
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static void addCompactMenu(QWidget *w);
-    static void fixWindowTitleBar(QWidget *win);
+    static void updateWindowData(QWidget *win);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset = QPoint(), float opacity = 1.0f);
     static void updateWindow(WId window, unsigned int changed = 63);
-    static void fixTitleLater(QWidget *win);
+    static void updateWindowDataLater(QWidget *win);
 
 public slots:
-    void fixTitle();
+    void updateWindowDataSlot();
 
 protected:
     Window(QObject *parent = 0);
@@ -117,7 +122,7 @@ protected slots:
 
 private:
     static Window s_instance;
-    static QMap<uint, QVector<QPixmap> > s_pix;
+    static QMap<uint, QVector<QPixmap> > s_unoPix;
     QList<QWidget *> m_menuWins;
 };
 

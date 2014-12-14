@@ -486,7 +486,7 @@ KwinClient::paint(QPainter &p)
     const QRect tr(m_titleLayout->geometry());
     p.setOpacity(m_opacity);
 
-    if (m_uno)
+    if (!m_bgPix[isActive()].isNull())
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
@@ -626,7 +626,11 @@ KwinClient::reset(unsigned long changed)
     {
         for (int i = 0; i < 2; ++i)
             if (*bg && *bg != m_bgPix[i].handle())
+            {
+                if (m_bgPix[i].handle())
+                    m_bgPix[i].detach();
                 m_bgPix[i] = QPixmap::fromX11Pixmap(*bg);
+            }
         needBg = false;
     }
     int n(0);

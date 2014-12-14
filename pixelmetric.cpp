@@ -123,7 +123,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent:;
     case PM_SplitterWidth:
-        return dConf.uno.enabled&&dConf.app!=Settings::Eiskalt?1:8;
+        return dConf.uno.enabled&&dConf.app!=Settings::Eiskalt?1:4;
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {

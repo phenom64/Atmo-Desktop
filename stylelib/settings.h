@@ -71,6 +71,11 @@
 #define PROGSHADOW          "progressbars.shadow"
 #define PROGRND             "progressbars.rnd"
 
+#define WINGRAD             "windows.gradient"
+#define WINNOISE            "windows.noisefactor"
+#define WINNOISESTYLE       "windows.noisestyle"
+#define WINHOR              "windows.horizontal"
+
 #define SHADOWOPACITY       "shadows.opacity"
 
 //defaults
@@ -132,7 +137,7 @@
 #define DEFUNOENABLED           true
 #define DEFUNOGRAD              "0.0:5, 1.0:-5"
 #define DEFUNOTINT              "-1:0"
-#define DEFUNONOISE             10
+#define DEFUNONOISE             5
 #define DEFUNONOISESTYLE        0
 #define DEFUNOHOR               false
 #define DEFUNOCONT              QStringList()
@@ -157,6 +162,11 @@
 
 #define DEFPROGSHADOW           3
 #define DEFPROGRND              4
+
+#define DEFWINGRAD             "0.0:-10, 0.5:10, 1.0:-10"
+#define DEFWINNOISE            0
+#define DEFWINNOISESTYLE       0
+#define DEFWINHOR              true
 
 #define DEFSHADOWOPACITY        33
 
@@ -225,6 +235,11 @@
 
 #define READPROGSHADOW          PROGSHADOW, DEFPROGSHADOW
 #define READPROGRND             PROGRND, DEFPROGRND
+
+#define READWINGRAD             WINGRAD, DEFWINGRAD
+#define READWINNOISE            WINNOISE, DEFWINNOISE
+#define READWINNOISESTYLE       WINNOISESTYLE, DEFWINNOISESTYLE
+#define READWINHOR              WINHOR, DEFWINHOR
 
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
 
@@ -301,6 +316,12 @@ public:
         float opacity;
         bool enabled, hor, contAware;
     } uno;
+    struct windows
+    {
+        Gradient gradient;
+        unsigned int noise, noiseStyle;
+        bool hor;
+    } windows;
     struct menues
     {
         bool icons;

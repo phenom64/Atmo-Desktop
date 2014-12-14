@@ -49,7 +49,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     case QEvent::Hide:
     {
         if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
-            Handlers::Window::fixWindowTitleBar(w->window());
+            Handlers::Window::updateWindowData(w->window());
     }
     case QEvent::LayoutRequest:
     {
@@ -60,7 +60,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
                 lbls.at(i)->setAlignment(Qt::AlignCenter);
         }
         else if (dConf.uno.enabled && qobject_cast<QMenuBar *>(w))
-            Handlers::Window::fixWindowTitleBar(w->window());
+            Handlers::Window::updateWindowData(w->window());
     }
     case QEvent::MetaCall:
     {
@@ -165,11 +165,11 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         w->setMouseTracking(true);
         w->setAttribute(Qt::WA_Hover);
         if (dConf.uno.enabled && qobject_cast<QMenuBar*>(o))
-            Handlers::Window::fixWindowTitleBar(w->window());
+            Handlers::Window::updateWindowData(w->window());
     }
     else if (qobject_cast<QTabBar *>(w))
     {
-        Handlers::Window::fixWindowTitleBar(w->window());
+        Handlers::Window::updateWindowData(w->window());
     }
     else if (w->inherits("KTitleWidget"))
     {

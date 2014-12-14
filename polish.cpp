@@ -87,17 +87,28 @@ StyleProject::polish(QWidget *widget)
         Handlers::Drag::manage(widget);
 
     if (dConf.app == Settings::Konversation && qobject_cast<QMainWindow *>(widget->window()))
-    if (qobject_cast<QHBoxLayout *>(widget->layout())||qobject_cast<QVBoxLayout *>(widget->layout()))
-    if (QBoxLayout *l = static_cast<QBoxLayout *>(widget->layout()))
-        l->setSpacing(0);
+    {
+//        if (QTextEdit *edit = qobject_cast<QTextEdit *>(widget))
+//        {
+//            edit->setFrameStyle(QFrame::StyledPanel|QFrame::Sunken);
+//            edit->viewport()->setAutoFillBackground(true);
+//        }
+        if (qobject_cast<QHBoxLayout *>(widget->layout())||qobject_cast<QVBoxLayout *>(widget->layout()))
+            if (QBoxLayout *l = static_cast<QBoxLayout *>(widget->layout()))
+                l->setSpacing(0);
+    }
 
     if (widget->isWindow()) //this segment needs serious cleaning still...
     {
         if (dConf.compactMenu && widget->findChild<QMenuBar *>())
             Handlers::Window::addCompactMenu(widget);
 
+        const bool mainWin(qobject_cast<QMainWindow *>(widget));
+        if (mainWin && !dConf.uno.enabled)
+            widget->setContentsMargins(4, 0, 4, 4);
+
         const bool hasTitle(!(widget->windowFlags() & Qt::FramelessWindowHint)||widget->property("DSP_hasbuttons").toBool());
-        const bool needTrans(hasTitle&&(dConf.uno.enabled?bool(qobject_cast<QMainWindow *>(widget)):true));
+        const bool needTrans(hasTitle&&(dConf.uno.enabled?mainWin:true));
         if (XHandler::opacity() < 1.0f && !widget->parentWidget() && needTrans)
         {
             const QIcon icn = widget->windowIcon();
@@ -312,7 +323,7 @@ StyleProject::polish(QWidget *widget)
     if (dConf.uno.enabled)
     if (QFrame *frame = qobject_cast<QFrame *>(widget))
     {
-        if (frame->frameShadow() == QFrame::Sunken
+        if (frame->frameStyle() == QFrame::Sunken+QFrame::StyledPanel
                 && qobject_cast<QMainWindow *>(frame->window()))
             OverLay::manage(frame, dConf.shadows.opacity*255.0f);
     }

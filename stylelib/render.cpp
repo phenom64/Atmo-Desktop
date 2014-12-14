@@ -695,7 +695,7 @@ Render::makeNoise()
         int v(randInt(0, 255));
         rgb[i] = QColor(v, v, v).rgb();
     }
-    if (dConf.uno.noiseStyle)
+    if (dConf.uno.enabled&&dConf.uno.noiseStyle || !dConf.uno.enabled&&dConf.windows.noiseStyle)
     {
         const int b(32);
         QImage small = noise.copy(0, 0, 256, 256);
@@ -778,7 +778,7 @@ Render::drawClickable(Shadow s,
             && s != Carved && s != Yosemite && !isToolBox)
     {
         if (s == Raised)
-            r.sAdjust(1, 2, -1, -1);
+            r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);
         s = Sunken;   
     }
 

@@ -137,6 +137,11 @@ Settings::read()
     conf.uno.contAware = s.value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
     conf.uno.opacity = s.value(READUNOOPACITY).toFloat()/100.0f;
     conf.uno.blur = s.value(READUNOCONTBLUR).toInt();
+    //windows when not uno
+    conf.windows.gradient = stringToGrad(s.value(READWINGRAD).toString());
+    conf.windows.noise = READINT(READWINNOISE);
+    conf.windows.noiseStyle = READINT(READWINNOISESTYLE);
+    conf.windows.hor = s.value(READWINHOR).toBool();
     //menues
     conf.menues.icons = s.value(READMENUICONS).toBool();
     //sliders

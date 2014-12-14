@@ -289,9 +289,9 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
 
 static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
 {
+    QRect r(rect.isValid()?rect:bar->rect());
     if (Ops::isSafariTabBar(bar))
     {
-        QRect r(rect.isValid()?rect:bar->rect());
         if (XHandler::opacity() < 1.0f)
         {
             p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -311,7 +311,6 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
     else if (bar->documentMode())
     {
         p->save();
-        QRect r(bar->rect());
 //        QLinearGradient lg(r.topLeft(), r.bottomLeft());
 //        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, bar->palette().color(QPalette::Window)));
 //        p->fillRect(r, lg);
@@ -404,7 +403,7 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
         default: break;
         }
-        if (Ops::isSafariTabBar(tabBar))
+        if (tabBar->documentMode())
         {
             drawDocTabBar(painter, tabBar, barRect);
             return true;
