@@ -263,21 +263,19 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         {
             if (win->windowFlags() & Qt::FramelessWindowHint || !win->mask().isEmpty())
             {
-//                toolBar->setMovable(false);
                 const int pm(6/*toolBar->style()->pixelMetric(QStyle::PM_ToolBarFrameWidth)*/);
                 toolBar->layout()->setContentsMargins(pm, pm, pm, pm);
                 toolBar->setContentsMargins(0, 0, 0, 0);
             }
             else
             {
-//                toolBar->setMovable(dConf.uno.enabled);
                 toolBar->layout()->setContentsMargins(0, 0, 0, 0);
                 toolBar->QWidget::setContentsMargins(0, 0, dConf.uno.enabled*toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
                 if (!win->property(CSDBUTTONS).toBool() && !toolBar->property(TOOLPADDING).toBool())
                 {
-                    qDebug() << "adding spacer to toolBar" << toolBar;
                     QWidget *w(new QWidget(toolBar));
-                    w->setFixedSize(4, 4);
+                    const int sz(dConf.uno.enabled?8:4);
+                    w->setFixedSize(sz, sz);
                     toolBar->insertWidget(toolBar->actions().first(), w);
                     toolBar->setProperty(TOOLPADDING, true);
                 }

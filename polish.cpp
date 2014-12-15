@@ -106,10 +106,15 @@ StyleProject::polish(QWidget *widget)
         const bool mainWin(qobject_cast<QMainWindow *>(widget));
         if (mainWin && !dConf.uno.enabled)
             widget->setContentsMargins(4, 0, 4, 4);
-
         const bool hasTitle(!(widget->windowFlags() & Qt::FramelessWindowHint)||widget->property("DSP_hasbuttons").toBool());
-        const bool needTrans(hasTitle&&(dConf.uno.enabled?mainWin:true));
-        if (XHandler::opacity() < 1.0f && !widget->parentWidget() && needTrans)
+        bool needTrans(hasTitle&&(dConf.uno.enabled?mainWin:true));
+        if (needTrans)
+            needTrans = !(widget->windowType() == Qt::Desktop
+                    || widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop)
+                    || widget->testAttribute(Qt::WA_TranslucentBackground)
+                    || widget->testAttribute(Qt::WA_NoSystemBackground)
+                    || widget->testAttribute(Qt::WA_OpaquePaintEvent));
+        if (XHandler::opacity() < 1.0f && needTrans)
         {
             const QIcon icn = widget->windowIcon();
             const bool wasVisible= widget->isVisible();
@@ -323,9 +328,13 @@ StyleProject::polish(QWidget *widget)
     if (dConf.uno.enabled)
     if (QFrame *frame = qobject_cast<QFrame *>(widget))
     {
-        if (frame->frameStyle() == QFrame::Sunken+QFrame::StyledPanel
+        if (frame->frameStyle() == QFrame::Sunken|QFrame::StyledPanel
                 && qobject_cast<QMainWindow *>(frame->window()))
-            OverLay::manage(frame, dConf.shadows.opacity*255.0f);
+        {
+            QAbstractScrollArea *area = qobject_cast<QAbstractScrollArea *>(frame);
+            if (!area || area->viewport()->autoFillBackground())
+                OverLay::manage(frame, dConf.shadows.opacity*255.0f);
+        }
     }
 
 #if !defined(QT_NO_DBUS)

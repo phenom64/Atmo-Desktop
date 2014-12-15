@@ -13,6 +13,7 @@
 #include <QStackedWidget>
 #include <QAbstractScrollArea>
 #include <QSplitter>
+#include <QStyleOption>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -23,7 +24,7 @@
 int
 StyleProject::layoutSpacingAndMargins(const QWidget *w)
 {
-    if (dConf.uno.enabled && w && w->layout())
+    if (dConf.uno.enabled && w )
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(w->window()))
     if (QWidget *cw = mw->centralWidget())
     if (cw->isAncestorOf(w))
@@ -127,7 +128,9 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
-        if (!widget)
+        if (!widget || !option)
+            return 2;
+        if (qobject_cast<const QLineEdit *>(widget))
             return 0;
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (OverLay::hasOverLay(frame))
@@ -137,7 +140,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
 
         if (frame && frame->frameShadow() == QFrame::Raised)
             return 8;
-        if (option && option->state & State_Raised) //the buttons in qtcreator....
+        if (option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
         if (dConf.uno.enabled)
