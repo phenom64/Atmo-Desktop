@@ -49,7 +49,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     case QEvent::Hide:
     {
         if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
-            Handlers::Window::updateWindowData(w->window());
+            Handlers::Window::updateWindowDataLater(w->window());
     }
     case QEvent::LayoutRequest:
     {
@@ -60,7 +60,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
                 lbls.at(i)->setAlignment(Qt::AlignCenter);
         }
         else if (dConf.uno.enabled && qobject_cast<QMenuBar *>(w))
-            Handlers::Window::updateWindowData(w->window());
+            Handlers::Window::updateWindowDataLater(w->window());
     }
     case QEvent::MetaCall:
     {
@@ -96,12 +96,12 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
     else if (o->objectName() == "konsole_tabbar_parent")
     {
         QWidget *w = static_cast<QWidget *>(o);
-        QStyleOptionTabBarBaseV2 opt;
-        opt.rect = w->rect();
         QTabBar *tb = w->findChild<QTabBar *>();
-        if (!Ops::isSafariTabBar(tb))
+        if (!tb||!tb->documentMode())
             return false;
 
+        QStyleOptionTabBarBaseV2 opt;
+        opt.rect = w->rect();
         opt.rect.setHeight(tb->height());
         QPainter p(w);
         QRect geo(tb->mapTo(w, tb->rect().topLeft()), tb->size());
@@ -160,22 +160,30 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     if (!o->isWidgetType())
         return QCommonStyle::eventFilter(o, e);
     QWidget *w(static_cast<QWidget *>(o));
-    if ((qobject_cast<QMenuBar*>(o)||qobject_cast<QMenu *>(o)))
+    if (qobject_cast<QMenuBar*>(w))
+    {
+        if (dConf.uno.enabled)
+            Handlers::Window::updateWindowDataLater(w->window());
+        return false;
+    }
+    else if (qobject_cast<QMenu *>(w))
     {
         w->setMouseTracking(true);
         w->setAttribute(Qt::WA_Hover);
-        if (dConf.uno.enabled && qobject_cast<QMenuBar*>(o))
-            Handlers::Window::updateWindowData(w->window());
+        return false;
     }
     else if (qobject_cast<QTabBar *>(w))
     {
-        Handlers::Window::updateWindowData(w->window());
+        if (dConf.uno.enabled)
+            Handlers::Window::updateWindowDataLater(w->window());
+        return false;
     }
     else if (w->inherits("KTitleWidget"))
     {
         QList<QLabel *> lbls = w->findChildren<QLabel *>();
         for (int i = 0; i < lbls.count(); ++i)
             lbls.at(i)->setAlignment(Qt::AlignCenter);
+        return false;
     }
     return QCommonStyle::eventFilter(o, e);
 }

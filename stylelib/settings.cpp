@@ -76,6 +76,8 @@ Settings::read()
         conf.app = Eiskalt;
     else if (appName == "konversation")
         conf.app = Konversation;
+    else if (appName == "konsole")
+        conf.app = Konsole;
     else
         conf.app = None;
 

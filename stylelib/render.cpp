@@ -16,6 +16,7 @@
 #include "ops.h"
 
 Q_DECL_EXPORT Render Render::m_instance;
+QPixmap Render::m_mask[][Render::PartCount];
 
 /* blurring function below from:
  * http://stackoverflow.com/questions/3903223/qt4-how-to-blur-qpixmap-image
@@ -482,7 +483,7 @@ Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path,
 }
 
 QRect
-Render::partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow) const
+Render::partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow)
 {
     if (isShadow && roundNess < 3)
         roundNess = 3;
@@ -527,6 +528,27 @@ Render::isCornerPart(const Part part) const
     return part==TopLeftPart||part==TopRightPart||part==BottomLeftPart||part==BottomRightPart;
 }
 
+void
+Render::shapeCorners(QWidget *w, QPainter *p, Sides s, int roundNess)
+{
+    const QPainter::CompositionMode mode(p->compositionMode());
+    const QBrush brush(p->brush());
+    const QPen pen(p->pen());
+    p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p->setPen(Qt::NoPen);
+    p->setBrush(Qt::black);
+    for (int i = 0; i < PartCount; ++i)
+    if (needPart(i, s))
+    {
+        if (i != CenterPart && !roundNess)
+            continue;
+        p->drawTiledPixmap(partRect(w->rect(), i, roundNess, s), m_mask[roundNess][i]);
+    }
+    p->setCompositionMode(mode);
+    p->setBrush(brush);
+    p->setPen(pen);
+}
+
 QPixmap
 Render::genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const
 {
@@ -541,7 +563,7 @@ Render::genPart(const Part part, const QPixmap &source, const int roundNess, con
 }
 
 bool
-Render::needPart(const Part part, const Sides sides) const
+Render::needPart(const Part part, const Sides sides)
 {
     switch (part)
     {

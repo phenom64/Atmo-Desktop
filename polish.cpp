@@ -65,56 +65,49 @@ StyleProject::polish(QWidget *widget)
     installFilter(widget);
 #endif
 
-    if (dConf.splitterExt && (widget->objectName() == "qt_qmainwindow_extended_splitter" || qobject_cast<QSplitterHandle *>(widget)))
+    if (dConf.splitterExt
+            && (widget->objectName() == "qt_qmainwindow_extended_splitter"
+                || qobject_cast<QSplitterHandle *>(widget)))
         SplitterExt::manage(widget);
 
-    if (qobject_cast<QPushButton *>(widget) ||
-            qobject_cast<QCheckBox *>(widget) ||
-            qobject_cast<QRadioButton *>(widget) ||
-            qobject_cast<QSlider *>(widget) ||
-            qobject_cast<QScrollBar *>(widget))
-        Anim::Basic::manage(widget);
-    if (/*dConf.uno.enabled &&*/
-            (qobject_cast<QMainWindow *>(widget) ||
-            widget->findChild<QToolBar *>() ||
-            widget->findChild<QTabBar *>()))
-        Handlers::Window::manage(widget);
+    if (dConf.app == Settings::Konversation
+            && qobject_cast<QMainWindow *>(widget->window())
+            && (qobject_cast<QHBoxLayout *>(widget->layout())
+                || qobject_cast<QVBoxLayout *>(widget->layout())))
+        static_cast<QBoxLayout *>(widget->layout())->setSpacing(0);
 
-    if (dConf.uno.contAware && qobject_cast<QMainWindow *>(widget->window()) && qobject_cast<QAbstractScrollArea *>(widget))
-        Handlers::ScrollWatcher::watch(static_cast<QAbstractScrollArea *>(widget));
+    if (qobject_cast<QPushButton *>(widget)
+            || qobject_cast<QCheckBox *>(widget)
+            || qobject_cast<QRadioButton *>(widget)
+            || qobject_cast<QSlider *>(widget)
+            || qobject_cast<QScrollBar *>(widget))
+        Anim::Basic::manage(widget);
 
     if (Handlers::Drag::canDrag(widget))
         Handlers::Drag::manage(widget);
 
-    if (dConf.app == Settings::Konversation && qobject_cast<QMainWindow *>(widget->window()))
-    {
-//        if (QTextEdit *edit = qobject_cast<QTextEdit *>(widget))
-//        {
-//            edit->setFrameStyle(QFrame::StyledPanel|QFrame::Sunken);
-//            edit->viewport()->setAutoFillBackground(true);
-//        }
-        if (qobject_cast<QHBoxLayout *>(widget->layout())||qobject_cast<QVBoxLayout *>(widget->layout()))
-            if (QBoxLayout *l = static_cast<QBoxLayout *>(widget->layout()))
-                l->setSpacing(0);
-    }
-
     if (widget->isWindow()) //this segment needs serious cleaning still...
     {
-        if (dConf.compactMenu && widget->findChild<QMenuBar *>())
+        if (dConf.compactMenu
+                && widget->findChild<QMenuBar *>())
             Handlers::Window::addCompactMenu(widget);
 
+        const bool toolTip(widget->windowType() == Qt::ToolTip && widget->inherits("QTipLabel"));
         const bool mainWin(qobject_cast<QMainWindow *>(widget));
-        if (mainWin && !dConf.uno.enabled)
-            widget->setContentsMargins(4, 0, 4, 4);
         const bool hasTitle(!(widget->windowFlags() & Qt::FramelessWindowHint)||widget->property("DSP_hasbuttons").toBool());
-        bool needTrans(hasTitle&&(dConf.uno.enabled?mainWin:true));
+        if (hasTitle)
+            Handlers::Window::manage(widget);
+        bool needTrans(XHandler::opacity() < 1.0f || toolTip);
+        if (needTrans && !mainWin)
+            needTrans = !dConf.uno.enabled;
         if (needTrans)
             needTrans = !(widget->windowType() == Qt::Desktop
-                    || widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop)
-                    || widget->testAttribute(Qt::WA_TranslucentBackground)
-                    || widget->testAttribute(Qt::WA_NoSystemBackground)
-                    || widget->testAttribute(Qt::WA_OpaquePaintEvent));
-        if (XHandler::opacity() < 1.0f && needTrans)
+                          || widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop)
+                          || widget->testAttribute(Qt::WA_TranslucentBackground)
+                          || widget->testAttribute(Qt::WA_NoSystemBackground)
+                          || widget->testAttribute(Qt::WA_OpaquePaintEvent));
+
+        if (needTrans)
         {
             const QIcon icn = widget->windowIcon();
             const bool wasVisible= widget->isVisible();
@@ -129,20 +122,11 @@ StyleProject::polish(QWidget *widget)
             unsigned int d(0);
             XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
         }
-        bool needShadows(false);
 
-        if (widget->windowType() == Qt::ToolTip && widget->inherits("QTipLabel"))
-        {
-            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-                widget->setAttribute(Qt::WA_TranslucentBackground);
-            needShadows = true;
-        }
+        bool needShadows(toolTip);
 
-        if (dConf.hackDialogs && qobject_cast<QDialog *>(widget))
-        {
-            Handlers::Window::manage(widget);
+        if (dConf.hackDialogs && qobject_cast<QDialog *>(widget) && widget->isModal())
             needShadows = true;
-        }
 
         if (qobject_cast<QMenu *>(widget)
                 || qobject_cast<QDockWidget *>(widget)
@@ -201,46 +185,47 @@ StyleProject::polish(QWidget *widget)
     {
         widget->setAttribute(Qt::WA_Hover);
     }
-    else if (QAbstractItemView *view = qobject_cast<QAbstractItemView *>(widget))
+    else if (QAbstractScrollArea *area = qobject_cast<QAbstractScrollArea *>(widget))
     {
-        view->viewport()->setAttribute(Qt::WA_Hover);
-        view->setAttribute(Qt::WA_MouseTracking);
-        installFilter(view);
+        if (dConf.uno.enabled
+                && dConf.uno.contAware
+                && qobject_cast<QMainWindow *>(widget->window()))
+            Handlers::ScrollWatcher::watch(area);
 
-        //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example, idiot gay....)
-        QPalette pal(widget->palette());
-        const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
-        QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
-        pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
-        pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
-        widget->setPalette(pal);
+        if (QAbstractItemView *view = qobject_cast<QAbstractItemView *>(area))
+        {
+            view->viewport()->setAttribute(Qt::WA_Hover);
+            view->setAttribute(Qt::WA_MouseTracking);
+            installFilter(view);
+
+            //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example, idiot gay....)
+            QPalette pal(widget->palette());
+            const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
+            QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
+            pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
+            pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
+            widget->setPalette(pal);
+        }
     }
     else if (qobject_cast<QStatusBar *>(widget))
     {
         widget->setForegroundRole(QPalette::WindowText);
         widget->setBackgroundRole(QPalette::Window);
     }
-    else if (qobject_cast<QMenu *>(widget)||qobject_cast<QMenuBar *>(widget))
+    else if (qobject_cast<QMenu *>(widget))
     {
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
-        if (qobject_cast<QMenu *>(widget))
-        {
-            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-                widget->setAttribute(Qt::WA_TranslucentBackground);
-            widget->setForegroundRole(QPalette::Text);
-            widget->setBackgroundRole(QPalette::Base);
-        }
-        else
-        {
-            widget->setForegroundRole(QPalette::WindowText);
-            widget->setBackgroundRole(QPalette::Window);
-        }
-        /**
-         * Apparently some menues fight back and dont
-         * want mousetracking, we filter and set mousetracking
-         * when the menu is shown.
-         */
+        widget->setForegroundRole(QPalette::Text);
+        widget->setBackgroundRole(QPalette::Base);
+        installFilter(widget);
+    }
+    else if (qobject_cast<QMenuBar *>(widget))
+    {
+        widget->setMouseTracking(true);
+        widget->setAttribute(Qt::WA_Hover);
+        widget->setForegroundRole(QPalette::WindowText);
+        widget->setBackgroundRole(QPalette::Window);
         installFilter(widget);
     }
     else if (qobject_cast<QToolBox *>(widget))
@@ -271,7 +256,7 @@ StyleProject::polish(QWidget *widget)
         tabBar->setAttribute(Qt::WA_MouseTracking);
         installFilter(tabBar);
 
-        if (!qApp->applicationName().compare("konsole", Qt::CaseInsensitive))
+        if (dConf.app == Settings::Konsole)
         {
             if (safari) //hmmm
             {
@@ -284,6 +269,10 @@ StyleProject::polish(QWidget *widget)
             }
         }
     }
+//    else if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget))
+//    {
+
+//    }
     else if (widget->inherits("KTitleWidget"))
     {
         installFilter(widget);

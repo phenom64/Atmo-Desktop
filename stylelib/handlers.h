@@ -1,5 +1,5 @@
-#ifndef UNOHANDLER_H
-#define UNOHANDLER_H
+#ifndef HANDLERS_H
+#define HANDLERS_H
 
 #include <QWidget>
 #include <QSharedMemory>
@@ -16,6 +16,9 @@ class QToolButton;
 #define HASSTRETCH  "DSP_hasstretch"
 #define CSDBUTTONS  "DSP_hasbuttons"
 #define TOOLPADDING "DSP_toolpadder"
+#define TOOLTIMER   "DSP_toolbartimer"
+#define TIMERNAME   "DSP_windowupdater"
+#define MENUPRESS   "DSP_menupress"
 
 class DButton : public Button
 {
@@ -69,7 +72,7 @@ protected:
 
 protected slots:
     void adjustMarginsSlot();
-    void updateToolBar();
+    void updateToolBarSlot();
 
 private:
     static ToolBar s_instance;
@@ -97,7 +100,7 @@ class Q_DECL_EXPORT Window : public QObject
     Q_OBJECT
 public:
     static QMap<QWidget *, Handlers::Data> s_unoData;
-    static QPixmap s_bgPix;
+    static QMap<QWidget *, QPixmap> s_bgPix;
     ~Window(){}
     static Window *instance();
     static void manage(QWidget *w);
@@ -105,7 +108,7 @@ public:
     static void addCompactMenu(QWidget *w);
     static void updateWindowData(QWidget *win);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset = QPoint(), float opacity = 1.0f);
-    static void updateWindow(WId window, unsigned int changed = 63);
+    static void updateDeco(WId window, unsigned int changed = 63);
     static void updateWindowDataLater(QWidget *win);
 
 public slots:
@@ -118,7 +121,6 @@ protected:
 
 protected slots:
     void menuShow();
-    void cleanUp();
 
 private:
     static Window s_instance;
@@ -181,4 +183,4 @@ private:
 
 }
 
-#endif //UNOHANDLER_H
+#endif //HANDLERS_H

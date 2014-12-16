@@ -75,10 +75,6 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         const bool hor(opt->orientation == Qt::Horizontal),
                 ltr(opt->direction == Qt::LeftToRight);
 
-        const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
-                          || qobject_cast<const QTextEdit *>(area)
-                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
-
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
         const QGradientStops sliderStops(Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
         lg.setStops(sliderStops);
@@ -99,6 +95,11 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
                               opt,
                               &bg);
         lg.setStops(sliderStops);
+
+        const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
+                          || qobject_cast<const QTextEdit *>(area)
+                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
+
         Render::renderShadow(Render::Raised, slider.adjusted(-1, -1, 1, 1), painter, 32, Render::All, dConf.shadows.opacity);
         Render::renderMask(slider.adjusted(!(inView && ltr && !hor), 1, -!(inView && ltr && !hor), -(!hor*2)), painter, lg);
 
@@ -141,35 +142,39 @@ StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter
         painter->fillRect(option->rect, option->palette.color(bg));
     }
     else if (dConf.scrollers.style == 1)
-        if (const QAbstractScrollArea *area = Ops::getAncestor<const QAbstractScrollArea *>(widget))
-        {
-            const bool bothVisible(area->verticalScrollBar()->isVisible() && area->horizontalScrollBar()->isVisible());
-            if (!bothVisible)
-                return true;
-            const QPen pen(painter->pen());
-            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
-            const QBrush brush(painter->brush());
-            painter->setBrush(Qt::NoBrush);
-            painter->setClipRect(option->rect.adjusted(0, 0, -1, -1));
-            painter->drawRect(option->rect);
-            painter->setClipping(false);
-            painter->setPen(pen);
-            painter->setBrush(brush);
-        }
+    {
+        const QAbstractScrollArea *area = Ops::getAncestor<const QAbstractScrollArea *>(widget);
+        if (!area)
+            return true;
+        const bool inView((area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
+                          || qobject_cast<const QTextEdit *>(area)
+                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
+        const bool bothVisible(area->verticalScrollBar()->isVisible() && area->horizontalScrollBar()->isVisible());
+        if (!bothVisible || !inView)
+            return true;
+        const QPen pen(painter->pen());
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        const QBrush brush(painter->brush());
+        painter->setBrush(Qt::NoBrush);
+        painter->setClipRect(option->rect.adjusted(0, 0, -1, -1));
+        painter->drawRect(option->rect);
+        painter->setClipping(false);
+        painter->setPen(pen);
+        painter->setBrush(brush);
+    }
     return true;
 }
 
 bool
 StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Slider, opt, option);
+    const QStyleOptionSlider *opt = qstyleoption_cast<const QStyleOptionSlider *>(option);
     if (!opt)
         return false;
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText)), bg(Ops::bgRole(widget, QPalette::Window));
     QRect slider(subControlRect(CC_Slider, option, SC_SliderHandle, widget));
     const QRect realGroove(subControlRect(CC_Slider, option, SC_SliderGroove, widget));
     QRect groove(realGroove);
-
 
     const bool hor(opt->orientation==Qt::Horizontal);
     const Render::Shadow gs(dConf.sliders.grooveShadow);

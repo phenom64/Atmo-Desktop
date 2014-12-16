@@ -62,6 +62,7 @@ public:
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
+    static void shapeCorners(QWidget *w, QPainter *p, Sides s, int roundNess = 4);
 
 protected:
     void _generateData();
@@ -75,13 +76,13 @@ protected:
     void makeNoise();
     void splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source);
     bool isCornerPart(const Part part) const;
-    bool needPart(const Part part, const Sides sides) const;
+    static bool needPart(const Part part, const Sides sides);
     QPixmap genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const;
-    QRect partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow = false) const;
+    static QRect partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow = false);
 
 private:
     static Render m_instance;
-    QPixmap m_mask[MAXRND+1][PartCount];
+    static QPixmap m_mask[MAXRND+1][PartCount];
     QPixmap m_shadow[ShadowCount][MAXRND+1][PartCount];
     QPixmap m_tab[PartCount];
     QPixmap m_noise;

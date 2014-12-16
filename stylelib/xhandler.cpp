@@ -5,6 +5,7 @@
 #include <QX11Info>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QTimer>
 #include "settings.h"
 
 static Atom atom[XHandler::ValueCount] =
@@ -18,6 +19,26 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECOBGPIX", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False)
 };
+
+XHandler XHandler::s_instance;
+
+XHandler
+*XHandler::instance()
+{
+    return &s_instance;
+}
+
+XHandler::XHandler(QObject *parent)
+    : QObject(parent)
+//      m_timer(new QTimer(this))
+{
+//    connect(m_timer, SIGNAL(timeout()), this, SLOT(clearX11PixmapsSlot()));
+}
+
+XHandler::~XHandler()
+{
+    clearX11Pixmaps();
+}
 
 void
 XHandler::changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems)
@@ -106,15 +127,49 @@ XHandler::opacity()
         return 1.0f;
 }
 
-QPixmap
-XHandler::x11Pix(const QPixmap &pix, const Qt::HANDLE handle)
+static QList<Qt::HANDLE> s_freeLater;
+
+void
+XHandler::clearX11PixmapsLater()
 {
+    QTimer::singleShot(250, instance(), SLOT(clearX11PixmapsSlot()));
+}
+
+void
+XHandler::clearX11PixmapsSlot()
+{
+    clearX11Pixmaps();
+}
+
+void
+XHandler::clearX11Pixmaps()
+{
+    while (!s_freeLater.isEmpty())
+        freePix(s_freeLater.takeFirst());
+}
+
+QPixmap
+XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle)
+{
+    if (pix.isNull())
+    {
+        if (handle)
+            s_freeLater << handle;
+        handle = 0;
+        return pix;
+    }
+    if (handle && pix.size() != QPixmap::fromX11Pixmap(handle).size())
+    {
+        s_freeLater << handle;
+        handle = 0;
+    }
     const Pixmap x = handle?handle:XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
     QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
     QPainter pt(&p);
     pt.setCompositionMode(QPainter::CompositionMode_Source);
     pt.drawPixmap(p.rect(), pix);
     pt.end();
+    handle = x;
     return p;
 }
 

@@ -12,8 +12,9 @@ typedef struct _WindowData
 } WindowData;
 
 static int _n = 0;
-class Q_DECL_EXPORT XHandler
+class Q_DECL_EXPORT XHandler : public QObject
 {
+    Q_OBJECT
 public:
     enum Value { WindowData = 0, KwinShadows, KwinBlur, StoreActiveShadow, StoreInActiveShadow, DecoData, DecoBgPix, ContPix, ValueCount };
     enum Size { Byte = 8, Short = 16, Long = 32, LongLong = 64 };
@@ -35,14 +36,26 @@ public:
     static bool compositingActive();
     static float opacity();
 
-    static QPixmap x11Pix(const QPixmap &pix, const Qt::HANDLE handle = 0);
+    static QPixmap x11Pix(const QPixmap &pix, Qt::HANDLE &handle);
     static void freePix(QPixmap pix);
     static void freePix(const Qt::HANDLE handle);
+    static void clearX11Pixmaps();
+    static void clearX11PixmapsLater();
+    static XHandler *instance();
+
+    XHandler(QObject *parent = 0);
+    ~XHandler();
+
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);
-//private:
-//    static Atom atom[ValueCount];
+
+private slots:
+    void clearX11PixmapsSlot();
+
+private:
+    static XHandler s_instance;
+//    QTimer *m_timer;
 };
 
 #endif //XHANDLER_H

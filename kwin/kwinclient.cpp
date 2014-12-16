@@ -621,38 +621,32 @@ KwinClient::reset(unsigned long changed)
         m_buttons = widget()->findChildren<Button * >();
     }
 
-    bool needBg(true);
-    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+    if (changed & SettingDecoration)
     {
-        for (int i = 0; i < 2; ++i)
-            if (*bg && *bg != m_bgPix[i].handle())
-            {
-                if (m_bgPix[i].handle())
-                    m_bgPix[i].detach();
-                m_bgPix[i] = QPixmap::fromX11Pixmap(*bg);
-            }
-        needBg = false;
-    }
-    int n(0);
-    WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
-    if (data && !isPreview())
-    {
-        m_contAware = data->contAware;
-        if (m_contAware)
-        if (m_headHeight != data->height)
-        if (m_mem && m_mem->isAttached())
-            m_mem->detach();
-        m_headHeight = data->height;
-        m_needSeparator = data->separator;
-        m_custcol[Text] = QColor::fromRgba(data->text);
-        m_custcol[Bg] = QColor::fromRgba(data->bg);
-        m_opacity = (float)data->opacity/100.0f;
-        m_uno = data->uno;
-        XFree(data);
-    }
-    else if (needBg)
-    {
-        if (m_uno)
+        bool needBg(true);
+        if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+        {
+            m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
+            needBg = false;
+        }
+        int n(0);
+        WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
+        if (data && !isPreview())
+        {
+            m_contAware = data->contAware;
+            if (m_contAware
+                    && m_headHeight != data->height
+                    && m_mem && m_mem->isAttached())
+                m_mem->detach();
+            m_headHeight = data->height;
+            m_needSeparator = data->separator;
+            m_custcol[Text] = QColor::fromRgba(data->text);
+            m_custcol[Bg] = QColor::fromRgba(data->bg);
+            m_opacity = (float)data->opacity/100.0f;
+            m_uno = data->uno;
+            XFree(data);
+        }
+        else if (needBg && m_uno)
         {
             m_needSeparator = true;
             for (int i = 0; i < 2; ++i)

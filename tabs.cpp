@@ -336,7 +336,7 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
 
     if (const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget))
     {
-        if (Ops::isSafariTabBar(tabBar) || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
+        if (tabBar->documentMode() || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
         {
             QRect r(tabBar->rect());
             if (opt->rect.width() > r.width())

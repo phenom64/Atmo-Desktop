@@ -31,7 +31,8 @@ set(libMocHDRS
     animhandler.h
     handlers.h
     ops.h
-    widgets.h)
+    widgets.h
+    xhandler.h)
 
 set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 set(QT_USE_QTDBUS TRUE)

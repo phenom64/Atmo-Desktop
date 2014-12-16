@@ -252,7 +252,7 @@ typedef QPair<QColor, int> Tint;
 class Q_DECL_EXPORT Settings
 {
 public:
-    enum AppName { Eiskalt, Konversation, None }; //app specific hacks should be avoided when possible.
+    enum AppName { Eiskalt, Konversation, Konsole, None }; //app specific hacks should be avoided when possible.
     typedef uint App;
     App app;
     float opacity;
