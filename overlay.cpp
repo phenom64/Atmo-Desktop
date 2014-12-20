@@ -231,7 +231,9 @@ OverLay::manage(QFrame *frame, int opacity)
     if (!frame || hasOverLay(frame))
         return false;
 
-    if (frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
+    if (frame->frameShadow() == QFrame::Sunken
+            && frame->frameShape() == QFrame::StyledPanel
+            && qobject_cast<QMainWindow *>(frame->window()))
     {
         new OverLay(frame, opacity);
         return true;

@@ -4,7 +4,7 @@
 #include "color.h"
 #include "render.h"
 #include "ops.h"
-#include "settings.h"
+#include "../config/settings.h"
 #include "shadowhandler.h"
 
 #include <QMainWindow>
@@ -289,7 +289,7 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         else
             toolBar->layout()->setContentsMargins(2, 2, 2, 2);
     }
-//    Window::updateWindowDataLater(toolBar->window());
+    Window::updateWindowDataLater(toolBar->window());
 }
 
 void
@@ -588,7 +588,8 @@ Window::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::Paint:
     {
-        if (qobject_cast<QDialog *>(w)
+        if (dConf.hackDialogs
+                && qobject_cast<QDialog *>(w)
                 && w->testAttribute(Qt::WA_TranslucentBackground)
                 && w->windowFlags() & Qt::FramelessWindowHint)
         {
@@ -599,10 +600,9 @@ Window::eventFilter(QObject *o, QEvent *e)
             p.setOpacity(XHandler::opacity());
             p.drawRoundedRect(w->rect(), 4, 4);
             p.end();
-            return true;
+            return false;
         }
-        else if (w->isWindow()
-                 && w->windowFlags() & Qt::Window)
+        else if (w->isWindow())
         {
             unsigned char *addV(XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoData));
             if (addV || w->property(CSDBUTTONS).toBool())
@@ -626,14 +626,14 @@ Window::eventFilter(QObject *o, QEvent *e)
                 }
                 else
                 {
-                    QPixmap pix(s_bgPix.value(w));
                     if (addV)
                     {
                         const int add(addV?*addV:0);
+                        QPixmap pix(s_bgPix.value(w));
                         b = pix.copy(0, add, pix.width(), pix.height()-add);
                     }
                     else
-                        b = pix;
+                        b = s_bgPix.value(w);
                 }
                 p.fillRect(w->rect(), b);
                 if (XHandler::opacity() < 1.0f)
@@ -644,7 +644,16 @@ Window::eventFilter(QObject *o, QEvent *e)
                     if (int th = Handlers::unoHeight(w, Handlers::ToolBars))
                         p.drawLine(0, th, w->width(), th);
                 p.end();
-                return true;
+                return false;
+            }
+            else
+            {
+//                QStyleOption opt;
+//                opt.initFrom(w);
+//                QPainter p(w);
+//                w->style()->drawPrimitive(QStyle::PE_FrameWindow, &opt, &p, w);
+//                p.end();
+                return false;
             }
         }
         return false;
@@ -728,6 +737,18 @@ Window::eventFilter(QObject *o, QEvent *e)
         }
         return false;
     }
+    case QEvent::WindowStateChange:
+    {
+        if (dConf.uno.enabled
+                || !qobject_cast<QMainWindow *>(w))
+            return false;
+
+        if (w->isMaximized() || w->isFullScreen())
+            w->setContentsMargins(0, 0, 0, 0);
+        else
+            w->setContentsMargins(4, 0, 4, 4);
+        return false;
+    }
     default: break;
     }
     return false;
@@ -777,14 +798,17 @@ unsigned int
 Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
 {
     unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
-    if (!h && !(dConf.removeTitleBars && win->property("DSP_hasbuttons").toBool()))
+    const bool csd(dConf.removeTitleBars && win->property(CSDBUTTONS).toBool());
+    if (!h && !csd)
         return 0;
     if (!dConf.uno.enabled)
     {
         needSeparator = 0;
-        if (win->property("DSP_hasbuttons").toBool())
+        if (csd)
             return 0;
-        return *h;
+        if (h)
+            return *h;
+        return 0;
     }
     const int oldHead(unoHeight(win, All));
     int hd[HeightCount];
@@ -901,15 +925,18 @@ Window::updateWindowData(QWidget *win)
     const int oldHeight(unoHeight(win, All));
     unsigned int ns(1);
     WindowData wd;
-    wd.height = getHeadHeight(win, ns);
-    wd.separator = ns;
-    wd.opacity = win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100;
+    const unsigned int height(getHeadHeight(win, ns));
+    wd.data = 0;
+    wd.data |= dConf.uno.enabled*WindowData::Uno;
+    wd.data |= dConf.uno.enabled&&dConf.uno.contAware*WindowData::ContAware;
+    wd.data |= (height<<16)&WindowData::UnoHeight;
+    wd.data |= WindowData::Separator*ns;
+    wd.data |= (int(win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100)<<8&WindowData::Opacity);
+    wd.data |= (dConf.deco.buttons+1)<<24;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
     wd.bg = win->palette().color(win->backgroundRole()).rgba();
-    wd.uno = dConf.uno.enabled;
-    wd.contAware = dConf.uno.enabled&&dConf.uno.contAware;
 
-    if (!wd.height && dConf.uno.enabled)
+    if (!height && dConf.uno.enabled)
         return;
 
     const WId id(win->winId());
@@ -920,12 +947,12 @@ Window::updateWindowData(QWidget *win)
         handle = *x11pixmap;
     if (dConf.uno.enabled)
     {
-        uint check = wd.height;
+        uint check = height;
         if (dConf.uno.hor)
             check = check<<16|win->width();
         if (!s_unoPix.contains(check))
-            s_unoPix.insert(check, unoParts(win, wd.height));
-        if (oldHeight != wd.height)
+            s_unoPix.insert(check, unoParts(win, height));
+        if (oldHeight != height)
             XHandler::x11Pix(s_unoPix.value(check).at(1), handle);
     }
     else
@@ -944,7 +971,7 @@ Window::updateWindowData(QWidget *win)
     else
         win->update();
 
-    XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 7);
+    XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 3);
     updateDeco(win->winId(), 1);
     XHandler::clearX11PixmapsLater();
 }

@@ -6,7 +6,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QTimer>
-#include "settings.h"
+#include "../config/settings.h"
 
 static Atom atom[XHandler::ValueCount] =
 {

@@ -18,13 +18,13 @@
 #include "styleproject.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 #include "stylelib/render.h"
 
 int
 StyleProject::layoutSpacingAndMargins(const QWidget *w)
 {
-    if (dConf.uno.enabled && w )
+    if (dConf.uno.enabled && w)
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(w->window()))
     if (QWidget *cw = mw->centralWidget())
     if (cw->isAncestorOf(w))
@@ -129,7 +129,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_DefaultFrameWidth:
     {
         if (!widget || !option)
-            return 2;
+            return dConf.uno.enabled?0:2;
         if (qobject_cast<const QLineEdit *>(widget))
             return 0;
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
@@ -151,7 +151,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         {
             return 0;
         }
-        return 2;
+        return dConf.uno.enabled?0:2;
     }
     case PM_ComboBoxFrameWidth: return 0;
     case PM_ToolBarItemSpacing: return 0;

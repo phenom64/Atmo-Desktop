@@ -4,12 +4,13 @@
 #include <QWidget>
 #include <QDebug>
 
-typedef struct _WindowData
+class WindowData
 {
+public:
+    enum DataType { Separator = 0x1, ContAware = 0x2, Uno = 0x4, Opacity = 0xff00, UnoHeight = 0xff0000, Buttons = 0xff000000 };
     QRgb text, bg;
-    bool separator, contAware, uno;
-    unsigned int height, opacity;
-} WindowData;
+    unsigned int data;
+};
 
 static int _n = 0;
 class Q_DECL_EXPORT XHandler : public QObject

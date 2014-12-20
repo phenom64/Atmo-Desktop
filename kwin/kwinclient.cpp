@@ -15,7 +15,7 @@
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/render.h"
 #include "../stylelib/color.h"
-#include "../stylelib/settings.h"
+#include "../config/settings.h"
 
 #define TITLEHEIGHT 22
 #define MARGIN 6
@@ -94,7 +94,7 @@ DButton::onClick(QMouseEvent *e, const Type &t)
 bool
 DButton::paintMaxButton(QPainter &p)
 {
-    if (dConf.deco.buttons == -1)
+    if (m_client->m_buttonStyle == -1)
     {
         const int s(rect().width()/8);
         QRect r = rect().adjusted(s, s, -s, -s);
@@ -586,6 +586,12 @@ KwinClient::activeChange()
         m_buttons.at(i)->update();
 }
 
+void
+KwinClient::updateContBg()
+{
+    widget()->update();
+}
+
 /**
  * These flags specify which settings changed when rereading dConf.
  * Each setting in class KDecorationOptions specifies its matching flag.
@@ -629,26 +635,28 @@ KwinClient::reset(unsigned long changed)
             m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
             needBg = false;
         }
-        int n(0);
-        WindowData *data = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData, n));
-        if (data && !isPreview())
+        WindowData *wd = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData));
+        if (wd && !isPreview())
         {
-            m_contAware = data->contAware;
+            const int height((wd->data & WindowData::UnoHeight) >> 16);
+            m_contAware = wd->data & WindowData::ContAware;
             if (m_contAware
-                    && m_headHeight != data->height
+                    && m_headHeight != height
                     && m_mem && m_mem->isAttached())
                 m_mem->detach();
-            m_headHeight = data->height;
-            m_needSeparator = data->separator;
-            m_custcol[Text] = QColor::fromRgba(data->text);
-            m_custcol[Bg] = QColor::fromRgba(data->bg);
-            m_opacity = (float)data->opacity/100.0f;
-            m_uno = data->uno;
-            XFree(data);
+            m_headHeight = height;
+            m_needSeparator = wd->data & WindowData::Separator;
+            m_custcol[Text] = QColor::fromRgba(wd->text);
+            m_custcol[Bg] = QColor::fromRgba(wd->bg);
+            m_opacity = (float)((wd->data & WindowData::Opacity) >> 8)/100.0f;
+            m_uno = wd->data & WindowData::Uno;
+            m_buttonStyle = (wd->data & WindowData::Buttons) >> 24 -1;
+            XFree(wd);
         }
         else if (needBg && m_uno)
         {
             m_needSeparator = true;
+            m_buttonStyle = dConf.deco.buttons;
             for (int i = 0; i < 2; ++i)
             {
                 QRect r(0, 0, width(), m_headHeight);
@@ -668,10 +676,4 @@ KwinClient::reset(unsigned long changed)
         m_buttons.at(i)->update();
 
     updateMask();
-}
-
-void
-KwinClient::updateContBg()
-{
-    widget()->update();
 }

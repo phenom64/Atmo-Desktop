@@ -6,7 +6,7 @@
 #include <QStyleOption>
 #include "stylelib/macros.h"
 #include "stylelib/ops.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 #define DEBUG 1
 

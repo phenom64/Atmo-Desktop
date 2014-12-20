@@ -19,7 +19,7 @@
 #include "stylelib/color.h"
 #include "stylelib/handlers.h"
 #include "overlay.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 #include "stylelib/xhandler.h"
 
 bool
@@ -119,7 +119,9 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (dConf.uno.enabled && widget && qobject_cast<const QMainWindow *>(widget->parentWidget()))
+    if (dConf.uno.enabled
+            && widget
+            && qobject_cast<const QMainWindow *>(widget->parentWidget()))
         Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
     return true;
 }
@@ -127,7 +129,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    // is this ever called???
+    painter->fillRect(option->rect, option->palette.color(QPalette::Window));
     return true;
 }
 
@@ -135,11 +137,10 @@ bool
 StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
-    Render::Sides sides = Render::All;
     QColor bgc(option->palette.color(bg));
     if (widget && !widget->property("DSP_hasmenuarrow").toBool())
         bgc.setAlpha(XHandler::opacity()*255.0f);
-//    Render::renderMask(option->rect, painter, bgc, 4, sides);
+
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setPen(Qt::NoPen);
@@ -152,7 +153,7 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
 bool
 StyleProject::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(GroupBox, opt, option);
+    const QStyleOptionGroupBox *opt = qstyleoption_cast<const QStyleOptionGroupBox *>(option);
     if (!opt)
         return true;
 
@@ -187,14 +188,23 @@ StyleProject::drawToolTip(const QStyleOption *option, QPainter *painter, const Q
     QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
     lg.setColorAt(0.0f, Color::mid(option->palette.color(QPalette::ToolTipBase), Qt::white, 5, 1));
     lg.setColorAt(1.0f, Color::mid(option->palette.color(QPalette::ToolTipBase), Qt::black, 5, 1));
-    Render::renderMask(option->rect, painter, lg, 4);
+    const QBrush brush(painter->brush());
+    const QPen pen(painter->pen());
+    const bool hadAa(painter->testRenderHint(QPainter::Antialiasing));
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setBrush(lg);
+    painter->setPen(Qt::NoPen);
+    painter->drawRoundedRect(option->rect, 4, 4);
+    painter->setPen(pen);
+    painter->setBrush(brush);
+    painter->setRenderHint(QPainter::Antialiasing, hadAa);
     return true;
 }
 
 bool
 StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(DockWidget, opt, option);
+    const QStyleOptionDockWidget *opt = qstyleoption_cast<const QStyleOptionDockWidget *>(option);
     if (!opt)
         return true;
 
@@ -204,7 +214,7 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
     if (dConf.uno.enabled)
     {
-        castObj(const QDockWidget *, dock, widget);
+        const QDockWidget *dock = qobject_cast<const QDockWidget *>(widget);
         painter->save();
         painter->setOpacity(dConf.shadows.opacity);
         painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));

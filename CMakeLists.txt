@@ -2,7 +2,6 @@ project(styleproject)
 cmake_minimum_required(VERSION 2.6)
 
 set(QT_USE_QTDBUS TRUE)
-#set (QT_USE_QTNETWORK TRUE)
 
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
@@ -15,8 +14,9 @@ add_definitions(${KDE4_DEFINITIONS})
 include_directories(${KDE4_INCLUDES})
 
 add_definitions(${QT_DEFINITIONS} ${QT_QTDBUS_DEFINITIONS})
-add_subdirectory(stylelib)
+set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 add_subdirectory(config)
+add_subdirectory(stylelib)
 
 set(SRCS
     buttons.cpp

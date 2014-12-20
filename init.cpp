@@ -7,7 +7,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
 #include "stylelib/handlers.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 void
 StyleProject::init()
@@ -86,7 +86,7 @@ StyleProject::assignMethods()
     m_pe[PE_PanelMenuBar] = method(drawMenuBar);
     m_pe[PE_IndicatorDockWidgetResizeHandle] = method(drawSplitter);
     m_pe[PE_PanelStatusBar] = method(drawStatusBar);
-    m_pe[PE_Widget] = method(primitiveSkipper);
+    m_pe[PE_Widget] = method(drawWindow);
     m_pe[PE_FrameWindow] = method(drawWindow);
     m_pe[PE_IndicatorToolBarHandle] = method(primitiveSkipper);
     m_pe[PE_FrameTabBarBase] = method(drawTabBar);

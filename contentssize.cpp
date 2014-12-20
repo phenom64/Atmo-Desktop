@@ -13,7 +13,7 @@
 #include "styleproject.h"
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 /** enum ContentsType {
     CT_PushButton,

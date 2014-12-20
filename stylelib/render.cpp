@@ -11,7 +11,7 @@
 
 #include "render.h"
 #include "color.h"
-#include "settings.h"
+#include "../config/settings.h"
 #include "macros.h"
 #include "ops.h"
 
@@ -532,21 +532,19 @@ void
 Render::shapeCorners(QWidget *w, QPainter *p, Sides s, int roundNess)
 {
     const QPainter::CompositionMode mode(p->compositionMode());
-    const QBrush brush(p->brush());
-    const QPen pen(p->pen());
+    const float opacity(p->opacity());
     p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p->setPen(Qt::NoPen);
-    p->setBrush(Qt::black);
+    p->setOpacity(1.0f);
     for (int i = 0; i < PartCount; ++i)
     if (needPart(i, s))
     {
         if (i != CenterPart && !roundNess)
             continue;
-        p->drawTiledPixmap(partRect(w->rect(), i, roundNess, s), m_mask[roundNess][i]);
+        p->drawPixmap(partRect(w->rect(), i, roundNess, s), m_mask[roundNess][i]);
     }
     p->setCompositionMode(mode);
-    p->setBrush(brush);
-    p->setPen(pen);
+    p->setOpacity(opacity);
 }
 
 QPixmap

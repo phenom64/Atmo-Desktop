@@ -1,5 +1,4 @@
 #include "settings.h"
-#include "color.h"
 #include <QSettings>
 #include <QFileInfo>
 #include <QDir>
@@ -36,12 +35,7 @@ Settings::pairToStop(const GradientStop pair, const QColor &c)
     QGradientStop stop;
     stop.first = pair.first;
     const int val(qAbs(pair.second));
-#if 0
-    const QColor mix(pair.second>0?Qt::white:Qt::black);
-    stop.second = Color::mid(c, mix, 100-val, val);
-#else
     stop.second = pair.second==0?c:(pair.second>0?c.lighter(100+val):c.darker(100+val));
-#endif
     return stop;
 }
 

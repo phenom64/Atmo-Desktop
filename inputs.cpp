@@ -16,7 +16,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, const QStyleOption *opt = 0)
 {

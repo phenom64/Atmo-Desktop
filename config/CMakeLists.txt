@@ -1,11 +1,14 @@
 message(STATUS "preparing config")
 set(PROJECT_NAME styleproject_config)
+set(LIB_NAME styleproject_config_lib)
 
 set(configSRCS
-    styleconfig.cpp)
+    styleconfig.cpp
+    settings.cpp)
     
 set(configHDRS
-    styleconfig.h)
+    styleconfig.h
+    settings.h)
 
 set(configMocHDRS
     styleconfig.h)
@@ -20,8 +23,14 @@ qt4_wrap_cpp(MOC_SRCS ${configMocHDRS})
 # standalone application to launch from terminal w/o going to systemsettings
 project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME} main.cpp ${configSRCS} ${MOC_SRCS} ${UI_HDRS})
-target_link_libraries(${PROJECT_NAME} stylelib ${QT_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${QT_BINARY_DIR})
+
+# shared library
+project(${LIB_NAME})
+add_library(${LIB_NAME} SHARED ${configSRCS} ${MOC_SRCS} ${UI_HDRS})
+target_link_libraries(${LIB_NAME} ${QT_LIBRARIES})
+install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${LIBRARY_DIR})
 
 # the systemsettings module in kde
 project(kde-style-module)

@@ -13,7 +13,7 @@
 #include "xhandler.h"
 #include "ops.h"
 #include "render.h"
-#include "settings.h"
+#include "../config/settings.h"
 
 Q_DECL_EXPORT ShadowHandler ShadowHandler::m_instance;
 

@@ -10,7 +10,6 @@ set(libSRCS
     progresshandler.cpp
     animhandler.cpp
     handlers.cpp
-    settings.cpp
     widgets.cpp)
     
 set(libHDRS
@@ -23,7 +22,6 @@ set(libHDRS
     progresshandler.h
     animhandler.h
     handlers.h
-    settings.h
     widgets.h)
 
 set(libMocHDRS
@@ -34,7 +32,6 @@ set(libMocHDRS
     widgets.h
     xhandler.h)
 
-set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 set(QT_USE_QTDBUS TRUE)
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
@@ -46,7 +43,7 @@ find_package(X11)
 add_library(stylelib SHARED ${libSRCS} ${libHDRS} ${MOC_SRCS})
 
 #${X11_Xrender_LIB}
-target_link_libraries(stylelib ${QT_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(stylelib styleproject_config_lib ${QT_LIBRARIES} ${X11_LIBRARIES})
 
 #${LIB_INSTALL_DIR}
 install(TARGETS stylelib LIBRARY DESTINATION ${LIBRARY_DIR})

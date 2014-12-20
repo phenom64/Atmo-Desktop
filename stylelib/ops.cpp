@@ -24,7 +24,7 @@
 #include "macros.h"
 #include "color.h"
 #include "render.h"
-#include "settings.h"
+#include "../config/settings.h"
 #include "handlers.h"
 
 Q_DECL_EXPORT Ops *Ops::s_instance = 0;

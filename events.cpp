@@ -20,7 +20,7 @@
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
 #include "stylelib/handlers.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 #include "overlay.h"
 #include "stylelib/animhandler.h"
 

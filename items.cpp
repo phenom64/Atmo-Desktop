@@ -17,7 +17,7 @@
 #include "styleproject.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 bool
 StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const

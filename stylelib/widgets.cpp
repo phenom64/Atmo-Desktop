@@ -1,5 +1,5 @@
 #include "widgets.h"
-#include "settings.h"
+#include "../config/settings.h"
 #include "color.h"
 #include "render.h"
 #include <QPainter>

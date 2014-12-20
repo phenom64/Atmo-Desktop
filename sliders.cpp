@@ -17,7 +17,7 @@
 #include "stylelib/color.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const

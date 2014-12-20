@@ -25,7 +25,7 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/handlers.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 class ProjectStylePlugin : public QStylePlugin
 {

@@ -23,7 +23,7 @@
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/xhandler.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 #include "stylelib/handlers.h"
 
 bool

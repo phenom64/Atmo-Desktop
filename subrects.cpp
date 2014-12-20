@@ -21,7 +21,7 @@
 #include "styleproject.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/ops.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 #include "stylelib/render.h"
 
 QRect

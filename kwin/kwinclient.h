@@ -82,7 +82,7 @@ private:
     Factory *m_factory;
     QPixmap m_bgPix[2];
     float m_opacity;
-    int m_headHeight, m_leftButtons, m_rightButtons;
+    int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle;
     bool m_needSeparator, m_contAware, m_uno;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;

@@ -5,7 +5,7 @@
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
-#include "stylelib/settings.h"
+#include "config/settings.h"
 
 int
 StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const
