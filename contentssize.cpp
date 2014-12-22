@@ -92,12 +92,11 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_TabBarTab:
     {
-        castOpt(TabV3, tab, opt);
-
+        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
         if (!tab)
             break;
 
-        castObj(const QTabBar *, bar, widget);
+        const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
         const bool safBar(Ops::isSafariTabBar(bar));
         QSize sz(contentsSize);
         if (safBar || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
@@ -105,7 +104,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             if (bar->expanding())
             {
                 int w(bar->width());
-                if (castObj(const QTabWidget *, tw, bar->parentWidget()))
+                if (const QTabWidget *tw = qobject_cast<const QTabWidget *>(bar->parentWidget()))
                 {
                     for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
                         if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
@@ -128,6 +127,12 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             }
             else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
+
+            if (!safBar)
+            {
+                sz.rheight()+=6;
+//                sz.setWidth(100);
+            }
         }
         if (styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignCenter)
         {

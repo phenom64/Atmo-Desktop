@@ -1038,10 +1038,12 @@ Drag::manage(QWidget *w)
 bool
 Drag::eventFilter(QObject *o, QEvent *e)
 {
-    if (!o || !e || !o->isWidgetType() || e->type() != QEvent::MouseButtonPress)
+    if (!o || !e || !o->isWidgetType() || e->type() != QEvent::MouseButtonPress || QApplication::overrideCursor())
         return false;
     QWidget *w(static_cast<QWidget *>(o));
     QMouseEvent *me(static_cast<QMouseEvent *>(e));
+    if (!w->rect().contains(me->pos()))
+        return false;
     bool cd(canDrag(w));
     if (QTabBar *tabBar = qobject_cast<QTabBar *>(w))
         cd = tabBar->tabAt(me->pos()) == -1;

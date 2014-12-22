@@ -95,9 +95,12 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
 //    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
 //        flags &= ~Qt::AlignHCenter;
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
-    if (pal.brush(bgRole).style() == Qt::SolidPattern && !pal.brush(bgRole).gradient())
-    if (pal.color(textRole).alpha() == 0xff /*&& pal.color(bgRole).alpha()*/)
-    if (textRole != QPalette::NoRole && bgRole != QPalette::NoRole && enabled)
+    if (enabled
+            && pal.brush(bgRole).style() == Qt::SolidPattern
+            && !pal.brush(bgRole).gradient()
+            && pal.color(textRole).alpha() == 0xff
+            && textRole != QPalette::NoRole
+            && bgRole != QPalette::NoRole)
     {
         const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
         const int rgb(isDark?0:255);

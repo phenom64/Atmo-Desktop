@@ -228,17 +228,15 @@ StyleProject::polish(QWidget *widget)
         tabBar->setAttribute(Qt::WA_MouseTracking);
         installFilter(tabBar);
 
-        if (dConf.app == Settings::Konsole)
+        if (tabBar->expanding() && !dConf.uno.enabled)
+            tabBar->setExpanding(false);
+
+        if (dConf.app == Settings::Konsole
+                && safari
+                && tabBar->parentWidget())
         {
-            if (safari) //hmmm
-            {
-                QWidget *p(tabBar->parentWidget());
-                if (p)
-                {
-                    p->setObjectName("konsole_tabbar_parent");
-                    installFilter(p);
-                }
-            }
+            tabBar->parentWidget()->setObjectName("konsole_tabbar_parent");
+            installFilter(tabBar->parentWidget());
         }
     }
     else if (qobject_cast<QMainWindow *>(widget))

@@ -179,29 +179,23 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     if (styleHint(SH_TabBar_Alignment, option, widget) == Qt::AlignCenter)
         return drawSelector(opt, painter, bar);
 
-//    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
-//            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
-//            isLast(opt->position == QStyleOptionTab::End),
-//            isRtl(opt->direction == Qt::RightToLeft),
-//            isSelected(opt->state & State_Selected);
-
-    painter->save();
-//    if (isSelected)
-//    {
-//        painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-//        painter->fillRect(option->rect, Qt::black);
-//        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
-//        if (XHandler::opacity() < 1.0f)
-//        {
-//            painter->setOpacity(XHandler::opacity());
-//            painter->fillRect(opt->rect, opt->palette.color(QPalette::Window));
-//            painter->setOpacity(1.0f);
-//        }
-//    }
-    painter->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
-    painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());
-    painter->restore();
-
+    const bool isFirst(opt->position == QStyleOptionTab::Beginning),
+            isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
+            isLast(opt->position == QStyleOptionTab::End),
+            isRtl(opt->direction == Qt::RightToLeft),
+            isSelected(opt->state & State_Selected);
+    const int topMargin(!isSelected*2);
+    const int level(isSelected?STEPS:bar?Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())):0);
+    Render::renderShadow(Render::Raised, opt->rect.adjusted(0, topMargin, 0, -4), painter, 4, Render::All & ~Render::Bottom, dConf.shadows.opacity);
+    const QRect maskRect(opt->rect.adjusted(2, 1+topMargin, -2, -4));
+    QLinearGradient lg(0, 0, 0, isSelected?opt->rect.height():maskRect.height());
+    QColor c(opt->palette.color(QPalette::Window));
+    QColor c2 = Color::mid(c, opt->palette.color(QPalette::Highlight), 2, 1);
+    c = Color::mid(c, c2, STEPS-level, level);
+    lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, c));
+    Render::renderMask(maskRect, painter, lg, 2, Render::All & ~Render::Bottom);
+    if (!isSelected)
+        Render::renderShadow(Render::Raised, opt->rect.adjusted(2, opt->rect.bottom()-6, -2, 0), painter, 4, Render::Top, dConf.shadows.opacity);
     return true;
 }
 
@@ -270,6 +264,7 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
     const bool safari(Ops::isSafariTabBar(bar));
+    bool needRestore(false);
     if (safari || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
         fg = QPalette::WindowText;
     else if (isSelected)
@@ -281,9 +276,9 @@ StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const 
         elide = Qt::ElideRight;
     const QString text(fm.elidedText(opt->text, elide, tr.width()));
     drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, text, fg);
-    painter->restore();
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
+    painter->restore();
     return true;
 }
 
@@ -310,17 +305,25 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
     }
     else if (bar->documentMode())
     {
-        p->save();
+//        p->save();
 //        QLinearGradient lg(r.topLeft(), r.bottomLeft());
 //        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, bar->palette().color(QPalette::Window)));
 //        p->fillRect(r, lg);
-        p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
-        p->drawLine(r.topLeft(), r.topRight());
-        p->drawLine(r.bottomLeft(), r.bottomRight());
-        p->setPen(QColor(255, 255, 255, 127.0f*dConf.shadows.opacity));
-        r.setTop(r.top()+1);
-        p->drawLine(r.topLeft(), r.topRight());
-        p->restore();
+//        p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
+//        p->drawLine(r.topLeft(), r.topRight());
+//        p->drawLine(r.bottomLeft(), r.bottomRight());
+//        p->setPen(QColor(255, 255, 255, 127.0f*dConf.shadows.opacity));
+//        r.setTop(r.top()+1);
+//        p->drawLine(r.topLeft(), r.topRight());
+//        p->restore();
+
+        QRect rt(r.adjusted(0, r.height()-6, 0, 0));
+        Render::renderShadow(Render::Raised, rt, p, 2, Render::All & ~Render::Bottom, dConf.shadows.opacity);
+        rt.adjust(0, 2, 0, 0);
+        QLinearGradient lg(0, 0, 0, bar->height());
+        QColor c(Color::mid(bar->palette().color(QPalette::Window), bar->palette().color(QPalette::Highlight), 2, 1));
+        lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, c));
+        Render::renderMask(rt, p, lg, 0, Render::All & ~Render::Bottom, -QPoint(0, bar->height()-4));
     }
 }
 

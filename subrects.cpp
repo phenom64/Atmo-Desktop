@@ -141,14 +141,14 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     case SE_TabBarTabRightButton:
     case SE_TabBarTabText:
     {
-        castOpt(TabV3, tab, opt);
-        castObj(const QTabBar *, bar, widget);
+        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
+        const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
         if (!tab)
             return QRect();
 
         const bool safBar(Ops::isSafariTabBar(bar));
         int o(safBar?dConf.tabs.safrnd:4);
-        int ladd((safBar && tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)*o);
+        int ladd((safBar && (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab))*o);
         int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
         QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));
         QRect textRect(rect);
@@ -211,14 +211,18 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
         if (tab->text.isEmpty())
             textRect = QRect();
 
+        int trans(0);
+        if (bar->documentMode() && !safBar)
+            trans = opt->state & State_Selected?-4:-2;
+
         switch (r)
         {
         case SE_TabBarTabLeftButton:
-            return visualRect(tab->direction, tab->rect, leftRect);
+            return visualRect(tab->direction, tab->rect, leftRect).translated(0, trans);
         case SE_TabBarTabRightButton:
-            return visualRect(tab->direction, tab->rect, rightRect);
+            return visualRect(tab->direction, tab->rect, rightRect).translated(0, trans);
         case SE_TabBarTabText:
-            return visualRect(tab->direction, tab->rect, textRect);
+            return visualRect(tab->direction, tab->rect, textRect).translated(0, trans);
         default: return QCommonStyle::subElementRect(r, opt, widget);
         }
     }

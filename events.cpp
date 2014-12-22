@@ -136,6 +136,21 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         w->installEventFilter(this);
         return true;
     }
+#if 0
+    else if (QTabBar *bar = qobject_cast<QTabBar *>(w))
+    {
+        if (!bar->documentMode() || Ops::isSafariTabBar(bar))
+            return false;
+        w->removeEventFilter(this);
+        QCoreApplication::sendEvent(o, e);
+        QStyleOptionTabBarBaseV2 opt;
+        opt.initFrom(w);
+        QPainter p(w);
+        drawTabBar(&opt, &p, w);
+        w->installEventFilter(this);
+        return true;
+    }
+#endif
     return QCommonStyle::eventFilter(o, e);
 }
 

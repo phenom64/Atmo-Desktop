@@ -10,6 +10,7 @@
 #include <QStyleOptionProgressBar>
 #include <QStyleOptionProgressBarV2>
 #include <QTextBrowser>
+#include <QApplication>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -69,8 +70,9 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     {
         if (opt->SUNKEN)
             level = STEPS;
-        const QColor bgColor(Color::mid(opt->palette.color(QPalette::Highlight), opt->palette.color(QPalette::Window), level, STEPS-level)),
-                fgColor(Color::mid(opt->palette.color(QPalette::HighlightedText), opt->palette.color(QPalette::WindowText), level, STEPS-level));
+        const QPalette pal = QApplication::palette();
+        const QColor bgColor(Color::mid(pal.color(QPalette::Highlight), pal.color(QPalette::Window), level, STEPS-level)),
+                fgColor(Color::mid(pal.color(QPalette::HighlightedText), pal.color(QPalette::WindowText), level, STEPS-level));
 
         const bool hor(opt->orientation == Qt::Horizontal),
                 ltr(opt->direction == Qt::LeftToRight);
@@ -84,7 +86,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         Ops::drawArrow(painter, fgColor, down, hor?Ops::Right:Ops::Down, 7);
 
         groove.setBottom(groove.bottom()+1);
-        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, opt->palette.color(QPalette::Base)));
+        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, pal.color(QPalette::Base)));
         QBrush bg(lg);
         Render::drawClickable(Render::Sunken,
                               groove.adjusted(-!hor, -hor, !hor, hor),
@@ -107,7 +109,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         for (int i = 0; i < 2; ++i)
         {
             if (!i)
-                painter->setPen(opt->palette.color(QPalette::Window));
+                painter->setPen(pal.color(QPalette::Window));
             else
                 painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
 
@@ -190,7 +192,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 
     QColor bgc(opt->palette.color(bg));
     const QColor grooveBg(Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
-    QLinearGradient lga(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
+    QLinearGradient lga(0, 0, !hor*Render::maskWidth(gs, groove.width()), hor*Render::maskHeight(gs, groove.height()));
     lga.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, grooveBg));
     QBrush amask(lga);
 
@@ -218,7 +220,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     if (dConf.sliders.fillGroove)
     {
         painter->setClipRect(clip);
-        QLinearGradient lgh(0, 0, hor*Render::maskWidth(gs, groove.width()), !hor*Render::maskHeight(gs, groove.height()));
+        QLinearGradient lgh(0, 0, !hor*Render::maskWidth(gs, groove.width()), hor*Render::maskHeight(gs, groove.height()));
         lgh.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
         QBrush hmask(lgh);
         Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, option, &hmask);
@@ -233,7 +235,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
             int x, y, x2, y2;
             opt->rect.getCoords(&x, &y, &x2, &y2);
 
-            const int available(pixelMetric( PM_SliderSpaceAvailable, option, widget ));
+            const int available(pixelMetric(PM_SliderSpaceAvailable, option, widget));
 
             int interval = opt->tickInterval;
             if (interval < 1)

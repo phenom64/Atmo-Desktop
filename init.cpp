@@ -89,6 +89,7 @@ StyleProject::assignMethods()
     m_pe[PE_Widget] = method(drawWindow);
     m_pe[PE_FrameWindow] = method(drawWindow);
     m_pe[PE_IndicatorToolBarHandle] = method(primitiveSkipper);
+//    m_pe[PE_FrameTabBarBase] = method(primitiveSkipper);
     m_pe[PE_FrameTabBarBase] = method(drawTabBar);
     m_pe[PE_FrameTabWidget] = method(drawTabWidget);
     m_pe[PE_IndicatorTabClose] = method(drawTabCloser);
