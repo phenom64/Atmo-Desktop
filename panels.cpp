@@ -129,7 +129,8 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
 bool
 StyleProject::drawWindow(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    painter->fillRect(option->rect, option->palette.color(QPalette::Window));
+    if (widget && widget->isWindow())
+        painter->fillRect(option->rect, option->palette.color(QPalette::Window));
     return true;
 }
 

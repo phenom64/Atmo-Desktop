@@ -8,6 +8,7 @@
 #include <QSlider>
 #include <QToolBox>
 #include <QStyleOption>
+#include <QLineEdit>
 
 #include "render.h"
 #include "color.h"
@@ -16,7 +17,7 @@
 #include "ops.h"
 
 Q_DECL_EXPORT Render Render::m_instance;
-QPixmap Render::m_mask[][Render::PartCount];
+QPixmap Render::m_mask[MAXRND+1][Render::PartCount];
 
 /* blurring function below from:
  * http://stackoverflow.com/questions/3903223/qt4-how-to-blur-qpixmap-image
@@ -792,10 +793,11 @@ Render::drawClickable(Shadow s,
         return;
 
     const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
+    const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     const bool sunken(opt && opt->state & QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange);
     if (opt
             && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
-            && s != Carved && s != Yosemite && !isToolBox)
+            && s != Carved && s != Yosemite && !isToolBox && !isLineEdit)
     {
         if (s == Raised)
             r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);

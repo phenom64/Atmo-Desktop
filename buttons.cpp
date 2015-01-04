@@ -11,6 +11,7 @@
 #include <QBrush>
 #include <QDockWidget>
 #include <QMenu>
+#include <QLineEdit>
 
 #include "styleproject.h"
 #include "stylelib/render.h"
@@ -289,10 +290,9 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     if (dConf.toolbtn.shadow == Render::Rect)
     {
         const QPalette pal(bar?bar->palette():opt->palette);
-        int hl(Anim::ToolBtns::level(btn, false));
         if (opt->SUNKEN)
-            hl = STEPS;
-        QColor bc = Color::mid(pal.foreground().color(), pal.highlight().color(), STEPS-hl, hl);
+            hover[0] = STEPS;
+        QColor bc = Color::mid(pal.foreground().color(), pal.highlight().color(), STEPS-hover[0], hover[0]);
         QBrush brush(bc);
         if (opt->SUNKEN)
         {

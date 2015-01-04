@@ -58,6 +58,8 @@ StyleProject::layoutSpacingAndMargins(const QWidget *w)
             return 0;
 #endif
     }
+    if (qobject_cast<const QGroupBox *>(w))
+        return 8;
     return 4;
 }
 
@@ -128,19 +130,20 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
-        if (!widget || !option)
-            return dConf.uno.enabled?0:2;
+        if (!widget)
+            return 2;
         if (qobject_cast<const QLineEdit *>(widget))
             return 0;
+        if (qobject_cast<const QGroupBox *>(widget))
+            return 8;
+
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (OverLay::hasOverLay(frame))
             return 0;
-        if (qobject_cast<const QGroupBox *>(widget))
-            return 4;
 
         if (frame && frame->frameShadow() == QFrame::Raised)
             return 8;
-        if (option->state & State_Raised) //the buttons in qtcreator....
+        if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
         if (dConf.uno.enabled)
@@ -151,7 +154,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         {
             return 0;
         }
-        return dConf.uno.enabled?0:2;
+        return 2;
     }
     case PM_ComboBoxFrameWidth: return 0;
     case PM_ToolBarItemSpacing: return 0;

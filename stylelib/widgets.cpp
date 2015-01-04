@@ -91,6 +91,12 @@ Button::isDark() const
     return Color::luminosity(w->palette().color(w->foregroundRole())) > Color::luminosity(w->palette().color(w->backgroundRole()));
 }
 
+const Button::ButtonStyle
+Button::buttonStyle() const
+{
+    return dConf.deco.buttons;
+}
+
 /**
  * @brief Button::drawBase
  * @param c
@@ -104,11 +110,11 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
-    if (dConf.deco.buttons)
+    if (buttonStyle())
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
-    switch (dConf.deco.buttons)
+    switch (buttonStyle())
     {
-    case 0:
+    case Yosemite:
     {
         p.save();
         p.setPen(Qt::NoPen);
@@ -124,7 +130,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.restore();
         break;
     }
-    case 1:
+    case Lion:
     {
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
@@ -154,7 +160,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(rr);
         break;
     }
-    case 2:
+    case Sunken:
     {
         const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
@@ -173,7 +179,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         break;
     }
-    case 3:
+    case Carved:
     {
         p.save();
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
@@ -208,6 +214,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.restore();
         break;
     }
+#if 0
     case 4:
     {
         p.save();
@@ -218,6 +225,7 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
         p.restore();
         break;
     }
+#endif
     default: break;
     }
 }

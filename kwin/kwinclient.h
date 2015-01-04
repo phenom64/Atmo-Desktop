@@ -33,6 +33,7 @@ protected:
     bool paintShadeButton(QPainter &p);
     bool paintQuickHelpButton(QPainter &p);
 
+    const ButtonStyle buttonStyle() const;
 
     const QColor color(const ColorRole &c) const;
     const bool isDark() const;

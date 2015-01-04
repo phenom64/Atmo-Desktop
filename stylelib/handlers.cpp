@@ -641,7 +641,7 @@ Window::eventFilter(QObject *o, QEvent *e)
                 p.setPen(Qt::black);
                 p.setOpacity(dConf.shadows.opacity);
                 if (dConf.uno.enabled)
-                    if (int th = Handlers::unoHeight(w, Handlers::ToolBars))
+                    if (int th = Handlers::unoHeight(w, ToolBars))
                         p.drawLine(0, th, w->width(), th);
                 p.end();
                 return false;
@@ -928,7 +928,7 @@ Window::updateWindowData(QWidget *win)
     const unsigned int height(getHeadHeight(win, ns));
     wd.data = 0;
     wd.data |= dConf.uno.enabled*WindowData::Uno;
-    wd.data |= dConf.uno.enabled&&dConf.uno.contAware*WindowData::ContAware;
+    wd.data |= bool(dConf.uno.enabled&&dConf.uno.contAware)*WindowData::ContAware;
     wd.data |= (height<<16)&WindowData::UnoHeight;
     wd.data |= WindowData::Separator*ns;
     wd.data |= (int(win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100)<<8&WindowData::Opacity);
@@ -1038,9 +1038,11 @@ Drag::manage(QWidget *w)
 bool
 Drag::eventFilter(QObject *o, QEvent *e)
 {
-    if (!o || !e || !o->isWidgetType() || e->type() != QEvent::MouseButtonPress || QApplication::overrideCursor())
+    if (!o || !e || !o->isWidgetType() || e->type() != QEvent::MouseButtonPress || QApplication::overrideCursor() || QWidget::mouseGrabber())
         return false;
     QWidget *w(static_cast<QWidget *>(o));
+    if (w->cursor().shape() != Qt::ArrowCursor)
+        return false;
     QMouseEvent *me(static_cast<QMouseEvent *>(e));
     if (!w->rect().contains(me->pos()))
         return false;
@@ -1071,6 +1073,7 @@ static QList<QWidget *> s_watched;
 
 ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent)
 {
+    connect(this, SIGNAL(updateRequest()), this, SLOT(updateLater()), Qt::QueuedConnection);
 }
 
 void
@@ -1250,7 +1253,8 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         QCoreApplication::sendEvent(o, e);
         s_win = win;
         if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, Handlers::ToolBarAndTabBar))
-            QTimer::singleShot(0, this, SLOT(updateLater()));
+//            QTimer::singleShot(0, this, SLOT(updateLater()));
+            emit updateRequest();
         o->installEventFilter(this);
         s_block = false;
         return true;

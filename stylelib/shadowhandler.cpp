@@ -96,7 +96,7 @@ unsigned long
         p.drawRoundedRect(r.adjusted(-1, -1, 1, 1), 5, 5);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.setBrush(Qt::black);
-        p.drawRoundedRect(r, 4, 4);
+        p.drawRoundedRect(r, 5, 5);
         p.end();
 
         for (int i = 0; i < 12; ++i)

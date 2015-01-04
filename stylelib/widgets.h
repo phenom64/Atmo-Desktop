@@ -3,9 +3,12 @@
 
 #include <QWidget>
 #include <QSplitterHandle>
+
 class Q_DECL_EXPORT Button : public QWidget
 {
 public:
+    enum Style { Yosemite = 0, Lion, Sunken, Carved, StyleCount };
+    typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid };
     enum Type { Close,
                 Min,
@@ -42,6 +45,7 @@ protected:
 
     virtual const QColor color(const ColorRole &c = Fg) const;
     virtual const bool isDark() const;
+    virtual const ButtonStyle buttonStyle() const;
 
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 

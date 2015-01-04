@@ -29,6 +29,12 @@ DButton::DButton(const Type &t, KwinClient *client, QWidget *parent)
 {
 }
 
+const DButton::ButtonStyle
+DButton::buttonStyle() const
+{
+    return m_client->m_buttonStyle;
+}
+
 const bool
 DButton::isDark() const
 {
@@ -500,7 +506,7 @@ KwinClient::paint(QPainter &p)
     lg.setColorAt(0.5f, Qt::transparent);
     p.setBrush(Qt::NoBrush);
     p.setPen(QPen(lg, 1.0f));
-    p.drawRoundedRect(QRectF(tr).translated(0.5f, 0.5f), 5, 5);
+    p.drawRoundedRect(QRectF(tr).adjusted(0.5f, 0.5f, -0.5f, -0.5f), 5, 5);
     if (m_contAware)
     {
         if (!m_mem)
@@ -635,6 +641,7 @@ KwinClient::reset(unsigned long changed)
             m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
             needBg = false;
         }
+
         WindowData *wd = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData));
         if (wd && !isPreview())
         {
@@ -650,7 +657,7 @@ KwinClient::reset(unsigned long changed)
             m_custcol[Bg] = QColor::fromRgba(wd->bg);
             m_opacity = (float)((wd->data & WindowData::Opacity) >> 8)/100.0f;
             m_uno = wd->data & WindowData::Uno;
-            m_buttonStyle = (wd->data & WindowData::Buttons) >> 24 -1;
+            m_buttonStyle = ((wd->data & WindowData::Buttons) >> 24) -1;
             XFree(wd);
         }
         else if (needBg && m_uno)

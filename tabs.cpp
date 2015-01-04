@@ -192,7 +192,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
     QColor c(opt->palette.color(QPalette::Window));
     QColor c2 = Color::mid(c, opt->palette.color(QPalette::Highlight), 2, 1);
     c = Color::mid(c, c2, STEPS-level, level);
-    lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, c));
+    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
     Render::renderMask(maskRect, painter, lg, 2, Render::All & ~Render::Bottom);
     if (!isSelected)
         Render::renderShadow(Render::Raised, opt->rect.adjusted(2, opt->rect.bottom()-6, -2, 0), painter, 4, Render::Top, dConf.shadows.opacity);

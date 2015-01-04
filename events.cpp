@@ -35,17 +35,16 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     QWidget *w(static_cast<QWidget *>(o));
     switch (e->type())
     {
-//    case QEvent::Show:
-//    case QEvent::Leave:
-//    case QEvent::HoverLeave:
-//    case QEvent::Enter:
-//    case QEvent::HoverEnter:
-//    {
-//        qDebug() << w << w->parentWidget();
-//    }
-//    case QEvent::Close:
-//        if (w->testAttribute(Qt::WA_TranslucentBackground) && w->isWindow())
-//            XHandler::deleteXProperty(w->winId(), XHandler::KwinBlur);
+#if 0
+    case QEvent::Show:
+    case QEvent::Leave:
+    case QEvent::HoverLeave:
+    case QEvent::Enter:
+    case QEvent::HoverEnter:
+    {
+        qDebug() << w << w->parentWidget();
+    }
+#endif
     case QEvent::Hide:
     {
         if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
