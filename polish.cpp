@@ -102,6 +102,51 @@ StyleProject::polish(QWidget *widget)
     if (Handlers::Drag::canDrag(widget))
         Handlers::Drag::manage(widget);
 
+    if (widget->isWindow())
+    {
+        if (qobject_cast<QMainWindow *>(widget))
+        {
+            if (dConf.compactMenu
+                    && widget->findChild<QMenuBar *>())
+                Handlers::Window::addCompactMenu(widget);
+
+//            if (!dConf.uno.enabled
+//                    && !(widget->isMaximized() || widget->isFullScreen()))
+//                widget->setContentsMargins(4, 0, 4, 4);
+
+            if (XHandler::opacity() < 1.0f
+                    && !widget->testAttribute(Qt::WA_TranslucentBackground))
+                applyTranslucency(widget);
+
+            if (dConf.removeTitleBars)
+                ShadowHandler::manage(widget);
+            Handlers::Window::manage(widget);
+        }
+        else if (qobject_cast<QDialog *>(widget))
+        {
+            bool needHandler(dConf.hackDialogs && widget->isModal());
+
+            if (!dConf.uno.enabled)
+            {
+                if (!(widget->isMaximized() || widget->isFullScreen()))
+                    widget->setContentsMargins(4, 0, 4, 4);
+
+                if (XHandler::opacity() < 1.0f
+                        && !widget->testAttribute(Qt::WA_TranslucentBackground))
+                {
+                    applyTranslucency(widget);
+                    needHandler = true;
+                }
+            }
+
+            if (needHandler)
+            {
+                Handlers::Window::manage(widget);
+                ShadowHandler::manage(widget);
+            }
+        }
+    }
+
     //main if segment for all widgets
     if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
     {
@@ -237,50 +282,8 @@ StyleProject::polish(QWidget *widget)
         {
             tabBar->parentWidget()->setObjectName("konsole_tabbar_parent");
             installFilter(tabBar->parentWidget());
-        }
-    }
-    else if (qobject_cast<QMainWindow *>(widget))
-    {
-        if (widget->isWindow())
-        {
-            if (dConf.compactMenu
-                    && widget->findChild<QMenuBar *>())
-                Handlers::Window::addCompactMenu(widget);
-
-            if (!dConf.uno.enabled
-                    && !(widget->isMaximized() || widget->isFullScreen()))
-                widget->setContentsMargins(4, 0, 4, 4);
-
-            if (XHandler::opacity() < 1.0f
-                    && !widget->testAttribute(Qt::WA_TranslucentBackground))
-                applyTranslucency(widget);
-
-            if (dConf.removeTitleBars)
-                ShadowHandler::manage(widget);
-            Handlers::Window::manage(widget);
-        }
-    }
-    else if (qobject_cast<QDialog *>(widget))
-    {
-        bool needHandler(dConf.hackDialogs && widget->isModal());
-
-        if (!dConf.uno.enabled)
-        {
-            if (!(widget->isMaximized() || widget->isFullScreen()))
-                widget->setContentsMargins(4, 0, 4, 4);
-
-            if (XHandler::opacity() < 1.0f
-                    && !widget->testAttribute(Qt::WA_TranslucentBackground))
-            {
-                applyTranslucency(widget);
-                needHandler = true;
-            }
-        }
-
-        if (needHandler)
-        {
-            Handlers::Window::manage(widget);
-            ShadowHandler::manage(widget);
+            disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
+            connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
         }
     }
     else if (widget->inherits("KTitleWidget"))

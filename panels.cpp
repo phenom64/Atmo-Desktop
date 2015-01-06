@@ -247,7 +247,7 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
 bool
 StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget)
+    if (!widget || widget->isWindow())
         return true;
 
     const QStyleOptionFrameV3 *opt = qstyleoption_cast<const QStyleOptionFrameV3 *>(option);

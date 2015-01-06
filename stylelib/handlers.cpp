@@ -851,8 +851,8 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
         }
     }
     hd[All] += hd[ToolBarAndTabBar];
-    if (oldHead != hd[All] && qobject_cast<QMainWindow *>(win))
-        ScrollWatcher::detachMem(static_cast<QMainWindow *>(win));
+//    if (oldHead != hd[All] && qobject_cast<QMainWindow *>(win))
+//        ScrollWatcher::detachMem(static_cast<QMainWindow *>(win));
     s_unoData.insert(win, Data(hd, possible));
     return hd[All];
 }
@@ -933,6 +933,7 @@ Window::updateWindowData(QWidget *win)
     wd.data |= WindowData::Separator*ns;
     wd.data |= (int(win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100)<<8&WindowData::Opacity);
     wd.data |= (dConf.deco.buttons+1)<<24;
+    wd.data |= (dConf.deco.frameSize)<<28;
     wd.text = win->palette().color(win->foregroundRole()).rgba();
     wd.bg = win->palette().color(win->backgroundRole()).rgba();
 
@@ -974,6 +975,7 @@ Window::updateWindowData(QWidget *win)
     XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 3);
     updateDeco(win->winId(), 1);
     XHandler::clearX11PixmapsLater();
+    emit instance()->windowDataChanged(win);
 }
 
 void
@@ -1163,10 +1165,14 @@ ScrollWatcher::regenBg(QMainWindow *win)
         m = new QSharedMemory(QString::number(win->winId()), win);
         s_mem.insert(win, m);
     }
-    const int dataSize((win->width()*uno)*4);
+
     if (!m->isAttached())
+    {
+        const int dataSize(2048*128*4);
         if (!m->create(dataSize))
             return;
+    }
+
     if (m->lock())
     {
         uchar *data = reinterpret_cast<uchar *>(m->data());
@@ -1237,8 +1243,8 @@ bool
 ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
     static bool s_block(false);
-    if ((e->type() == QEvent::Resize || e->type() == QEvent::Close) && qobject_cast<QMainWindow *>(o))
-        detachMem(static_cast<QMainWindow *>(o));  
+    if (e->type() == QEvent::Close && qobject_cast<QMainWindow *>(o))
+            detachMem(static_cast<QMainWindow *>(o));
     else if (e->type() == QEvent::Paint && !s_block && qobject_cast<QAbstractScrollArea *>(o->parent()))
     {
         s_win = 0;
@@ -1253,7 +1259,6 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
         QCoreApplication::sendEvent(o, e);
         s_win = win;
         if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, Handlers::ToolBarAndTabBar))
-//            QTimer::singleShot(0, this, SLOT(updateLater()));
             emit updateRequest();
         o->installEventFilter(this);
         s_block = false;

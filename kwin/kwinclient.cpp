@@ -294,6 +294,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_mem(0)
     , m_contAware(false)
     , m_uno(true)
+    , m_frameSize(0)
 {
     setParent(factory);
     Settings::read();
@@ -322,7 +323,7 @@ KwinClient::init()
     m_titleLayout->setContentsMargins(MARGIN, 3, MARGIN, 3);
     QVBoxLayout *l = new QVBoxLayout(widget());
     l->setSpacing(0);
-    l->setContentsMargins(0, 0, 0, 0);
+    l->setContentsMargins(dConf.deco.frameSize, dConf.deco.frameSize, dConf.deco.frameSize, dConf.deco.frameSize);
     l->addLayout(m_titleLayout);
     l->addStretch();
     widget()->setLayout(l);
@@ -391,7 +392,7 @@ KwinClient::updateMask()
     const int w(width()), h(height());
     if (compositingActive())
     {
-        if (m_opacity < 1.0f)
+        if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
             clearMask();
         else
         {
@@ -414,8 +415,6 @@ KwinClient::updateMask()
 void
 KwinClient::resize(const QSize &s)
 {
-    if (m_mem && m_mem->isAttached())
-        m_mem->detach();
     widget()->resize(s);
     updateMask();
 }
@@ -423,10 +422,9 @@ KwinClient::resize(const QSize &s)
 void
 KwinClient::borders(int &left, int &right, int &top, int &bottom) const
 {
-    left = 0;
-    right = 0;
-    top = TITLEHEIGHT;
-    bottom = 0;
+    const int f((maximizeMode()!=MaximizeFull)*dConf.deco.frameSize);
+    left = right = bottom = f;
+    top = TITLEHEIGHT+f;
 }
 
 void
@@ -487,6 +485,9 @@ KwinClient::paint(QPainter &p)
     p.fillRect(widget()->rect(), Qt::transparent);
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);
     p.setBrushOrigin(widget()->rect().topLeft());
+
+    p.fillRect(widget()->rect(), Color::mid(widget()->palette().color(widget()->foregroundRole()), widget()->palette().color(widget()->backgroundRole())));
+
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::NoBrush);
     const QRect tr(m_titleLayout->geometry());
@@ -501,17 +502,30 @@ KwinClient::paint(QPainter &p)
     const int bgLum(Color::luminosity(bgColor()));
     const bool isDark(Color::luminosity(fgColor()) > bgLum);
 
-    QLinearGradient lg(tr.topLeft(), tr.bottomLeft());
-    lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
-    lg.setColorAt(0.5f, Qt::transparent);
-    p.setBrush(Qt::NoBrush);
-    p.setPen(QPen(lg, 1.0f));
-    p.drawRoundedRect(QRectF(tr).adjusted(0.5f, 0.5f, -0.5f, -0.5f), 5, 5);
+    if (dConf.deco.frameSize && maximizeMode() != MaximizeFull)
+    {
+        QRectF r(widget()->layout()->geometry().adjusted(dConf.deco.frameSize, dConf.deco.frameSize, -dConf.deco.frameSize, -dConf.deco.frameSize));
+        r.adjust(-0.5f, -0.5f, 0.5f, 0.5f);
+        p.setPen(QColor(0, 0, 0, 127));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(r);
+    }
+    else
+    {
+        const QRectF bevel(0.5f, 0.5f, width()-0.5f, 10.0f);
+        QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
+        lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
+        lg.setColorAt(0.5f, Qt::transparent);
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(lg, 1.0f));
+        p.drawRoundedRect(bevel, 5, 5);
+    }
+
     if (m_contAware)
     {
         if (!m_mem)
             m_mem = new QSharedMemory(QString::number(windowId()), this);
-        if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->size() == (widget()->width()*m_headHeight)*4)
+        if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)))
             if (m_mem->lock())
             {
                 p.setOpacity(dConf.uno.opacity);
@@ -545,6 +559,7 @@ KwinClient::paint(QPainter &p)
     if (dConf.deco.icon && !icon().isNull())
     {
         QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
+        ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
         if (ir.left() > m_leftButtons)
             p.drawTiledPixmap(ir, icon().pixmap(16));
     }
@@ -566,14 +581,7 @@ KwinClient::paint(QPainter &p)
         p.setClipping(false);
     }
     else
-    {
-//        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-//        Render::renderMask(tr, &p, Qt::black, 4, Render::All&~Render::Bottom);
-        p.setOpacity(1.0f);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        p.drawPixmap(QRect(widget()->rect().topLeft(), Factory::s_topLeft->size()), *Factory::s_topLeft);
-        p.drawPixmap(QRect(QPoint((widget()->x()+width())-Factory::s_topRight->size().width(), widget()->y()), Factory::s_topRight->size()), *Factory::s_topRight);
-    }
+        Render::shapeCorners(widget(), &p, Render::All);
 }
 
 QSize
@@ -596,6 +604,42 @@ void
 KwinClient::updateContBg()
 {
     widget()->update();
+}
+
+//below stolen from http://www.usermode.org/docs/kwintheme.html, unused atm
+KDecorationDefines::Position
+KwinClient::mousePosition(const QPoint &point) const
+{
+    const int corner = 24;
+    Position pos;
+
+    if (point.y() <= dConf.deco.frameSize) { // inside top frame
+        if (point.x() <= corner)                 pos = PositionTopLeft;
+        else if (point.x() >= (width()-corner))  pos = PositionTopRight;
+        else                                     pos = PositionTop;
+    } else if (point.y() >= (height()-dConf.deco.frameSize*2)) { // inside handle
+        if (point.x() <= corner)                 pos = PositionBottomLeft;
+        else if (point.x() >= (width()-corner))  pos = PositionBottomRight;
+        else                                     pos = PositionBottom;
+    } else if (point.x() <= dConf.deco.frameSize) { // on left frame
+        if (point.y() <= corner)                 pos = PositionTopLeft;
+        else if (point.y() >= (height()-corner)) pos = PositionBottomLeft;
+        else                                     pos = PositionLeft;
+    } else if (point.x() >= width()-dConf.deco.frameSize) { // on right frame
+        if (point.y() <= corner)                 pos = PositionTopRight;
+        else if (point.y() >= (height()-corner)) pos = PositionBottomRight;
+        else                                     pos = PositionRight;
+    } else { // inside the frame
+        pos = PositionCenter;
+    }
+    return pos;
+}
+
+void
+KwinClient::maximizeChange()
+{
+    const int fs((maximizeMode()!=MaximizeFull)*dConf.deco.frameSize);
+    widget()->layout()->setContentsMargins(fs, fs, fs, fs);
 }
 
 /**
@@ -647,10 +691,6 @@ KwinClient::reset(unsigned long changed)
         {
             const int height((wd->data & WindowData::UnoHeight) >> 16);
             m_contAware = wd->data & WindowData::ContAware;
-            if (m_contAware
-                    && m_headHeight != height
-                    && m_mem && m_mem->isAttached())
-                m_mem->detach();
             m_headHeight = height;
             m_needSeparator = wd->data & WindowData::Separator;
             m_custcol[Text] = QColor::fromRgba(wd->text);
@@ -658,6 +698,7 @@ KwinClient::reset(unsigned long changed)
             m_opacity = (float)((wd->data & WindowData::Opacity) >> 8)/100.0f;
             m_uno = wd->data & WindowData::Uno;
             m_buttonStyle = ((wd->data & WindowData::Buttons) >> 24) -1;
+            m_frameSize = (wd->data & WindowData::Frame) >> 28;
             XFree(wd);
         }
         else if (needBg && m_uno)

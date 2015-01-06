@@ -132,7 +132,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     {
         if (!widget)
             return 2;
-        if (qobject_cast<const QLineEdit *>(widget))
+        if (qobject_cast<const QLineEdit *>(widget) || widget->isWindow())
             return 0;
         if (qobject_cast<const QGroupBox *>(widget))
             return 8;

@@ -99,6 +99,7 @@ Settings::read()
     conf.deco.buttons = s.value(READDECOBUTTONS).toInt();
     conf.deco.icon = s.value(READDECOICON).toBool();
     conf.deco.shadowSize = READINT(READDECOSHADOWSIZE);
+    conf.deco.frameSize = READINT(READDECOFRAME);
     //pushbuttons
     conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
     conf.pushbtn.shadow = s.value(READPUSHBTNSHADOW).toInt();

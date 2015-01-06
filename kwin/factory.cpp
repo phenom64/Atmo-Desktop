@@ -18,10 +18,6 @@ KDecoration
 
 //Atom Factory::s_wmAtom;
 
-#define SIZE 8
-
-QPixmap *Factory::s_topLeft(0), *Factory::s_topRight(0);
-
 Factory::Factory()
     : QObject()
     , KDecorationFactory()
@@ -31,35 +27,11 @@ Factory::Factory()
     ShadowHandler::removeDelete();
     new FactoryDbusAdaptor(this);
     QDBusConnection::sessionBus().registerObject("/StyleProjectFactory", this);
-    genMasks();
 }
 
 Factory::~Factory()
 {
     ShadowHandler::removeDelete();
-}
-
-void
-Factory::genMasks()
-{
-    const int half(SIZE>>1);
-
-    QPixmap pix(SIZE, SIZE);
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setPen(Qt::NoPen);
-    p.setBrush(Qt::black);
-    p.drawEllipse(pix.rect());
-    p.end();
-
-    if (!s_topLeft)
-    {
-        s_topLeft = new QPixmap();
-        s_topRight = new QPixmap();
-    }
-    *s_topLeft = pix.copy(QRect(0, 0, half, half));
-    *s_topRight = pix.copy(QRect(half, 0, half, half));
 }
 
 bool

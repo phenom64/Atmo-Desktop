@@ -114,6 +114,9 @@ public:
 public slots:
     void updateWindowDataSlot();
 
+signals:
+    void windowDataChanged(QWidget *win);
+
 protected:
     Window(QObject *parent = 0);
     bool eventFilter(QObject *, QEvent *);

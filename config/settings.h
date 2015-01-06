@@ -17,6 +17,7 @@
 #define DECOBUTTONS         "deco.buttons"
 #define DECOICON            "deco.icon"
 #define DECOSHADOWSIZE      "deco.shadowsize"
+#define DECOFRAME           "deco.framesize"
 
 #define PUSHBTNRND          "pushbtn.rnd"
 #define PUSHBTNSHADOW       "pushbtn.shadow"
@@ -109,6 +110,7 @@
 #define DEFDECOBUTTONS          0
 #define DEFDECOICON             true
 #define DEFDECOSHADOWSIZE       32
+#define DEFDECOFRAME               0
 
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
@@ -182,6 +184,7 @@
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
 #define READDECOICON            DECOICON, DEFDECOICON
 #define READDECOSHADOWSIZE      DECOSHADOWSIZE, DEFDECOSHADOWSIZE
+#define READDECOFRAME           DECOFRAME, DEFDECOFRAME
 
 #define READPUSHBTNRND          PUSHBTNRND, DEFPUSHBTNRND
 #define READPUSHBTNSHADOW       PUSHBTNSHADOW, DEFPUSHBTNSHADOW
@@ -261,7 +264,7 @@ public:
     int titlePos, arrowSize;
     struct deco
     {
-        int buttons, shadowSize;
+        int buttons, shadowSize, frameSize;
         bool icon;
     } deco;
 

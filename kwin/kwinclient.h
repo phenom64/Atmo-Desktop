@@ -57,9 +57,9 @@ public:
     void captionChange();
     void desktopChange() {}
     void iconChange() {}
-    void maximizeChange() {}
+    void maximizeChange();
     QSize minimumSize() const;
-    KDecorationDefines::Position mousePosition(const QPoint &p) const { return KDecorationDefines::PositionCenter; }
+    KDecorationDefines::Position mousePosition(const QPoint &point) const;
     void resize(const QSize &s);
     void shadeChange() {}
     void reset(unsigned long changed);
@@ -83,7 +83,7 @@ private:
     Factory *m_factory;
     QPixmap m_bgPix[2];
     float m_opacity;
-    int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle;
+    int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize;
     bool m_needSeparator, m_contAware, m_uno;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;

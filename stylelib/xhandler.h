@@ -7,7 +7,7 @@
 class WindowData
 {
 public:
-    enum DataType { Separator = 0x1, ContAware = 0x2, Uno = 0x4, Opacity = 0xff00, UnoHeight = 0xff0000, Buttons = 0xff000000 };
+    enum DataType { Separator = 0x1, ContAware = 0x2, Uno = 0x4, Opacity = 0xff00, UnoHeight = 0xff0000, Buttons = 0xf000000, Frame = 0xf0000000 };
     QRgb text, bg;
     unsigned int data;
 };

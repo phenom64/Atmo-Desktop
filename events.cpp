@@ -96,7 +96,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
     {
         QWidget *w = static_cast<QWidget *>(o);
         QTabBar *tb = w->findChild<QTabBar *>();
-        if (!tb||!tb->documentMode())
+        if (!tb || !tb->documentMode())
             return false;
 
         QStyleOptionTabBarBaseV2 opt;
