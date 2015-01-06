@@ -487,6 +487,23 @@ KwinClient::paint(QPainter &p)
     p.setBrushOrigin(widget()->rect().topLeft());
 
     p.fillRect(widget()->rect(), Color::mid(widget()->palette().color(widget()->foregroundRole()), widget()->palette().color(widget()->backgroundRole())));
+    if (dConf.deco.frameSize && maximizeMode() != MaximizeFull)
+    {
+        QRectF r(widget()->layout()->geometry().adjusted(dConf.deco.frameSize, dConf.deco.frameSize, -dConf.deco.frameSize, -dConf.deco.frameSize));
+        r.adjust(-0.5f, -0.5f, 0.5f, 0.5f);
+        p.setPen(QColor(0, 0, 0, 127));
+        p.setBrush(Qt::NoBrush);
+        p.drawRect(r);
+        p.setPen(QColor(0, 0, 0, 127));
+        p.setBrush(QColor(0, 0, 0, 63));
+        p.drawRect(QRectF(positionRect(PositionTopLeft)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
+        p.drawRect(QRectF(positionRect(PositionTopRight)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
+        p.drawRect(QRectF(positionRect(PositionBottomLeft)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
+        p.drawRect(QRectF(positionRect(PositionBottomRight)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QColor(255, 255, 255, 63));
+        p.drawRoundedRect(QRectF(widget()->rect()).adjusted(0.5f, 0.5f, -0.5f, -0.5f), 4, 4);
+    }
 
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::NoBrush);
@@ -502,15 +519,7 @@ KwinClient::paint(QPainter &p)
     const int bgLum(Color::luminosity(bgColor()));
     const bool isDark(Color::luminosity(fgColor()) > bgLum);
 
-    if (dConf.deco.frameSize && maximizeMode() != MaximizeFull)
-    {
-        QRectF r(widget()->layout()->geometry().adjusted(dConf.deco.frameSize, dConf.deco.frameSize, -dConf.deco.frameSize, -dConf.deco.frameSize));
-        r.adjust(-0.5f, -0.5f, 0.5f, 0.5f);
-        p.setPen(QColor(0, 0, 0, 127));
-        p.setBrush(Qt::NoBrush);
-        p.drawRect(r);
-    }
-    else
+    if (!dConf.deco.frameSize || maximizeMode() == MaximizeFull)
     {
         const QRectF bevel(0.5f, 0.5f, width()-0.5f, 10.0f);
         QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
@@ -606,18 +615,19 @@ KwinClient::updateContBg()
     widget()->update();
 }
 
+static const int corner = 24;
 //below stolen from http://www.usermode.org/docs/kwintheme.html, unused atm
 KDecorationDefines::Position
 KwinClient::mousePosition(const QPoint &point) const
 {
-    const int corner = 24;
+
     Position pos;
 
     if (point.y() <= dConf.deco.frameSize) { // inside top frame
         if (point.x() <= corner)                 pos = PositionTopLeft;
         else if (point.x() >= (width()-corner))  pos = PositionTopRight;
         else                                     pos = PositionTop;
-    } else if (point.y() >= (height()-dConf.deco.frameSize*2)) { // inside handle
+    } else if (point.y() >= (height()-dConf.deco.frameSize)) { // inside handle
         if (point.x() <= corner)                 pos = PositionBottomLeft;
         else if (point.x() >= (width()-corner))  pos = PositionBottomRight;
         else                                     pos = PositionBottom;
@@ -633,6 +643,23 @@ KwinClient::mousePosition(const QPoint &point) const
         pos = PositionCenter;
     }
     return pos;
+}
+
+const QRect
+KwinClient::positionRect(const KDecorationDefines::Position pos) const
+{
+    switch (pos)
+    {
+    case KDecorationDefines::PositionTopLeft: return QRect(0, 0, corner, corner);
+    case KDecorationDefines::PositionTop: return QRect(corner, 0, width()-(corner*2), corner);
+    case KDecorationDefines::PositionTopRight: return QRect(width()-corner, 0, corner, corner);
+    case KDecorationDefines::PositionRight: return QRect(width()-corner, corner, corner, height()-(corner*2));
+    case KDecorationDefines::PositionBottomRight: return QRect(width()-corner, height()-corner, corner, corner);
+    case KDecorationDefines::PositionBottom: return QRect(corner, height()-corner, width()-(corner*2), corner);
+    case KDecorationDefines::PositionBottomLeft: return QRect(0, height()-corner, corner, corner);
+    case KDecorationDefines::PositionLeft: return QRect(0, corner, corner, height()-(corner*2));
+    default: return QRect();
+    }
 }
 
 void

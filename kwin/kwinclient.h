@@ -75,6 +75,7 @@ protected:
     void updateMask();
     QColor bgColor() const;
     QColor fgColor() const;
+    const QRect positionRect(const KDecorationDefines::Position pos) const;
 
 private:
     QHBoxLayout *m_titleLayout;
