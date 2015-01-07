@@ -486,7 +486,7 @@ KwinClient::paint(QPainter &p)
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);
     p.setBrushOrigin(widget()->rect().topLeft());
 
-    p.fillRect(widget()->rect(), Color::mid(widget()->palette().color(widget()->foregroundRole()), widget()->palette().color(widget()->backgroundRole())));
+    p.fillRect(widget()->rect(), Color::mid(widget()->palette().color(widget()->foregroundRole()), widget()->palette().color(widget()->backgroundRole()), 1, 8));
     if (dConf.deco.frameSize && maximizeMode() != MaximizeFull)
     {
         QRectF r(widget()->layout()->geometry().adjusted(dConf.deco.frameSize, dConf.deco.frameSize, -dConf.deco.frameSize, -dConf.deco.frameSize));
@@ -507,7 +507,9 @@ KwinClient::paint(QPainter &p)
 
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::NoBrush);
-    const QRect tr(m_titleLayout->geometry());
+    QRect tr(m_titleLayout->geometry());
+    if (tr.height() < TITLEHEIGHT)
+        tr.setHeight(TITLEHEIGHT);
     p.setOpacity(m_opacity);
 
     if (!m_bgPix[isActive()].isNull())
@@ -710,7 +712,8 @@ KwinClient::reset(unsigned long changed)
         if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
         {
             m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
-            needBg = false;
+            if (!m_bgPix[0].isNull())
+                needBg = false;
         }
 
         WindowData *wd = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData));

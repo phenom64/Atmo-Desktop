@@ -861,7 +861,10 @@ static QVector<QPixmap> unoParts(QWidget *win, int h)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
-    QColor bc(win->palette().color(win->backgroundRole()));
+    QPalette pal(win->palette());
+    if (!pal.color(win->backgroundRole()).alpha() < 0xff)
+        pal = QApplication::palette();
+    QColor bc(pal.color(win->backgroundRole()));
     bc = Color::mid(bc, dConf.uno.tint.first, 100-dConf.uno.tint.second, dConf.uno.tint.second);
     lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
 
@@ -934,8 +937,13 @@ Window::updateWindowData(QWidget *win)
     wd.data |= (int(win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100)<<8&WindowData::Opacity);
     wd.data |= (dConf.deco.buttons+1)<<24;
     wd.data |= (dConf.deco.frameSize)<<28;
-    wd.text = win->palette().color(win->foregroundRole()).rgba();
-    wd.bg = win->palette().color(win->backgroundRole()).rgba();
+
+    QPalette pal(win->palette());
+    if (!pal.color(win->backgroundRole()).alpha() < 0xff) //im looking at you spotify you faggot!!!!!!!!!!!111111
+        pal = QApplication::palette();
+
+    wd.text = pal.color(win->foregroundRole()).rgba();
+    wd.bg = pal.color(win->backgroundRole()).rgba();
 
     if (!height && dConf.uno.enabled)
         return;
