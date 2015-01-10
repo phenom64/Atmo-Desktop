@@ -530,7 +530,7 @@ Render::isCornerPart(const Part part) const
 }
 
 void
-Render::shapeCorners(QWidget *w, QPainter *p, Sides s, int roundNess)
+Render::shapeCorners(const QWidget *w, QPainter *p, Sides s, int roundNess)
 {
     const QPainter::CompositionMode mode(p->compositionMode());
     const float opacity(p->opacity());

@@ -11,7 +11,8 @@ set(configHDRS
     settings.h)
 
 set(configMocHDRS
-    styleconfig.h)
+    styleconfig.h
+    settings.h)
 
 set(MAIN
     main.cpp)

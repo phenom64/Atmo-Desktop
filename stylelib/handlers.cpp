@@ -749,6 +749,20 @@ Window::eventFilter(QObject *o, QEvent *e)
             w->setContentsMargins(4, 0, 4, 4);
         return false;
     }
+    case QEvent::Close:
+    {
+        if (unsigned long *bg = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
+        {
+            XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
+            XHandler::freePix(*bg);
+        }
+
+    }
+    case QEvent::PaletteChange:
+    {
+        if (w->isWindow())
+            updateWindowDataLater(w);
+    }
     default: break;
     }
     return false;
@@ -950,10 +964,12 @@ Window::updateWindowData(QWidget *win)
 
     const WId id(win->winId());
 
-    unsigned long *x11pixmap = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
     unsigned long handle(0);
+    unsigned long *x11pixmap = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
+
     if (x11pixmap)
         handle = *x11pixmap;
+
     if (dConf.uno.enabled)
     {
         uint check = height;
@@ -962,10 +978,10 @@ Window::updateWindowData(QWidget *win)
         if (!s_unoPix.contains(check))
             s_unoPix.insert(check, unoParts(win, height));
         if (oldHeight != height)
-            XHandler::x11Pix(s_unoPix.value(check).at(1), handle);
+            XHandler::x11Pix(s_unoPix.value(check).at(1), handle, win);
     }
     else
-        XHandler::x11Pix(bgPix(win), handle);
+        XHandler::x11Pix(bgPix(win), handle, win);
 
     if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
         XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
@@ -982,7 +998,6 @@ Window::updateWindowData(QWidget *win)
 
     XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 3);
     updateDeco(win->winId(), 1);
-    XHandler::clearX11PixmapsLater();
     emit instance()->windowDataChanged(win);
 }
 

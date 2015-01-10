@@ -432,3 +432,19 @@ StyleProject::hackLayout(QWidget *w)
         l->setContentsMargins(m, m, m, m);
     }
 }
+
+void
+StyleProject::polish(QPalette &p)
+{
+    QCommonStyle::polish(p);
+    if (dConf.palette)
+        p = *dConf.palette;
+}
+
+void
+StyleProject::polish(QApplication *app)
+{
+    QCommonStyle::polish(app);
+//    if (app && dConf.palette)
+//        app->setPalette(*dConf.palette);
+}

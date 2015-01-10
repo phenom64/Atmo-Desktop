@@ -3,6 +3,7 @@
 #include <QStringList>
 #include <QPair>
 #include <QGradientStop>
+#include <QObject>
 //settings vars, these are the vars read from dsp.conf
 
 #define OPACITY             "opacity"
@@ -250,18 +251,22 @@ typedef QList<QPair<float, int> > Gradient;
 typedef QPair<float, int> GradientStop;
 typedef QPair<QColor, int> Tint;
 
+class QSettings;
+
 #define dConf Settings::conf
 
-class Q_DECL_EXPORT Settings
+class Q_DECL_EXPORT Settings : public QObject
 {
+    Q_OBJECT
 public:
-    enum AppName { Eiskalt, Konversation, Konsole, None }; //app specific hacks should be avoided when possible.
+    enum AppName { Eiskalt, Konversation, Konsole, KWin, None }; //app specific hacks should be avoided when possible.
     typedef uint App;
     App app;
     float opacity;
     QStringList blackList;
     bool removeTitleBars, hackDialogs, compactMenu, splitterExt;
     int titlePos, arrowSize;
+    QPalette *palette;
     struct deco
     {
         int buttons, shadowSize, frameSize;
@@ -334,10 +339,20 @@ public:
         bool treelines;
     } views;
 
+    Settings(QObject *parent = 0);
+    ~Settings();
     static Settings conf;
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
     static void read();
+    static void readPalette();
+
+public slots:
+    void writePalette();
+
+private:
+    QSettings *m_settings;
+    QString m_appName;
 };
 
 #endif //SETTINGS_H

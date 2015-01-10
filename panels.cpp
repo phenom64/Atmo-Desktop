@@ -54,12 +54,9 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
         }
         else
         {
-            QPixmap pix(r.size());
-            pix.fill(Qt::transparent);
-            QPainter p(&pix);
-            Handlers::Window::drawUnoPart(&p, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
-            p.end();
-            Render::renderMask(r, painter, pix, 4, Render::Bottom|Render::Left|Render::Right);
+            Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
+            if (!dConf.deco.frameSize)
+                Render::shapeCorners(widget, painter, Render::All & ~Render::Top);
         }
         painter->save();
         painter->setPen(Qt::black);

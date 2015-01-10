@@ -451,6 +451,7 @@ SplitterExt::event(QEvent *e)
         QCoreApplication::sendEvent(m_splitter, &m);
         return true;
     }
+#if 0
     case QEvent::Paint:
     {
         QPainter p(this);
@@ -464,6 +465,7 @@ SplitterExt::event(QEvent *e)
         p.end();
         return false;
     }
+#endif
     default: return false;
     }
 }

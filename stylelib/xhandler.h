@@ -37,11 +37,9 @@ public:
     static bool compositingActive();
     static float opacity();
 
-    static QPixmap x11Pix(const QPixmap &pix, Qt::HANDLE &handle);
+    static QPixmap x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win = 0);
     static void freePix(QPixmap pix);
     static void freePix(const Qt::HANDLE handle);
-    static void clearX11Pixmaps();
-    static void clearX11PixmapsLater();
     static XHandler *instance();
 
     XHandler(QObject *parent = 0);
@@ -50,9 +48,6 @@ public:
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const WId w, const Value v, int &n);
-
-private slots:
-    void clearX11PixmapsSlot();
 
 private:
     static XHandler s_instance;

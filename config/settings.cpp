@@ -3,8 +3,46 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QApplication>
+#include <QPalette>
+#include <QDebug>
 
 Q_DECL_EXPORT Settings Settings::conf;
+
+Settings::Settings(QObject *parent) : QObject(parent), palette(0), m_settings(0)
+{
+    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(writePalette()));
+    conf.m_appName = QFileInfo(qApp->applicationFilePath()).fileName();
+    QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
+
+    if (conf.m_appName == "eiskaltdcpp-qt")
+        conf.app = Eiskalt;
+    else if (conf.m_appName == "konversation")
+        conf.app = Konversation;
+    else if (conf.m_appName == "konsole")
+        conf.app = Konsole;
+    else if (conf.m_appName == "kwin")
+        conf.app == KWin;
+    else
+        conf.app = None;
+
+    const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(conf.m_appName)));
+    QString append("/dsp.conf");
+    if (presetFile.exists())
+        append = QString("/%1.conf").arg(conf.m_appName);
+    settingsPath.append(append);
+
+    conf.m_settings = new QSettings(settingsPath, QSettings::NativeFormat);
+    read();
+}
+
+Settings::~Settings()
+{
+    if (conf.m_settings)
+    {
+        delete conf.m_settings;
+        conf.m_settings = 0;
+    }
+}
 
 static Gradient stringToGrad(const QString &string)
 {
@@ -60,106 +98,127 @@ static Tint tintColor(const QString &tint)
     return c;
 }
 
+static char *paletteString[3] = { "activePalette", "disabledPalette", "inactivePalette" };
+
+void
+Settings::writePalette()
+{
+    const QPalette pal(QApplication::palette());
+    for (int g = 0; g < QPalette::NColorGroups; ++g)
+    {
+        unsigned int data[QPalette::NColorRoles];
+        for (int i = 0; i < QPalette::NColorRoles; ++i)
+        {
+//            qDebug() << QApplication::palette().color((QPalette::ColorGroup)g, (QPalette::ColorRole)i) << QApplication::palette().color((QPalette::ColorRole)i);
+            data[i] = pal.color((QPalette::ColorGroup)g, (QPalette::ColorRole)i).rgba();
+        }
+        QByteArray array(reinterpret_cast<char *>(data), QPalette::NColorRoles*sizeof(unsigned int));
+        conf.m_settings->setValue(paletteString[g], array);
+    }
+}
+
+void
+Settings::readPalette()
+{
+    for (int g = 0; g < QPalette::NColorGroups; ++g)
+    {
+        QByteArray array(conf.m_settings->value(paletteString[g], QByteArray()).toByteArray());
+        if (array.isEmpty())
+            return;
+        if (!conf.palette)
+            conf.palette = new QPalette();
+        unsigned int *data = reinterpret_cast<unsigned int *>(array.data());
+        for (int i = 0; i < QPalette::NColorRoles; ++i)
+        {
+//            qDebug() << qRed(data[i]) << qGreen(data[i]) << qBlue(data[i]) << qAlpha(data[i]);
+            conf.palette->setColor((QPalette::ColorGroup)g, (QPalette::ColorRole)i, QColor::fromRgba(data[i]));
+        }
+    }
+}
+
 void
 Settings::read()
 {
-    const QString appName(QFileInfo(qApp->applicationFilePath()).fileName());
-    QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
-
-    if (appName == "eiskaltdcpp-qt")
-        conf.app = Eiskalt;
-    else if (appName == "konversation")
-        conf.app = Konversation;
-    else if (appName == "konsole")
-        conf.app = Konsole;
-    else
-        conf.app = None;
-
-    const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(appName)));
-    QString append("/dsp.conf");
-    if (presetFile.exists())
-        append = QString("/%1.conf").arg(appName);
-    settingsPath.append(append);
-
-#define READINT(_VAR_) s.value(_VAR_).toInt();
-
-    QSettings s(settingsPath, QSettings::NativeFormat);
+#define READINT(_VAR_) conf.m_settings->value(_VAR_).toInt();
     //globals
-    conf.opacity = s.value(READOPACITY).toFloat()/100.0f;
-    conf.blackList = s.value(READBLACKLIST).toStringList();
-    if (conf.blackList.contains(appName) || appName == "kwin")
+    conf.opacity = conf.m_settings->value(READOPACITY).toFloat()/100.0f;
+    conf.blackList = conf.m_settings->value(READBLACKLIST).toStringList();
+    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
         conf.opacity = 1.0f;
-    conf.removeTitleBars = s.value(READREMOVETITLE).toBool();
-    conf.titlePos = conf.removeTitleBars?s.value(READTITLEPOS).toInt():-1;
-    conf.hackDialogs = s.value(READHACKDIALOGS).toBool();
-    conf.compactMenu = s.value(READCOMPACTMENU).toBool();
-    conf.splitterExt = s.value(READSPLITTEREXT).toBool();
+    conf.removeTitleBars = conf.m_settings->value(READREMOVETITLE).toBool();
+    conf.titlePos = conf.removeTitleBars?conf.m_settings->value(READTITLEPOS).toInt():-1;
+    conf.hackDialogs = conf.m_settings->value(READHACKDIALOGS).toBool();
+    conf.compactMenu = conf.m_settings->value(READCOMPACTMENU).toBool();
+    conf.splitterExt = conf.m_settings->value(READSPLITTEREXT).toBool();
     conf.arrowSize = READINT(READARROWSIZE);
+
+    readPalette();
+
     //deco
-    conf.deco.buttons = s.value(READDECOBUTTONS).toInt();
-    conf.deco.icon = s.value(READDECOICON).toBool();
+    conf.deco.buttons = conf.m_settings->value(READDECOBUTTONS).toInt();
+    conf.deco.icon = conf.m_settings->value(READDECOICON).toBool();
     conf.deco.shadowSize = READINT(READDECOSHADOWSIZE);
     conf.deco.frameSize = READINT(READDECOFRAME);
     //pushbuttons
-    conf.pushbtn.rnd = s.value(READPUSHBTNRND).toInt();
-    conf.pushbtn.shadow = s.value(READPUSHBTNSHADOW).toInt();
-    conf.pushbtn.gradient = stringToGrad(s.value(READPUSHBTNGRAD).toString());
-    conf.pushbtn.tint = tintColor(s.value(READPUSHBTNTINT).toString());
+    conf.pushbtn.rnd = conf.m_settings->value(READPUSHBTNRND).toInt();
+    conf.pushbtn.shadow = conf.m_settings->value(READPUSHBTNSHADOW).toInt();
+    conf.pushbtn.gradient = stringToGrad(conf.m_settings->value(READPUSHBTNGRAD).toString());
+    conf.pushbtn.tint = tintColor(conf.m_settings->value(READPUSHBTNTINT).toString());
     //toolbuttons
-    conf.toolbtn.rnd = s.value(READTOOLBTNRND).toInt();
-    conf.toolbtn.shadow = s.value(READTOOLBTNSHADOW).toInt();
-    conf.toolbtn.gradient = stringToGrad(s.value(READTOOLBTNGRAD).toString());
-    conf.toolbtn.tint = tintColor(s.value(READTOOLBTNTINT).toString());
-    conf.toolbtn.folCol = s.value(READTOOLBTNFOLCOL).toBool();
-    conf.toolbtn.invAct = s.value(READTOOLBTNINVACT).toBool();
-    conf.toolbtn.flat = s.value(READTOOLBTNFLAT).toBool();
+    conf.toolbtn.rnd = conf.m_settings->value(READTOOLBTNRND).toInt();
+    conf.toolbtn.shadow = conf.m_settings->value(READTOOLBTNSHADOW).toInt();
+    conf.toolbtn.gradient = stringToGrad(conf.m_settings->value(READTOOLBTNGRAD).toString());
+    conf.toolbtn.tint = tintColor(conf.m_settings->value(READTOOLBTNTINT).toString());
+    conf.toolbtn.folCol = conf.m_settings->value(READTOOLBTNFOLCOL).toBool();
+    conf.toolbtn.invAct = conf.m_settings->value(READTOOLBTNINVACT).toBool();
+    conf.toolbtn.flat = conf.m_settings->value(READTOOLBTNFLAT).toBool();
     //inputs
-    conf.input.rnd = s.value(READINPUTRND).toInt();
-    conf.input.shadow = s.value(READINPUTSHADOW).toInt();
-    conf.input.gradient = stringToGrad(s.value(READINPUTGRAD).toString());
-    conf.input.tint = tintColor(s.value(READINPUTTINT).toString());
+    conf.input.rnd = conf.m_settings->value(READINPUTRND).toInt();
+    conf.input.shadow = conf.m_settings->value(READINPUTSHADOW).toInt();
+    conf.input.gradient = stringToGrad(conf.m_settings->value(READINPUTGRAD).toString());
+    conf.input.tint = tintColor(conf.m_settings->value(READINPUTTINT).toString());
     //tabs
-    conf.tabs.rnd = s.value(READTABRND).toInt();
-    conf.tabs.shadow = s.value(READTABSHADOW).toInt();
-    conf.tabs.gradient = stringToGrad(s.value(READTABGRAD).toString());
-    conf.tabs.safrnd = qMin(s.value(READSAFTABRND).toInt(), 8);
-    conf.tabs.closeButtonSide = s.value(READTABCLOSER).toInt();
+    conf.tabs.rnd = conf.m_settings->value(READTABRND).toInt();
+    conf.tabs.shadow = conf.m_settings->value(READTABSHADOW).toInt();
+    conf.tabs.gradient = stringToGrad(conf.m_settings->value(READTABGRAD).toString());
+    conf.tabs.safrnd = qMin(conf.m_settings->value(READSAFTABRND).toInt(), 8);
+    conf.tabs.closeButtonSide = conf.m_settings->value(READTABCLOSER).toInt();
     //uno
-    conf.uno.enabled = s.value(READUNOENABLED).toBool();
-    conf.uno.gradient = stringToGrad(s.value(READUNOGRAD).toString());
-    conf.uno.tint = tintColor(s.value(READUNOTINT).toString());
-    conf.uno.noise = s.value(READUNONOISE).toInt();
-    conf.uno.noiseStyle = s.value(READUNONOISESTYLE).toInt();
-    conf.uno.hor = s.value(READUNOHOR).toBool();
-    conf.uno.contAware = s.value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
-    conf.uno.opacity = s.value(READUNOOPACITY).toFloat()/100.0f;
-    conf.uno.blur = s.value(READUNOCONTBLUR).toInt();
+    conf.uno.enabled = conf.m_settings->value(READUNOENABLED).toBool();
+    conf.uno.gradient = stringToGrad(conf.m_settings->value(READUNOGRAD).toString());
+    conf.uno.tint = tintColor(conf.m_settings->value(READUNOTINT).toString());
+    conf.uno.noise = conf.m_settings->value(READUNONOISE).toInt();
+    conf.uno.noiseStyle = conf.m_settings->value(READUNONOISESTYLE).toInt();
+    conf.uno.hor = conf.m_settings->value(READUNOHOR).toBool();
+    conf.uno.contAware = conf.m_settings->value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
+    conf.uno.opacity = conf.m_settings->value(READUNOOPACITY).toFloat()/100.0f;
+    conf.uno.blur = conf.m_settings->value(READUNOCONTBLUR).toInt();
     //windows when not uno
-    conf.windows.gradient = stringToGrad(s.value(READWINGRAD).toString());
+    conf.windows.gradient = stringToGrad(conf.m_settings->value(READWINGRAD).toString());
     conf.windows.noise = READINT(READWINNOISE);
     conf.windows.noiseStyle = READINT(READWINNOISESTYLE);
-    conf.windows.hor = s.value(READWINHOR).toBool();
+    conf.windows.hor = conf.m_settings->value(READWINHOR).toBool();
     //menues
-    conf.menues.icons = s.value(READMENUICONS).toBool();
+    conf.menues.icons = conf.m_settings->value(READMENUICONS).toBool();
     //sliders
-    conf.sliders.size = s.value(READSLIDERSIZE).toInt();
-    conf.sliders.dot = s.value(READSLIDERDOT).toBool();
-    conf.sliders.grooveShadow = s.value(READSLIDERGROOVESHAD).toInt();
-    conf.sliders.grooveGrad = stringToGrad(s.value(READSLIDERGROOVE).toString());
-    conf.sliders.sliderGrad = stringToGrad(s.value(READSLIDERGRAD).toString());
-    conf.sliders.fillGroove = s.value(READSLIDERFILLGROOVE).toBool();
+    conf.sliders.size = conf.m_settings->value(READSLIDERSIZE).toInt();
+    conf.sliders.dot = conf.m_settings->value(READSLIDERDOT).toBool();
+    conf.sliders.grooveShadow = conf.m_settings->value(READSLIDERGROOVESHAD).toInt();
+    conf.sliders.grooveGrad = stringToGrad(conf.m_settings->value(READSLIDERGROOVE).toString());
+    conf.sliders.sliderGrad = stringToGrad(conf.m_settings->value(READSLIDERGRAD).toString());
+    conf.sliders.fillGroove = conf.m_settings->value(READSLIDERFILLGROOVE).toBool();
     //scrollers
-    conf.scrollers.size = s.value(READSCROLLERSIZE).toInt();
+    conf.scrollers.size = conf.m_settings->value(READSCROLLERSIZE).toInt();
     conf.scrollers.style = READINT(READSCROLLERSTYLE);
-    conf.scrollers.grooveGrad = stringToGrad(s.value(READSCROLLERGROOVE).toString());
-    conf.scrollers.sliderGrad = stringToGrad(s.value(READSCROLLERGRAD).toString());
+    conf.scrollers.grooveGrad = stringToGrad(conf.m_settings->value(READSCROLLERGROOVE).toString());
+    conf.scrollers.sliderGrad = stringToGrad(conf.m_settings->value(READSCROLLERGRAD).toString());
     //views
-    conf.views.treelines = s.value(READVIEWTREELINES).toBool();
+    conf.views.treelines = conf.m_settings->value(READVIEWTREELINES).toBool();
     //progressbars
     conf.progressbars.shadow = READINT(READPROGSHADOW);
     conf.progressbars.rnd = READINT(READPROGRND);
     //shadows
-    conf.shadows.opacity = s.value(READSHADOWOPACITY).toFloat()/100.0f;
+    conf.shadows.opacity = conf.m_settings->value(READSHADOWOPACITY).toFloat()/100.0f;
 
 #undef READINT
 }

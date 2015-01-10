@@ -62,7 +62,7 @@ public:
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
-    static void shapeCorners(QWidget *w, QPainter *p, Sides s, int roundNess = 4);
+    static void shapeCorners(const QWidget *w, QPainter *p, Sides s, int roundNess = 4);
 
 protected:
     void _generateData();

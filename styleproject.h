@@ -39,6 +39,8 @@ public:
     int styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w = 0, QStyleHintReturn *shret = 0) const;
 
     void polish(QWidget *widget);
+    void polish(QPalette &);
+    void polish(QApplication *app);
     void unpolish(QWidget *widget);
 
     bool eventFilter(QObject *, QEvent *);

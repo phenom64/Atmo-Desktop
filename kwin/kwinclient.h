@@ -76,6 +76,7 @@ protected:
     QColor bgColor() const;
     QColor fgColor() const;
     const QRect positionRect(const KDecorationDefines::Position pos) const;
+    const int titleHeight() const;
 
 private:
     QHBoxLayout *m_titleLayout;

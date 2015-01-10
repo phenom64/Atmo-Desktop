@@ -17,8 +17,7 @@
 #include "../stylelib/color.h"
 #include "../config/settings.h"
 
-#define TITLEHEIGHT 22
-#define MARGIN 6
+#define MARGIN isModal()?3:6
 #define SPACING 4
 
 ///-------------------------------------------------------------------
@@ -286,7 +285,7 @@ DButton::paintQuickHelpButton(QPainter &p)
 KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
-    , m_headHeight(TITLEHEIGHT)
+    , m_headHeight(0)
     , m_needSeparator(true)
     , m_factory(factory)
     , m_opacity(1.0f)
@@ -320,20 +319,22 @@ KwinClient::init()
 
     m_titleLayout = new QHBoxLayout();
     m_titleLayout->setSpacing(SPACING);
-    m_titleLayout->setContentsMargins(MARGIN, 3, MARGIN, 3);
+    int tb(!isModal()*3);
+    m_titleLayout->setContentsMargins(MARGIN, tb, MARGIN, tb);
     QVBoxLayout *l = new QVBoxLayout(widget());
     l->setSpacing(0);
     l->setContentsMargins(dConf.deco.frameSize, dConf.deco.frameSize, dConf.deco.frameSize, dConf.deco.frameSize);
     l->addLayout(m_titleLayout);
     l->addStretch();
     widget()->setLayout(l);
+    m_headHeight = titleHeight();
     m_needSeparator = true;
     if (!isPreview() && windowId())
     {
-        unsigned char height(TITLEHEIGHT);
+        unsigned char height(titleHeight());
         XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
         ShadowHandler::installShadows(windowId());
-        if (isResizable() && !m_sizeGrip)
+        if (isResizable() && !m_sizeGrip && !dConf.deco.frameSize)
             m_sizeGrip = new SizeGrip(this);
     }
     reset(63);
@@ -390,24 +391,31 @@ void
 KwinClient::updateMask()
 {
     const int w(width()), h(height());
-    if (compositingActive())
+    if (isModal())
     {
-        if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
-            clearMask();
-        else
-        {
-            QRegion r(2, 0, w-4, h);
-            r += QRegion(1, 0, w-2, h-1);
-            r += QRegion(0, 0, w, h-2);
-            setMask(r);
-        }
+        clearMask();
     }
     else
     {
-        QRegion r(0, 2, w, h-4);
-        r += QRegion(1, 1, w-2, h-2);
-        r += QRegion(2, 0, w-4, h);
-        setMask(r);
+        if (compositingActive())
+        {
+            if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
+                clearMask();
+            else
+            {
+                QRegion r(2, 0, w-4, h);
+                r += QRegion(1, 0, w-2, h-1);
+                r += QRegion(0, 0, w, h-2);
+                setMask(r);
+            }
+        }
+        else
+        {
+            QRegion r(0, 2, w, h-4);
+            r += QRegion(1, 1, w-2, h-2);
+            r += QRegion(2, 0, w-4, h);
+            setMask(r);
+        }
     }
     widget()->update();
 }
@@ -424,7 +432,7 @@ KwinClient::borders(int &left, int &right, int &top, int &bottom) const
 {
     const int f((maximizeMode()!=MaximizeFull)*dConf.deco.frameSize);
     left = right = bottom = f;
-    top = TITLEHEIGHT+f;
+    top = titleHeight()+f;
 }
 
 void
@@ -502,17 +510,24 @@ KwinClient::paint(QPainter &p)
         p.drawRect(QRectF(positionRect(PositionBottomRight)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
         p.setBrush(Qt::NoBrush);
         p.setPen(QColor(255, 255, 255, 63));
-        p.drawRoundedRect(QRectF(widget()->rect()).adjusted(0.5f, 0.5f, -0.5f, -0.5f), 4, 4);
+        int rnd(!isModal()*4);
+        p.drawRoundedRect(QRectF(widget()->rect()).adjusted(0.5f, 0.5f, -0.5f, -0.5f), rnd, rnd);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        r.adjust(0.5f, 0.5f, -0.5f, -0.5f);
+        p.fillRect(r, Qt::black);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
 
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::NoBrush);
     QRect tr(m_titleLayout->geometry());
-    if (tr.height() < TITLEHEIGHT)
-        tr.setHeight(TITLEHEIGHT);
+    if (tr.height() < titleHeight())
+        tr.setHeight(titleHeight());
     p.setOpacity(m_opacity);
 
-    if (!m_bgPix[isActive()].isNull())
+    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+        p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg));
+    else if (!m_bgPix[isActive()].isNull())
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
@@ -521,7 +536,8 @@ KwinClient::paint(QPainter &p)
     const int bgLum(Color::luminosity(bgColor()));
     const bool isDark(Color::luminosity(fgColor()) > bgLum);
 
-    if (!dConf.deco.frameSize || maximizeMode() == MaximizeFull)
+    //bevel
+    if ((!dConf.deco.frameSize || maximizeMode() == MaximizeFull) && !isModal())
     {
         const QRectF bevel(0.5f, 0.5f, width()-0.5f, 10.0f);
         QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
@@ -591,7 +607,7 @@ KwinClient::paint(QPainter &p)
         p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
         p.setClipping(false);
     }
-    else
+    else if (!isModal())
         Render::shapeCorners(widget(), &p, Render::All);
 }
 
@@ -664,6 +680,12 @@ KwinClient::positionRect(const KDecorationDefines::Position pos) const
     }
 }
 
+const int
+KwinClient::titleHeight() const
+{
+    return isModal()?16:22;
+}
+
 void
 KwinClient::maximizeChange()
 {
@@ -709,12 +731,14 @@ KwinClient::reset(unsigned long changed)
     if (changed & SettingDecoration)
     {
         bool needBg(true);
-        if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-        {
-            m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
-            if (!m_bgPix[0].isNull())
-                needBg = false;
-        }
+//        if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+//        {
+//            m_pixmap = *bg;
+//            needBg = false;
+////            m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
+////            if (!m_bgPix[0].isNull())
+////                needBg = false;
+//        }
 
         WindowData *wd = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData));
         if (wd && !isPreview())

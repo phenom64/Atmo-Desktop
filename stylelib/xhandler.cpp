@@ -37,7 +37,7 @@ XHandler::XHandler(QObject *parent)
 
 XHandler::~XHandler()
 {
-    clearX11Pixmaps();
+
 }
 
 void
@@ -68,6 +68,7 @@ void
 XHandler::deleteXProperty(const WId w, const Value v)
 {
     XDeleteProperty(QX11Info::display(), w, atom[v]);
+    XSync(QX11Info::display(), False);
 }
 
 void
@@ -127,42 +128,23 @@ XHandler::opacity()
         return 1.0f;
 }
 
-static QList<Qt::HANDLE> s_freeLater;
-
-void
-XHandler::clearX11PixmapsLater()
-{
-    QTimer::singleShot(250, instance(), SLOT(clearX11PixmapsSlot()));
-}
-
-void
-XHandler::clearX11PixmapsSlot()
-{
-    clearX11Pixmaps();
-}
-
-void
-XHandler::clearX11Pixmaps()
-{
-    while (!s_freeLater.isEmpty())
-        freePix(s_freeLater.takeFirst());
-}
-
 QPixmap
-XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle)
+XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win)
 {
     if (pix.isNull())
     {
-        if (handle)
-            s_freeLater << handle;
         handle = 0;
         return pix;
     }
+
     if (handle && pix.size() != QPixmap::fromX11Pixmap(handle).size())
     {
-        s_freeLater << handle;
+        if (win)
+            deleteXProperty(win->winId(), DecoBgPix);
+        freePix(handle);
         handle = 0;
     }
+
     const Pixmap x = handle?handle:XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
     QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
     QPainter pt(&p);

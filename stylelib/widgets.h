@@ -76,19 +76,4 @@ private:
     bool m_hasPress;
 };
 
-//class Q_DECL_EXPORT SplitterProxy : public QObject
-//{
-//public:
-////    explicit SplitterProxy(QObject *parent = 0) : QObject(parent){}
-////    ~SplitterProxy(){}
-//    static void manage(QSplitterHandle *sh);
-//    static SplitterProxy *instance() { return &s_instance; }
-
-//protected:
-//    bool eventFilter(QObject *, QEvent *);
-
-//private:
-//    static SplitterProxy s_instance;
-//};
-
 #endif //WIDGETS_H
