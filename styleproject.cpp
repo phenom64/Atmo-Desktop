@@ -46,7 +46,7 @@ StyleProject::StyleProject() : QCommonStyle()
 //    Anim::setStyle(this);
     init();
     assignMethods();
-//    Settings::read();
+    Settings::read();
     Render::generateData();
 }
 

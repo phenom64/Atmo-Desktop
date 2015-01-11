@@ -5,34 +5,14 @@
 #include <QApplication>
 #include <QPalette>
 #include <QDebug>
+#include <QLabel>
+#include <QTimer>
 
 Q_DECL_EXPORT Settings Settings::conf;
 
 Settings::Settings(QObject *parent) : QObject(parent), palette(0), m_settings(0)
 {
     connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(writePalette()));
-    conf.m_appName = QFileInfo(qApp->applicationFilePath()).fileName();
-    QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
-
-    if (conf.m_appName == "eiskaltdcpp-qt")
-        conf.app = Eiskalt;
-    else if (conf.m_appName == "konversation")
-        conf.app = Konversation;
-    else if (conf.m_appName == "konsole")
-        conf.app = Konsole;
-    else if (conf.m_appName == "kwin")
-        conf.app == KWin;
-    else
-        conf.app = None;
-
-    const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(conf.m_appName)));
-    QString append("/dsp.conf");
-    if (presetFile.exists())
-        append = QString("/%1.conf").arg(conf.m_appName);
-    settingsPath.append(append);
-
-    conf.m_settings = new QSettings(settingsPath, QSettings::NativeFormat);
-    read();
 }
 
 Settings::~Settings()
@@ -98,23 +78,53 @@ static Tint tintColor(const QString &tint)
     return c;
 }
 
-static char *paletteString[3] = { "activePalette", "disabledPalette", "inactivePalette" };
+static const char *groups[QPalette::NColorGroups] =
+{
+    "activePalette",
+    "disabledPalette",
+    "inactivePalette"
+};
+static const char *roles[QPalette::NColorRoles] =
+{
+    "WindowText", "Button", "Light", "Midlight", "Dark", "Mid",
+    "Text", "BrightText", "ButtonText", "Base", "Window", "Shadow",
+    "Highlight", "HighlightedText",
+    "Link", "LinkVisited", // ### Qt 5: remove
+    "AlternateBase",
+    "NoRole", // ### Qt 5: value should be 0 or -1
+    "ToolTipBase", "ToolTipText"
+    //                         NColorRoles = ToolTipText + 1,
+    //                         Foreground = WindowText, Background = Window // ### Qt 5: remove
+};
+
+void
+Settings::writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c)
+{
+    const QString &color = QString::number(c.rgba(), 16);
+    conf.m_settings->beginGroup(groups[g]);
+    conf.m_settings->setValue(roles[r], color);
+    conf.m_settings->endGroup();
+}
+
+QColor
+Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
+{
+    conf.m_settings->beginGroup(groups[g]);
+    const QString color = conf.m_settings->value(roles[r], QString()).toString();
+    QColor c;
+    if (color.size() == 8)
+        c = QColor::fromRgba(color.toUInt(0, 16));
+    conf.m_settings->endGroup();
+    return c;
+}
 
 void
 Settings::writePalette()
 {
     const QPalette pal(QApplication::palette());
     for (int g = 0; g < QPalette::NColorGroups; ++g)
-    {
-        unsigned int data[QPalette::NColorRoles];
-        for (int i = 0; i < QPalette::NColorRoles; ++i)
-        {
-//            qDebug() << QApplication::palette().color((QPalette::ColorGroup)g, (QPalette::ColorRole)i) << QApplication::palette().color((QPalette::ColorRole)i);
-            data[i] = pal.color((QPalette::ColorGroup)g, (QPalette::ColorRole)i).rgba();
-        }
-        QByteArray array(reinterpret_cast<char *>(data), QPalette::NColorRoles*sizeof(unsigned int));
-        conf.m_settings->setValue(paletteString[g], array);
-    }
+        for (int r = 0; r < QPalette::NColorRoles; ++r)
+            writePaletteColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, pal.color((QPalette::ColorGroup)g, (QPalette::ColorRole)r));
 }
 
 void
@@ -122,16 +132,21 @@ Settings::readPalette()
 {
     for (int g = 0; g < QPalette::NColorGroups; ++g)
     {
-        QByteArray array(conf.m_settings->value(paletteString[g], QByteArray()).toByteArray());
-        if (array.isEmpty())
-            return;
-        if (!conf.palette)
-            conf.palette = new QPalette();
-        unsigned int *data = reinterpret_cast<unsigned int *>(array.data());
-        for (int i = 0; i < QPalette::NColorRoles; ++i)
+        for (int r = 0; r < QPalette::NColorRoles; ++r)
         {
-//            qDebug() << qRed(data[i]) << qGreen(data[i]) << qBlue(data[i]) << qAlpha(data[i]);
-            conf.palette->setColor((QPalette::ColorGroup)g, (QPalette::ColorRole)i, QColor::fromRgba(data[i]));
+            const QColor c = readPaletteColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r);
+            if (c.isValid())
+            {
+                if (!conf.palette)
+                    conf.palette = new QPalette();
+            }
+            else
+            {
+                if (conf.palette)
+                    delete conf.palette;
+                return;
+            }
+            conf.palette->setColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, c);
         }
     }
 }
@@ -139,6 +154,33 @@ Settings::readPalette()
 void
 Settings::read()
 {
+    conf.m_appName = qApp->arguments().first();
+    if (conf.m_appName.contains("/"))
+        conf.m_appName = QFileInfo(conf.m_appName).fileName();
+    QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
+
+    QTimer::singleShot(0, &conf, SLOT(showLabel()));
+
+    if (conf.m_appName == "eiskaltdcpp-qt")
+        conf.app = Eiskalt;
+    else if (conf.m_appName == "konversation")
+        conf.app = Konversation;
+    else if (conf.m_appName == "konsole")
+        conf.app = Konsole;
+    else if (conf.m_appName == "kwin")
+        conf.app == KWin;
+    else
+        conf.app = None;
+
+    const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(conf.m_appName)));
+    QString append("/dsp.conf");
+    if (presetFile.exists())
+        append = QString("/%1.conf").arg(conf.m_appName);
+    settingsPath.append(append);
+
+    if (!conf.m_settings)
+        conf.m_settings = new QSettings(settingsPath, QSettings::NativeFormat);
+
 #define READINT(_VAR_) conf.m_settings->value(_VAR_).toInt();
     //globals
     conf.opacity = conf.m_settings->value(READOPACITY).toFloat()/100.0f;
@@ -151,8 +193,6 @@ Settings::read()
     conf.compactMenu = conf.m_settings->value(READCOMPACTMENU).toBool();
     conf.splitterExt = conf.m_settings->value(READSPLITTEREXT).toBool();
     conf.arrowSize = READINT(READARROWSIZE);
-
-    readPalette();
 
     //deco
     conf.deco.buttons = conf.m_settings->value(READDECOBUTTONS).toInt();
@@ -219,6 +259,6 @@ Settings::read()
     conf.progressbars.rnd = READINT(READPROGRND);
     //shadows
     conf.shadows.opacity = conf.m_settings->value(READSHADOWOPACITY).toFloat()/100.0f;
-
 #undef READINT
+    readPalette();
 }

@@ -756,12 +756,13 @@ Window::eventFilter(QObject *o, QEvent *e)
             XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
             XHandler::freePix(*bg);
         }
-
+        break;
     }
     case QEvent::PaletteChange:
     {
         if (w->isWindow())
             updateWindowDataLater(w);
+        break;
     }
     default: break;
     }

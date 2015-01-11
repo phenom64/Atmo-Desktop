@@ -4,6 +4,7 @@
 #include <QPair>
 #include <QGradientStop>
 #include <QObject>
+#include <QPalette>
 //settings vars, these are the vars read from dsp.conf
 
 #define OPACITY             "opacity"
@@ -349,6 +350,10 @@ public:
 
 public slots:
     void writePalette();
+
+protected:
+    static void writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c);
+    static QColor readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r);
 
 private:
     QSettings *m_settings;
