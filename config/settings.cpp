@@ -22,6 +22,11 @@ Settings::~Settings()
         delete conf.m_settings;
         conf.m_settings = 0;
     }
+    if (conf.m_paletteSettings)
+    {
+        delete conf.m_paletteSettings;
+        conf.m_paletteSettings = 0;
+    }
 }
 
 static Gradient stringToGrad(const QString &string)
@@ -101,26 +106,29 @@ void
 Settings::writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c)
 {
     const QString &color = QString::number(c.rgba(), 16);
-    conf.m_settings->beginGroup(groups[g]);
-    conf.m_settings->setValue(roles[r], color);
-    conf.m_settings->endGroup();
+    conf.m_paletteSettings->beginGroup(groups[g]);
+    conf.m_paletteSettings->setValue(roles[r], color);
+    conf.m_paletteSettings->endGroup();
 }
 
 QColor
 Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
 {
-    conf.m_settings->beginGroup(groups[g]);
-    const QString color = conf.m_settings->value(roles[r], QString()).toString();
+    conf.m_paletteSettings->beginGroup(groups[g]);
+    const QString color = conf.m_paletteSettings->value(roles[r], QString()).toString();
     QColor c;
     if (color.size() == 8)
         c = QColor::fromRgba(color.toUInt(0, 16));
-    conf.m_settings->endGroup();
+    conf.m_paletteSettings->endGroup();
     return c;
 }
 
 void
 Settings::writePalette()
 {
+    QSettings *s = paletteSettings();
+    if (!s || QFileInfo(s->fileName()).exists())
+        return;
     const QPalette pal(QApplication::palette());
     for (int g = 0; g < QPalette::NColorGroups; ++g)
         for (int r = 0; r < QPalette::NColorRoles; ++r)
@@ -130,6 +138,8 @@ Settings::writePalette()
 void
 Settings::readPalette()
 {
+    if (!paletteSettings())
+        return;
     for (int g = 0; g < QPalette::NColorGroups; ++g)
     {
         for (int r = 0; r < QPalette::NColorRoles; ++r)
@@ -151,16 +161,65 @@ Settings::readPalette()
     }
 }
 
+QSettings
+*Settings::paletteSettings()
+{
+    if (conf.m_paletteSettings)
+        return conf.m_paletteSettings;
+    const QString paletteFileName(conf.m_settings->value(READPALETTE).toString());
+    if (paletteFileName.isEmpty())
+        return 0;
+
+    QString settingsPath(CONFIGPATH);
+    settingsPath.append(QString("/%1.conf").arg(paletteFileName));
+
+//    if (!QFileInfo(settingsPath).exists())
+//        return 0;
+
+    conf.m_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
+    return conf.m_paletteSettings;
+}
+
+static const QString appName()
+{
+    QString app;
+    if (qApp)
+    {
+        if (!qApp->arguments().isEmpty())
+            app = qApp->arguments().first();
+        else if (!qApp->applicationName().isEmpty())
+            app = qApp->applicationName();
+        else
+            app = QFileInfo(qApp->applicationFilePath()).fileName();
+    }
+    if (app.contains("/"))
+        app = QFileInfo(app).fileName();
+    return app;
+}
+
+static const QString getPreset(QSettings *s, const QString &appName)
+{
+    QString preset;
+    s->beginGroup("Presets");
+    const QStringList presets(s->childKeys());
+    const int count(presets.count());
+    for (int i = 0; i < count; ++i)
+    {
+        const QStringList &apps(s->value(presets.at(i), QStringList()).toStringList());
+        if (apps.contains(appName, Qt::CaseInsensitive))
+        {
+            preset = presets.at(i);
+            break;
+        }
+    }
+    s->endGroup();
+    return preset;
+}
+
 void
 Settings::read()
 {
-    conf.m_appName = qApp->arguments().first();
-    if (conf.m_appName.contains("/"))
-        conf.m_appName = QFileInfo(conf.m_appName).fileName();
-    QString settingsPath(QString("%1/.config/dsp").arg(QDir::homePath()));
-
-    QTimer::singleShot(0, &conf, SLOT(showLabel()));
-
+    conf.m_appName = appName();
     if (conf.m_appName == "eiskaltdcpp-qt")
         conf.app = Eiskalt;
     else if (conf.m_appName == "konversation")
@@ -172,14 +231,20 @@ Settings::read()
     else
         conf.app = None;
 
-    const QFileInfo presetFile(QDir(settingsPath).absoluteFilePath(QString("%1.conf").arg(conf.m_appName)));
-    QString append("/dsp.conf");
-    if (presetFile.exists())
-        append = QString("/%1.conf").arg(conf.m_appName);
-    settingsPath.append(append);
+    const QDir settingsDir(CONFIGPATH);
+    QString settingsFileName("dsp");
+    conf.m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+    const QString preset(getPreset(conf.m_settings, conf.m_appName));
+    const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
+    if (!preset.isEmpty() && presetFile.exists())
+    {
+        settingsFileName = preset;
+        delete conf.m_settings;
+        conf.m_settings = 0;
+    }
 
     if (!conf.m_settings)
-        conf.m_settings = new QSettings(settingsPath, QSettings::NativeFormat);
+        conf.m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
 
 #define READINT(_VAR_) conf.m_settings->value(_VAR_).toInt();
     //globals

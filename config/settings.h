@@ -15,6 +15,7 @@
 #define COMPACTMENU         "compactmenu"
 #define SPLITTEREXT         "splitterext"
 #define ARROWSIZE           "maxarrowsize"
+#define PALETTE             "palette"
 
 #define DECOBUTTONS         "deco.buttons"
 #define DECOICON            "deco.icon"
@@ -108,6 +109,7 @@
 #define DEFCOMPACTMENU          false
 #define DEFSPLITTEREXT          false
 #define DEFARROWSIZE            9
+#define DEFPALETTE              QString()
 
 #define DEFDECOBUTTONS          0
 #define DEFDECOICON             true
@@ -182,6 +184,7 @@
 #define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
 #define READSPLITTEREXT         SPLITTEREXT, DEFSPLITTEREXT
 #define READARROWSIZE           ARROWSIZE, DEFARROWSIZE
+#define READPALETTE             PALETTE, DEFPALETTE
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
 #define READDECOICON            DECOICON, DEFDECOICON
@@ -247,6 +250,8 @@
 #define READWINHOR              WINHOR, DEFWINHOR
 
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
+
+#define CONFIGPATH              QString("%1/.config/dsp").arg(QDir::homePath())
 
 typedef QList<QPair<float, int> > Gradient;
 typedef QPair<float, int> GradientStop;
@@ -347,6 +352,7 @@ public:
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
     static void read();
     static void readPalette();
+    static QSettings *paletteSettings();
 
 public slots:
     void writePalette();
@@ -356,7 +362,7 @@ protected:
     static QColor readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r);
 
 private:
-    QSettings *m_settings;
+    QSettings *m_settings, *m_paletteSettings;
     QString m_appName;
 };
 
