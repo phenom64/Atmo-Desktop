@@ -14,6 +14,42 @@
 class Factory;
 class KwinClient;
 class SizeGrip;
+
+class DButton : public ButtonBase, public QSpacerItem
+{
+public:
+    DButton(const Type &t, KwinClient *client = 0);
+    ~DButton(){}
+
+    QSize sizeHint() { return QSize(16, 16); }
+    QRect buttonRect() { return geometry(); }
+
+protected:
+    bool isActive() const;
+    void onClick(QMouseEvent *e, const Type &t);
+
+    void paintMaxButton(QPainter &p);
+    void paintOnAllDesktopsButton(QPainter &p);
+    void paintWindowMenuButton(QPainter &p);
+    void paintKeepAboveButton(QPainter &p);
+    void paintKeepBelowButton(QPainter &p);
+    void paintApplicationMenuButton(QPainter &p);
+    void paintShadeButton(QPainter &p);
+    void paintQuickHelpButton(QPainter &p);
+
+    void hoverChanged();
+
+    const ButtonStyle buttonStyle() const;
+
+    const QColor color(const ColorRole &c) const;
+    const bool isDark() const;
+
+    bool isMaximized();
+
+private:
+    KwinClient *m_client;
+};
+#if 0
 class DButton : public Button
 {
 public:
@@ -33,6 +69,8 @@ protected:
     bool paintShadeButton(QPainter &p);
     bool paintQuickHelpButton(QPainter &p);
 
+    void paintEvent(QPaintEvent *e);
+
     const ButtonStyle buttonStyle() const;
 
     const QColor color(const ColorRole &c) const;
@@ -40,13 +78,14 @@ protected:
 private:
     KwinClient *m_client;
 };
+#endif
 
 class KwinClient : public KDecoration
 {
     Q_OBJECT
 public:
     enum CustomColors { Text = 0, Bg, CustColCount };
-    typedef QList<Button *> Buttons;
+    typedef QList<DButton *> Buttons;
     KwinClient(KDecorationBridge *bridge, Factory *factory);
     ~KwinClient();
 
@@ -64,14 +103,12 @@ public:
     void shadeChange() {}
     void reset(unsigned long changed);
     void updateContBg();
-
     bool compositingActive() const;
-    int buttonCornerWidth(bool left) { return left ? m_leftButtons : m_rightButtons; }
 
 protected:
     bool eventFilter(QObject *, QEvent *);
     void paint(QPainter &p);
-    void populate(const QString &buttons, bool left);
+    void populate(const QString &buttons, int &size);
     void updateMask();
     QColor bgColor() const;
     QColor fgColor() const;

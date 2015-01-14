@@ -13,86 +13,73 @@
 #include "xhandler.h"
 #include "macros.h"
 
-Button::Button(Type type, QWidget *parent)
-    : QWidget(parent)
-    , m_type(type)
+ButtonBase::ButtonBase(Type type)
+    : m_type(type)
     , m_hasPress(false)
+    , m_hasMouse(false)
 {
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_Hover);
-    setFixedSize(16, 16);
-    setForegroundRole(QPalette::ButtonText);
-    setBackgroundRole(QPalette::Button);
     for (int i = 0; i < TypeCount; ++i)
         m_paintEvent[i] = 0;
 
-    m_paintEvent[Close] = &Button::paintCloseButton;
-    m_paintEvent[Min] = &Button::paintMinButton;
-    m_paintEvent[Max] = &Button::paintMaxButton;
-    m_paintEvent[OnAllDesktops] = &Button::paintOnAllDesktopsButton;
-    m_paintEvent[WindowMenu] = &Button::paintWindowMenuButton;
-    m_paintEvent[KeepAbove] = &Button::paintKeepAboveButton;
-    m_paintEvent[KeepBelow] = &Button::paintKeepBelowButton;
-    m_paintEvent[Shade] = &Button::paintShadeButton;
-    m_paintEvent[Resize] = &Button::paintResizeButton;
-    m_paintEvent[QuickHelp] = &Button::paintQuickHelpButton;
-    m_paintEvent[AppMenu] = &Button::paintApplicationMenuButton;
+    m_paintEvent[Close] = &ButtonBase::paintCloseButton;
+    m_paintEvent[Min] = &ButtonBase::paintMinButton;
+    m_paintEvent[Max] = &ButtonBase::paintMaxButton;
+    m_paintEvent[OnAllDesktops] = &ButtonBase::paintOnAllDesktopsButton;
+    m_paintEvent[WindowMenu] = &ButtonBase::paintWindowMenuButton;
+    m_paintEvent[KeepAbove] = &ButtonBase::paintKeepAboveButton;
+    m_paintEvent[KeepBelow] = &ButtonBase::paintKeepBelowButton;
+    m_paintEvent[Shade] = &ButtonBase::paintShadeButton;
+    m_paintEvent[Resize] = &ButtonBase::paintResizeButton;
+    m_paintEvent[QuickHelp] = &ButtonBase::paintQuickHelpButton;
+    m_paintEvent[AppMenu] = &ButtonBase::paintApplicationMenuButton;
 }
 
-Button::~Button()
+ButtonBase::~ButtonBase()
 {
 
 }
 
 void
-Button::paintEvent(QPaintEvent *)
+ButtonBase::paint(QPainter &p)
 {
-    QPainter p(this);
-    if (!XHandler::compositingActive() && !m_bgPix[isActive()].isNull())
-        p.drawTiledPixmap(rect(), m_bgPix[isActive()], geometry().topLeft());
-    if (m_type < TypeCount && m_paintEvent[m_type] && (this->*m_paintEvent[m_type])(p))
-        return;
-    p.end();
+    if (m_type < TypeCount && m_paintEvent[m_type])
+        (this->*m_paintEvent[m_type])(p);
 }
 
 void
-Button::mousePressEvent(QMouseEvent *e)
+ButtonBase::processMouseEvent(QMouseEvent *e)
 {
-//    QWidget::mousePressEvent(e);
-    e->accept();
-    m_hasPress = true;
-}
-
-void
-Button::mouseReleaseEvent(QMouseEvent *e)
-{
-//    QWidget::mouseReleaseEvent(e);
-    if (m_hasPress)
+    switch (e->type())
+    {
+    case QEvent::MouseButtonPress:
     {
         e->accept();
-        m_hasPress = false;
-        if (rect().contains(e->pos()))
-            onClick(e, m_type);
+        m_hasPress = true;
+        break;
+    }
+    case QEvent::MouseButtonRelease:
+    {
+        if (m_hasPress)
+        {
+            e->accept();
+            m_hasPress = false;
+            if (buttonRect().contains(e->pos()))
+                onClick(e, m_type);
+        }
+        break;
+    }
+    case QEvent::MouseMove:
+    {
+        bool hadMouse(m_hasMouse);
+        m_hasMouse = buttonRect().contains(e->pos());
+        if (hadMouse != m_hasMouse)
+            hoverChanged();
+    }
     }
 }
 
-const QColor
-Button::color(const ColorRole &c) const
-{
-    if (c==Mid)
-        return Color::mid(palette().color(foregroundRole()), palette().color(backgroundRole()));
-    return palette().color(c==Fg?foregroundRole():backgroundRole());
-}
-
-const bool
-Button::isDark() const
-{
-    const QWidget *w(parentWidget()?parentWidget():this);
-    return Color::luminosity(w->palette().color(w->foregroundRole())) > Color::luminosity(w->palette().color(w->backgroundRole()));
-}
-
 const Button::ButtonStyle
-Button::buttonStyle() const
+ButtonBase::buttonStyle() const
 {
     return dConf.deco.buttons;
 }
@@ -106,7 +93,7 @@ Button::buttonStyle() const
  */
 
 void
-Button::drawBase(QColor c, QPainter &p, QRect &r) const
+ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
@@ -249,19 +236,19 @@ Button::drawBase(QColor c, QPainter &p, QRect &r) const
 
 static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFF37CC40 };
 
-bool
-Button::paintCloseButton(QPainter &p)
+void
+ButtonBase::paintCloseButton(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
-    QRect r(rect());
+    QRect r(buttonRect());
     if (dConf.deco.buttons == -1)
     {
-        const int s(rect().width()/8);
-        r = rect().adjusted(s, s, -s, -s);
+        const int s(buttonRect().width()/8);
+        r = buttonRect().adjusted(s, s, -s, -s);
         const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
-        QPixmap pix(rect().size());
+        QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
         pt.setRenderHint(QPainter::Antialiasing);
@@ -269,34 +256,32 @@ Button::paintCloseButton(QPainter &p)
         pt.drawLine(r.topLeft(), r.bottomRight());
         pt.drawLine(r.topRight(), r.bottomLeft());
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
+        p.drawTiledPixmap(buttonRect(), Render::sunkenized(buttonRect(), pix, isDark(), color(Mid)));
     }
     else
     {
         drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
-        if (underMouse())
+        if (isHovered())
         {
             p.setBrush(color(Fg));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
-    p.end();
-    return true;
 }
 
-bool
-Button::paintMaxButton(QPainter &p)
+void
+ButtonBase::paintMaxButton(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
-    QRect r(rect());
+    QRect r(buttonRect());
     if (dConf.deco.buttons == -1)
     {
-        const int s(rect().width()/8);
-        QRect r = rect().adjusted(s, s, -s, -s);
-        const QPen pen(window()->isMaximized()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const int s(buttonRect().width()/8);
+        QRect r = buttonRect().adjusted(s, s, -s, -s);
+        const QPen pen(color(isMaximized()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
-        QPixmap pix(rect().size());
+        QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
         pt.setRenderHint(QPainter::Antialiasing);
@@ -306,34 +291,32 @@ Button::paintMaxButton(QPainter &p)
         pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
+        p.drawTiledPixmap(buttonRect(), Render::sunkenized(buttonRect(), pix, isDark(), color(Mid)));
     }
     else
     {
         drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
-        if (underMouse())
+        if (isHovered())
         {
             p.setBrush(color(Fg));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
-    p.end();
-    return true;
 }
 
-bool
-Button::paintMinButton(QPainter &p)
+void
+ButtonBase::paintMinButton(QPainter &p)
 {
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
-    QRect r(rect());
+    QRect r(buttonRect());
     if (dConf.deco.buttons == -1)
     {
-        const int s(rect().width()/8);
-        QRect r = rect().adjusted(s, s, -s, -s);
+        const int s(buttonRect().width()/8);
+        QRect r = buttonRect().adjusted(s, s, -s, -s);
         const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         r.adjust(s, s, -s, -s);
-        QPixmap pix(rect().size());
+        QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
         pt.setRenderHint(QPainter::Antialiasing);
@@ -342,20 +325,67 @@ Button::paintMinButton(QPainter &p)
         r.getRect(&x, &y, &w, &h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
+        p.drawTiledPixmap(buttonRect(), Render::sunkenized(buttonRect(), pix, isDark(), color(Mid)));
     }
     else
     {
         drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
-        if (underMouse())
+        if (isHovered())
         {
             p.setBrush(color(Fg));
             p.drawEllipse(r.adjusted(3, 3, -3, -3));
         }
     }
-    p.end();
-    return true;
 }
+////////////////////////////////////////////////////////////////////////////////////////
+
+Button::Button(Type type, QWidget *parent)
+    : ButtonBase(type),
+      QWidget(parent)
+{
+    setAttribute(Qt::WA_Hover);
+    setFixedSize(16, 16);
+    setForegroundRole(QPalette::ButtonText);
+    setBackgroundRole(QPalette::Button);
+}
+
+void
+Button::mousePressEvent(QMouseEvent *e)
+{
+    ButtonBase::processMouseEvent(e);
+}
+
+void
+Button::mouseReleaseEvent(QMouseEvent *e)
+{
+    ButtonBase::processMouseEvent(e);
+}
+
+const QColor
+Button::color(const ColorRole &c) const
+{
+    if (c==Highlight)
+        return palette().color(QPalette::Highlight);
+    if (c==Mid)
+        return Color::mid(palette().color(foregroundRole()), palette().color(backgroundRole()));
+    return palette().color(c==Fg?foregroundRole():backgroundRole());
+}
+
+const bool
+Button::isDark() const
+{
+    const QWidget *w(parentWidget()?parentWidget():this);
+    return Color::luminosity(w->palette().color(w->foregroundRole())) > Color::luminosity(w->palette().color(w->backgroundRole()));
+}
+
+void
+Button::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    ButtonBase::paint(p);
+    p.end();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -451,21 +481,6 @@ SplitterExt::event(QEvent *e)
         QCoreApplication::sendEvent(m_splitter, &m);
         return true;
     }
-#if 0
-    case QEvent::Paint:
-    {
-        QPainter p(this);
-        p.setPen(Qt::NoPen);
-        QRadialGradient rg(rect().center(), SSIZE>>1);
-        rg.setColorAt(0.5f, QColor(0, 0, 0, 63));
-        rg.setColorAt(1.0f, Qt::transparent);
-        p.setBrush(rg);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.drawEllipse(rect());
-        p.end();
-        return false;
-    }
-#endif
     default: return false;
     }
 }

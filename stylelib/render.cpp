@@ -9,6 +9,7 @@
 #include <QToolBox>
 #include <QStyleOption>
 #include <QLineEdit>
+#include <QToolButton>
 
 #include "render.h"
 #include "color.h"
@@ -901,7 +902,7 @@ Render::drawClickable(Shadow s,
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 0);
     }
-    else
+    else if (r.height() != r.width() || qobject_cast<const QToolButton *>(w))
         r.sAdjust(0, 0, 0, -1);
 
     if (mask)

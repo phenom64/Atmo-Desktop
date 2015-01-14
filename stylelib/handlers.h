@@ -23,7 +23,8 @@ class QToolButton;
 class DButton : public Button
 {
 public:
-    DButton(const Type &t, QWidget *parent = 0) : Button(t, parent){}
+    DButton(const Type &t, QWidget *parent = 0);
+
 protected:
     bool isActive() const { return window()->isActiveWindow(); }
     void onClick(QMouseEvent *e, const Type &t);

@@ -154,7 +154,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         {
             return 0;
         }
-        return 2;
+        return (frame&&frame->frameShadow()==QFrame::Sunken||!dConf.uno.enabled)*2;
     }
     case PM_ComboBoxFrameWidth: return 0;
     case PM_ToolBarItemSpacing: return 0;

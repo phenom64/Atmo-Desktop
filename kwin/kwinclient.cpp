@@ -17,15 +17,22 @@
 #include "../stylelib/color.h"
 #include "../config/settings.h"
 
-#define MARGIN isModal()?3:6
+#define MARGIN (isModal()?3:6)
 #define SPACING 4
 
 ///-------------------------------------------------------------------
 
-DButton::DButton(const Type &t, KwinClient *client, QWidget *parent)
-    : Button(t, parent)
+DButton::DButton(const Type &t, KwinClient *client)
+    : ButtonBase(t)
+    , QSpacerItem(16, 16)
     , m_client(client)
 {
+}
+
+void
+DButton::hoverChanged()
+{
+    m_client->widget()->repaint(buttonRect());
 }
 
 const DButton::ButtonStyle
@@ -51,21 +58,28 @@ DButton::isDark() const
     return Color::luminosity(fgc) > Color::luminosity(bgc);
 }
 
+bool
+DButton::isMaximized()
+{
+    return m_client->maximizeMode()==KDecoration::MaximizeFull;
+}
+
 const QColor
 DButton::color(const ColorRole &c) const
 {
-    return Button::color(c);
-//    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
-//    if (m_client->m_custcol[Fg].isValid())
-//        fgc = m_client->m_custcol[Fg];
-//    if (c == Fg)
-//        return fgc;
-//    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
-//    if (m_client->m_custcol[Bg].isValid())
-//        bgc = m_client->m_custcol[Bg];
-//    if (c == Bg)
-//        return bgc;
-//    return Color::mid(fgc, bgc);
+    if (c == Highlight)
+        return m_client->widget()->palette().color(QPalette::Highlight);
+    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
+    if (m_client->m_custcol[Fg].isValid())
+        fgc = m_client->m_custcol[Fg];
+    if (c == Fg)
+        return fgc;
+    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
+    if (m_client->m_custcol[Bg].isValid())
+        bgc = m_client->m_custcol[Bg];
+    if (c == Bg)
+        return bgc;
+    return Color::mid(fgc, bgc);
 }
 
 bool
@@ -83,30 +97,28 @@ DButton::onClick(QMouseEvent *e, const Type &t)
     case Min: m_client->minimize(); break;
     case Max: m_client->maximize(e->button()); break;
     case OnAllDesktops: m_client->toggleOnAllDesktops(); break;
-    case WindowMenu: m_client->showWindowMenu(mapToGlobal(rect().bottomLeft())); break;
+    case WindowMenu: m_client->showWindowMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
     case KeepAbove: m_client->setKeepAbove(!m_client->keepAbove()); break;
     case KeepBelow: m_client->setKeepBelow(!m_client->keepBelow()); break;
-    case AppMenu: m_client->showApplicationMenu(mapToGlobal(rect().bottomLeft())); break;
+    case AppMenu: m_client->showApplicationMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
     case Shade: m_client->setShade(!m_client->isShade()); break;
     case QuickHelp: m_client->showContextHelp(); break;
     default: break;
     }
-    QList<DButton *> buttons(m_client->widget()->findChildren<DButton *>());
-    for (int i = 0; i < buttons.count(); ++i)
-        buttons.at(i)->update();
+    m_client->widget()->repaint();
 }
 
-bool
+void
 DButton::paintMaxButton(QPainter &p)
 {
     if (m_client->m_buttonStyle == -1)
     {
-        const int s(rect().width()/8);
-        QRect r = rect().adjusted(s, s, -s, -s);
-        const QPen pen(m_client->maximizeMode()==KDecoration::MaximizeFull?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-        r.adjust(s, s, -s, -s);
-        QPixmap pix(rect().size());
+        QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
+        const int s(pix.width()/8);
+        QRect r = pix.rect().adjusted(s, s, -s, -s);
+        const QPen pen(color(m_client->maximizeMode()==KDecoration::MaximizeFull?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
         QPainter pt(&pix);
         pt.setRenderHint(QPainter::Antialiasing);
         pt.setPen(pen);
@@ -115,23 +127,21 @@ DButton::paintMaxButton(QPainter &p)
         pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
         pt.end();
-        p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-        p.end();
-        return true;
+        p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
     }
     else
-        return Button::paintMaxButton(p);
+        ButtonBase::paintMaxButton(p);
 }
 
-bool
+void
 DButton::paintOnAllDesktopsButton(QPainter &p)
 {
-    const int s(rect().width()/8);
-    QRect r = rect().adjusted(s, s, -s, -s);
+    QPixmap pix(buttonRect().size());
+    pix.fill(Qt::transparent);
+    const int s(pix.width()/8);
+    QRect r = pix.rect().adjusted(s, s, -s, -s);
     const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
-    QPixmap pix(rect().size());
-    pix.fill(Qt::transparent);
     QPainter pt(&pix);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setPen(pen);
@@ -142,20 +152,18 @@ DButton::paintOnAllDesktopsButton(QPainter &p)
     if (!m_client->isOnAllDesktops())
         pt.drawLine(x+w/2, y, x+w/2, y+h);
     pt.end();
-    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-    p.end();
-    return true;
+    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
 }
 
-bool
+void
 DButton::paintWindowMenuButton(QPainter &p)
 {
-    const int s(rect().width()/8);
-    QRect r = rect().adjusted(s, s, -s, -s);
+    QPixmap pix(buttonRect().size());
+    pix.fill(Qt::transparent);
+    const int s(pix.width()/8);
+    QRect r = pix.rect().adjusted(s, s, -s, -s);
     const QPen pen(color(Mid), s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
     r.adjust(s, s, -s, -s);
-    QPixmap pix(rect().size());
-    pix.fill(Qt::transparent);
     QPainter pt(&pix);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setPen(pen);
@@ -164,20 +172,18 @@ DButton::paintWindowMenuButton(QPainter &p)
     for (int i = 0; i < 3; ++i)
         pt.drawLine(x, y+i*4, x+w, y+i*4);
     pt.end();
-    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-    p.end();
-    return true;
+    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
 }
 
-bool
+void
 DButton::paintKeepAboveButton(QPainter &p)
 {
-    const int s(rect().width()/8);
-    QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(m_client->keepAbove()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPixmap pix(rect().size());
+    QPixmap pix(buttonRect().size());
     pix.fill(Qt::transparent);
+    const int s(pix.width()/8);
+    QRect r = pix.rect().adjusted(s, s, -s, -s);
+    const QPen pen(color(m_client->keepAbove()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    r.adjust(s, s, -s, -s);
     QPainter pt(&pix);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setPen(pen);
@@ -189,20 +195,18 @@ DButton::paintKeepAboveButton(QPainter &p)
     polygon.setPoints(3, points);
     pt.drawPolygon(polygon);
     pt.end();
-    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-    p.end();
-    return true;
+    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
 }
 
-bool
+void
 DButton::paintKeepBelowButton(QPainter &p)
 {
-    const int s(rect().width()/8);
-    QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(m_client->keepBelow()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPixmap pix(rect().size());
+    QPixmap pix(buttonRect().size());
     pix.fill(Qt::transparent);
+    const int s(pix.width()/8);
+    QRect r = pix.rect().adjusted(s, s, -s, -s);
+    const QPen pen(color(m_client->keepBelow()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    r.adjust(s, s, -s, -s);
     QPainter pt(&pix);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setPen(pen);
@@ -214,26 +218,24 @@ DButton::paintKeepBelowButton(QPainter &p)
     polygon.setPoints(3, points);
     pt.drawPolygon(polygon);
     pt.end();
-    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-    p.end();
-    return true;
+    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
 }
 
-bool
+void
 DButton::paintApplicationMenuButton(QPainter &p)
 {
-    return paintWindowMenuButton(p);
+    paintWindowMenuButton(p);
 }
 
-bool
+void
 DButton::paintShadeButton(QPainter &p)
 {
-    const int s(rect().width()/8);
-    QRect r = rect().adjusted(s, s, -s, -s);
-    const QPen pen(m_client->isShade()?palette().color(QPalette::Highlight):color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPixmap pix(rect().size());
+    QPixmap pix(buttonRect().size());
     pix.fill(Qt::transparent);
+    const int s(pix.width()/8);
+    QRect r = pix.rect().adjusted(s, s, -s, -s);
+    const QPen pen(color(m_client->isShade()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    r.adjust(s, s, -s, -s);
     QPainter pt(&pix);
     pt.setRenderHint(QPainter::Antialiasing);
     pt.setPen(pen);
@@ -241,21 +243,19 @@ DButton::paintShadeButton(QPainter &p)
     r.getRect(&x, &y, &w, &h);
     pt.drawLine(x, y+h/3, x+w, y+h/3);
     pt.end();
-    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-    p.end();
-    return true;
+    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
 }
 
-bool
+void
 DButton::paintQuickHelpButton(QPainter &p)
 {
-    const int s(rect().height()/8);
-    QRectF r(rect().adjusted(s, s, -s, -s));
+    QPixmap pix(buttonRect().size());
+    pix.fill(Qt::transparent);
+    const int s(pix.height()/8);
+    QRectF r(pix.rect().adjusted(s, s, -s, -s));
     QFont f(p.font());
     f.setWeight(QFont::Black);
     f.setPixelSize(r.height()*1.5f);
-    QPixmap pix(rect().size());
-    pix.fill(Qt::transparent);
     const float rnd(r.height()/4.0f);
     const float x(r.x());
     const float y(r.y());
@@ -275,9 +275,7 @@ DButton::paintQuickHelpButton(QPainter &p)
     pt.setBrush(color(Mid));
     pt.drawEllipse(QPoint(x+rnd+rnd, y+rnd*4), 2, 2);
     pt.end();
-    p.drawTiledPixmap(rect(), Render::sunkenized(rect(), pix, isDark(), color(Mid)));
-    p.end();
-    return true;
+    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
 }
 
 ///-------------------------------------------------------------------
@@ -316,6 +314,7 @@ KwinClient::init()
 {
     createMainWidget();
     widget()->installEventFilter(this);
+    widget()->setMouseTracking(true);
 
     m_titleLayout = new QHBoxLayout();
     m_titleLayout->setSpacing(SPACING);
@@ -347,7 +346,7 @@ KwinClient::compositingActive() const
 }
 
 void
-KwinClient::populate(const QString &buttons, bool left)
+KwinClient::populate(const QString &buttons, int &sz)
 {
     int size(0);
     for (int i = 0; i < buttons.size(); ++i)
@@ -372,19 +371,21 @@ KwinClient::populate(const QString &buttons, bool left)
         case '_': m_titleLayout->addSpacing(SPACING); supported = false; size += SPACING; break;
         default: supported = false; break;
         }
+
         if (t == Button::QuickHelp && !providesContextHelp())
             supported = false;
+
         if (supported)
         {
-            DButton *b = new DButton(t, this, widget());
-            size += b->width()+SPACING;
-            m_titleLayout->addWidget(b);
+            DButton *b = new DButton(t, this);
+            m_buttons << b;
+            size += 16+SPACING;
+            m_titleLayout->addItem(b);
+            if (i < buttons.size()-1)
+                m_titleLayout->addSpacing(SPACING);
         }
     }
-    if (left)
-        m_leftButtons = size+MARGIN;
-    else
-        m_rightButtons = size+MARGIN;
+    sz = size+MARGIN;
 }
 
 void
@@ -392,32 +393,28 @@ KwinClient::updateMask()
 {
     const int w(width()), h(height());
     if (isModal())
+        return;
+
+    if (compositingActive())
     {
-        clearMask();
-    }
-    else
-    {
-        if (compositingActive())
-        {
-            if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
-                clearMask();
-            else
-            {
-                QRegion r(2, 0, w-4, h);
-                r += QRegion(1, 0, w-2, h-1);
-                r += QRegion(0, 0, w, h-2);
-                setMask(r);
-            }
-        }
+        if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
+            clearMask();
         else
         {
-            QRegion r(0, 2, w, h-4);
-            r += QRegion(1, 1, w-2, h-2);
-            r += QRegion(2, 0, w-4, h);
+            QRegion r(2, 0, w-4, h);
+            r += QRegion(1, 0, w-2, h-1);
+            r += QRegion(0, 0, w, h-2);
             setMask(r);
         }
     }
-    widget()->update();
+    else
+    {
+        QRegion r(0, 2, w, h-4);
+        r += QRegion(1, 1, w-2, h-2);
+        r += QRegion(2, 0, w-4, h);
+        setMask(r);
+    }
+    widget()->repaint();
 }
 
 void
@@ -438,7 +435,7 @@ KwinClient::borders(int &left, int &right, int &top, int &bottom) const
 void
 KwinClient::captionChange()
 {
-    widget()->update();
+    widget()->repaint();
 }
 
 QColor
@@ -466,21 +463,63 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::Paint:
     {
-        QPainter p(widget());
-        p.setRenderHint(QPainter::Antialiasing);
-        paint(p);
-        p.end();
+        if (XHandler::compositingActive())
+        {
+            QPainter p(widget());
+            p.setRenderHint(QPainter::Antialiasing);
+            paint(p);
+            p.end();
+        }
+        else
+        {
+            QPixmap pix(widget()->size());
+            pix.fill(Qt::black);
+            QPainter p(&pix);
+            p.setRenderHint(QPainter::Antialiasing);
+            paint(p);
+            p.end();
+            p.begin(widget());
+            p.drawPixmap(widget()->rect(), pix);
+            p.end();
+        }
         return true;
     }
     case QEvent::MouseButtonDblClick:
+    {
         titlebarDblClickOperation();
         return true;
+    }
     case QEvent::MouseButtonPress:
-        processMousePressEvent(static_cast<QMouseEvent *>(e));
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseMove:
+    {
+        QMouseEvent *me = static_cast<QMouseEvent *>(e);
+        for (int i = 0; i < m_buttons.size(); ++i)
+        {
+            DButton *button(m_buttons.at(i));
+            if (button->buttonRect().contains(me->pos()) || me->type() == QEvent::MouseMove)
+            {
+                button->processMouseEvent(me);
+                if (me->type() == QEvent::MouseMove)
+                    continue;
+                return true;
+            }
+        }
+        if (me->type() == QEvent::MouseButtonPress)
+            processMousePressEvent(me);
         return true;
+    }
     case QEvent::Wheel:
+    {
         titlebarMouseWheelOperation(static_cast<QWheelEvent *>(e)->delta());
         return true;
+    }
+    case QEvent::Show:
+    {
+        for (int i = 0; i < m_buttons.size(); ++i)
+            m_buttons.at(i)->unhover();
+        widget()->repaint();
+    }
     default: break;
     }
     return KDecoration::eventFilter(o, e);
@@ -489,14 +528,16 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
 void
 KwinClient::paint(QPainter &p)
 {
-    p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.fillRect(widget()->rect(), Qt::transparent);
-    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    if (XHandler::compositingActive())
+    {
+        p.setCompositionMode(QPainter::CompositionMode_Source);
+        p.fillRect(widget()->rect(), Qt::transparent);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    }
     p.setBrushOrigin(widget()->rect().topLeft());
-
-    p.fillRect(widget()->rect(), Color::mid(widget()->palette().color(widget()->foregroundRole()), widget()->palette().color(widget()->backgroundRole()), 1, 8));
     if (dConf.deco.frameSize && maximizeMode() != MaximizeFull)
     {
+        p.fillRect(widget()->rect(), Color::mid(widget()->palette().color(widget()->foregroundRole()), widget()->palette().color(widget()->backgroundRole()), 1, 8));
         QRectF r(widget()->layout()->geometry().adjusted(dConf.deco.frameSize, dConf.deco.frameSize, -dConf.deco.frameSize, -dConf.deco.frameSize));
         r.adjust(-0.5f, -0.5f, 0.5f, 0.5f);
         p.setPen(QColor(0, 0, 0, 127));
@@ -523,7 +564,8 @@ KwinClient::paint(QPainter &p)
     QRect tr(m_titleLayout->geometry());
     if (tr.height() < titleHeight())
         tr.setHeight(titleHeight());
-    p.setOpacity(m_opacity);
+    if (XHandler::compositingActive())
+        p.setOpacity(m_opacity);
 
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
         p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg));
@@ -598,7 +640,6 @@ KwinClient::paint(QPainter &p)
         p.setPen(QColor(0, 0, 0, 32));
         p.drawLine(r.bottomLeft(), r.bottomRight());
     }
-    p.setClipping(false);
     if (isPreview())
     {
         p.setClipRegion(QRegion(widget()->rect())-QRegion(tr));
@@ -609,6 +650,9 @@ KwinClient::paint(QPainter &p)
     }
     else if (!isModal())
         Render::shapeCorners(widget(), &p, Render::All);
+
+    for (int i = 0; i < m_buttons.count(); ++i)
+        m_buttons.at(i)->paint(p);
 }
 
 QSize
@@ -622,15 +666,15 @@ KwinClient::activeChange()
 {
     if (!isPreview())
         ShadowHandler::installShadows(windowId(), isActive());
-    widget()->update();
-    for (int i = 0; i < m_buttons.count(); ++i)
-        m_buttons.at(i)->update();
+    widget()->repaint();
+//    for (int i = 0; i < m_buttons.count(); ++i)
+//        m_buttons.at(i)->update();
 }
 
 void
 KwinClient::updateContBg()
 {
-    widget()->update();
+    widget()->repaint();
 }
 
 static const int corner = 24;
@@ -722,24 +766,14 @@ KwinClient::reset(unsigned long changed)
             else
                 delete item;
         }
-        populate(options()->titleButtonsLeft(), true);
+        populate(options()->titleButtonsLeft(), m_leftButtons);
         m_titleLayout->addStretch();
-        populate(options()->titleButtonsRight(), false);
-        m_buttons = widget()->findChildren<Button * >();
+        populate(options()->titleButtonsRight(), m_rightButtons);
     }
 
     if (changed & SettingDecoration)
     {
         bool needBg(true);
-//        if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-//        {
-//            m_pixmap = *bg;
-//            needBg = false;
-////            m_bgPix[0] = m_bgPix[1] = QPixmap::fromX11Pixmap(*bg);
-////            if (!m_bgPix[0].isNull())
-////                needBg = false;
-//        }
-
         WindowData *wd = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData));
         if (wd && !isPreview())
         {
@@ -774,8 +808,5 @@ KwinClient::reset(unsigned long changed)
             }
         }
     }
-    for (int i = 0; i < m_buttons.count(); ++i)
-        m_buttons.at(i)->update();
-
     updateMask();
 }

@@ -82,34 +82,36 @@ StyleProject::drawSplitter(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (dConf.uno.enabled)
-    if (widget && option)
-    if (const QMainWindow *win = qobject_cast<const QMainWindow *>(widget->parentWidget()))
-    {
-//        painter->save();
-        if (dConf.removeTitleBars && XHandler::opacity() < 1.0f && win->windowFlags() & Qt::FramelessWindowHint)
+    if (dConf.uno.enabled
+            && widget
+            && option
+            && qobject_cast<const QMainWindow *>(widget->parentWidget()))
         {
             Render::Sides sides(Render::checkedForWindowEdges(widget));
             sides = Render::All-sides;
-            QPixmap p(option->rect.size());
-            p.fill(Qt::transparent);
-            QPainter pt(&p);
-            Handlers::Window::drawUnoPart(&pt, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
-            pt.end();
-            Render::renderMask(option->rect, painter, p, 4, sides);
-        }
-        else
             Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
-//        painter->drawTiledPixmap(option->rect, bg, widget->geometry().topLeft());
-//        int hh(UNO::unoHeight(win, UNO::ToolBars));
-//        if (hh == widget->geometry().bottom()+1)
-//        {
-//            painter->setPen(Qt::black);
-//            painter->setOpacity(dConf.shadows.opacity);
-//            painter->drawLine(option->rect.bottomLeft(), option->rect.bottomRight());
-//        }
-//        painter->restore();
-    }
+            if (dConf.removeTitleBars
+                    && sides & Render::Top
+                    && (!widget->parentWidget()->mask().isEmpty()
+                        || widget->parentWidget()->windowFlags() & Qt::FramelessWindowHint))
+            {
+                Render::shapeCorners(widget, painter, sides);
+                const QRectF bevel(widget->x()+0.5f, 0.5f, widget->width()-0.5f, 10.0f);
+                QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
+                lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, Color::luminosity(option->palette.color(widget->backgroundRole()))*1.1f)));
+                lg.setColorAt(0.5f, Qt::transparent);
+                const QPen pen(painter->pen());
+                const QBrush brush(painter->brush());
+                const bool hadAnti(painter->testRenderHint(QPainter::Antialiasing));
+                painter->setRenderHint(QPainter::Antialiasing);
+                painter->setBrush(Qt::NoBrush);
+                painter->setPen(QPen(lg, 1.0f));
+                painter->drawRoundedRect(bevel, 5, 5);
+                painter->setPen(pen);
+                painter->setBrush(brush);
+                painter->setRenderHint(QPainter::Antialiasing, hadAnti);
+            }
+        }
     return true;
 }
 

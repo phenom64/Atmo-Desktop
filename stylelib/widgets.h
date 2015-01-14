@@ -4,12 +4,12 @@
 #include <QWidget>
 #include <QSplitterHandle>
 
-class Q_DECL_EXPORT Button : public QWidget
+class Q_DECL_EXPORT ButtonBase
 {
 public:
     enum Style { Yosemite = 0, Lion, Sunken, Carved, StyleCount };
     typedef int ButtonStyle;
-    enum ColorRole { Fg = 0, Bg, Mid };
+    enum ColorRole { Fg = 0, Bg, Mid, Highlight };
     enum Type { Close,
                 Min,
                 Max,
@@ -22,41 +22,69 @@ public:
                 QuickHelp,
                 AppMenu,
                 TypeCount };
-    Button(Type type, QWidget *parent = 0);
-    ~Button();
+    ButtonBase(Type type);
+    ~ButtonBase();
 
-    inline void setBgPix(const QPixmap &bg, const bool active) {m_bgPix[active] = bg;}
+    virtual QRect buttonRect() = 0;
+    virtual bool isHovered() { return m_hasMouse; }
+    void paint(QPainter &p);
+    void processMouseEvent(QMouseEvent *e);
+    void unhover() { m_hasMouse = false; }
 
 protected:
-    void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
-    virtual bool paintCloseButton(QPainter &p);
-    virtual bool paintMinButton(QPainter &p);
-    virtual bool paintMaxButton(QPainter &p);
-    virtual bool paintOnAllDesktopsButton(QPainter &p) {return false;}
-    virtual bool paintWindowMenuButton(QPainter &p) {return false;}
-    virtual bool paintKeepAboveButton(QPainter &p) {return false;}
-    virtual bool paintKeepBelowButton(QPainter &p) {return false;}
-    virtual bool paintShadeButton(QPainter &p) {return false;}
-    virtual bool paintResizeButton(QPainter &p) {return false;}
-    virtual bool paintQuickHelpButton(QPainter &p) {return false;}
-    virtual bool paintApplicationMenuButton(QPainter &p) {return false;}
 
-    virtual const QColor color(const ColorRole &c = Fg) const;
-    virtual const bool isDark() const;
+    virtual void paintCloseButton(QPainter &p);
+    virtual void paintMinButton(QPainter &p);
+    virtual void paintMaxButton(QPainter &p);
+    virtual void paintOnAllDesktopsButton(QPainter &p) {}
+    virtual void paintWindowMenuButton(QPainter &p) {}
+    virtual void paintKeepAboveButton(QPainter &p) {}
+    virtual void paintKeepBelowButton(QPainter &p) {}
+    virtual void paintShadeButton(QPainter &p) {}
+    virtual void paintResizeButton(QPainter &p) {}
+    virtual void paintQuickHelpButton(QPainter &p) {}
+    virtual void paintApplicationMenuButton(QPainter &p) {}
+
+    virtual const QColor color(const ColorRole &c = Fg) const = 0;
+    virtual const bool isDark() const = 0;
+    virtual bool isMaximized() = 0;
     virtual const ButtonStyle buttonStyle() const;
+    virtual void hoverChanged() {}
 
     void drawBase(QColor c, QPainter &p, QRect &r) const;
 
-    typedef bool (Button::*PaintEvent)(QPainter &);
+    typedef void (ButtonBase::*PaintEvent)(QPainter &);
     virtual bool isActive() const = 0;
     virtual void onClick(QMouseEvent *e, const Type &t) = 0;
 
     PaintEvent m_paintEvent[TypeCount];
     Type m_type;
-    bool m_hasPress;
+    bool m_hasPress, m_hasMouse;
     QPixmap m_bgPix[2];
+};
+
+class Q_DECL_EXPORT Button : public ButtonBase, public QWidget
+{
+public:
+    Button(Type type, QWidget *parent = 0);
+    ~Button() {}
+
+    virtual QRect buttonRect() { return rect(); }
+    virtual bool isHovered() { return underMouse(); }
+
+protected:
+    void paintEvent(QPaintEvent *);
+    void mousePressEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
+
+    const QColor color(const ColorRole &c = Fg) const;
+    const bool isDark() const;
+    bool isMaximized() { return window()->isMaximized(); }
+
+    virtual bool isActive() const = 0;
+    virtual void onClick(QMouseEvent *e, const Type &t) = 0;
 };
 
 class Q_DECL_EXPORT SplitterExt : public QWidget

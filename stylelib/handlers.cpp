@@ -79,6 +79,12 @@ static QRegion paintRegion(QMainWindow *win)
     return r;
 }
 
+DButton::DButton(const Type &t, QWidget *parent)
+    : Button(t, parent)
+{
+
+}
+
 void
 DButton::onClick(QMouseEvent *e, const Type &t)
 {
@@ -90,6 +96,8 @@ DButton::onClick(QMouseEvent *e, const Type &t)
     default: break;
     }
 }
+
+//-------------------------------------------------------------------------------------------------
 
 Buttons::Buttons(QWidget *parent) : QWidget(parent)
 {
@@ -107,7 +115,7 @@ Buttons::Buttons(QWidget *parent) : QWidget(parent)
 bool
 Buttons::eventFilter(QObject *o, QEvent *e)
 {
-    if (!o || !e || !o->isWidgetType())
+    if (!o || !e || !o->isWidgetType() || !static_cast<QWidget *>(o)->testAttribute(Qt::WA_WState_Created))
         return false;
 
     if (e->type() == QEvent::WindowDeactivate || e->type() == QEvent::WindowActivate || e->type() == QEvent::WindowTitleChange)
@@ -987,6 +995,7 @@ Window::updateWindowData(QWidget *win)
     if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
         XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
 
+    win->update();
     if (dConf.uno.enabled)
     {
         updateChildren<QToolBar *>(win);
@@ -994,8 +1003,6 @@ Window::updateWindowData(QWidget *win)
         updateChildren<QTabBar *>(win);
         updateChildren<QStatusBar *>(win);
     }
-    else
-        win->update();
 
     XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 3);
     updateDeco(win->winId(), 1);
