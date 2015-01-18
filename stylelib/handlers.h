@@ -20,16 +20,6 @@ class QToolButton;
 #define TIMERNAME   "DSP_windowupdater"
 #define MENUPRESS   "DSP_menupress"
 
-class DButton : public Button
-{
-public:
-    DButton(const Type &t, QWidget *parent = 0);
-
-protected:
-    bool isActive() const { return window()->isActiveWindow(); }
-    void onClick(QMouseEvent *e, const Type &t);
-};
-
 class Buttons : public QWidget
 {
     Q_OBJECT

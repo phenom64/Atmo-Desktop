@@ -86,14 +86,14 @@ Factory::supports(Ability ability) const
     ///  @since 4.3
         return true;
     case AbilityExtendIntoClientArea: ///< The decoration respects transparentRect()
-        return false;
+        return true;
     ///  @since 4.4
     case AbilityUsesBlurBehind: ///< The decoration wants the background to be blurred, when the blur plugin is enabled.
     /// @since 4.6
         return false;
     case AbilityAnnounceAlphaChannel: ///< The decoration can tell whether it currently uses an alpha channel or not. Requires AbilityUsesAlphaChannel.
     /// @since 4.10
-        return true;
+        return false;
     // Tabbing
     case AbilityTabbing: ///< The decoration supports tabbing
     // TODO colors for individual button types

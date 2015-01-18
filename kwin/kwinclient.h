@@ -21,64 +21,27 @@ public:
     DButton(const Type &t, KwinClient *client = 0);
     ~DButton(){}
 
-    QSize sizeHint() { return QSize(16, 16); }
-    QRect buttonRect() { return geometry(); }
+    QSize sizeHint() const { return QSize(16, 16); }
+    const QRect buttonRect() const { return geometry(); }
 
 protected:
-    bool isActive() const;
-    void onClick(QMouseEvent *e, const Type &t);
-
-    void paintMaxButton(QPainter &p);
-    void paintOnAllDesktopsButton(QPainter &p);
-    void paintWindowMenuButton(QPainter &p);
-    void paintKeepAboveButton(QPainter &p);
-    void paintKeepBelowButton(QPainter &p);
-    void paintApplicationMenuButton(QPainter &p);
-    void paintShadeButton(QPainter &p);
-    void paintQuickHelpButton(QPainter &p);
-
+    void onClick(const Qt::MouseButton &button);
     void hoverChanged();
 
-    const ButtonStyle buttonStyle() const;
+    const bool isActive() const;
+    const bool isMaximized() const;
+    const bool onAllDesktops() const;
+    const bool keepAbove() const;
+    const bool keepBelow() const;
+    const bool shade() const;
 
+    const ButtonStyle buttonStyle() const;
     const QColor color(const ColorRole &c) const;
     const bool isDark() const;
-
-    bool isMaximized();
 
 private:
     KwinClient *m_client;
 };
-#if 0
-class DButton : public Button
-{
-public:
-    DButton(const Type &t, KwinClient *client = 0, QWidget *parent = 0);
-    ~DButton(){}
-
-protected:
-    bool isActive() const;
-    void onClick(QMouseEvent *e, const Type &t);
-
-    bool paintMaxButton(QPainter &p);
-    bool paintOnAllDesktopsButton(QPainter &p);
-    bool paintWindowMenuButton(QPainter &p);
-    bool paintKeepAboveButton(QPainter &p);
-    bool paintKeepBelowButton(QPainter &p);
-    bool paintApplicationMenuButton(QPainter &p);
-    bool paintShadeButton(QPainter &p);
-    bool paintQuickHelpButton(QPainter &p);
-
-    void paintEvent(QPaintEvent *e);
-
-    const ButtonStyle buttonStyle() const;
-
-    const QColor color(const ColorRole &c) const;
-    const bool isDark() const;
-private:
-    KwinClient *m_client;
-};
-#endif
 
 class KwinClient : public KDecoration
 {

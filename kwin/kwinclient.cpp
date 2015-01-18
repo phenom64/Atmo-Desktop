@@ -35,33 +35,16 @@ DButton::hoverChanged()
     m_client->widget()->repaint(buttonRect());
 }
 
-const DButton::ButtonStyle
-DButton::buttonStyle() const
-{
-    return m_client->m_buttonStyle;
-}
-
 const bool
 DButton::isDark() const
 {
     QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
     if (m_client->m_custcol[Fg].isValid())
         fgc = m_client->m_custcol[Fg];
-//    if (c == Fg)
-//        return fgc;
     QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
     if (m_client->m_custcol[Bg].isValid())
         bgc = m_client->m_custcol[Bg];
-//    if (c == Bg)
-//        return bgc;
-//    return Color::mid(fgc, bgc);
     return Color::luminosity(fgc) > Color::luminosity(bgc);
-}
-
-bool
-DButton::isMaximized()
-{
-    return m_client->maximizeMode()==KDecoration::MaximizeFull;
 }
 
 const QColor
@@ -82,20 +65,14 @@ DButton::color(const ColorRole &c) const
     return Color::mid(fgc, bgc);
 }
 
-bool
-DButton::isActive() const
-{
-    return m_client?m_client->isActive():true;
-}
-
 void
-DButton::onClick(QMouseEvent *e, const Type &t)
+DButton::onClick(const Qt::MouseButton &button)
 {
-    switch (t)
+    switch (type())
     {
     case Close: m_client->closeWindow(); break;
     case Min: m_client->minimize(); break;
-    case Max: m_client->maximize(e->button()); break;
+    case Max: m_client->maximize(button); break;
     case OnAllDesktops: m_client->toggleOnAllDesktops(); break;
     case WindowMenu: m_client->showWindowMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
     case KeepAbove: m_client->setKeepAbove(!m_client->keepAbove()); break;
@@ -108,174 +85,46 @@ DButton::onClick(QMouseEvent *e, const Type &t)
     m_client->widget()->repaint();
 }
 
-void
-DButton::paintMaxButton(QPainter &p)
+const DButton::ButtonStyle
+DButton::buttonStyle() const
 {
-    if (m_client->m_buttonStyle == -1)
-    {
-        QPixmap pix(buttonRect().size());
-        pix.fill(Qt::transparent);
-        const int s(pix.width()/8);
-        QRect r = pix.rect().adjusted(s, s, -s, -s);
-        const QPen pen(color(m_client->maximizeMode()==KDecoration::MaximizeFull?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-        r.adjust(s, s, -s, -s);
-        QPainter pt(&pix);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(pen);
-        int x, y, w, h;
-        r.getRect(&x, &y, &w, &h);
-        pt.drawLine(x+w/2, y, x+w/2, y+h);
-        pt.drawLine(x, y+h/2, x+w, y+h/2);
-        pt.end();
-        p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
-    }
-    else
-        ButtonBase::paintMaxButton(p);
+    return m_client->m_buttonStyle;
 }
 
-void
-DButton::paintOnAllDesktopsButton(QPainter &p)
+const bool
+DButton::isMaximized() const
 {
-    QPixmap pix(buttonRect().size());
-    pix.fill(Qt::transparent);
-    const int s(pix.width()/8);
-    QRect r = pix.rect().adjusted(s, s, -s, -s);
-    const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPainter pt(&pix);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(pen);
-    int x, y, w, h;
-    r.getRect(&x, &y, &w, &h);
-
-    pt.drawLine(x, y+h/2, x+w, y+h/2);
-    if (!m_client->isOnAllDesktops())
-        pt.drawLine(x+w/2, y, x+w/2, y+h);
-    pt.end();
-    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    return m_client->maximizeMode()==KDecoration::MaximizeFull;
 }
 
-void
-DButton::paintWindowMenuButton(QPainter &p)
+const bool
+DButton::onAllDesktops() const
 {
-    QPixmap pix(buttonRect().size());
-    pix.fill(Qt::transparent);
-    const int s(pix.width()/8);
-    QRect r = pix.rect().adjusted(s, s, -s, -s);
-    const QPen pen(color(Mid), s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPainter pt(&pix);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(pen);
-    int x, y, w, h;
-    r.getRect(&x, &y, &w, &h);
-    for (int i = 0; i < 3; ++i)
-        pt.drawLine(x, y+i*4, x+w, y+i*4);
-    pt.end();
-    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    return m_client->isOnAllDesktops();
 }
 
-void
-DButton::paintKeepAboveButton(QPainter &p)
+const bool
+DButton::keepAbove() const
 {
-    QPixmap pix(buttonRect().size());
-    pix.fill(Qt::transparent);
-    const int s(pix.width()/8);
-    QRect r = pix.rect().adjusted(s, s, -s, -s);
-    const QPen pen(color(m_client->keepAbove()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPainter pt(&pix);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(pen);
-    pt.setBrush(pt.pen().color());
-    int x, y, w, h;
-    r.getRect(&x, &y, &w, &h);
-    static const int points[] = { x,y+h/2, x+w/2,y, x+w,y+h/2 };
-    QPolygon polygon;
-    polygon.setPoints(3, points);
-    pt.drawPolygon(polygon);
-    pt.end();
-    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    return m_client->keepAbove();
 }
 
-void
-DButton::paintKeepBelowButton(QPainter &p)
+const bool
+DButton::isActive() const
 {
-    QPixmap pix(buttonRect().size());
-    pix.fill(Qt::transparent);
-    const int s(pix.width()/8);
-    QRect r = pix.rect().adjusted(s, s, -s, -s);
-    const QPen pen(color(m_client->keepBelow()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPainter pt(&pix);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(pen);
-    pt.setBrush(pt.pen().color());
-    int x, y, w, h;
-    r.getRect(&x, &y, &w, &h);
-    static const int points[] = { x,y+h/2, x+w/2,y+h, x+w,y+h/2 };
-    QPolygon polygon;
-    polygon.setPoints(3, points);
-    pt.drawPolygon(polygon);
-    pt.end();
-    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    return m_client->isActive();
 }
 
-void
-DButton::paintApplicationMenuButton(QPainter &p)
+const bool
+DButton::keepBelow() const
 {
-    paintWindowMenuButton(p);
+    return m_client->keepBelow();
 }
 
-void
-DButton::paintShadeButton(QPainter &p)
+const bool
+DButton::shade() const
 {
-    QPixmap pix(buttonRect().size());
-    pix.fill(Qt::transparent);
-    const int s(pix.width()/8);
-    QRect r = pix.rect().adjusted(s, s, -s, -s);
-    const QPen pen(color(m_client->isShade()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-    r.adjust(s, s, -s, -s);
-    QPainter pt(&pix);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(pen);
-    int x, y, w, h;
-    r.getRect(&x, &y, &w, &h);
-    pt.drawLine(x, y+h/3, x+w, y+h/3);
-    pt.end();
-    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
-}
-
-void
-DButton::paintQuickHelpButton(QPainter &p)
-{
-    QPixmap pix(buttonRect().size());
-    pix.fill(Qt::transparent);
-    const int s(pix.height()/8);
-    QRectF r(pix.rect().adjusted(s, s, -s, -s));
-    QFont f(p.font());
-    f.setWeight(QFont::Black);
-    f.setPixelSize(r.height()*1.5f);
-    const float rnd(r.height()/4.0f);
-    const float x(r.x());
-    const float y(r.y());
-    QPainterPath path;
-    path.moveTo(x, y+rnd);
-    path.quadTo(r.topLeft(), QPointF(x+rnd, y));
-    path.quadTo(QPointF(x+rnd*2, y), QPointF(x+rnd*2, y+rnd));
-    path.quadTo(QPointF(x+rnd*2, y+rnd*2), QPointF(x+rnd, y+rnd*2));
-    path.lineTo(QPointF(x+rnd, y+rnd*2+rnd/2));
-
-    QPainter pt(&pix);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.setPen(QPen(color(Mid), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    pt.setBrush(Qt::NoBrush);
-    pt.drawPath(path.translated(rnd, 0));
-    pt.setPen(Qt::NoPen);
-    pt.setBrush(color(Mid));
-    pt.drawEllipse(QPoint(x+rnd+rnd, y+rnd*4), 2, 2);
-    pt.end();
-    p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    return m_client->isShade();
 }
 
 ///-------------------------------------------------------------------
@@ -314,6 +163,7 @@ KwinClient::init()
 {
     createMainWidget();
     widget()->installEventFilter(this);
+    widget()->setAttribute(Qt::WA_NoSystemBackground);
     widget()->setMouseTracking(true);
 
     m_titleLayout = new QHBoxLayout();
@@ -473,7 +323,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         else
         {
             QPixmap pix(widget()->size());
-            pix.fill(Qt::black);
+            pix.fill(Qt::transparent);
             QPainter p(&pix);
             p.setRenderHint(QPainter::Antialiasing);
             paint(p);
@@ -568,7 +418,7 @@ KwinClient::paint(QPainter &p)
         p.setOpacity(m_opacity);
 
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-        p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg));
+        p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg), tr.topLeft());
     else if (!m_bgPix[isActive()].isNull())
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
@@ -594,15 +444,14 @@ KwinClient::paint(QPainter &p)
     {
         if (!m_mem)
             m_mem = new QSharedMemory(QString::number(windowId()), this);
-        if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)))
-            if (m_mem->lock())
-            {
-                p.setOpacity(dConf.uno.opacity);
-                const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
-                p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
-                p.setOpacity(1.0f);
-                m_mem->unlock();
-            }
+        if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
+        {
+            p.setOpacity(dConf.uno.opacity);
+            const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
+            p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
+            p.setOpacity(1.0f);
+            m_mem->unlock();
+        }
     }
 
     QFont f(p.font());
@@ -666,15 +515,13 @@ KwinClient::activeChange()
 {
     if (!isPreview())
         ShadowHandler::installShadows(windowId(), isActive());
-    widget()->repaint();
-//    for (int i = 0; i < m_buttons.count(); ++i)
-//        m_buttons.at(i)->update();
+    widget()->update();
 }
 
 void
 KwinClient::updateContBg()
 {
-    widget()->repaint();
+    widget()->update();
 }
 
 static const int corner = 24;

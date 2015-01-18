@@ -46,7 +46,7 @@ ButtonBase::paint(QPainter &p)
         (this->*m_paintEvent[m_type])(p);
 }
 
-void
+bool
 ButtonBase::processMouseEvent(QMouseEvent *e)
 {
     switch (e->type())
@@ -55,7 +55,7 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
     {
         e->accept();
         m_hasPress = true;
-        break;
+        return true;
     }
     case QEvent::MouseButtonRelease:
     {
@@ -64,9 +64,9 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
             e->accept();
             m_hasPress = false;
             if (buttonRect().contains(e->pos()))
-                onClick(e, m_type);
+                onClick(e->button());
         }
-        break;
+        return true;
     }
     case QEvent::MouseMove:
     {
@@ -74,7 +74,9 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
         m_hasMouse = buttonRect().contains(e->pos());
         if (hadMouse != m_hasMouse)
             hoverChanged();
+        return true;
     }
+    default: return false;
     }
 }
 
@@ -242,31 +244,49 @@ ButtonBase::paintCloseButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(buttonRect());
-    if (dConf.deco.buttons == -1)
+    const QColor c(color(Mid));
+    const quint64 check((r.width()*r.height())
+                        | ((quint64)(dConf.deco.buttons+1)<<24)
+                        | ((quint64)isActive()<<28)
+                        | ((quint64)isHovered()<<30)
+                        | ((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
     {
-        const int s(buttonRect().width()/8);
-        r = buttonRect().adjusted(s, s, -s, -s);
-        const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-        r.adjust(s, s, -s, -s);
-        QPixmap pix(buttonRect().size());
-        pix.fill(Qt::transparent);
-        QPainter pt(&pix);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(pen);
-        pt.drawLine(r.topLeft(), r.bottomRight());
-        pt.drawLine(r.topRight(), r.bottomLeft());
-        pt.end();
-        p.drawTiledPixmap(buttonRect(), Render::sunkenized(buttonRect(), pix, isDark(), color(Mid)));
-    }
-    else
-    {
-        drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
-        if (isHovered())
+        if (dConf.deco.buttons == -1)
         {
-            p.setBrush(color(Fg));
-            p.drawEllipse(r.adjusted(3, 3, -3, -3));
+            QPixmap pix(buttonRect().size());
+            const int s(pix.width()/8);
+            const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            QRect rect = pix.rect().adjusted(s, s, -s, -s);
+            rect.adjust(s, s, -s, -s);
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            pt.setRenderHint(QPainter::Antialiasing);
+            pt.setPen(pen);
+            pt.drawLine(rect.topLeft(), rect.bottomRight());
+            pt.drawLine(rect.topRight(), rect.bottomLeft());
+            pt.end();
+            p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+        }
+        else
+        {
+            QPixmap pix(r.size());
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            pt.setPen(Qt::NoPen);
+            pt.setRenderHint(QPainter::Antialiasing);
+            QRect rect(pix.rect());
+            drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
+            if (isHovered())
+            {
+                pt.setBrush(color(Fg));
+                pt.drawEllipse(rect.adjusted(3, 3, -3, -3));
+            }
+            pt.end();
+            m_bgPix.insert(check, pix);
         }
     }
+    p.drawTiledPixmap(r, m_bgPix.value(check));
 }
 
 void
@@ -275,33 +295,52 @@ ButtonBase::paintMaxButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(buttonRect());
-    if (dConf.deco.buttons == -1)
+    const QColor c(color(Mid));
+    const quint64 check((r.width()*r.height())
+                        | ((quint64)(dConf.deco.buttons+1)<<24)
+                        | ((quint64)isMaximized()<<26)
+                        | ((quint64)isActive()<<28)
+                        | ((quint64)isHovered()<<30)
+                        | ((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
     {
-        const int s(buttonRect().width()/8);
-        QRect r = buttonRect().adjusted(s, s, -s, -s);
-        const QPen pen(color(isMaximized()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-        r.adjust(s, s, -s, -s);
-        QPixmap pix(buttonRect().size());
-        pix.fill(Qt::transparent);
-        QPainter pt(&pix);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(pen);
-        int x, y, w, h;
-        r.getRect(&x, &y, &w, &h);
-        pt.drawLine(x+w/2, y, x+w/2, y+h);
-        pt.drawLine(x, y+h/2, x+w, y+h/2);
-        pt.end();
-        p.drawTiledPixmap(buttonRect(), Render::sunkenized(buttonRect(), pix, isDark(), color(Mid)));
-    }
-    else
-    {
-        drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
-        if (isHovered())
+        if (dConf.deco.buttons == NoStyle)
         {
-            p.setBrush(color(Fg));
-            p.drawEllipse(r.adjusted(3, 3, -3, -3));
+            QPixmap pix(buttonRect().size());
+            const int s(pix.width()/8);
+            const QPen pen(color(isMaximized()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            QRect rect = pix.rect().adjusted(s, s, -s, -s);
+            rect.adjust(s, s, -s, -s);
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            pt.setRenderHint(QPainter::Antialiasing);
+            pt.setPen(pen);
+            int x, y, w, h;
+            rect.getRect(&x, &y, &w, &h);
+            pt.drawLine(x+w/2, y, x+w/2, y+h);
+            pt.drawLine(x, y+h/2, x+w, y+h/2);
+            pt.end();
+            p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), c));
+        }
+        else
+        {
+            QPixmap pix(r.size());
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            pt.setPen(Qt::NoPen);
+            pt.setRenderHint(QPainter::Antialiasing);
+            QRect rect(pix.rect());
+            drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
+            if (isHovered())
+            {
+                pt.setBrush(color(Fg));
+                pt.drawEllipse(rect.adjusted(3, 3, -3, -3));
+            }
+            pt.end();
+            m_bgPix.insert(check, pix);
         }
     }
+    p.drawTiledPixmap(r, m_bgPix.value(check));
 }
 
 void
@@ -310,33 +349,234 @@ ButtonBase::paintMinButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(buttonRect());
-    if (dConf.deco.buttons == -1)
+    const QColor c(color(Mid));
+    const quint64 check((r.width()*r.height())
+                        | ((quint64)(dConf.deco.buttons+1)<<24)
+                        | ((quint64)isActive()<<28)
+                        | ((quint64)isHovered()<<30)
+                        | ((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
     {
-        const int s(buttonRect().width()/8);
-        QRect r = buttonRect().adjusted(s, s, -s, -s);
-        const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-        r.adjust(s, s, -s, -s);
+        if (dConf.deco.buttons == NoStyle)
+        {
+            QPixmap pix(buttonRect().size());
+            const int s(pix.width()/8);
+            const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            QRect rect = pix.rect().adjusted(s, s, -s, -s);
+            rect.adjust(s, s, -s, -s);
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            pt.setRenderHint(QPainter::Antialiasing);
+            pt.setPen(pen);
+            int x, y, w, h;
+            rect.getRect(&x, &y, &w, &h);
+            pt.drawLine(x, y+h/2, x+w, y+h/2);
+            pt.end();
+            m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), c));
+        }
+        else
+        {
+            QPixmap pix(r.size());
+            pix.fill(Qt::transparent);
+            QPainter pt(&pix);
+            pt.setPen(Qt::NoPen);
+            pt.setRenderHint(QPainter::Antialiasing);
+            QRect rect(pix.rect());
+            drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
+            if (isHovered())
+            {
+                pt.setBrush(color(Fg));
+                pt.drawEllipse(rect.adjusted(3, 3, -3, -3));
+            }
+            pt.end();
+            m_bgPix.insert(check, pix);
+        }
+    }
+    p.drawTiledPixmap(r, m_bgPix.value(check));
+}
+
+void
+ButtonBase::paintOnAllDesktopsButton(QPainter &p)
+{
+    const bool all(onAllDesktops());
+    const QColor c(color(Mid));
+    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)all<<28)|((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
+    {
         QPixmap pix(buttonRect().size());
+        const int s(pix.width()/8);
+        const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        QRect rect = pix.rect().adjusted(s, s, -s, -s);
+        rect.adjust(s, s, -s, -s);
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
         pt.setRenderHint(QPainter::Antialiasing);
         pt.setPen(pen);
         int x, y, w, h;
-        r.getRect(&x, &y, &w, &h);
+        rect.getRect(&x, &y, &w, &h);
         pt.drawLine(x, y+h/2, x+w, y+h/2);
+        if (!all)
+            pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.end();
-        p.drawTiledPixmap(buttonRect(), Render::sunkenized(buttonRect(), pix, isDark(), color(Mid)));
+        p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), c));
+        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), c));
     }
-    else
-    {
-        drawBase(isActive()?fcolors[m_type]:color(Bg), p, r);
-        if (isHovered())
-        {
-            p.setBrush(color(Fg));
-            p.drawEllipse(r.adjusted(3, 3, -3, -3));
-        }
-    }
+    p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }
+
+void
+ButtonBase::paintWindowMenuButton(QPainter &p)
+{
+    const QColor c(color(Mid));
+    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
+    {
+        QPixmap pix(buttonRect().size());
+        pix.fill(Qt::transparent);
+        const int s(pix.width()/8);
+        QRect r = pix.rect().adjusted(s, s, -s, -s);
+        const QPen pen(c, s, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        int x, y, w, h;
+        r.getRect(&x, &y, &w, &h);
+        for (int i = 0; i < 3; ++i)
+            pt.drawLine(x, y+i*4, x+w, y+i*4);
+        pt.end();
+        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    }
+    p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
+}
+
+void
+ButtonBase::paintApplicationMenuButton(QPainter &p)
+{
+    paintWindowMenuButton(p);
+}
+
+void
+ButtonBase::paintKeepAboveButton(QPainter &p)
+{
+    const QColor c(color(keepAbove()?Highlight:Mid));
+    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
+    {
+        QPixmap pix(buttonRect().size());
+        pix.fill(Qt::transparent);
+        const int s(pix.width()/8);
+        QRect r = pix.rect().adjusted(s, s, -s, -s);
+        const QPen pen(c, s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        pt.setBrush(pt.pen().color());
+        int x, y, w, h;
+        r.getRect(&x, &y, &w, &h);
+        static const int points[] = { x,y+h/2, x+w/2,y, x+w,y+h/2 };
+        QPolygon polygon;
+        polygon.setPoints(3, points);
+        pt.drawPolygon(polygon);
+        pt.end();
+        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    }
+    p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
+}
+
+void
+ButtonBase::paintKeepBelowButton(QPainter &p)
+{
+    const QColor c(color(keepBelow()?Highlight:Mid));
+    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
+    {
+        QPixmap pix(buttonRect().size());
+        pix.fill(Qt::transparent);
+        const int s(pix.width()/8);
+        QRect r = pix.rect().adjusted(s, s, -s, -s);
+        const QPen pen(c, s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        pt.setBrush(pt.pen().color());
+        int x, y, w, h;
+        r.getRect(&x, &y, &w, &h);
+        static const int points[] = { x,y+h/2, x+w/2,y+h, x+w,y+h/2 };
+        QPolygon polygon;
+        polygon.setPoints(3, points);
+        pt.drawPolygon(polygon);
+        pt.end();
+        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    }
+    p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
+}
+
+void
+ButtonBase::paintShadeButton(QPainter &p)
+{
+    const QColor c(color(shade()?Highlight:Mid));
+    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
+    {
+        QPixmap pix(buttonRect().size());
+        pix.fill(Qt::transparent);
+        const int s(pix.width()/8);
+        QRect r = pix.rect().adjusted(s, s, -s, -s);
+        const QPen pen(c, s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        r.adjust(s, s, -s, -s);
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(pen);
+        int x, y, w, h;
+        r.getRect(&x, &y, &w, &h);
+        pt.drawLine(x, y+h/3, x+w, y+h/3);
+        pt.end();
+        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+    }
+    p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
+}
+
+void
+ButtonBase::paintQuickHelpButton(QPainter &p)
+{
+    const QColor c(color(Mid));
+    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    if (!m_bgPix.contains(check))
+    {
+        QPixmap pix(buttonRect().size());
+        pix.fill(Qt::transparent);
+        const int s(pix.height()/8);
+        QRectF r(pix.rect().adjusted(s, s, -s, -s));
+        QFont f(p.font());
+        f.setWeight(QFont::Black);
+        f.setPixelSize(r.height()*1.5f);
+        const float rnd(r.height()/4.0f);
+        const float x(r.x());
+        const float y(r.y());
+        QPainterPath path;
+        path.moveTo(x, y+rnd);
+        path.quadTo(r.topLeft(), QPointF(x+rnd, y));
+        path.quadTo(QPointF(x+rnd*2, y), QPointF(x+rnd*2, y+rnd));
+        path.quadTo(QPointF(x+rnd*2, y+rnd*2), QPointF(x+rnd, y+rnd*2));
+        path.lineTo(QPointF(x+rnd, y+rnd*2+rnd/2));
+
+        QPainter pt(&pix);
+        pt.setRenderHint(QPainter::Antialiasing);
+        pt.setPen(QPen(c, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        pt.setBrush(Qt::NoBrush);
+        pt.drawPath(path.translated(rnd, 0));
+        pt.setPen(Qt::NoPen);
+        pt.setBrush(c);
+        pt.drawEllipse(QPoint(x+rnd+rnd, y+rnd*4), 2, 2);
+        pt.end();
+        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), c));
+    }
+    p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 
 Button::Button(Type type, QWidget *parent)
@@ -350,16 +590,28 @@ Button::Button(Type type, QWidget *parent)
 }
 
 void
-Button::mousePressEvent(QMouseEvent *e)
+Button::onClick(const Qt::MouseButton &btn)
 {
-    ButtonBase::processMouseEvent(e);
+    switch (type())
+    {
+    case Close: window()->close(); break;
+    case Min: window()->showMinimized(); break;
+    case Max: window()->isMaximized()?window()->showNormal():window()->showMaximized(); break;
+    default: break;
+    }
 }
 
-void
-Button::mouseReleaseEvent(QMouseEvent *e)
-{
-    ButtonBase::processMouseEvent(e);
-}
+//void
+//Button::mousePressEvent(QMouseEvent *e)
+//{
+//    ButtonBase::processMouseEvent(e);
+//}
+
+//void
+//Button::mouseReleaseEvent(QMouseEvent *e)
+//{
+//    ButtonBase::processMouseEvent(e);
+//}
 
 const QColor
 Button::color(const ColorRole &c) const

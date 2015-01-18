@@ -3,11 +3,12 @@
 
 #include <QWidget>
 #include <QSplitterHandle>
+#include <QMap>
 
 class Q_DECL_EXPORT ButtonBase
 {
 public:
-    enum Style { Yosemite = 0, Lion, Sunken, Carved, StyleCount };
+    enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, StyleCount };
     typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid, Highlight };
     enum Type { Close,
@@ -25,44 +26,47 @@ public:
     ButtonBase(Type type);
     ~ButtonBase();
 
-    virtual QRect buttonRect() = 0;
-    virtual bool isHovered() { return m_hasMouse; }
+    virtual const QRect buttonRect() const = 0;
+    virtual const bool isHovered() const { return m_hasMouse; }
     void paint(QPainter &p);
-    void processMouseEvent(QMouseEvent *e);
+    bool processMouseEvent(QMouseEvent *e);
     void unhover() { m_hasMouse = false; }
+    const Type type() const { return m_type; }
 
 protected:
-    void mousePressEvent(QMouseEvent *);
-    void mouseReleaseEvent(QMouseEvent *);
-
-    virtual void paintCloseButton(QPainter &p);
-    virtual void paintMinButton(QPainter &p);
-    virtual void paintMaxButton(QPainter &p);
-    virtual void paintOnAllDesktopsButton(QPainter &p) {}
-    virtual void paintWindowMenuButton(QPainter &p) {}
-    virtual void paintKeepAboveButton(QPainter &p) {}
-    virtual void paintKeepBelowButton(QPainter &p) {}
-    virtual void paintShadeButton(QPainter &p) {}
-    virtual void paintResizeButton(QPainter &p) {}
-    virtual void paintQuickHelpButton(QPainter &p) {}
-    virtual void paintApplicationMenuButton(QPainter &p) {}
+    void drawBase(QColor c, QPainter &p, QRect &r) const;
+    void paintCloseButton(QPainter &p);
+    void paintMinButton(QPainter &p);
+    void paintMaxButton(QPainter &p);
+    void paintOnAllDesktopsButton(QPainter &p);
+    void paintWindowMenuButton(QPainter &p);
+    void paintKeepAboveButton(QPainter &p);
+    void paintKeepBelowButton(QPainter &p);
+    void paintShadeButton(QPainter &p);
+    void paintResizeButton(QPainter &p){}
+    void paintQuickHelpButton(QPainter &p);
+    void paintApplicationMenuButton(QPainter &p);
 
     virtual const QColor color(const ColorRole &c = Fg) const = 0;
     virtual const bool isDark() const = 0;
-    virtual bool isMaximized() = 0;
+    virtual const bool isMaximized() const = 0;
+    virtual const bool isActive() const = 0;
+
     virtual const ButtonStyle buttonStyle() const;
+    virtual const bool onAllDesktops() const { return false; }
+    virtual const bool keepAbove() const { return false; }
+    virtual const bool keepBelow() const {return false; }
+    virtual const bool shade() const { return false; }
+
     virtual void hoverChanged() {}
+    virtual void onClick(const Qt::MouseButton &button) = 0;
 
-    void drawBase(QColor c, QPainter &p, QRect &r) const;
-
+private:
     typedef void (ButtonBase::*PaintEvent)(QPainter &);
-    virtual bool isActive() const = 0;
-    virtual void onClick(QMouseEvent *e, const Type &t) = 0;
-
     PaintEvent m_paintEvent[TypeCount];
     Type m_type;
     bool m_hasPress, m_hasMouse;
-    QPixmap m_bgPix[2];
+    QMap<quint64, QPixmap> m_bgPix;
 };
 
 class Q_DECL_EXPORT Button : public ButtonBase, public QWidget
@@ -71,20 +75,20 @@ public:
     Button(Type type, QWidget *parent = 0);
     ~Button() {}
 
-    virtual QRect buttonRect() { return rect(); }
-    virtual bool isHovered() { return underMouse(); }
+    const QRect buttonRect() const { return rect(); }
+    const bool isHovered() const { return underMouse(); }
 
 protected:
+    void mousePressEvent(QMouseEvent *e) { processMouseEvent(e); }
+    void mouseReleaseEvent(QMouseEvent *e) { processMouseEvent(e); }
+
+    void onClick(const Qt::MouseButton &button);
     void paintEvent(QPaintEvent *);
-    void mousePressEvent(QMouseEvent *);
-    void mouseReleaseEvent(QMouseEvent *);
 
     const QColor color(const ColorRole &c = Fg) const;
     const bool isDark() const;
-    bool isMaximized() { return window()->isMaximized(); }
-
-    virtual bool isActive() const = 0;
-    virtual void onClick(QMouseEvent *e, const Type &t) = 0;
+    const bool isMaximized() const { return window()->isMaximized(); }
+    const bool isActive() const { return window()->isActiveWindow(); }
 };
 
 class Q_DECL_EXPORT SplitterExt : public QWidget

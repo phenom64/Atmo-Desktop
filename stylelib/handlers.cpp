@@ -79,23 +79,6 @@ static QRegion paintRegion(QMainWindow *win)
     return r;
 }
 
-DButton::DButton(const Type &t, QWidget *parent)
-    : Button(t, parent)
-{
-
-}
-
-void
-DButton::onClick(QMouseEvent *e, const Type &t)
-{
-    switch (t)
-    {
-    case Close: window()->close(); break;
-    case Min: window()->showMinimized(); break;
-    case Max: window()->isMaximized()?window()->showNormal():window()->showMaximized(); break;
-    default: break;
-    }
-}
 
 //-------------------------------------------------------------------------------------------------
 
@@ -104,9 +87,9 @@ Buttons::Buttons(QWidget *parent) : QWidget(parent)
     QHBoxLayout *bl(new QHBoxLayout(this));
     bl->setContentsMargins(4, 4, 4, 4);
     bl->setSpacing(4);
-    bl->addWidget(new DButton(Button::Close, this));
-    bl->addWidget(new DButton(Button::Min, this));
-    bl->addWidget(new DButton(Button::Max, this));
+    bl->addWidget(new Button(Button::Close, this));
+    bl->addWidget(new Button(Button::Min, this));
+    bl->addWidget(new Button(Button::Max, this));
     setLayout(bl);
     if (parent)
         parent->window()->installEventFilter(this);
