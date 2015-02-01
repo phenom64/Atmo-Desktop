@@ -32,4 +32,8 @@
     f.setBold(true); \
     painter->setFont(f); }
 
+#define BALLOONTIP "DSP_BALLOONTIP"
+#define SETBALLOONTIP(_WIDGET_, _ACTIVE_) _WIDGET_->setProperty(BALLOONTIP, _ACTIVE_);
+#define ISBALLOONTIP(_WIDGET_) _WIDGET_->property(BALLOONTIP).toBool()
+
 #endif // MACROS_H

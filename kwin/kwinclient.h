@@ -66,7 +66,6 @@ public:
     void shadeChange() {}
     void reset(unsigned long changed);
     void updateContBg();
-    bool compositingActive() const;
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -78,6 +77,9 @@ protected:
     const QRect positionRect(const KDecorationDefines::Position pos) const;
     const int titleHeight() const;
 
+protected slots:
+    void readCompositing();
+
 private:
     QHBoxLayout *m_titleLayout;
     QLinearGradient m_unoGradient;
@@ -86,7 +88,7 @@ private:
     QPixmap m_bgPix[2];
     float m_opacity;
     int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize;
-    bool m_needSeparator, m_contAware, m_uno;
+    bool m_needSeparator, m_contAware, m_uno, m_compositingActive;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;

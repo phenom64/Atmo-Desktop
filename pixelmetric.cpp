@@ -20,6 +20,7 @@
 #include "stylelib/ops.h"
 #include "config/settings.h"
 #include "stylelib/render.h"
+#include "stylelib/macros.h"
 
 int
 StyleProject::layoutSpacingAndMargins(const QWidget *w)

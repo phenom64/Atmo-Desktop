@@ -14,6 +14,7 @@
 #include "ops.h"
 #include "render.h"
 #include "../config/settings.h"
+#include "macros.h"
 
 Q_DECL_EXPORT ShadowHandler ShadowHandler::m_instance;
 
@@ -31,7 +32,7 @@ ShadowHandler::eventFilter(QObject *o, QEvent *e)
     if (e->type() == QEvent::Show)
     {
         QWidget *w = static_cast<QWidget *>(o);
-        if (w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
+        if (!ISBALLOONTIP(w) && w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
         {
             if (QMenu *m = qobject_cast<QMenu *>(w))
                 ShadowHandler::installShadows(m);
@@ -208,7 +209,6 @@ unsigned long
     return data;
 }
 
-
 void
 ShadowHandler::installShadows(WId w, bool active)
 {
@@ -254,6 +254,7 @@ void
 ShadowHandler::release(QWidget *w)
 {
     w->removeEventFilter(instance());
+    XHandler::deleteXProperty(w->winId(), XHandler::KwinShadows);
 }
 
 void

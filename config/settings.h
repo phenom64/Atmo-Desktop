@@ -15,6 +15,7 @@
 #define COMPACTMENU         "compactmenu"
 #define SPLITTEREXT         "splitterext"
 #define ARROWSIZE           "maxarrowsize"
+#define BALLOONTIPS         "balloontips"
 #define PALETTE             "palette"
 
 #define DECOBUTTONS         "deco.buttons"
@@ -109,6 +110,7 @@
 #define DEFCOMPACTMENU          false
 #define DEFSPLITTEREXT          false
 #define DEFARROWSIZE            9
+#define DEFBALLOONTIPS          false
 #define DEFPALETTE              QString()
 
 #define DEFDECOBUTTONS          0
@@ -184,6 +186,7 @@
 #define READCOMPACTMENU         COMPACTMENU, DEFCOMPACTMENU
 #define READSPLITTEREXT         SPLITTEREXT, DEFSPLITTEREXT
 #define READARROWSIZE           ARROWSIZE, DEFARROWSIZE
+#define READBALLOONTIPS         BALLOONTIPS, DEFBALLOONTIPS
 #define READPALETTE             PALETTE, DEFPALETTE
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
@@ -270,7 +273,7 @@ public:
     App app;
     float opacity;
     QStringList blackList;
-    bool removeTitleBars, hackDialogs, compactMenu, splitterExt;
+    bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips;
     int titlePos, arrowSize;
     QPalette *palette;
     struct deco

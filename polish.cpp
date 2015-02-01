@@ -92,6 +92,13 @@ StyleProject::polish(QWidget *widget)
                 || qobject_cast<QVBoxLayout *>(widget->layout())))
         static_cast<QBoxLayout *>(widget->layout())->setSpacing(0);
 
+    if (dConf.balloonTips
+            && !widget->toolTip().isEmpty()
+            && (qobject_cast<QAbstractButton *>(widget)
+                || qobject_cast<QSlider *>(widget)
+                || qobject_cast<QLabel *>(widget)))
+        Handlers::BalloonHelper::manage(widget);
+
     if (qobject_cast<QPushButton *>(widget)
             || qobject_cast<QCheckBox *>(widget)
             || qobject_cast<QRadioButton *>(widget)
@@ -118,8 +125,6 @@ StyleProject::polish(QWidget *widget)
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
 
-            if (dConf.removeTitleBars)
-                ShadowHandler::manage(widget);
             Handlers::Window::manage(widget);
         }
         else if (qobject_cast<QDialog *>(widget))
@@ -140,11 +145,10 @@ StyleProject::polish(QWidget *widget)
             }
 
             if (needHandler)
-            {
                 Handlers::Window::manage(widget);
-                ShadowHandler::manage(widget);
-            }
         }
+        if (widget->windowFlags() & Qt::FramelessWindowHint && !widget->inherits("Handlers::Balloon"))
+            ShadowHandler::manage(widget);
     }
 
     //main if segment for all widgets
@@ -326,14 +330,14 @@ StyleProject::polish(QWidget *widget)
             frame->setContentsMargins(0, 0, 0, 0);
         }
     }
-    else if (widget->inherits("QTipLabel"))
+    else if (widget->inherits("QTipLabel")) //tooltip
     {
         if (!widget->testAttribute(Qt::WA_TranslucentBackground))
             widget->setAttribute(Qt::WA_TranslucentBackground);
 
         ShadowHandler::manage(widget);
-        unsigned int d(0);
-        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        if (dConf.balloonTips)
+            Handlers::BalloonHelper::manage(widget);
     }
 //    else if (widget->isWindow())
 //    {

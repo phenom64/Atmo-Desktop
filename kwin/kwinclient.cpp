@@ -141,6 +141,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_contAware(false)
     , m_uno(true)
     , m_frameSize(0)
+    , m_compositingActive(true)
 {
     setParent(factory);
     Settings::read();
@@ -186,13 +187,7 @@ KwinClient::init()
         if (isResizable() && !m_sizeGrip && !dConf.deco.frameSize)
             m_sizeGrip = new SizeGrip(this);
     }
-    reset(63);
-}
-
-bool
-KwinClient::compositingActive() const
-{
-    return m_factory->compositingActive();
+    reset(127);
 }
 
 void
@@ -245,7 +240,7 @@ KwinClient::updateMask()
     if (isModal())
         return;
 
-    if (compositingActive())
+    if (m_compositingActive)
     {
         if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
             clearMask();
@@ -264,7 +259,7 @@ KwinClient::updateMask()
         r += QRegion(2, 0, w-4, h);
         setMask(r);
     }
-    widget()->repaint();
+    widget()->update();
 }
 
 void
@@ -313,9 +308,12 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::Paint:
     {
-        if (XHandler::compositingActive())
+        if (m_compositingActive)
         {
             QPainter p(widget());
+            p.setCompositionMode(QPainter::CompositionMode_Source);
+            p.fillRect(widget()->rect(), Qt::transparent);
+            p.setCompositionMode(QPainter::CompositionMode_SourceOver);
             p.setRenderHint(QPainter::Antialiasing);
             paint(p);
             p.end();
@@ -323,7 +321,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         else
         {
             QPixmap pix(widget()->size());
-            pix.fill(Qt::transparent);
+            pix.fill(bgColor());
             QPainter p(&pix);
             p.setRenderHint(QPainter::Antialiasing);
             paint(p);
@@ -378,12 +376,6 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
 void
 KwinClient::paint(QPainter &p)
 {
-    if (XHandler::compositingActive())
-    {
-        p.setCompositionMode(QPainter::CompositionMode_Source);
-        p.fillRect(widget()->rect(), Qt::transparent);
-        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    }
     p.setBrushOrigin(widget()->rect().topLeft());
     if (dConf.deco.frameSize && maximizeMode() != MaximizeFull)
     {
@@ -395,10 +387,12 @@ KwinClient::paint(QPainter &p)
         p.drawRect(r);
         p.setPen(QColor(0, 0, 0, 127));
         p.setBrush(QColor(0, 0, 0, 63));
-        p.drawRect(QRectF(positionRect(PositionTopLeft)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
-        p.drawRect(QRectF(positionRect(PositionTopRight)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
-        p.drawRect(QRectF(positionRect(PositionBottomLeft)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
-        p.drawRect(QRectF(positionRect(PositionBottomRight)).adjusted(-0.5f, -0.5f, 0.5f, 0.5f));
+        p.setRenderHint(QPainter::Antialiasing, false);
+        p.drawRect(positionRect(PositionTopLeft));
+        p.drawRect(positionRect(PositionTopRight));
+        p.drawRect(positionRect(PositionBottomLeft));
+        p.drawRect(positionRect(PositionBottomRight));
+        p.setRenderHint(QPainter::Antialiasing);
         p.setBrush(Qt::NoBrush);
         p.setPen(QColor(255, 255, 255, 63));
         int rnd(!isModal()*4);
@@ -414,7 +408,7 @@ KwinClient::paint(QPainter &p)
     QRect tr(m_titleLayout->geometry());
     if (tr.height() < titleHeight())
         tr.setHeight(titleHeight());
-    if (XHandler::compositingActive())
+    if (m_compositingActive)
         p.setOpacity(m_opacity);
 
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
@@ -431,13 +425,41 @@ KwinClient::paint(QPainter &p)
     //bevel
     if ((!dConf.deco.frameSize || maximizeMode() == MaximizeFull) && !isModal())
     {
-        const QRectF bevel(0.5f, 0.5f, width()-0.5f, 10.0f);
-        QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
-        lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
-        lg.setColorAt(0.5f, Qt::transparent);
-        p.setBrush(Qt::NoBrush);
-        p.setPen(QPen(lg, 1.0f));
-        p.drawRoundedRect(bevel, 5, 5);
+        static QPixmap bevelCorner[3];
+        static int prevLum(0);
+        if (bevelCorner[0].isNull() || prevLum != bgLum)
+        {
+            prevLum = bgLum;
+            if (!bevelCorner[0])
+            {
+                for (int i = 0; i < 2; ++i)
+                {
+                    bevelCorner[i] = QPixmap(5, 5);
+                    bevelCorner[i].fill(Qt::transparent);
+                }
+                bevelCorner[2] = QPixmap(1, 1);
+                bevelCorner[2].fill(Qt::transparent);
+            }
+
+            QPixmap tmp(11, 10);
+            tmp.fill(Qt::transparent);
+            QPainter pt(&tmp);
+            pt.setRenderHint(QPainter::Antialiasing);
+            const QRectF bevel(0.5f, 0.5f, tmp.width()-0.5f, tmp.height());
+            QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
+            lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
+            lg.setColorAt(0.5f, Qt::transparent);
+            pt.setBrush(Qt::NoBrush);
+            pt.setPen(QPen(lg, 1.0f));
+            pt.drawRoundedRect(bevel, 5, 5);
+            pt.end();
+            bevelCorner[0] = tmp.copy(QRect(0, 0, 5, 5));
+            bevelCorner[1] = tmp.copy(QRect(6, 0, 5, 5));
+            bevelCorner[2] = tmp.copy(5, 0, 1, 1);
+        }
+        p.drawPixmap(QRect(tr.topLeft(), bevelCorner[0].size()), bevelCorner[0]);
+        p.drawPixmap(QRect(tr.topRight()-QPoint(bevelCorner[1].width(), 0), bevelCorner[1].size()), bevelCorner[1]);
+        p.drawTiledPixmap(tr.adjusted(bevelCorner[0].width(), 0, -bevelCorner[1].width(), -(tr.height()-1)), bevelCorner[2]);
     }
 
     if (m_contAware)
@@ -479,7 +501,7 @@ KwinClient::paint(QPainter &p)
         QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
         ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
         if (ir.left() > m_leftButtons)
-            p.drawTiledPixmap(ir, icon().pixmap(16));
+            icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
     }
 
     if (m_needSeparator)
@@ -497,7 +519,7 @@ KwinClient::paint(QPainter &p)
         p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
         p.setClipping(false);
     }
-    else if (!isModal())
+    else if (!isModal() && m_compositingActive)
         Render::shapeCorners(widget(), &p, Render::All);
 
     for (int i = 0; i < m_buttons.count(); ++i)
@@ -584,6 +606,13 @@ KwinClient::maximizeChange()
     widget()->layout()->setContentsMargins(fs, fs, fs, fs);
 }
 
+void
+KwinClient::readCompositing()
+{
+    m_compositingActive = XHandler::compositingActive();
+    updateMask();
+}
+
 /**
  * These flags specify which settings changed when rereading dConf.
  * Each setting in class KDecorationOptions specifies its matching flag.
@@ -655,5 +684,7 @@ KwinClient::reset(unsigned long changed)
             }
         }
     }
+    if (changed & SettingCompositing)
+        QTimer::singleShot(2000, this, SLOT(readCompositing()));
     updateMask();
 }

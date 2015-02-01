@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSharedMemory>
 #include <QMap>
+#include <QLabel>
 #include "render.h"
 #include "widgets.h"
 
@@ -173,6 +174,46 @@ private:
     static ScrollWatcher s_instance;
     static QMap<qlonglong, QImage> s_winBg;
     static QMap<QMainWindow *, QSharedMemory *> s_mem;
+};
+
+class Q_DECL_EXPORT Balloon : public QWidget
+{
+    Q_OBJECT
+public:
+    Balloon();
+    ~Balloon();
+    void setToolTipText(const QString &text);
+    inline QString toolTipText() const { return m_label->text(); }
+
+protected:
+    void paintEvent(QPaintEvent *e);
+    void resizeEvent(QResizeEvent *e);
+    void showEvent(QShowEvent *e);
+    void hideEvent(QHideEvent *e);
+    void updateShadow();
+    void genPixmaps();
+
+private:
+    QLabel *m_label;
+};
+
+class Q_DECL_EXPORT BalloonHelper : public QObject
+{
+    Q_OBJECT
+public:
+    enum Mode { Left = 0, Top, Right, Bottom };
+    static BalloonHelper *instance() { return &s_instance; }
+    static void manage(QWidget *w);
+    static void release(QWidget *w) { w->removeEventFilter(instance()); }
+    static Mode mode();
+    static void updateBallon();
+    static Balloon *balloon();
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e);
+
+private:
+    static BalloonHelper s_instance;
 };
 
 }

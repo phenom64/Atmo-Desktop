@@ -35,13 +35,6 @@ Factory::~Factory()
 }
 
 bool
-Factory::compositingActive()
-{
-//    return XGetSelectionOwner( QX11Info::display(), s_wmAtom ) != None;
-    return QX11Info::isCompositingManagerRunning();
-}
-
-bool
 Factory::supports(Ability ability) const
 {
     switch (ability)

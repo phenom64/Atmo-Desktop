@@ -257,6 +257,7 @@ Settings::read()
     conf.hackDialogs = conf.m_settings->value(READHACKDIALOGS).toBool();
     conf.compactMenu = conf.m_settings->value(READCOMPACTMENU).toBool();
     conf.splitterExt = conf.m_settings->value(READSPLITTEREXT).toBool();
+    conf.balloonTips = conf.m_settings->value(READBALLOONTIPS).toBool();
     conf.arrowSize = READINT(READARROWSIZE);
 
     //deco

@@ -16,6 +16,7 @@
 #include <QTimer>
 #include <QStatusBar>
 #include <QPushButton>
+
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
@@ -23,6 +24,7 @@
 #include "config/settings.h"
 #include "overlay.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/shadowhandler.h"
 
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
@@ -49,6 +51,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
     {
         if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
             Handlers::Window::updateWindowDataLater(w->window());
+        break;
     }
     case QEvent::LayoutRequest:
     {
@@ -60,11 +63,13 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
         }
         else if (dConf.uno.enabled && qobject_cast<QMenuBar *>(w))
             Handlers::Window::updateWindowDataLater(w->window());
+        break;
     }
     case QEvent::MetaCall:
     {
         if (w->property("DSP_KTitleLabel").toBool())
             static_cast<QLabel *>(w)->setAlignment(Qt::AlignCenter);
+        break;
     }
     default: break;
     }

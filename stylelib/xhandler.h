@@ -38,6 +38,7 @@ public:
     static float opacity();
 
     static QPixmap x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win = 0);
+    static QPixmap x11Pix(const QPixmap &pix);
     static void freePix(QPixmap pix);
     static void freePix(const Qt::HANDLE handle);
     static XHandler *instance();

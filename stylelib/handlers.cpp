@@ -32,6 +32,9 @@
 #include <QElapsedTimer>
 #include <QBuffer>
 #include <QHeaderView>
+#include <QToolTip>
+#include <QDesktopWidget>
+#include <QGroupBox>
 
 static QRegion paintRegion(QMainWindow *win)
 {
@@ -1281,4 +1284,269 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
     else if (e->type() == QEvent::Hide && qobject_cast<QAbstractScrollArea *>(o->parent()))
         updateWin(static_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
     return false;
+}
+
+static QPainterPath balloonPath(const QRect &rect)
+{
+    QPainterPath path;
+    static const int m(8);
+    path.addRoundedRect(rect.adjusted(8, 8, -8, -8), 4, 4);
+    path.closeSubpath();
+    const int halfH(rect.x()+(rect.width()/2.0f));
+    const int halfV(rect.y()+(rect.height()/2.0f));
+    QPolygon poly;
+    switch (Handlers::BalloonHelper::mode())
+    {
+    case Handlers::BalloonHelper::Left:
+    {
+        const int pt[] = { rect.x(),halfV, rect.x()+m,halfV-m, rect.x()+m,halfV+m };
+        poly.setPoints(3, pt);
+        break;
+    }
+    case Handlers::BalloonHelper::Top:
+    {
+        const int pt[] = { halfH,rect.y(), halfH-m,rect.y()+m, halfH+m,rect.y()+m };
+        poly.setPoints(3, pt);
+        break;
+    }
+    case Handlers::BalloonHelper::Right:
+    {
+        break;
+    }
+    case Handlers::BalloonHelper::Bottom:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+    path.addPolygon(poly);
+    path.closeSubpath();
+    return path.simplified();
+}
+
+static QImage balloonTipShadow(const QRect &rect, const int radius)
+{
+    QImage img(rect.size()+QSize(radius*2, radius*2), QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(Qt::NoPen);
+    p.setBrush(Qt::black);
+    p.drawPath(balloonPath(img.rect().adjusted(radius, radius, -radius, -radius)));
+    p.end();
+
+    Render::expblur(img, radius);
+    return img;
+}
+
+Balloon::Balloon() : QWidget(), m_label(new QLabel(this))
+{
+    m_label->setAlignment(Qt::AlignCenter);
+    m_label->setAutoFillBackground(true);
+//    setWindowFlags(windowFlags()|Qt::FramelessWindowHint|Qt::X11BypassWindowManagerHint);
+    QHBoxLayout *l = new QHBoxLayout(this);
+    l->setSpacing(0);
+    l->addWidget(m_label);
+    setLayout(l);
+    setParent(0, windowFlags()|Qt::ToolTip);
+    QPalette pal(palette());
+    pal.setColor(QPalette::ToolTipBase, pal.color(QPalette::WindowText));
+    pal.setColor(QPalette::ToolTipText, pal.color(QPalette::Window));
+    setForegroundRole(QPalette::ToolTipText);
+    setBackgroundRole(QPalette::ToolTipBase);
+    setPalette(pal);
+    m_label->setPalette(pal);
+    QFont f(m_label->font());
+    f.setPointSize(10);
+    f.setBold(true);
+    m_label->setFont(f);
+}
+
+static bool s_isInit(false);
+static QPixmap pix[8];
+
+static void clearPix()
+{
+    for (int i = 0; i < 8; ++i)
+        XHandler::freePix(pix[i].handle());
+    s_isInit = false;
+}
+
+Balloon::~Balloon()
+{
+    if (s_isInit)
+        clearPix();
+}
+
+void
+Balloon::paintEvent(QPaintEvent *e)
+{
+    QPainter p(this);
+    p.fillRect(rect(), palette().color(QPalette::ToolTipBase));
+    p.end();
+}
+
+static const int s_padding(20);
+
+void
+Balloon::genPixmaps()
+{
+    if (s_isInit)
+        clearPix();
+
+    QPixmap px(size()+QSize(s_padding*2, s_padding*2));
+    px.fill(Qt::transparent);
+    static const int m(8);
+    const QRect r(px.rect().adjusted(m, m, -m, -m));
+    QPainter p(&px);
+    p.drawImage(px.rect().topLeft(), balloonTipShadow(r.translated(0, 4), 8));
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(QColor(255, 255, 255, 255), 2.0f));
+    p.setBrush(palette().color(QPalette::ToolTipBase));
+    p.drawPath(balloonPath(r));
+    p.end();
+
+    pix[0] = XHandler::x11Pix(px.copy(s_padding, 0, px.width()-s_padding*2, s_padding)); //top
+    pix[1] = XHandler::x11Pix(px.copy(px.width()-s_padding, 0, s_padding, s_padding)); //topright
+    pix[2] = XHandler::x11Pix(px.copy(px.width()-s_padding, s_padding, s_padding, px.height()-s_padding*2)); //right
+    pix[3] = XHandler::x11Pix(px.copy(px.width()-s_padding, px.height()-s_padding, s_padding, s_padding)); //bottomright
+    pix[4] = XHandler::x11Pix(px.copy(s_padding, px.height()-s_padding, px.width()-s_padding*2, s_padding)); //bottom
+    pix[5] = XHandler::x11Pix(px.copy(0, px.height()-s_padding, s_padding, s_padding)); //bottomleft
+    pix[6] = XHandler::x11Pix(px.copy(0, s_padding, s_padding, px.height()-s_padding*2)); //left
+    pix[7] = XHandler::x11Pix(px.copy(0, 0, s_padding, s_padding)); //topleft
+    s_isInit = true;
+}
+
+void
+Balloon::updateShadow()
+{
+    unsigned long data[12];
+    genPixmaps();
+    for (int i = 0; i < 8; ++i)
+        data[i] = pix[i].handle();
+    for (int i = 8; i < 12; ++i)
+        data[i] = s_padding;
+
+    XHandler::setXProperty<unsigned long>(winId(), XHandler::KwinShadows, XHandler::Long, data, 12);
+}
+
+void
+Balloon::resizeEvent(QResizeEvent *e)
+{
+    QWidget::resizeEvent(e);
+    BalloonHelper::updateBallon();
+    updateShadow();
+}
+
+void
+Balloon::showEvent(QShowEvent *e)
+{
+    QWidget::showEvent(e);
+    BalloonHelper::updateBallon();
+    updateShadow();
+}
+
+static Balloon *s_toolTip(0);
+
+void
+Balloon::hideEvent(QHideEvent *e)
+{
+    QWidget::hideEvent(e);
+    s_toolTip = 0;
+    deleteLater();
+}
+
+void
+Balloon::setToolTipText(const QString &text)
+{
+    m_label->setText(text);
+}
+
+BalloonHelper BalloonHelper::s_instance;
+
+Balloon
+*BalloonHelper::balloon()
+{
+    if (!s_toolTip)
+        s_toolTip = new Balloon();
+    return s_toolTip;
+}
+
+void
+BalloonHelper::manage(QWidget *w)
+{
+    w->setAttribute(Qt::WA_Hover);
+    w->removeEventFilter(instance());
+    w->installEventFilter(instance());
+}
+
+static QWidget *s_widget(0);
+static BalloonHelper::Mode s_mode(BalloonHelper::Top);
+
+BalloonHelper::Mode
+BalloonHelper::mode()
+{
+    return s_mode;
+}
+
+void
+BalloonHelper::updateBallon()
+{
+    if (!s_widget)
+        return;
+    if (balloon()->toolTipText() != s_widget->toolTip())
+        balloon()->setToolTipText(s_widget->toolTip());
+    QPoint globPt;
+    const QRect globRect(s_widget->mapToGlobal(s_widget->rect().topLeft()), s_widget->size());
+    globPt = QPoint(globRect.center().x()-(balloon()->width()/2), globRect.bottom()+s_padding);
+    if (balloon()->pos() != globPt)
+        balloon()->move(globPt);
+}
+
+bool
+BalloonHelper::eventFilter(QObject *o, QEvent *e)
+{
+    if (!o->isWidgetType())
+        return false;
+    if (o->inherits("QTipLabel"))
+    {
+        if (e->type() == QEvent::Show && s_widget)
+        {
+            static_cast<QWidget *>(o)->hide();
+            return true;
+        }
+        return false;
+    }
+    switch (e->type())
+    {
+    case QEvent::ToolTip:
+    case QEvent::ToolTipChange:
+    {
+        if (e->type() == QEvent::ToolTipChange && !balloon()->isVisible())
+            return false;
+        if (!static_cast<QWidget *>(o)->toolTip().isEmpty()
+                && (qobject_cast<QAbstractButton *>(o)
+                    || qobject_cast<QSlider *>(o)
+                    || qobject_cast<QLabel *>(o)))
+        {
+            s_widget = static_cast<QWidget *>(o);
+            updateBallon();
+            if (QToolTip::isVisible())
+                QToolTip::hideText();
+            if (!balloon()->isVisible())
+                balloon()->show();
+            return true;
+        }
+        return false;
+    }
+    case QEvent::HoverLeave:
+    {
+        if (balloon()->isVisible())
+            balloon()->hide();
+        s_widget = 0;
+        return false;
+    }
+    default: return false;
+    }
 }
