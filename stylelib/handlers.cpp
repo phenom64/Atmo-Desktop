@@ -1523,18 +1523,27 @@ BalloonHelper::eventFilter(QObject *o, QEvent *e)
     case QEvent::ToolTip:
     case QEvent::ToolTipChange:
     {
-        if (e->type() == QEvent::ToolTipChange && !balloon()->isVisible())
+        if (e->type() == QEvent::ToolTipChange && (!balloon()->isVisible() || !static_cast<QWidget *>(o)->underMouse()))
             return false;
-        if (!static_cast<QWidget *>(o)->toolTip().isEmpty()
-                && (qobject_cast<QAbstractButton *>(o)
+
+        if (qobject_cast<QAbstractButton *>(o)
                     || qobject_cast<QSlider *>(o)
-                    || qobject_cast<QLabel *>(o)))
+                    || qobject_cast<QLabel *>(o))
         {
             s_widget = static_cast<QWidget *>(o);
-            updateBallon();
+            const bool isBeClock(o->inherits("BE::Clock"));
+            if (isBeClock) //beclock sets the tooltip when a tooltip is requested, needs an extra push
+            {
+                o->removeEventFilter(this);
+                QCoreApplication::sendEvent(o, e);
+                o->installEventFilter(this);
+            }
+            const bool hasToolTip(!s_widget->toolTip().isEmpty());
+            if (hasToolTip)
+                updateBallon();
             if (QToolTip::isVisible())
                 QToolTip::hideText();
-            if (!balloon()->isVisible())
+            if (!balloon()->isVisible() && hasToolTip)
                 balloon()->show();
             return true;
         }

@@ -93,10 +93,10 @@ StyleProject::polish(QWidget *widget)
         static_cast<QBoxLayout *>(widget->layout())->setSpacing(0);
 
     if (dConf.balloonTips
-            && !widget->toolTip().isEmpty()
             && (qobject_cast<QAbstractButton *>(widget)
                 || qobject_cast<QSlider *>(widget)
-                || qobject_cast<QLabel *>(widget)))
+                || qobject_cast<QLabel *>(widget)
+                || widget->inherits("BE::Clock")))
         Handlers::BalloonHelper::manage(widget);
 
     if (qobject_cast<QPushButton *>(widget)
@@ -108,6 +108,9 @@ StyleProject::polish(QWidget *widget)
 
     if (Handlers::Drag::canDrag(widget))
         Handlers::Drag::manage(widget);
+
+    if (widget->inherits("BE::CalendarWidget") && widget->parentWidget())
+        widget->parentWidget()->setWindowFlags(widget->parentWidget()->windowFlags()|Qt::Window|Qt::FramelessWindowHint);
 
     if (widget->isWindow())
     {
