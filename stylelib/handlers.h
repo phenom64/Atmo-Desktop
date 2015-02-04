@@ -21,7 +21,7 @@ class QToolButton;
 #define TIMERNAME   "DSP_windowupdater"
 #define MENUPRESS   "DSP_menupress"
 
-class Buttons : public QWidget
+class Q_DECL_EXPORT Buttons : public QWidget
 {
     Q_OBJECT
 public:
@@ -30,7 +30,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 };
 
-class TitleWidget : public QWidget
+class Q_DECL_EXPORT TitleWidget : public QWidget
 {
     Q_OBJECT
 public:

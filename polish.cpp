@@ -71,6 +71,14 @@ StyleProject::polish(QWidget *widget)
 {
     if (!widget)
         return;
+    if (qobject_cast<Handlers::Balloon *>(widget))
+        return;
+    if (qobject_cast<SplitterExt *>(widget))
+        return;
+    if (qobject_cast<Buttons *>(widget))
+        return;
+    if (qobject_cast<TitleWidget *>(widget))
+        return;
 
 #if 0
     if (widget->parentWidget())
@@ -133,7 +141,6 @@ StyleProject::polish(QWidget *widget)
         else if (qobject_cast<QDialog *>(widget))
         {
             bool needHandler(dConf.hackDialogs && widget->isModal());
-
             if (!dConf.uno.enabled)
             {
                 if (!(widget->isMaximized() || widget->isFullScreen()))
@@ -150,10 +157,9 @@ StyleProject::polish(QWidget *widget)
             if (needHandler)
                 Handlers::Window::manage(widget);
         }
-        qDebug() << widget;
-        if (((widget->windowFlags() & Qt::FramelessWindowHint) || widget->inherits("KPopupFrame"))
-                && !widget->inherits("Handlers::Balloon")
-                && !widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop))
+        if (widget->windowType() == Qt::Popup
+                || widget->windowType() == Qt::ToolTip
+                || widget->windowType() == Qt::Dialog)
             ShadowHandler::manage(widget);
     }
 
