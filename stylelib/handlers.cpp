@@ -195,19 +195,6 @@ ToolBar::isArrowPressed(const QToolButton *tb)
 }
 
 void
-ToolBar::updateToolBarLater(QToolBar *bar, const int time)
-{
-    QTimer *t(bar->findChild<QTimer *>(TOOLTIMER));
-    if (!t)
-    {
-        t = new QTimer(bar);
-        t->setObjectName(TOOLTIMER);
-        connect(t, SIGNAL(timeout()), instance(), SLOT(updateToolBarSlot()));
-    }
-    t->start(time);
-}
-
-void
 ToolBar::forceButtonSizeReRead(QToolBar *bar)
 {
     const QSize &iconSize(bar->iconSize());
@@ -287,20 +274,10 @@ ToolBar::adjustMargins(QToolBar *toolBar)
 }
 
 void
-ToolBar::updateToolBarSlot()
+ToolBar::updateToolBar(QWidget *toolbar)
 {
-    QTimer *t = qobject_cast<QTimer *>(sender());
-    if (!t)
-        return;
-    QToolBar *bar = qobject_cast<QToolBar *>(t->parent());
-    if (!bar)
-        return;
-
-    forceButtonSizeReRead(bar);
-    adjustMargins(bar);
-
-    t->stop();
-    t->deleteLater();
+    forceButtonSizeReRead(static_cast<QToolBar *>(toolbar));
+    adjustMargins(static_cast<QToolBar *>(toolbar));
 }
 
 void
@@ -332,12 +309,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     case QEvent::Show:
     {
         if (tbn)
-        {
-            updateToolBarLater(static_cast<QToolBar *>(tbn->parentWidget()));
-//            forceButtonSizeReRead(static_cast<QToolBar *>(tbn->parentWidget()));
-//            if (dConf.removeTitleBars)
-//                setupNoTitleBarWindow(static_cast<QToolBar *>(tbn->parentWidget()));
-        }
+            QMetaObject::invokeMethod(this, "updateToolBar", Qt::QueuedConnection, Q_ARG(QWidget*, tbn->parentWidget()));
         else if (tb && dConf.uno.enabled)
             Window::updateWindowDataLater(tb->window());
         return false;
@@ -998,17 +970,18 @@ Window::updateWindowData(QWidget *win)
 void
 Window::updateWindowDataLater(QWidget *win)
 {
-    if (!win)
-        return;
+    QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(QWidget*, win));
+//    if (!win)
+//        return;
 
-    QTimer *t = win->findChild<QTimer *>(TIMERNAME);
-    if (!t)
-    {
-        t = new QTimer(win);
-        t->setObjectName(TIMERNAME);
-        connect(t, SIGNAL(timeout()), instance(), SLOT(updateWindowDataSlot()));
-    }
-    t->start(250);
+//    QTimer *t = win->findChild<QTimer *>(TIMERNAME);
+//    if (!t)
+//    {
+//        t = new QTimer(win);
+//        t->setObjectName(TIMERNAME);
+//        connect(t, SIGNAL(timeout()), instance(), SLOT(updateWindowDataSlot()));
+//    }
+//    t->start(250);
 }
 
 void

@@ -153,7 +153,6 @@ StyleProject::polish(QWidget *widget)
                     needHandler = true;
                 }
             }
-
             if (needHandler)
                 Handlers::Window::manage(widget);
         }
