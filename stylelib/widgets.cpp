@@ -121,7 +121,8 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case Lion:
     {
-        const QColor low(Color::mid(c, Qt::black, 5, 3+isDark()*10));
+        QColor low(Color::mid(c, Qt::black, 5, 5+isDark()*10));
+        low.setHsv(low.hue(), qMin(127, low.saturation()), low.value());
         const QColor high(QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
         r.adjust(2, 2, -2, -2);
         p.setBrush(high);
@@ -130,12 +131,12 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         p.drawEllipse(r);
         r.adjust(1, 1, -1, -1);
 
-        QRadialGradient rg(r.center()+QPoint(1, r.height()/2-1), r.height()-1);
-        rg.setColorAt(0.0f, Color::mid(c, Qt::white));
+        QRadialGradient rg(r.center()+QPoint(1, r.height()/2), r.height());
+        rg.setColorAt(0.0f, Color::mid(c, Qt::white, 1, 3));
         rg.setColorAt(0.5f, c);
         rg.setColorAt(1.0f, Color::mid(c, Qt::black));
         p.setBrush(rg);
-        p.drawEllipse(r);
+        p.drawEllipse(QRectF(r).adjusted(0.25f, 0.25f, -0.25f, -0.25f).translated(0.0f, 0.5f));
 
         QRect rr(r);
         rr.setWidth(6);
@@ -143,7 +144,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         rr.moveCenter(r.center());
         rr.moveTop(r.top()+1);
         QLinearGradient lg(rr.topLeft(), rr.bottomLeft());
-        lg.setColorAt(0.0f, QColor(255, 255, 255, 192));
+        lg.setColorAt(0.0f, QColor(255, 255, 255, 222));
         lg.setColorAt(1.0f, QColor(255, 255, 255, 64));
         p.setBrush(lg);
         p.drawEllipse(rr);
@@ -236,7 +237,9 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 // Aqua2
 // static uint fcolors[3] = { 0xFFBF2929, 0xFF29BF29, 0xFFBFBF29 };
 
-static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFF37CC40 };
+//static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFF37CC40 };
+
+static uint fcolors[3] = { 0xFFFE8D88, 0xFFF8C96C, 0xFF8AC96B };
 
 void
 ButtonBase::paintCloseButton(QPainter &p)
@@ -665,6 +668,12 @@ SplitterExt::SplitterExt()
     setAttribute(Qt::WA_Hover);
     setAttribute(Qt::WA_NoChildEventsForParent);
     setMouseTracking(true);
+}
+
+bool
+SplitterExt::isActive()
+{
+    return s_se && s_se->isVisible();
 }
 
 bool

@@ -109,8 +109,8 @@ StyleProject::polish(QWidget *widget)
     if (Handlers::Drag::canDrag(widget))
         Handlers::Drag::manage(widget);
 
-    if (widget->inherits("BE::CalendarWidget") && widget->parentWidget())
-        widget->parentWidget()->setWindowFlags(widget->parentWidget()->windowFlags()|Qt::Window|Qt::FramelessWindowHint);
+//    if (widget->inherits("BE::CalendarWidget") && widget->parentWidget())
+//        widget->parentWidget()->setWindowFlags(widget->parentWidget()->windowFlags()|Qt::Window|Qt::FramelessWindowHint);
 
     if (widget->isWindow())
     {
@@ -150,7 +150,7 @@ StyleProject::polish(QWidget *widget)
             if (needHandler)
                 Handlers::Window::manage(widget);
         }
-        if (widget->windowFlags() & Qt::FramelessWindowHint && !widget->inherits("Handlers::Balloon"))
+        if ((!(widget->windowFlags() & Qt::FramelessWindowHint) || widget->inherits("KPopupWindow")) && !widget->inherits("Handlers::Balloon") && !widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop))
             ShadowHandler::manage(widget);
     }
 

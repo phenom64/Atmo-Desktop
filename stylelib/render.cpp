@@ -789,7 +789,8 @@ Render::drawClickable(Shadow s,
                       const Sides sides,
                       const QPoint &offSet)
 {
-    rnd = qMin(rnd, qMin(r.height(), r.width())/2);
+    const int maxRnd(qMin(r.height(), r.width())/2);
+    rnd = qMin(rnd, maxRnd);
     if (s >= ShadowCount)
         return;
 
@@ -804,6 +805,8 @@ Render::drawClickable(Shadow s,
             r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);
         s = Sunken;   
     }
+    if (s == Raised)
+        rnd = qMin(maxRnd, rnd+1); //we inset the mask of raised scheisse...
 
     bool needStrong(qobject_cast<const QSlider *>(w));
     int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
@@ -936,7 +939,7 @@ Render::drawClickable(Shadow s,
         QBrush b(lg);
         renderShadow(Rect, r, p, rnd, sides, 1.0f, &b);
 
-        if (sides & (Left|Right))
+        if (dConf.shadows.darkRaisedEdges && sides & (Left|Right))
         {
             QLinearGradient edges(0, 0, r.width(), 0);
             const QColor edge(QColor(0, 0, 0, dConf.shadows.opacity*127.0f));

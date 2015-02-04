@@ -147,15 +147,18 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
         if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
+        const bool inMainWin(qobject_cast<QMainWindow *>(widget->window()));
+
         if (dConf.uno.enabled)
-        if (qobject_cast<const QTabWidget *>(widget))
-        if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
+        if (qobject_cast<const QTabWidget *>(widget) && inMainWin)
+        if (QMainWindow *mw = static_cast<QMainWindow *>(widget->window()))
         if (mw->centralWidget() && mw->centralWidget()->isAncestorOf(widget))
         if (!static_cast<const QFrame *>(widget)->frameStyle())
         {
             return 0;
         }
-        return (frame&&frame->frameShadow()==QFrame::Sunken||!dConf.uno.enabled)*2;
+//        return (frame&&frame->frameShadow()==QFrame::Sunken||!dConf.uno.enabled)*2;
+        return !(inMainWin&&dConf.uno.enabled)*2;
     }
     case PM_ComboBoxFrameWidth: return 0;
     case PM_ToolBarItemSpacing: return 0;

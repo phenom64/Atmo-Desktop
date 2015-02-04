@@ -97,6 +97,7 @@ class Q_DECL_EXPORT SplitterExt : public QWidget
 public:
     SplitterExt();
     static void manage(QWidget *sh);
+    static bool isActive();
 
 protected:
     bool eventFilter(QObject *, QEvent *);

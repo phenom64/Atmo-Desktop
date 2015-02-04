@@ -62,7 +62,7 @@ DButton::color(const ColorRole &c) const
         bgc = m_client->m_custcol[Bg];
     if (c == Bg)
         return bgc;
-    return Color::mid(fgc, bgc);
+    return Color::mid(fgc, bgc, 1, 4+!isActive()*8);
 }
 
 void
@@ -481,10 +481,13 @@ KwinClient::paint(QPainter &p)
     p.setFont(f);
 
     QString text(caption());
-    const QRect textRect(tr.adjusted(dConf.deco.icon&&!icon().isNull()*20, 0, 0, 0));
-    const int maxW(textRect.width()-(qMax(m_leftButtons, m_rightButtons)*2));
-    if (p.fontMetrics().width(text) > maxW)
-        text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+    QRect textRect(p.fontMetrics().boundingRect(tr, Qt::AlignCenter, text));
+    if (textRect.width() >= tr.width())
+    {
+        const int maxW(textRect.width()-(qMax(m_leftButtons, m_rightButtons)*2));
+        if (p.fontMetrics().width(text) > maxW)
+            text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+    }
 
     if (isActive())
     {
@@ -494,12 +497,33 @@ KwinClient::paint(QPainter &p)
     }
 
     p.setPen(fgColor());
-    p.drawText(textRect, Qt::AlignCenter, text);
-
-    if (dConf.deco.icon && !icon().isNull())
+//    KWindowInfo info(windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
+//    qDebug() << info.visibleName() << info.visibleNameWithState() << info.windowClassName() << info.name() << info.windowClassClass();
+    static const QString character[] = { " :: ", QString(" %1 ").arg(QChar(0x2013)), " - " };
+    bool needPaint(true);
+    for (int i = 0; i < 3; ++i)
+    if (text.contains(character[i]))
     {
-        QRect ir(p.fontMetrics().boundingRect(textRect, Qt::AlignCenter, text).left()-20, tr.height()/2-8, 16, 16);
+        needPaint = false;
+        QString leftText(text.mid(0, text.lastIndexOf(character[i])));
+        QString rightText(text.mid(text.lastIndexOf(character[i])));
+
+        QRect leftTextRect(textRect.adjusted(0, 0, -p.fontMetrics().width(rightText), 0));
+        QRect rightTextRect(textRect.adjusted(p.fontMetrics().width(leftText), 0, 0, 0));
+
+        p.drawText(leftTextRect, Qt::AlignCenter, leftText);
+        p.setPen(Color::mid(fgColor(), bgColor(), 2, 1));
+        p.drawText(rightTextRect, Qt::AlignCenter, rightText);
+        break;
+    }
+    if (needPaint)
+        p.drawText(textRect, Qt::AlignCenter, text);
+
+    if (dConf.deco.icon && XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowIcon))
+    {
+        QRect ir(QPoint(), QSize(16, 16));
         ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
+        ir.moveRight(textRect.left()-4);
         if (ir.left() > m_leftButtons)
             icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
     }

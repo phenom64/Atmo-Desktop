@@ -10,9 +10,10 @@
 
 static Atom atom[XHandler::ValueCount] =
 {
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_MAINWINDOWDATA", False),
+    XInternAtom(QX11Info::display(), "_NET_WM_ICON", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_SHADOW", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_BLUR_BEHIND_REGION", False),
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_MAINWINDOWDATA", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREACTIVESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREINACTIVESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False),

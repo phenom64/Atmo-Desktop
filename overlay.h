@@ -5,6 +5,24 @@
 
 class QFrame;
 class QScrollBar;
+class OverLay;
+
+class OverLayHandler : public QObject
+{
+    Q_OBJECT
+public:
+    static OverLayHandler *instance() { return &s_instance; }
+    static void manage(OverLay *o);
+
+protected:
+    bool eventFilter(QObject *, QEvent *);
+
+protected slots:
+    void overLayDeleted();
+
+private:
+    static OverLayHandler s_instance;
+};
 
 class OverLay : public QWidget
 {
@@ -37,7 +55,6 @@ private:
     bool m_hasFocus;
     Sides m_lines;
     QFrame *m_frame;
-    QTimer *m_timer;
     QWidget *m_window;
     QPoint m_position[PosCount];
 };

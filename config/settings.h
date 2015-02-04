@@ -82,6 +82,7 @@
 #define WINHOR              "windows.horizontal"
 
 #define SHADOWOPACITY       "shadows.opacity"
+#define SHADOWDARKRAISED    "shadows.darkraisededges"
 
 //defaults
 
@@ -177,6 +178,7 @@
 #define DEFWINHOR              true
 
 #define DEFSHADOWOPACITY        33
+#define DEFSHADOWDARKRAISED     false
 
 #define READOPACITY             OPACITY, DEFOPACITY
 #define READBLACKLIST           BLACKLIST, DEFBLACKLIST
@@ -253,6 +255,7 @@
 #define READWINHOR              WINHOR, DEFWINHOR
 
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
+#define READSHADOWDARKRAISED    SHADOWDARKRAISED, DEFSHADOWDARKRAISED
 
 #define CONFIGPATH              QString("%1/.config/dsp").arg(QDir::homePath())
 
@@ -319,6 +322,7 @@ public:
     struct shadows
     {
         float opacity;
+        bool darkRaisedEdges;
     } shadows;
     struct tabs
     {

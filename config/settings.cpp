@@ -325,6 +325,7 @@ Settings::read()
     conf.progressbars.rnd = READINT(READPROGRND);
     //shadows
     conf.shadows.opacity = conf.m_settings->value(READSHADOWOPACITY).toFloat()/100.0f;
+    conf.shadows.darkRaisedEdges = conf.m_settings->value(READSHADOWDARKRAISED).toBool();
 #undef READINT
     readPalette();
 }

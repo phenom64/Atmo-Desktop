@@ -1,5 +1,6 @@
 #include "overlay.h"
 #include "stylelib/ops.h"
+#include "stylelib/widgets.h"
 
 #include <QSplitterHandle>
 #include <QStyle>
@@ -18,20 +19,63 @@
 #include <QStackedWidget>
 #include <QMainWindow>
 
+OverLayHandler OverLayHandler::s_instance;
+static QList<OverLay *> s_overLays;
+
+void
+OverLayHandler::manage(OverLay *o)
+{
+    o->window()->removeEventFilter(instance());
+    o->window()->installEventFilter(instance());
+    if (!s_overLays.contains(o))
+        s_overLays << o;
+    connect(o, SIGNAL(destroyed()), instance(), SLOT(overLayDeleted()));
+}
+
+void
+OverLayHandler::overLayDeleted()
+{
+    OverLay *o(static_cast<OverLay *>(sender()));
+    if (s_overLays.contains(o))
+        s_overLays.removeOne(o);
+}
+
+bool
+OverLayHandler::eventFilter(QObject *o, QEvent *e)
+{
+    if (SplitterExt::isActive())
+        return false;
+    if (o->isWidgetType())
+    {
+        if (e->type() == QEvent::LayoutRequest
+                || e->type() == QEvent::ZOrderChange
+                || e->type() == QEvent::HideToParent
+                || e->type() == QEvent::ShowToParent)
+            for (int i = 0; i < s_overLays.count(); ++i)
+                QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
+        return false;
+    }
+    return false;
+}
+
 OverLay::OverLay(QFrame *parent, int opacity)
     : QWidget(parent)
     , m_alpha(opacity)
     , m_lines(All)
     , m_frame(parent)
-    , m_timer(new QTimer(this))
     , m_hasFocus(false)
 {
+    if (!m_frame->parentWidget())
+    {
+        deleteLater();
+        return;
+    }
+    OverLayHandler::manage(this);
     setAttribute(Qt::WA_TransparentForMouseEvents);
     m_frame->installEventFilter(this);  //m_frame guaranteed by manage()
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(updateOverlay()));
-    m_timer->setInterval(50);
-    foreach (QStackedWidget *stack, m_frame->window()->findChildren<QStackedWidget *>())
-    stack->installEventFilter(this);
+    const QList<QStackedWidget *> stacks(m_frame->window()->findChildren<QStackedWidget *>());
+    for (int i = 0; i < stacks.count(); ++i)
+        stacks.at(i)->installEventFilter(this);
 }
 
 OverLay::~OverLay()
@@ -99,56 +143,30 @@ OverLay::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e || !o->isWidgetType())
         return false;
-    if (o != m_frame && e->type() == QEvent::ChildRemoved)
-    {
-        m_timer->start();
-        return false;
-    }
     if (o == m_frame)
+    {
         switch (e->type())
         {
         case QEvent::ZOrderChange:
+        case QEvent::LayoutRequest:
         case QEvent::Show:
-            show();
-            resize(m_frame->size());
-            repaint();
             setMask(mask());
-            updateOverlay();
-            m_timer->start();
+            QMetaObject::invokeMethod(this, "updateOverlay", Qt::QueuedConnection);
             return false;
         case QEvent::Resize:
             resize(m_frame->size());
-            repaint();
             setMask(mask());
-            m_timer->start();
-            return false;
-        case QEvent::FocusIn:
-            m_hasFocus = true;
-            repaint();
-            setMask(mask());
-            updateOverlay();
-            m_timer->start();
-            return false;
-        case QEvent::FocusOut:
-            m_hasFocus = false;
-            repaint();
-            setMask(mask());
-            updateOverlay();
-            m_timer->start();
-            return false;
-        case QEvent::Paint:
-            raise();
-            return false;
-        case QEvent::Hide:
-            hide();
-            return false;
-        case QEvent::ParentChange:
-            parentChanged();
             return false;
         default:
             return false;
         }
+    }
     return false;
+}
+
+static QRect windowGeo(QWidget *widget)
+{
+    return QRect(widget->mapTo(widget->window(), QPoint(0, 0)), widget->size());
 }
 
 void
@@ -167,7 +185,6 @@ OverLay::updateOverlay()
         return;
     }
 
-    m_timer->stop();
     const QRect &r(m_frame->rect());
     const int d(1);
 
@@ -265,8 +282,7 @@ QRect
 OverLay::mappedRect(const QWidget *widget)
 {
     QPoint topLeft(widget->mapTo(widget->window(), widget->rect().topLeft()));
-    QPoint bottomRight(widget->mapTo(widget->window(), widget->rect().bottomRight()));
-    return QRect(topLeft, bottomRight);
+    return QRect(topLeft, widget->size());
 }
 
 bool

@@ -32,12 +32,15 @@ ShadowHandler::eventFilter(QObject *o, QEvent *e)
     if (e->type() == QEvent::Show)
     {
         QWidget *w = static_cast<QWidget *>(o);
-        if (!ISBALLOONTIP(w) && w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
+        if (w->testAttribute(Qt::WA_WState_Created) || w->internalWinId())
         {
             if (QMenu *m = qobject_cast<QMenu *>(w))
                 ShadowHandler::installShadows(m);
             else
+            {
+                qDebug() << w;
                 ShadowHandler::installShadows(w->winId());
+            }
         }
     }
     return false;
