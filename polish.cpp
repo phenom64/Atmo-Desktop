@@ -150,7 +150,10 @@ StyleProject::polish(QWidget *widget)
             if (needHandler)
                 Handlers::Window::manage(widget);
         }
-        if (((widget->windowFlags() & Qt::FramelessWindowHint) || widget->inherits("KPopupWindow")) && !widget->inherits("Handlers::Balloon") && !widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop))
+        qDebug() << widget;
+        if (((widget->windowFlags() & Qt::FramelessWindowHint) || widget->inherits("KPopupFrame"))
+                && !widget->inherits("Handlers::Balloon")
+                && !widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop))
             ShadowHandler::manage(widget);
     }
 
