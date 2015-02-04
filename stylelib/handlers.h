@@ -102,7 +102,6 @@ public:
     static void updateWindowDataLater(QWidget *win);
 
 public slots:
-    void updateWindowDataSlot();
     void updateWindowData(QWidget *win);
 
 signals:

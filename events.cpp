@@ -164,12 +164,17 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
     if (!o->isWidgetType())
         return false;
     QWidget *w(static_cast<QWidget *>(o));
+    QResizeEvent *re = static_cast<QResizeEvent *>(e);
     if (w->inherits("KTitleWidget"))
     {
         QList<QLabel *> lbls = w->findChildren<QLabel *>();
         for (int i = 0; i < lbls.count(); ++i)
             lbls.at(i)->setAlignment(Qt::AlignCenter);
     }
+    else if (dConf.uno.enabled
+             && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o))
+             && re->oldSize().height() != re->size().height())
+        Handlers::Window::updateWindowDataLater(w->window());
     return QCommonStyle::eventFilter(o, e);
 }
 

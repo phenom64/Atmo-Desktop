@@ -332,6 +332,12 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             tb->update();
         return false;
     }
+    case QEvent::Resize:
+    {
+        QResizeEvent *re(static_cast<QResizeEvent *>(e));
+        if (tb && dConf.uno.enabled && re->oldSize().height() != re->size().height())
+            Window::updateWindowDataLater(tb->window());
+    }
     default: return false;
     }
     return false;
@@ -341,7 +347,7 @@ static TitleWidget *canAddTitle(QToolBar *toolBar, bool &canhas)
 {
     canhas = false;
     const QList<QAction *> actions(toolBar->actions());
-    if (toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly)
+//    if (toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly)
     {
         canhas = true;
         for (int i = 0; i < actions.count(); ++i)
@@ -464,13 +470,8 @@ ToolBar::setupNoTitleBarWindow(QToolBar *toolBar)
         else
             toolBar->insertWidget(a, title);
         toolBar->setProperty(HASSTRETCH, true);
+        title->show();
     }
-//    if (TitleWidget *tw = toolBar->findChild<TitleWidget *>())
-//    {
-
-//    }
-    adjustMargins(toolBar);
-//    fixTitleLater(toolBar->parentWidget());
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -971,30 +972,6 @@ void
 Window::updateWindowDataLater(QWidget *win)
 {
     QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(QWidget*, win));
-//    if (!win)
-//        return;
-
-//    QTimer *t = win->findChild<QTimer *>(TIMERNAME);
-//    if (!t)
-//    {
-//        t = new QTimer(win);
-//        t->setObjectName(TIMERNAME);
-//        connect(t, SIGNAL(timeout()), instance(), SLOT(updateWindowDataSlot()));
-//    }
-//    t->start(250);
-}
-
-void
-Window::updateWindowDataSlot()
-{
-    if (QTimer *t = qobject_cast<QTimer *>(sender()))
-    {
-        if (t->parent()->isWidgetType())
-        if (QWidget *w = static_cast<QWidget *>(t->parent()))
-        if (w->isWindow())
-            updateWindowData(w);
-        t->stop();
-    }
 }
 
 static QDBusMessage methodCall(const QString &method)
