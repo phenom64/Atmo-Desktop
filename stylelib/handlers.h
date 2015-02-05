@@ -108,7 +108,7 @@ public:
     static void updateWindowDataLater(QWidget *win);
 
 public slots:
-    void updateWindowData(QWidget *win);
+    void updateWindowData(qulonglong window);
 
 signals:
     void windowDataChanged(QWidget *win);

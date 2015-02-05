@@ -962,8 +962,26 @@ template<typename T> static void updateChildren(QWidget *win)
 }
 
 void
-Window::updateWindowData(QWidget *win)
+Window::updateWindowDataLater(QWidget *win)
 {
+    QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)win));
+}
+
+void
+Window::updateWindowData(qulonglong window)
+{
+    QWidget *win(0);
+    const QList<QWidget *> widgets = qApp->allWidgets();
+    for (int i = 0; i < widgets.count(); ++i)
+    {
+        QWidget *w(widgets.at(i));
+        if ((qulonglong)w == window)
+        {
+            win = w;
+            break;
+        }
+    }
+
     if (!win || !win->isWindow() || !win->testAttribute(Qt::WA_WState_Created))
         return;
 
@@ -1026,12 +1044,6 @@ Window::updateWindowData(QWidget *win)
     XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 3);
     updateDeco(win->winId(), 1);
     emit instance()->windowDataChanged(win);
-}
-
-void
-Window::updateWindowDataLater(QWidget *win)
-{
-    QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(QWidget*, win));
 }
 
 static QDBusMessage methodCall(const QString &method)
