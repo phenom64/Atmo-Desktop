@@ -241,39 +241,30 @@ Ops::hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb)
 }
 
 void
-Ops::toolButtonData(const QToolButton *tbtn, const int sepext, bool &nextsel, bool &prevsel, bool &isintop, unsigned int &sides)
+Ops::toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, unsigned int &sides)
 {
     if (!tbtn)
         return;
     const QToolBar *bar = qobject_cast<const QToolBar *>(tbtn->parentWidget());
     if (!bar)
         return;
-    const QRect geo = tbtn->geometry();
-    int x, y, r, b, h = tbtn->height(), hc = y+h/2, w = tbtn->width(), wc = x+w/2;
-    geo.getCoords(&x, &y, &r, &b);
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(r+sepext, hc)))
+
+    const QList<QAction *> actions(bar->actions());
+    int action(-1);
+    while (++action < actions.count())
+        if (bar->widgetForAction(actions.at(action)) == tbtn)
+            break;
+
+    sides = Handlers::ToolBar::sides(tbtn);
+    if (!sides & Render::Left||!sides & Render::Top)
     {
-        sides &= ~Render::Right;
-        if (btn->isChecked())
-            nextsel = true;
+        if (const QToolButton *prev = qobject_cast<const QToolButton *>(bar->widgetForAction(actions.at(action-1))))
+            prevsel = prev->isChecked();
     }
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(x-sepext, hc)))
+    if (!sides & Render::Right||!sides & Render::Bottom)
     {
-        sides &= ~Render::Left;
-        if (btn->isChecked())
-            prevsel = true;
-    }
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, b+sepext)))
-    {
-        sides &= ~Render::Bottom;
-        if (btn->isChecked())
-            nextsel = true;
-    }
-    if (const QToolButton *btn = qobject_cast<const QToolButton *>(bar->childAt(wc, y-sepext)))
-    {
-        sides &= ~Render::Top;
-        if (btn->isChecked())
-            prevsel = true;
+        if (const QToolButton *next = qobject_cast<const QToolButton *>(bar->widgetForAction(actions.at(action-1))))
+            nextsel = next->isChecked();
     }
     if (tbtn->isChecked())
         nextsel = true;

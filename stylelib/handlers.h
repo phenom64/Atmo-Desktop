@@ -52,21 +52,27 @@ public:
     static void manage(QToolBar *tb);
     static void manage(QToolButton *tb);
     static bool isArrowPressed(const QToolButton *tb);
-    static void setupNoTitleBarWindow(QToolBar *toolBar);
+    static void setupNoTitleBarWindowLater(QToolBar *toolBar);
     static void adjustMargins(QToolBar *toolBar);
+    static Render::Sides sides(const QToolButton *btn);
+    static void processToolBar(QToolBar *bar);
+    static bool isDirty(QToolBar *bar);
 
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
-    void forceButtonSizeReRead(QToolBar *bar);
     void checkForArrowPress(QToolButton *tb, const QPoint pos);
     bool eventFilter(QObject *, QEvent *);
 
 protected slots:
     void adjustMarginsSlot();
-    void updateToolBar(QWidget *toolbar);
+    void toolBarDeleted(QObject *toolBar);
+    void toolBtnDeleted(QObject *toolBtn);
+    void setupNoTitleBarWindow(qulonglong bar);
 
 private:
     static ToolBar s_instance;
+    static QMap<QToolButton *, Render::Sides> s_sides;
+    static QMap<QToolBar *, bool> s_dirty;
 };
 
 enum UnoData { ToolBars = 0, ToolBarAndTabBar, TitleBar, All, HeightCount };

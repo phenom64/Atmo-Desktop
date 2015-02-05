@@ -147,7 +147,9 @@ TitleWidget::paintEvent(QPaintEvent *)
 
 using namespace Handlers;
 
-Q_DECL_EXPORT ToolBar ToolBar::s_instance;
+ToolBar ToolBar::s_instance;
+QMap<QToolButton *, Render::Sides> ToolBar::s_sides;
+QMap<QToolBar *, bool> ToolBar::s_dirty;
 
 ToolBar
 *ToolBar::instance()
@@ -162,6 +164,35 @@ ToolBar::manage(QToolButton *tb)
         return;
     tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
+    connect(tb, SIGNAL(destroyed(QObject*)), instance(), SLOT(toolBtnDeleted(QObject*)));
+}
+
+void
+ToolBar::manage(QToolBar *tb)
+{
+    if (!tb)
+        return;
+    tb->removeEventFilter(instance());
+    tb->installEventFilter(instance());
+    if (qobject_cast<QMainWindow *>(tb->parentWidget()))
+        connect(tb, SIGNAL(topLevelChanged(bool)), ToolBar::instance(), SLOT(adjustMarginsSlot()));
+    connect(tb, SIGNAL(destroyed(QObject*)), instance(), SLOT(toolBarDeleted(QObject*)));
+}
+
+void
+ToolBar::toolBarDeleted(QObject *toolBar)
+{
+    QToolBar *bar(static_cast<QToolBar *>(toolBar));
+    if (s_dirty.contains(bar))
+        s_dirty.remove(bar);
+}
+
+void
+ToolBar::toolBtnDeleted(QObject *toolBtn)
+{
+    QToolButton *btn(static_cast<QToolButton *>(toolBtn));
+    if (s_sides.contains(btn))
+        s_sides.remove(btn);
 }
 
 void
@@ -195,43 +226,13 @@ ToolBar::isArrowPressed(const QToolButton *tb)
 }
 
 void
-ToolBar::forceButtonSizeReRead(QToolBar *bar)
-{
-    const QSize &iconSize(bar->iconSize());
-    bar->setIconSize(iconSize - QSize(1, 1));
-    bar->setIconSize(iconSize);
-#if 0
-    for (int i = 0; i < bar->actions().count(); ++i)
-    {
-        QAction *a(bar->actions().at(i));
-        if (QWidget *w = bar->widgetForAction(a))
-        {
-            bool prevIsToolBtn(false);
-            QAction *prev(0);
-            if (i)
-                prev = bar->actions().at(i-1);
-            if (!prev)
-                continue;
-            prevIsToolBtn = qobject_cast<QToolButton *>(bar->widgetForAction(prev));
-            if (!prevIsToolBtn && !prev->isSeparator() && !a->isSeparator())
-                bar->insertSeparator(a);
-        }
-    }
-#endif
-
-    if (dConf.removeTitleBars
-            && bar->geometry().topLeft() == QPoint(0, 0)
-            && bar->orientation() == Qt::Horizontal
-            && qobject_cast<QMainWindow *>(bar->parentWidget()))
-        setupNoTitleBarWindow(bar);
-}
-
-void
 ToolBar::adjustMargins(QToolBar *toolBar)
 {
     QMainWindow *win = qobject_cast<QMainWindow *>(toolBar->parentWidget());
+
     if (!win || !toolBar || toolBar->actions().isEmpty())
       return;
+
     if (toolBar->isWindow() && toolBar->isFloating())
     {
         toolBar->setContentsMargins(0, 0, 0, 0);
@@ -255,6 +256,7 @@ ToolBar::adjustMargins(QToolBar *toolBar)
                 if (!win->property(CSDBUTTONS).toBool() && !toolBar->property(TOOLPADDING).toBool())
                 {
                     QWidget *w(new QWidget(toolBar));
+                    w->setObjectName(TOOLPADDING);
                     const int sz(dConf.uno.enabled?8:4);
                     w->setFixedSize(sz, sz);
                     toolBar->insertWidget(toolBar->actions().first(), w);
@@ -270,31 +272,47 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         else
             toolBar->layout()->setContentsMargins(2, 2, 2, 2);
     }
-    Window::updateWindowDataLater(toolBar->window());
 }
 
-void
-ToolBar::updateToolBar(QWidget *toolbar)
+bool
+ToolBar::isDirty(QToolBar *bar)
 {
-    forceButtonSizeReRead(static_cast<QToolBar *>(toolbar));
-    adjustMargins(static_cast<QToolBar *>(toolbar));
-}
-
-void
-ToolBar::manage(QToolBar *tb)
-{
-    if (!tb)
-        return;
-    tb->removeEventFilter(instance());
-    tb->installEventFilter(instance());
-    if (qobject_cast<QMainWindow *>(tb->parentWidget()))
-        connect(tb, SIGNAL(topLevelChanged(bool)), ToolBar::instance(), SLOT(adjustMarginsSlot()));
+    return bar&&s_dirty.value(bar, true);
 }
 
 void
 ToolBar::adjustMarginsSlot()
 {
     adjustMargins(static_cast<QToolBar *>(sender()));
+}
+
+void
+ToolBar::processToolBar(QToolBar *bar)
+{
+    const QList<QAction *> actions(bar->actions());
+    for (int i = 0; i < actions.count(); ++i)
+    {
+        QToolButton *btn = qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i)));
+        if (btn)
+        {
+            Render::Sides sides(Render::All);
+            if (i && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i-1))))
+                sides &= ~(bar->orientation() == Qt::Horizontal?Render::Left:Render::Top);
+            if (i+1 < actions.count() && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i+1))))
+                sides &= ~(bar->orientation() == Qt::Horizontal?Render::Right:Render::Bottom);
+            s_sides.insert(btn, sides);
+        }
+    }
+    s_dirty.insert(bar, false);
+}
+
+Render::Sides
+ToolBar::sides(const QToolButton *btn)
+{
+    if (QToolBar *bar = qobject_cast<QToolBar *>(btn->parentWidget()))
+        if (isDirty(bar))
+            processToolBar(bar);
+    return s_sides.value(const_cast<QToolButton *>(btn), Render::All);
 }
 
 bool
@@ -307,23 +325,36 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     switch (e->type())
     {
     case QEvent::Show:
-    {
-        if (tbn)
-            QMetaObject::invokeMethod(this, "updateToolBar", Qt::QueuedConnection, Q_ARG(QWidget*, tbn->parentWidget()));
-        else if (tb && dConf.uno.enabled)
-            Window::updateWindowDataLater(tb->window());
-        return false;
-    }
     case QEvent::Hide:
     {
         if (tb && dConf.uno.enabled)
-            Window::updateWindowDataLater(tb->window());
+        {
+            if (dConf.removeTitleBars)
+                setupNoTitleBarWindowLater(tb);
+            else
+            {
+                adjustMargins(tb);
+                Window::updateWindowDataLater(tb->window());
+            }
+        }
         return false;
     }
-    case QEvent::MouseButtonPress:
+    case QEvent::ActionAdded:
+    case QEvent::ActionRemoved:
     {
-        if (tbn && Ops::hasMenu(tbn))
-            checkForArrowPress(tbn, static_cast<QMouseEvent *>(e)->pos());
+        if (tb && dConf.uno.enabled)
+            s_dirty.insert(tb, true);
+        QActionEvent *ae = static_cast<QActionEvent *>(e);
+        if (dConf.removeTitleBars && tb)
+        {
+            QWidget *w(tb->widgetForAction(ae->action()));
+            if (!ae->action()->isSeparator()
+                    && qobject_cast<QToolButton *>(w)
+/*                    && !qobject_cast<Buttons *>(w)
+                    && !qobject_cast<TitleWidget *>(w)
+                    && w->objectName() != TOOLPADDING*/)
+                setupNoTitleBarWindowLater(tb);
+        }
         return false;
     }
     case QEvent::ActionChanged:
@@ -332,11 +363,18 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             tb->update();
         return false;
     }
+    case QEvent::MouseButtonPress:
+    {
+        if (tbn && Ops::hasMenu(tbn))
+            checkForArrowPress(tbn, static_cast<QMouseEvent *>(e)->pos());
+        return false;
+    }
     case QEvent::Resize:
     {
         QResizeEvent *re(static_cast<QResizeEvent *>(e));
         if (tb && dConf.uno.enabled && re->oldSize().height() != re->size().height())
             Window::updateWindowDataLater(tb->window());
+        return false;
     }
     default: return false;
     }
@@ -400,8 +438,25 @@ static void applyMask(QWidget *widget)
 }
 
 void
-ToolBar::setupNoTitleBarWindow(QToolBar *toolBar)
+ToolBar::setupNoTitleBarWindowLater(QToolBar *toolBar)
 {
+    QMetaObject::invokeMethod(instance(), "setupNoTitleBarWindow", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)toolBar));
+}
+
+void
+ToolBar::setupNoTitleBarWindow(qulonglong bar)
+{
+    QToolBar *toolBar(0);
+    const QList<QWidget *> widgets = qApp->allWidgets();
+    for (int i = 0; i < widgets.count(); ++i)
+    {
+        QWidget *w(widgets.at(i));
+        if ((qulonglong)w == bar)
+        {
+            toolBar = static_cast<QToolBar *>(w);
+            break;
+        }
+    }
     if (!toolBar
             || !toolBar->parentWidget()
             || toolBar->parentWidget()->parentWidget()
@@ -472,6 +527,11 @@ ToolBar::setupNoTitleBarWindow(QToolBar *toolBar)
         toolBar->setProperty(HASSTRETCH, true);
         title->show();
     }
+    const QSize is(toolBar->iconSize());
+    toolBar->setIconSize(is-QSize(1, 1));
+    toolBar->setIconSize(is);
+    adjustMargins(toolBar);
+    Window::updateWindowDataLater(toolBar->parentWidget());
 }
 
 //-------------------------------------------------------------------------------------------------

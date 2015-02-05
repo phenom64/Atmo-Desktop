@@ -14,6 +14,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
 #include "config/settings.h"
+#include "stylelib/handlers.h"
 
 /** enum ContentsType {
     CT_PushButton,
@@ -160,28 +161,20 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         if (widget && !widget->parentWidget())
             return contentsSize;
 
-        castOpt(ToolButton, optbtn, opt);
+        const QStyleOptionToolButton *optbtn = qstyleoption_cast<const QStyleOptionToolButton *>(opt);
         if (!optbtn)
             return contentsSize;
 
-        const QRect geo = widget->geometry();
-        int x, y, r, b, h = widget->height(), hc = y+h/2, w = widget->width(), wc = x+w/2;
-        int margin = pixelMetric(PM_ToolBarSeparatorExtent, opt, widget);
-        geo.getCoords(&x, &y, &r, &b);
-        castObj(const QToolButton *, btn, widget);
-        castObj(const QToolBar *, bar, widget->parentWidget());
+        const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
+        QToolBar *bar = qobject_cast<QToolBar *>(widget->parentWidget());
         Render::Sides sides = Render::All;
-        if (bar&&qobject_cast<const QToolButton *>(bar->childAt(r+margin, hc)))
-            sides &= ~Render::Right;
-        if (bar&&qobject_cast<const QToolButton *>(bar->childAt(x-margin, hc)))
-            sides &= ~Render::Left;
-//        if (qobject_cast<const QToolButton *>(bar->childAt(wc, b+margin)))
-//            sides &= ~Render::Bottom;
-//        if (qobject_cast<const QToolButton *>(bar->childAt(wc, y-margin)))
-//            sides &= ~Render::Top;
-
+        if (bar)
+        {
+            if (Handlers::ToolBar::isDirty(bar))
+                Handlers::ToolBar::processToolBar(bar);
+            sides = Handlers::ToolBar::sides(btn);
+        }
         const bool isFull(sides == Render::All);
-
         QSize sz(contentsSize);
         bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
         sz+=QSize(hor?8:4, hor?4:8);

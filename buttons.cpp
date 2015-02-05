@@ -285,7 +285,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
 
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
-    Ops::toolButtonData(btn, pixelMetric(PM_ToolBarSeparatorExtent, opt, widget), nextSelected, prevSelected, isInTopToolBar, sides);
+    Ops::toolButtonData(btn, nextSelected, prevSelected, isInTopToolBar, sides);
 
     if (dConf.toolbtn.shadow == Render::Rect)
     {
@@ -407,7 +407,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
 
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
-    Ops::toolButtonData(btn, pixelMetric(PM_ToolBarSeparatorExtent, opt, widget), nextSelected, prevSelected, isInTopToolBar, sides);
+    Ops::toolButtonData(btn, nextSelected, prevSelected, isInTopToolBar, sides);
 
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
