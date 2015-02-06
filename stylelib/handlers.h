@@ -68,11 +68,13 @@ protected slots:
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
     void setupNoTitleBarWindow(qulonglong bar);
+    void fixSpacer(QWidget *toolbar);
 
 private:
     static ToolBar s_instance;
     static QMap<QToolButton *, Render::Sides> s_sides;
     static QMap<QToolBar *, bool> s_dirty;
+    static QMap<QToolBar *, QAction *> s_spacers;
 };
 
 enum UnoData { ToolBars = 0, ToolBarAndTabBar, TitleBar, All, HeightCount };

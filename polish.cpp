@@ -137,6 +137,8 @@ StyleProject::polish(QWidget *widget)
                 applyTranslucency(widget);
 
             Handlers::Window::manage(widget);
+            if (dConf.removeTitleBars)
+                ShadowHandler::manage(widget);
         }
         else if (qobject_cast<QDialog *>(widget))
         {
