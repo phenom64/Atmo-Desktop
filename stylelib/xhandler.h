@@ -17,7 +17,7 @@ class Q_DECL_EXPORT XHandler : public QObject
 {
     Q_OBJECT
 public:
-    enum Value { WindowIcon = 0, KwinShadows, KwinBlur, WindowData, StoreActiveShadow, StoreInActiveShadow, DecoData, DecoBgPix, ContPix, ValueCount };
+    enum Value { WindowIcon = 0, KwinShadows, KwinBlur, WindowData, StoreActiveShadow, StoreInActiveShadow, DecoTitleHeight, DecoBgPix, ContPix, ValueCount };
     enum Size { Byte = 8, Short = 16, Long = 32, LongLong = 64 };
     typedef unsigned int TypeSize;
     template<typename T> static void setXProperty(const WId w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
@@ -32,12 +32,11 @@ public:
     {
         return reinterpret_cast<T *>(fetchProperty(w, v, n));
     }
-
+    static void freeData(void *data);
     static void deleteXProperty(const WId w, const Value v);
     static void mwRes(const QPoint &globalPoint, const WId &win, bool resize = false);
     static bool compositingActive();
     static float opacity();
-
     static QPixmap x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win = 0);
     static QPixmap x11Pix(const QPixmap &pix);
     static void freePix(QPixmap pix);

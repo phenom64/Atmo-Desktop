@@ -177,23 +177,37 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         const bool isFull(sides == Render::All);
         QSize sz(contentsSize);
         bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
+        if (!hor)
+            sz.transpose();
+        if (!hor && bar && bar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon)
+        {
+            sz.setWidth(bar->iconSize().width());
+            sz.rheight()+=16;
+        }
         sz+=QSize(hor?8:4, hor?4:8);
-        if (bar && hor && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
+
+        int *hvsz = hor?&sz.rwidth():&sz.rheight();
+        int ends = hor?(Render::Left|Render::Right):(Render::Top|Render::Bottom);
+
+        if (bar && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
         {
             if (isFull)
-                sz.rwidth() += 16;
-            else if (sides & (Render::Left|Render::Right))
-                sz.rwidth() += (2+(dConf.toolbtn.shadow==Render::Carved)*2);
+                *hvsz += 16;
+            else if (sides & ends)
+                *hvsz += (2+(dConf.toolbtn.shadow==Render::Carved)*2);
             if (btn && btn->group())
-                sz.rwidth() += 8;
+                *hvsz += 8;
             if (btn && btn->isCheckable() && !isFull)
-                sz.rwidth() += 2;
+                *hvsz += 2;
         }
-        if (sz.height() < 23)
-            sz.setHeight(23);
+        static const int minSz(23);
+        if (hor && sz.height() < minSz)
+            sz.setHeight(minSz);
+        else if (!hor && sz.width() < minSz)
+            sz.setWidth(minSz);
 
         if (Ops::hasMenu(btn, optbtn))
-            sz.rwidth()+=16;
+            *hvsz+=16;
         return sz;
     }
     case CT_LineEdit:

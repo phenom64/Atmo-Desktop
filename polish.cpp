@@ -45,6 +45,7 @@
 
 static void applyTranslucency(QWidget *widget)
 {
+    qDebug() << widget;
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
     const bool wasMoved = widget->testAttribute(Qt::WA_Moved);

@@ -312,6 +312,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button)), fg(Ops::fgRole(widget, QPalette::ButtonText));
     if (bar)
     {
+        const int hor(bar->orientation() == Qt::Horizontal);
         if (hasMenu && arrow.isValid())
             painter->setClipRegion(QRegion(rect)-QRegion(arrow));
 
@@ -343,7 +344,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         if (Color::luminosity(bc) < Color::luminosity(bar->palette().color(bar->backgroundRole()))*0.8f)
             ns = true;
 
-        QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
+        QLinearGradient lg(0, 0, !hor*Render::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
         lg.setStops(Settings::gradientStops(dConf.toolbtn.gradient, bc));
         QBrush mask(lg);
         Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, &mask, 0, sides);
@@ -359,7 +360,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
             }
 
             painter->setClipRect(arrow);
-            QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
+            QLinearGradient lga(0, 0, !hor*Render::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
             lga.setStops(Settings::gradientStops(dConf.toolbtn.gradient, bca));
             QBrush amask(lga);
             Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, &amask, 0, sides);
@@ -381,10 +382,13 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
 
         painter->setClipping(false);
 
-        if (!(sides&Render::Right) && !nextSelected && bar->orientation() == Qt::Horizontal)
+        const int nextSide=hor?Render::Right:Render::Bottom;
+        if (!(sides&nextSide) && !nextSelected)
         {
             painter->setPen(QColor(0, 0, 0, 32));
-            painter->drawLine(mr.topRight(), mr.bottomRight());
+            QPoint first(hor?mr.topRight():mr.bottomLeft());
+            QPoint second(hor?mr.bottomRight():mr.bottomRight());
+            painter->drawLine(first, second);
         }
     }
     painter->restore();
@@ -404,6 +408,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     const QToolBar *bar(0);
     if (widget)
         bar = qobject_cast<const QToolBar *>(widget->parentWidget());
+    const bool hor(!bar||bar->orientation() == Qt::Horizontal);
 
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
@@ -421,27 +426,42 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
 
     if (hasMenu)
     {
-        mr.setRight(arrow.left());
+        if (hor)
+            mr.setRight(arrow.left());
+        else
+            mr.setBottom(arrow.top());
         painter->setPen(QColor(0, 0, 0, 32));
-        painter->drawLine(mr.topRight(), mr.bottomRight());
+        QPoint first(hor?mr.topRight():mr.bottomLeft());
+        QPoint second(hor?mr.bottomRight():mr.bottomRight());
+        painter->drawLine(first, second);
         Ops::drawArrow(painter, opt->palette.color(fg), arrow, Ops::Down, 7);
     }
-//    const bool hor(!bar||bar->orientation() == Qt::Horizontal);
     QRect ir(mr);
     const Render::Pos rp(Render::pos(sides, bar?bar->orientation():Qt::Horizontal));
     switch (opt->toolButtonStyle)
     {
     case Qt::ToolButtonTextBesideIcon:
-        if (rp == Render::First || rp == Render::Alone)
-            ir.translate(6, 0);
+        if (hor)
+        {
+            if (rp == Render::First || rp == Render::Alone)
+                ir.translate(6, 0);
+            else
+                ir.translate(4, 0);
+            ir.setRight(ir.left()+opt->iconSize.width());
+            mr.setLeft(ir.right());
+        }
         else
-            ir.translate(4, 0);
-        ir.setRight(ir.left()+opt->iconSize.width());
-        mr.setLeft(ir.right());
+        {
+            ir.setHeight(opt->iconSize.height());
+            ir.moveTop(ir.top()+4);
+            mr.setTop(ir.bottom());
+        }
         break;
     case Qt::ToolButtonTextUnderIcon:
         ir.setBottom(ir.top()+opt->iconSize.height());
-        mr.setTop(ir.bottom());
+        if (!hor)
+            ir.moveTop(ir.top()+4);
+        mr.setTop(ir.bottom()+(!hor*4));
         break;
     default: break;
     }
@@ -504,7 +524,20 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
         }
     }
     if (opt->toolButtonStyle)
+    {
+        if (bar && !hor)
+        {
+            painter->translate(mr.center());
+            painter->rotate(-90);
+            painter->translate(-mr.center());
+            const QRect tmp(mr);
+            QSize sz(mr.size());
+            sz.transpose();
+            mr.setSize(sz);
+            mr.moveCenter(tmp.center());
+        }
         drawItemText(painter, mr, Qt::AlignCenter, opt->palette, opt->ENABLED, opt->text, textRole);
+    }
     painter->restore();
     return true;
 }

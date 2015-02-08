@@ -182,7 +182,7 @@ KwinClient::init()
     if (!isPreview() && windowId())
     {
         unsigned char height(titleHeight());
-        XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoData, XHandler::Byte, &height); //never higher then 255...
+        XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoTitleHeight, XHandler::Byte, &height); //never higher then 255...
         ShadowHandler::installShadows(windowId());
         if (isResizable() && !m_sizeGrip && !dConf.deco.frameSize)
             m_sizeGrip = new SizeGrip(this);
@@ -408,16 +408,16 @@ KwinClient::paint(QPainter &p)
     QRect tr(m_titleLayout->geometry());
     if (tr.height() < titleHeight())
         tr.setHeight(titleHeight());
-    if (m_compositingActive)
-        p.setOpacity(m_opacity);
 
     if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+    {
         p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg), tr.topLeft());
+        XHandler::freeData(bg);
+    }
     else if (!m_bgPix[isActive()].isNull())
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
-    p.setOpacity(1.0f);
 
     const int bgLum(Color::luminosity(bgColor()));
     const bool isDark(Color::luminosity(fgColor()) > bgLum);
@@ -468,10 +468,8 @@ KwinClient::paint(QPainter &p)
             m_mem = new QSharedMemory(QString::number(windowId()), this);
         if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
         {
-            p.setOpacity(dConf.uno.opacity);
             const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
             p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
-            p.setOpacity(1.0f);
             m_mem->unlock();
         }
     }
@@ -527,7 +525,7 @@ KwinClient::paint(QPainter &p)
             ir.moveRight(textRect.left()-4);
             if (ir.left() > m_leftButtons)
                 icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
-            XFree(iconData);
+            XHandler::freeData(iconData);
         }
 
     if (m_needSeparator)
@@ -672,11 +670,9 @@ KwinClient::reset(unsigned long changed)
         m_titleLayout->addStretch();
         populate(options()->titleButtonsRight(), m_rightButtons);
     }
-
     if (changed & SettingDecoration)
     {
-        bool needBg(true);
-        WindowData *wd = reinterpret_cast<WindowData *>(XHandler::getXProperty<unsigned int>(windowId(), XHandler::WindowData));
+        WindowData *wd = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData);
         if (wd && !isPreview())
         {
             const int height((wd->data & WindowData::UnoHeight) >> 16);
@@ -689,9 +685,9 @@ KwinClient::reset(unsigned long changed)
             m_uno = wd->data & WindowData::Uno;
             m_buttonStyle = ((wd->data & WindowData::Buttons) >> 24) -1;
             m_frameSize = (wd->data & WindowData::Frame) >> 28;
-            XFree(wd);
+            XHandler::freeData(wd);
         }
-        else if (needBg && m_uno)
+        else if (m_uno)
         {
             m_needSeparator = true;
             m_buttonStyle = dConf.deco.buttons;

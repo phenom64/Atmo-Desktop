@@ -177,6 +177,7 @@ ToolBar::manage(QToolBar *tb)
     tb->installEventFilter(instance());
     if (qobject_cast<QMainWindow *>(tb->parentWidget()))
         connect(tb, SIGNAL(topLevelChanged(bool)), ToolBar::instance(), SLOT(adjustMarginsSlot()));
+    connect(tb, SIGNAL(orientationChanged(Qt::Orientation)), ToolBar::instance(), SLOT(adjustMarginsSlot()));
     connect(tb, SIGNAL(destroyed(QObject*)), instance(), SLOT(toolBarDeleted(QObject*)));
 }
 
@@ -231,7 +232,9 @@ ToolBar::isArrowPressed(const QToolButton *tb)
 void
 ToolBar::adjustMarginsSlot()
 {
-    adjustMargins(static_cast<QToolBar *>(sender()));
+    QToolBar *toolBar = static_cast<QToolBar *>(sender());
+    adjustMargins(toolBar);
+    processToolBar(toolBar, true);
 }
 
 void
@@ -280,8 +283,14 @@ ToolBar::isDirty(QToolBar *bar)
 }
 
 void
-ToolBar::processToolBar(QToolBar *bar)
+ToolBar::processToolBar(QToolBar *bar, bool forceSizeUpdate)
 {
+    if (forceSizeUpdate)
+    {
+        const QSize is(bar->iconSize());
+        bar->setIconSize(is - QSize(1, 1));
+        bar->setIconSize(is);
+    }
     const QList<QAction *> actions(bar->actions());
     for (int i = 0; i < actions.count(); ++i)
     {
@@ -541,9 +550,7 @@ ToolBar::setupNoTitleBarWindow(qulonglong bar)
         toolBar->setProperty(HASSTRETCH, true);
         title->show();
     }
-    const QSize is(toolBar->iconSize());
-    toolBar->setIconSize(is-QSize(1, 1));
-    toolBar->setIconSize(is);
+    processToolBar(toolBar, true);
     adjustMargins(toolBar);
     toolBar->installEventFilter(instance());
     Window::updateWindowDataLater(toolBar->parentWidget());
@@ -552,7 +559,6 @@ ToolBar::setupNoTitleBarWindow(qulonglong bar)
 //-------------------------------------------------------------------------------------------------
 
 Window Window::s_instance;
-QMap<uint, QVector<QPixmap> > Window::s_unoPix;
 QMap<QWidget *, Handlers::Data> Window::s_unoData;
 QMap<QWidget *, QPixmap> Window::s_bgPix;
 
@@ -646,12 +652,12 @@ Window::eventFilter(QObject *o, QEvent *e)
         }
         else if (w->isWindow())
         {
-            unsigned char *addV(XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoData));
+            unsigned char *addV(XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight));
             if (addV || w->property(CSDBUTTONS).toBool())
             {
                 const QColor bgColor(w->palette().color(w->backgroundRole()));
                 QPainter p(w);
-                p.setOpacity(XHandler::opacity());
+//                p.setOpacity(XHandler::opacity());
                 Render::Sides sides(Render::All);
                 if (!w->property(CSDBUTTONS).toBool())
                     sides &= ~Render::Top;
@@ -662,7 +668,7 @@ Window::eventFilter(QObject *o, QEvent *e)
                     if (XHandler::opacity() < 1.0f
                             && qobject_cast<QMainWindow *>(w))
                     {
-                        p.setOpacity(1.0f);
+//                        p.setOpacity(1.0f);
                         p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
                     }
                 }
@@ -686,7 +692,6 @@ Window::eventFilter(QObject *o, QEvent *e)
                     if (int th = Handlers::unoHeight(w, ToolBars))
                         p.drawLine(0, th, w->width(), th);
                 p.end();
-                return false;
             }
             else
             {
@@ -695,8 +700,9 @@ Window::eventFilter(QObject *o, QEvent *e)
 //                QPainter p(w);
 //                w->style()->drawPrimitive(QStyle::PE_FrameWindow, &opt, &p, w);
 //                p.end();
-                return false;
             }
+            if (addV)
+                XHandler::freeData(addV);
         }
         return false;
     }
@@ -792,18 +798,19 @@ Window::eventFilter(QObject *o, QEvent *e)
         return false;
     }
     case QEvent::Close:
-    {
-        if (unsigned long *bg = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
-        {
-            XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
-            XHandler::freePix(*bg);
-        }
-        break;
-    }
     case QEvent::PaletteChange:
     {
         if (w->isWindow())
-            updateWindowDataLater(w);
+        {
+            if (unsigned long *bgPx = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
+            {
+                XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
+                XHandler::freePix(*bgPx);
+                XHandler::freeData(bgPx); //superfluous?
+            }
+            if (e->type() == QEvent::PaletteChange)
+                updateWindowDataLater(w);
+        }
         break;
     }
     default: break;
@@ -812,40 +819,33 @@ Window::eventFilter(QObject *o, QEvent *e)
 }
 
 bool
-Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset, float opacity)
+Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset, float opacity)
 {
     QWidget *win(w->window());
     const int clientUno(unoHeight(win, ToolBarAndTabBar));
     if (!clientUno)
         return false;
     if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
-//        if (QMainWindow *mwin = qobject_cast<QMainWindow *>(tb->parentWidget()))
-//            if (mwin->toolBarArea(const_cast<QToolBar *>(tb)) != Qt::TopToolBarArea)
-//                if (tb->orientation() != Qt::Horizontal)
         if (tb->geometry().top() > clientUno)
             return false;
 
     if (!w->isWindow() && w->height() > w->width())
         return false;
 
-    if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget())
+    if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget()) //weird case where mainwindow is embedded in another window
         return false;
 
-    const int allUno(unoHeight(win, All));
-    uint check = allUno;
-    if (dConf.uno.hor)
-        check = check<<16|win->width();
-    if (s_unoPix.contains(check))
+    if (unsigned char *titleHeight = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight))
     {
-        const float savedOpacity(p->opacity());
-        p->setOpacity(opacity);
-        p->drawTiledPixmap(r, s_unoPix.value(check).at(0), offset);
+        offset+=QPoint(0, *titleHeight);
+        XHandler::freeData(titleHeight);
+    }
+    if (unsigned long *unoBg = XHandler::getXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix))
+    {
+        p->drawTiledPixmap(r, QPixmap::fromX11Pixmap(*unoBg), offset);
         if (dConf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
-        {
-            p->setOpacity(dConf.uno.opacity);
-            p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset+QPoint(0, unoHeight(win, TitleBar))));
-        }
-        p->setOpacity(savedOpacity);
+            p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset));
+        XHandler::freeData(unoBg);
         return true;
     }
     return false;
@@ -854,7 +854,7 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset
 unsigned int
 Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
 {
-    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData);
+    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight);
     const bool csd(dConf.removeTitleBars && win->property(CSDBUTTONS).toBool());
     if (!h && !csd)
         return 0;
@@ -914,7 +914,7 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     return hd[All];
 }
 
-static QVector<QPixmap> unoParts(QWidget *win, int h)
+static QPixmap unoBgPix(QWidget *win, int h)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
@@ -934,9 +934,18 @@ static QVector<QPixmap> unoParts(QWidget *win, int h)
     pt.end();
     if (n)
         p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
-    QVector<QPixmap> values;
-    values << p.copy(0, unoHeight(win, TitleBar), w, unoHeight(win, ToolBarAndTabBar)) << p.copy(0, 0, w, unoHeight(win, TitleBar));
-    return values;
+
+    if (XHandler::opacity() < 1.0f)
+    {
+        QPixmap copy(p);
+        p.fill(Qt::transparent);
+        pt.begin(&p);
+        pt.drawPixmap(p.rect(), copy);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        pt.fillRect(p.rect(), QColor(0, 0, 0, 255.0f-(XHandler::opacity()*255.0f)));
+        pt.end();
+    }
+    return p;
 }
 
 static QPixmap bgPix(QWidget *win)
@@ -946,7 +955,7 @@ static QPixmap bgPix(QWidget *win)
     QColor bc(win->palette().color(win->backgroundRole()));
     lg.setStops(Settings::gradientStops(dConf.windows.gradient, bc));
 
-    unsigned char *addV(XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoData));
+    unsigned char *addV(XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight));
     if (!addV)
         return QPixmap();
     const unsigned int n(dConf.windows.noise);
@@ -965,6 +974,7 @@ static QPixmap bgPix(QWidget *win)
     }
     pt.end();
     Window::s_bgPix.insert(win, p);
+    XHandler::freeData(addV);
     return Window::s_bgPix.value(win);
 }
 
@@ -1036,16 +1046,17 @@ Window::updateWindowData(qulonglong window)
         uint check = height;
         if (dConf.uno.hor)
             check = check<<16|win->width();
-        if (!s_unoPix.contains(check))
-            s_unoPix.insert(check, unoParts(win, height));
-        if (oldHeight != height)
-            XHandler::x11Pix(s_unoPix.value(check).at(1), handle, win);
+        if (oldHeight != height  || !x11pixmap)
+            XHandler::x11Pix(unoBgPix(win, height), handle, win);
     }
     else
         XHandler::x11Pix(bgPix(win), handle, win);
 
     if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
         XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+
+    if (x11pixmap)
+        XHandler::freeData(x11pixmap);
 
     win->update();
     if (dConf.uno.enabled)
@@ -1282,6 +1293,14 @@ ScrollWatcher::regenBg(QMainWindow *win)
         }
         if (int blurRadius = dConf.uno.blur)
             Render::expblur(img, blurRadius);
+
+        if (dConf.uno.opacity < 1.0f)
+        {
+            QPainter p(&img);
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p.fillRect(img.rect(), QColor(0, 0, 0, 255.0f-(dConf.uno.opacity*255.0f)));
+            p.end();
+        }
         s_winBg.insert((qlonglong)win, img);
         m->unlock();
     }

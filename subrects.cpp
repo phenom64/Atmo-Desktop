@@ -457,7 +457,14 @@ QRect
 StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
-    castOpt(ToolButton, tb, opt);
+    const QStyleOptionToolButton *tb = qstyleoption_cast<const QStyleOptionToolButton *>(opt);
+    const QToolBar *bar(0);
+    bool hor(true);
+    if (w && qobject_cast<QToolBar *>(w->parentWidget()))
+    {
+        bar = static_cast<QToolBar *>(w->parentWidget());
+        hor = bar->orientation()==Qt::Horizontal;
+    }
     if (!tb)
         return ret;
     switch (sc)
@@ -466,7 +473,10 @@ StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, cons
     case SC_ToolButtonMenu:
     {
         ret = tb->rect;
-        ret.setLeft(ret.right()-16);
+        if (hor)
+            ret.setLeft(ret.right()-16);
+        else
+            ret.setTop(ret.bottom()-16);
         break;
     }
     default: break;

@@ -73,6 +73,12 @@ XHandler::deleteXProperty(const WId w, const Value v)
 }
 
 void
+XHandler::freeData(void *data)
+{
+    XFree(data);
+}
+
+void
 XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
 {
     static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);

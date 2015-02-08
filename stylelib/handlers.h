@@ -55,7 +55,7 @@ public:
     static void setupNoTitleBarWindowLater(QToolBar *toolBar);
     static void adjustMargins(QToolBar *toolBar);
     static Render::Sides sides(const QToolButton *btn);
-    static void processToolBar(QToolBar *bar);
+    static void processToolBar(QToolBar *bar, bool forceSizeUpdate = false);
     static bool isDirty(QToolBar *bar);
 
 protected:
@@ -105,7 +105,7 @@ public:
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static void addCompactMenu(QWidget *w);
-    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, const QPoint &offset = QPoint(), float opacity = 1.0f);
+    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint(), float opacity = 1.0f);
     static void updateDeco(WId window, unsigned int changed = 63);
     static void updateWindowDataLater(QWidget *win);
 
@@ -125,7 +125,6 @@ protected slots:
 
 private:
     static Window s_instance;
-    static QMap<uint, QVector<QPixmap> > s_unoPix;
     QList<QWidget *> m_menuWins;
 };
 
