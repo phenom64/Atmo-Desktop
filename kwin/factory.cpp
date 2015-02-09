@@ -112,7 +112,7 @@ Factory::update(WId window, unsigned int changed)
         KwinClient *d = decos.at(i);
         if (d->windowId() == window)
         {
-            if (changed == 64)
+            if (changed == 256)
                 d->updateContBg();
             else
                 d->reset(changed);

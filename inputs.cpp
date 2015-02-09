@@ -119,16 +119,6 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         painter->setClipRect(arrowRect);
         Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
         painter->setClipping(false);
-
-//        arrowRect.adjust(!ltr?m:0, m, -(ltr?m:0), -m);
-//        painter->setPen(QColor(0, 0, 0, o/3));
-//        const float op(painter->opacity());
-//        painter->setOpacity(dConf.shadows.opacity);
-//        if (ltr)
-//            painter->drawLine(arrowRect.topLeft()/*-QPoint(1, 0)*/, arrowRect.bottomLeft()-QPoint(1, 0));
-//        else
-//            painter->drawLine(arrowRect.topRight()/*+QPoint(1, 0)*/, arrowRect.bottomRight()+QPoint(1, 0));
-//        painter->setOpacity(op);
     }
     else
     {

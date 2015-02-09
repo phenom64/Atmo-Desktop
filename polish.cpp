@@ -144,17 +144,12 @@ StyleProject::polish(QWidget *widget)
         else if (qobject_cast<QDialog *>(widget))
         {
             bool needHandler(dConf.hackDialogs && widget->isModal());
-            if (!dConf.uno.enabled)
+            if (!dConf.uno.enabled
+                    && XHandler::opacity() < 1.0f
+                    && !widget->testAttribute(Qt::WA_TranslucentBackground))
             {
-                if (!(widget->isMaximized() || widget->isFullScreen()))
-                    widget->setContentsMargins(4, 0, 4, 4);
-
-                if (XHandler::opacity() < 1.0f
-                        && !widget->testAttribute(Qt::WA_TranslucentBackground))
-                {
-                    applyTranslucency(widget);
-                    needHandler = true;
-                }
+                applyTranslucency(widget);
+                needHandler = true;
             }
             if (needHandler)
                 Handlers::Window::manage(widget);

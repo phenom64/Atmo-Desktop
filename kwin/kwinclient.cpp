@@ -314,7 +314,6 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
             p.setCompositionMode(QPainter::CompositionMode_Source);
             p.fillRect(widget()->rect(), Qt::transparent);
             p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-            p.setRenderHint(QPainter::Antialiasing);
             paint(p);
             p.end();
         }
@@ -323,7 +322,6 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
             QPixmap pix(widget()->size());
             pix.fill(bgColor());
             QPainter p(&pix);
-            p.setRenderHint(QPainter::Antialiasing);
             paint(p);
             p.end();
             p.begin(widget());
@@ -530,10 +528,8 @@ KwinClient::paint(QPainter &p)
 
     if (m_needSeparator)
     {
-        QRectF r(tr);
-        r.translate(-0.5f, -0.5f);
         p.setPen(QColor(0, 0, 0, 32));
-        p.drawLine(r.bottomLeft(), r.bottomRight());
+        p.drawLine(tr.bottomLeft(), tr.bottomRight());
     }
     if (isPreview())
     {

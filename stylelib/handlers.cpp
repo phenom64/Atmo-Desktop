@@ -657,7 +657,6 @@ Window::eventFilter(QObject *o, QEvent *e)
             {
                 const QColor bgColor(w->palette().color(w->backgroundRole()));
                 QPainter p(w);
-//                p.setOpacity(XHandler::opacity());
                 Render::Sides sides(Render::All);
                 if (!w->property(CSDBUTTONS).toBool())
                     sides &= ~Render::Top;
@@ -667,10 +666,7 @@ Window::eventFilter(QObject *o, QEvent *e)
                     b = bgColor;
                     if (XHandler::opacity() < 1.0f
                             && qobject_cast<QMainWindow *>(w))
-                    {
-//                        p.setOpacity(1.0f);
                         p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
-                    }
                 }
                 else
                 {
@@ -686,20 +682,11 @@ Window::eventFilter(QObject *o, QEvent *e)
                 p.fillRect(w->rect(), b);
                 if (XHandler::opacity() < 1.0f)
                     Render::shapeCorners(w, &p, sides);
-                p.setPen(Qt::black);
-                p.setOpacity(dConf.shadows.opacity);
+                p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
                 if (dConf.uno.enabled)
                     if (int th = Handlers::unoHeight(w, ToolBars))
                         p.drawLine(0, th, w->width(), th);
                 p.end();
-            }
-            else
-            {
-//                QStyleOption opt;
-//                opt.initFrom(w);
-//                QPainter p(w);
-//                w->style()->drawPrimitive(QStyle::PE_FrameWindow, &opt, &p, w);
-//                p.end();
             }
             if (addV)
                 XHandler::freeData(addV);
@@ -967,10 +954,14 @@ static QPixmap bgPix(QWidget *win)
     pt.fillRect(p.rect(), lg);
 
     if (n)
-//        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
     {
         pt.setOpacity(n*0.01f);
         pt.drawTiledPixmap(p.rect(), Render::noise());
+        if (XHandler::opacity() < 1.0f)
+        {
+            pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            pt.fillRect(p.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
+        }
     }
     pt.end();
     Window::s_bgPix.insert(win, p);
@@ -1140,7 +1131,7 @@ static QList<QWidget *> s_watched;
 
 ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent)
 {
-    connect(this, SIGNAL(updateRequest()), this, SLOT(updateLater()), Qt::QueuedConnection);
+//    connect(this, SIGNAL(updateRequest()), this, SLOT(updateLater()), Qt::QueuedConnection);
 }
 
 void
@@ -1151,9 +1142,15 @@ ScrollWatcher::watch(QAbstractScrollArea *area)
     if (!dConf.uno.contAware || !qobject_cast<QMainWindow *>(area->window()))
         return;
     s_watched << area->viewport();
-//    area->viewport()->removeEventFilter(instance());
+    connect(area->viewport(), SIGNAL(destroyed(QObject*)), instance(), SLOT(vpDeleted(QObject*)));
     area->viewport()->installEventFilter(instance());
     area->window()->installEventFilter(instance());
+}
+
+void
+ScrollWatcher::vpDeleted(QObject *vp)
+{
+    s_watched.removeOne(static_cast<QWidget *>(vp));
 }
 
 void
@@ -1169,19 +1166,10 @@ ScrollWatcher::detachMem(QMainWindow *win)
         s_winBg.remove((qulonglong)win);
 }
 
-static QMainWindow *s_win(0);
-
 void
-ScrollWatcher::updateLater()
+ScrollWatcher::updateWin(QWidget *mainWin)
 {
-    if (s_win)
-        updateWin(s_win);
-}
-
-void
-ScrollWatcher::updateWin(QMainWindow *win)
-{
-    blockSignals(true);
+    QMainWindow *win = static_cast<QMainWindow *>(mainWin);
     regenBg(win);
     const QList<QToolBar *> toolBars(win->findChildren<QToolBar *>());
     const int uno(unoHeight(win, Handlers::ToolBarAndTabBar));
@@ -1212,8 +1200,7 @@ ScrollWatcher::updateWin(QMainWindow *win)
                     tb->update();
             }
     if (!dConf.removeTitleBars)
-        Handlers::Window::updateDeco(win->winId(), 64);
-    blockSignals(false);
+        Handlers::Window::updateDeco(win->winId(), 256);
 }
 
 void
@@ -1255,7 +1242,11 @@ ScrollWatcher::regenBg(QMainWindow *win)
             const QPoint topLeft(area->mapTo(win, QPoint(0, 0)));
             if (topLeft.y()-1 > (uno-unoHeight(win, Handlers::TitleBar)) || area->verticalScrollBar()->value() == area->verticalScrollBar()->minimum())
                 continue;
+
             QWidget *vp(area->viewport());
+            const bool hadFilter(s_watched.contains(vp));
+            if (hadFilter)
+                vp->removeEventFilter(this);
             area->blockSignals(true);
             area->verticalScrollBar()->blockSignals(true);
             vp->blockSignals(true);
@@ -1272,24 +1263,20 @@ ScrollWatcher::regenBg(QMainWindow *win)
             const int realVal(qMax(0, prevVal-(uno+offset)));
 
             area->verticalScrollBar()->setValue(realVal);
-            const bool needRm(s_watched.contains(vp));
-            if (needRm)
-                vp->removeEventFilter(this);
-            vp->render(&img, vp->mapTo(win, QPoint(0, titleHeight-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), QWidget::DrawWindowBackground);
-
+            vp->setAttribute(Qt::WA_NoSystemBackground); //this disables the viewport bg to get painted in the uno area, only items get painted
+            vp->render(&img, vp->mapTo(win, QPoint(0, titleHeight-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), 0);
+            vp->setAttribute(Qt::WA_NoSystemBackground, false);
             area->verticalScrollBar()->setValue(prevVal);
-            if (needRm)
-                vp->installEventFilter(this);
-
             if (view)
             {
                 mode = view->verticalScrollMode();
                 view->setVerticalScrollMode(mode);
             }
-
             vp->blockSignals(false);
             area->verticalScrollBar()->blockSignals(false);
             area->blockSignals(false);
+            if (hadFilter)
+                vp->installEventFilter(this);
         }
         if (int blurRadius = dConf.uno.blur)
             Render::expblur(img, blurRadius);
@@ -1297,8 +1284,8 @@ ScrollWatcher::regenBg(QMainWindow *win)
         if (dConf.uno.opacity < 1.0f)
         {
             QPainter p(&img);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            p.fillRect(img.rect(), QColor(0, 0, 0, 255.0f-(dConf.uno.opacity*255.0f)));
+            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            p.fillRect(img.rect(), QColor(0, 0, 0, dConf.uno.opacity*255.0f));
             p.end();
         }
         s_winBg.insert((qlonglong)win, img);
@@ -1315,30 +1302,26 @@ ScrollWatcher::bg(qlonglong win)
 bool
 ScrollWatcher::eventFilter(QObject *o, QEvent *e)
 {
-    static bool s_block(false);
     if (e->type() == QEvent::Close && qobject_cast<QMainWindow *>(o))
             detachMem(static_cast<QMainWindow *>(o));
-    else if (e->type() == QEvent::Paint && !s_block && qobject_cast<QAbstractScrollArea *>(o->parent()))
+    else if (e->type() == QEvent::Paint
+             && qobject_cast<QAbstractScrollArea *>(o->parent()))
     {
-        s_win = 0;
         QWidget *w(static_cast<QWidget *>(o));
         QAbstractScrollArea *a(static_cast<QAbstractScrollArea *>(w->parentWidget()));
         if (!s_watched.contains(w)
                 || a->verticalScrollBar()->minimum() == a->verticalScrollBar()->maximum())
             return false;
-        QMainWindow *win(static_cast<QMainWindow *>(w->window()));
-        s_block = true;
+        QWidget *win(w->window());
         o->removeEventFilter(this);
         QCoreApplication::sendEvent(o, e);
-        s_win = win;
-        if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, Handlers::ToolBarAndTabBar))
-            emit updateRequest();
         o->installEventFilter(this);
-        s_block = false;
+        if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, Handlers::ToolBarAndTabBar))
+            QMetaObject::invokeMethod(this, "updateWin", Qt::QueuedConnection, Q_ARG(QWidget*,win));
         return true;
     }
     else if (e->type() == QEvent::Hide && qobject_cast<QAbstractScrollArea *>(o->parent()))
-        updateWin(static_cast<QMainWindow *>(static_cast<QWidget *>(o)->window()));
+        updateWin(static_cast<QWidget *>(o)->window());
     return false;
 }
 

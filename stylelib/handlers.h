@@ -169,11 +169,8 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 protected slots:
-    void updateWin(QMainWindow *win);
-    void updateLater();
-
-signals:
-    void updateRequest();
+    void updateWin(QWidget *mainWin);
+    void vpDeleted(QObject *vp);
 
 private:
     static ScrollWatcher s_instance;

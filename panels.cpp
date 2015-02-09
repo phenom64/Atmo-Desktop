@@ -25,6 +25,7 @@
 bool
 StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    Q_UNUSED(option);
     if (!widget || !widget->window() || !painter->isActive() || widget->palette().color(widget->backgroundRole()) != widget->window()->palette().color(QPalette::Window))
         return true;
 
@@ -46,25 +47,17 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
         if (sides & (Render::Left|Render::Right))
         {
             painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
-//            return true;
         }
-        if (sides & Render::Bottom)
-        {
-//            UNO::Handler::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
-        }
-        else
+        else if (!(sides & Render::Bottom))
         {
             Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
             if (!dConf.deco.frameSize)
                 Render::shapeCorners(widget, painter, Render::All & ~Render::Top);
         }
-        painter->save();
-        painter->setPen(Qt::black);
-        painter->setOpacity(dConf.shadows.opacity);
+        const QPen &savedPen = painter->pen();
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         painter->drawLine(r.topLeft(), r.topRight());
-//        if (sides & Render::Bottom)
-//            painter->drawLine(r.bottomLeft(), r.bottomRight());
-        painter->restore();
+        painter->setPen(savedPen);
     }
     return true;
 }
