@@ -50,7 +50,7 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
         }
         else if (!(sides & Render::Bottom))
         {
-            Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget, QPoint(), XHandler::opacity());
+            Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget);
             if (!dConf.deco.frameSize)
                 Render::shapeCorners(widget, painter, Render::All & ~Render::Top);
         }
@@ -82,7 +82,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
         {
             Render::Sides sides(Render::checkedForWindowEdges(widget));
             sides = Render::All-sides;
-            Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
+            Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft());
             if (dConf.removeTitleBars
                     && sides & Render::Top
                     && (!widget->parentWidget()->mask().isEmpty()
@@ -114,7 +114,7 @@ StyleProject::drawMenuBar(const QStyleOption *option, QPainter *painter, const Q
     if (dConf.uno.enabled
             && widget
             && qobject_cast<const QMainWindow *>(widget->parentWidget()))
-        Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft(), XHandler::opacity());
+        Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft());
     return true;
 }
 

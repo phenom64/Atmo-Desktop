@@ -41,6 +41,8 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         const int m(2);
         slider.adjust(m, m, -m, -m);
         QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
+        if (bgc.alpha() < 0xff)
+            bgc = opt->palette.color(QPalette::Window);
         Color::ensureContrast(bgc, fgc);
         painter->fillRect(groove, bgc);
         if (bg == QPalette::Base)

@@ -159,17 +159,18 @@ ToolBar
 }
 
 void
-ToolBar::manage(QToolButton *tb)
+ToolBar::manage(QWidget *child)
 {
-    if (!qobject_cast<QToolBar *>(tb->parentWidget()))
+    if (!qobject_cast<QToolBar *>(child->parentWidget()))
         return;
-    tb->removeEventFilter(instance());
-    tb->installEventFilter(instance());
-    connect(tb, SIGNAL(destroyed(QObject*)), instance(), SLOT(toolBtnDeleted(QObject*)));
+    child->removeEventFilter(instance());
+    child->installEventFilter(instance());
+    if (qobject_cast<QToolButton *>(child))
+        connect(child, SIGNAL(destroyed(QObject*)), instance(), SLOT(toolBtnDeleted(QObject*)));
 }
 
 void
-ToolBar::manage(QToolBar *tb)
+ToolBar::manageToolBar(QToolBar *tb)
 {
     if (!tb)
         return;
@@ -285,23 +286,61 @@ ToolBar::isDirty(QToolBar *bar)
 void
 ToolBar::processToolBar(QToolBar *bar, bool forceSizeUpdate)
 {
+    instance()->queryToolBar((qulonglong)bar, forceSizeUpdate);
+}
+
+void
+ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
+{
+    QToolBar *bar = getChild<QToolBar *>(toolbar);
+    if (!bar)
+        return;
     if (forceSizeUpdate)
     {
         const QSize is(bar->iconSize());
         bar->setIconSize(is - QSize(1, 1));
         bar->setIconSize(is);
+        s_dirty.insert(bar, true);
+        return;
     }
-    const QList<QAction *> actions(bar->actions());
-    for (int i = 0; i < actions.count(); ++i)
+    if (!bar->isVisible())
     {
-        QToolButton *btn = qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i)));
-        if (btn)
+        const QList<QAction *> actions(bar->actions());
+        for (int i = 0; i < actions.count(); ++i)
         {
+            QToolButton *btn = qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i)));
+            if (btn)
+            {
+                Render::Sides sides(Render::All);
+                if (i && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i-1))))
+                    sides &= ~(bar->orientation() == Qt::Horizontal?Render::Left:Render::Top);
+                if (i+1 < actions.count() && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i+1))))
+                    sides &= ~(bar->orientation() == Qt::Horizontal?Render::Right:Render::Bottom);
+                s_sides.insert(btn, sides);
+            }
+        }
+    }
+    else
+    {
+        const QList<QToolButton *> buttons(bar->findChildren<QToolButton *>());
+        for (int i = 0; i < buttons.count(); ++i)
+        {
+            QToolButton *btn(buttons.at(i));
             Render::Sides sides(Render::All);
-            if (i && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i-1))))
-                sides &= ~(bar->orientation() == Qt::Horizontal?Render::Left:Render::Top);
-            if (i+1 < actions.count() && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i+1))))
-                sides &= ~(bar->orientation() == Qt::Horizontal?Render::Right:Render::Bottom);
+            if (bar->orientation() == Qt::Horizontal)
+            {
+                if (qobject_cast<QToolButton *>(bar->childAt(btn->geometry().topLeft()-QPoint(1, 0))))
+                    sides&=~Render::Left;
+                if (qobject_cast<QToolButton *>(bar->childAt(btn->geometry().topRight()+QPoint(2, 0))))
+                    sides&=~Render::Right;
+            }
+            else
+            {
+                if (qobject_cast<QToolButton *>(bar->childAt(btn->geometry().topLeft()-QPoint(0, 1))))
+                    sides&=~Render::Top;
+                if (qobject_cast<QToolButton *>(bar->childAt(btn->geometry().bottomLeft()+QPoint(0, 2))))
+                    sides&=~Render::Bottom;
+            }
             s_sides.insert(btn, sides);
         }
     }
@@ -331,7 +370,7 @@ ToolBar::fixSpacer(qulonglong toolbar)
             break;
         }
     }
-    if (!tb || tb->window()->property(CSDBUTTONS).toBool())
+    if (!tb || tb->window()->property(CSDBUTTONS).toBool() || !qobject_cast<QMainWindow *>(tb->parentWidget()))
         return;
 
     tb->removeEventFilter(this);
@@ -355,19 +394,45 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
         return false;
     QToolBar *tb = qobject_cast<QToolBar *>(o);
     QToolButton *tbn = qobject_cast<QToolButton *>(o);
+    QToolBar *childParent(0);
+    if (!tbn && !tb)
+        childParent = qobject_cast<QToolBar *>(o->parent());
     switch (e->type())
     {
+    case QEvent::ChildAdded:
+    case QEvent::ChildRemoved:
+    {
+        if (tb)
+            s_dirty.insert(tb, true);
+        return false;
+    }
     case QEvent::Show:
     case QEvent::Hide:
     {
-        if (tb && dConf.uno.enabled)
+        if (tb)
         {
-            if (dConf.removeTitleBars)
+            s_dirty.insert(tb, true);
+            if (dConf.uno.enabled && dConf.removeTitleBars)
+                setupNoTitleBarWindowLater(tb);
+
+            adjustMargins(tb);
+            Window::updateWindowDataLater(tb->window());
+        }
+        else if (childParent) //non-toolbutton child shown/hidden in toolbar, this does apparently not trigger a size-from-content reload.
+            QMetaObject::invokeMethod(this, "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)childParent), Q_ARG(bool,true));
+        return false;
+    }
+    case QEvent::HideToParent:
+    case QEvent::ShowToParent:
+    {
+        if (tb)
+        {
+            if (dConf.uno.enabled && dConf.removeTitleBars)
                 setupNoTitleBarWindowLater(tb);
             else
             {
-                adjustMargins(tb);
-                Window::updateWindowDataLater(tb->window());
+                s_dirty.insert(tb, true);
+                QMetaObject::invokeMethod(this, "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)tb));
             }
         }
         return false;
@@ -379,6 +444,11 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
         QActionEvent *ae = static_cast<QActionEvent *>(e);
         if (tb)
         {
+            if (e->type() == QEvent::ActionChanged)
+            {
+                tb->update();
+                return false;
+            }
 //            if (dConf.uno.enabled)
                 s_dirty.insert(tb, true);
             if (dConf.removeTitleBars)
@@ -391,7 +461,6 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             {
                 QMetaObject::invokeMethod(this, "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)tb));
             }
-            tb->update();
         }
         return false;
     }
@@ -810,7 +879,7 @@ Window::eventFilter(QObject *o, QEvent *e)
 }
 
 bool
-Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset, float opacity)
+Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
 {
     QWidget *win(w->window());
     const int clientUno(unoHeight(win, ToolBarAndTabBar));
@@ -826,13 +895,13 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset, float
     if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget()) //weird case where mainwindow is embedded in another window
         return false;
 
-    int addV(0);
+    const bool csd(/*(win->windowFlags() & Qt::FramelessWindowHint) && */win->property(CSDBUTTONS).toBool());
+    if (!csd)
     if (unsigned char *titleHeight = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight))
     {
-        addV = *titleHeight;
+        offset.ry()+=*titleHeight;
         XHandler::freeData(titleHeight);
     }
-    offset.ry()+=addV;
     if (unsigned long *unoBg = XHandler::getXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix))
     {
         p->drawTiledPixmap(r, QPixmap::fromX11Pixmap(*unoBg), offset);
@@ -840,15 +909,26 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset, float
         if (dConf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset));
 
-#if 0
-        QIcon icon(win->windowIcon());
-        if (!icon.isNull() && !qobject_cast<const QStatusBar *>(w))
+        if (csd)
         {
-            QPixmap pix(icon.pixmap(128));
-            offset.ry()+=addV;
-            p->drawPixmap(pix.rect().translated(-offset), pix);
+            QIcon icon(win->windowIcon());
+            if (!icon.isNull() && !qobject_cast<const QStatusBar *>(w))
+            {
+                QPixmap pix(icon.pixmap(128));
+//                QTransform tf;
+//                tf.translate(pix.width()/2, pix.height()/2);
+//                tf.rotate(-60.0f, Qt::YAxis);
+//                tf.translate(-pix.width()/2, -pix.height()/2);
+//                pix = pix.transformed(tf, Qt::SmoothTransformation);
+                offset.ry()+=(pix.height()-clientUno)/2;
+//                offset.rx()-=(win->findChild<Buttons *>()->width());
+                QPainter pt(&pix);
+                pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                pt.fillRect(pix.rect(), QColor(0, 0, 0, 170));
+                pt.end();
+                p->drawPixmap(pix.rect().translated(-offset), pix);
+            }
         }
-#endif
         return true;
     }
     return false;

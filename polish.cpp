@@ -155,10 +155,13 @@ StyleProject::polish(QWidget *widget)
             ShadowHandler::manage(widget);
     }
 
+    if (qobject_cast<QToolBar *>(widget->parent()))
+        Handlers::ToolBar::manage(widget);
+
     //main if segment for all widgets
     if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
     {
-        Handlers::ToolBar::manage(bar);
+        Handlers::ToolBar::manageToolBar(bar);
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
     }

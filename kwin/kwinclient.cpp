@@ -524,13 +524,8 @@ KwinClient::paint(QPainter &p)
             ir.moveRight(textRect.left()-4);
             if (ir.left() > m_leftButtons)
                 icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
-
-//            QImage img((uchar *)&iconData[2], iconData[0], iconData[1], QImage::Format_ARGB32);
-//            p.drawImage(0, 0, img);
-
             XHandler::freeData(iconData);
         }
-
     if (m_needSeparator)
     {
         p.setPen(QColor(0, 0, 0, 32));

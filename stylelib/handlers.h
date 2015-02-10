@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QSharedMemory>
+#include <QApplication>
 #include <QMap>
 #include <QLabel>
 #include "render.h"
@@ -49,14 +50,31 @@ class Q_DECL_EXPORT ToolBar : public QObject
 public:
     ~ToolBar(){}
     static ToolBar *instance();
-    static void manage(QToolBar *tb);
-    static void manage(QToolButton *tb);
+    static void manageToolBar(QToolBar *tb);
+    static void manage(QWidget *child);
     static bool isArrowPressed(const QToolButton *tb);
     static void setupNoTitleBarWindowLater(QToolBar *toolBar);
     static void adjustMargins(QToolBar *toolBar);
     static Render::Sides sides(const QToolButton *btn);
     static void processToolBar(QToolBar *bar, bool forceSizeUpdate = false);
     static bool isDirty(QToolBar *bar);
+
+    template<typename T>
+    static T getChild(qulonglong child)
+    {
+        T c(0);
+        const QList<QWidget *> widgets = qApp->allWidgets();
+        for (int i = 0; i < widgets.count(); ++i)
+        {
+            QWidget *w(widgets.at(i));
+            if ((qulonglong)w == child)
+            {
+                c = static_cast<T>(w);
+                return c;
+            }
+        }
+        return 0;
+    }
 
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
@@ -69,6 +87,7 @@ protected slots:
     void toolBtnDeleted(QObject *toolBtn);
     void setupNoTitleBarWindow(qulonglong bar);
     void fixSpacer(qulonglong toolbar);
+    void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
 
 private:
     static ToolBar s_instance;
@@ -104,7 +123,7 @@ public:
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static void addCompactMenu(QWidget *w);
-    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint(), float opacity = 1.0f);
+    static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
     static void updateDeco(WId window, unsigned int changed = 63);
     static void updateWindowDataLater(QWidget *win);
 

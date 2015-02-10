@@ -24,7 +24,7 @@ public:
                 AppMenu,
                 TypeCount };
     ButtonBase(Type type);
-    ~ButtonBase();
+    virtual ~ButtonBase();
 
     virtual const QRect buttonRect() const = 0;
     virtual const bool isHovered() const { return m_hasMouse; }

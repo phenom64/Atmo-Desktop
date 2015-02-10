@@ -68,7 +68,7 @@ StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const
         QPixmap pix(r.size());
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
-        Handlers::Window::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()), XHandler::opacity());
+        Handlers::Window::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()));
         pt.end();
         if (XHandler::opacity() < 1.0f)
         {
@@ -295,7 +295,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
         }
         const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
         p->setRenderHint(QPainter::Antialiasing, false);
-        Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
+        Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
         p->setPen(QColor(0, 0, 0, 255.0f*(dConf.shadows.opacity/2.0f)));
         p->drawLine(r.topLeft(), r.topRight());
         p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
