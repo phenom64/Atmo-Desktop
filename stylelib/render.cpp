@@ -457,31 +457,37 @@ Render::_renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path,
     const QSize sz(m_tab[TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
         return;
+
+    QPixmap pix(r.size());
+    pix.fill(Qt::transparent);
+    QPainter pt(&pix);
+
     int x1, y1, x2, y2;
-    r.getCoords(&x1, &y1, &x2, &y2);
+    pix.rect().getCoords(&x1, &y1, &x2, &y2);
     int halfH(r.width()-(sz.width()*2)), halfV(r.height()-(sz.height()*2));
-    p->save();
-    p->setOpacity(o);
 
     if (t > BeforeSelected)
     {
-        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1, sz.width(), sz.height()), m_tab[TopRightPart]);
-        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), m_tab[RightPart]);
-        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[BottomRightPart]);
+        pt.drawTiledPixmap(QRect(x1+sz.width()+halfH, y1, sz.width(), sz.height()), m_tab[TopRightPart]);
+        pt.drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), m_tab[RightPart]);
+        pt.drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[BottomRightPart]);
     }
     if (t < AfterSelected)
     {
-        p->drawTiledPixmap(QRect(x1, y1, sz.width(), sz.height()), m_tab[TopLeftPart]);
-        p->drawTiledPixmap(QRect(x1, y1+sz.height(), sz.width(), halfV), m_tab[LeftPart]);
-        p->drawTiledPixmap(QRect(x1, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[BottomLeftPart]);
+        pt.drawTiledPixmap(QRect(x1, y1, sz.width(), sz.height()), m_tab[TopLeftPart]);
+        pt.drawTiledPixmap(QRect(x1, y1+sz.height(), sz.width(), halfV), m_tab[LeftPart]);
+        pt.drawTiledPixmap(QRect(x1, y1+sz.height()+halfV, sz.width(), sz.height()), m_tab[BottomLeftPart]);
     }
-    p->drawTiledPixmap(QRect(x1+sz.width(), y1, halfH, sz.height()), m_tab[TopMidPart]);
-    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height(), halfH, halfV), m_tab[CenterPart]);
-    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), m_tab[BottomMidPart]);
+    pt.drawTiledPixmap(QRect(x1+sz.width(), y1, halfH, sz.height()), m_tab[TopMidPart]);
+    pt.drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height(), halfH, halfV), m_tab[CenterPart]);
+    pt.drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), m_tab[BottomMidPart]);
+    pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    pt.fillRect(pix.rect(), QColor(0, 0, 0, o*255.0f));
+    pt.end();
 
     if (path)
         *path = tab(r.adjusted(ts, 0, -ts, 0), dConf.tabs.safrnd);
-    p->restore();
+    p->drawPixmap(r, pix);
 }
 
 QRect
@@ -534,10 +540,8 @@ void
 Render::shapeCorners(const QWidget *w, QPainter *p, Sides s, int roundNess)
 {
     const QPainter::CompositionMode mode(p->compositionMode());
-    const float opacity(p->opacity());
     p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p->setPen(Qt::NoPen);
-    p->setOpacity(1.0f);
     for (int i = 0; i < PartCount; ++i)
     if (needPart(i, s))
     {
@@ -546,7 +550,6 @@ Render::shapeCorners(const QWidget *w, QPainter *p, Sides s, int roundNess)
         p->drawPixmap(partRect(w->rect(), i, roundNess, s), m_mask[roundNess][i]);
     }
     p->setCompositionMode(mode);
-    p->setOpacity(opacity);
 }
 
 QPixmap
@@ -612,16 +615,17 @@ Render::_renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *p
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
 
-    const float o(painter->opacity());
-    painter->setOpacity(opacity);
+    QPixmap px(rect.size());
+    px.fill(Qt::transparent);
+    QPainter pt(&px);
     for (int i = 0; i < PartCount; ++i)
         if (i != CenterPart)
             if (needPart((Parts)i, sides))
-            {
-                QPixmap pix = m_shadow[shadow][roundNess][i];
-                painter->drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides, true).translated(rect.x(), rect.y()), pix);
-            }
-    painter->setOpacity(o);
+                pt.drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides, true), m_shadow[shadow][roundNess][i]);
+    pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    pt.fillRect(px.rect(), QColor(0, 0, 0, opacity*255.0f));
+    pt.end();
+    painter->drawPixmap(rect, px);
 }
 
 void

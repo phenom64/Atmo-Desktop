@@ -515,14 +515,19 @@ KwinClient::paint(QPainter &p)
     if (needPaint)
         p.drawText(textRect, Qt::AlignCenter, text);
 
+    int n;
     if (dConf.deco.icon)
-        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowIcon))
+        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowIcon, n))
         {
             QRect ir(QPoint(), QSize(16, 16));
             ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
             ir.moveRight(textRect.left()-4);
             if (ir.left() > m_leftButtons)
                 icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
+
+//            QImage img((uchar *)&iconData[2], iconData[0], iconData[1], QImage::Format_ARGB32);
+//            p.drawImage(0, 0, img);
+
             XHandler::freeData(iconData);
         }
 

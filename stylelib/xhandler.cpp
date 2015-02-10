@@ -52,7 +52,7 @@ XHandler::changeProperty(const WId w, const Value v, const TypeSize size, const 
 }
 
 unsigned char
-*XHandler::fetchProperty(const WId w, const Value v, int &n)
+*XHandler::fetchProperty(const WId w, const Value v, int &n, unsigned long offset, unsigned long length)
 {
     Atom type;
     int format;
@@ -60,7 +60,7 @@ unsigned char
     unsigned char *d = 0;
     unsigned char **data = &d;
 //    Atom a = ((v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM);
-    XGetWindowProperty(QX11Info::display(), w, atom[v], 0L, 0xffffffff, False, XA_CARDINAL, &type, &format, &nitems, &after, data);
+    XGetWindowProperty(QX11Info::display(), w, atom[v], offset, length, False, XA_CARDINAL, &type, &format, &nitems, &after, data);
     n = nitems;
     return d;
 }

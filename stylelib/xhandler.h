@@ -28,9 +28,9 @@ public:
 
         changeProperty(w, v, qMin<TypeSize>(size, Long), reinterpret_cast<unsigned char *>(d), n);
     }
-    template<typename T> static T *getXProperty(const WId w, const Value v, int &n = _n)
+    template<typename T> static T *getXProperty(const WId w, const Value v, int &n = _n, unsigned long offset = 0L, unsigned long length = 0xffffffff)
     {
-        return reinterpret_cast<T *>(fetchProperty(w, v, n));
+        return reinterpret_cast<T *>(fetchProperty(w, v, n, offset, length));
     }
     static void freeData(void *data);
     static void deleteXProperty(const WId w, const Value v);
@@ -48,7 +48,7 @@ public:
 
 protected:
     static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
-    static unsigned char *fetchProperty(const WId w, const Value v, int &n);
+    static unsigned char *fetchProperty(const WId w, const Value v, int &n, unsigned long offset, unsigned long length);
 
 private:
     static XHandler s_instance;

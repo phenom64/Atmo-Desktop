@@ -68,7 +68,7 @@ protected slots:
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
     void setupNoTitleBarWindow(qulonglong bar);
-    void fixSpacer(QWidget *toolbar);
+    void fixSpacer(qulonglong toolbar);
 
 private:
     static ToolBar s_instance;
@@ -99,7 +99,6 @@ class Q_DECL_EXPORT Window : public QObject
     Q_OBJECT
 public:
     static QMap<QWidget *, Handlers::Data> s_unoData;
-    static QMap<QWidget *, QPixmap> s_bgPix;
     ~Window(){}
     static Window *instance();
     static void manage(QWidget *w);

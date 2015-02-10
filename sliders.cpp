@@ -58,13 +58,9 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
             painter->drawLine(l);
             painter->setPen(saved);
         }
-        const int o(painter->opacity());
-
-        const float add(0.5f/(float)STEPS);
         if (bar && !bar->isSliderDown())
-            painter->setOpacity(0.5f+add*level);
+            fgc.setAlpha(85.0f+((170.0f/(float)STEPS)*level));
         Render::renderMask(slider, painter, fgc);
-        painter->setOpacity(o);
     }
     else if (dConf.scrollers.style == 1)
     {

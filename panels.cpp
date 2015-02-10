@@ -208,9 +208,8 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
     if (dConf.uno.enabled)
     {
         const QDockWidget *dock = qobject_cast<const QDockWidget *>(widget);
-        painter->save();
-        painter->setOpacity(dConf.shadows.opacity);
-        painter->setPen(opt->palette.color(Ops::fgRole(widget, QPalette::WindowText)));
+        const QPen savedPen(painter->pen());
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         QRect l(tr);
         l.setLeft(0);
         l.setBottom(l.bottom()+1);
@@ -223,7 +222,7 @@ StyleProject::drawDockTitle(const QStyleOption *option, QPainter *painter, const
             if (!left && dock->geometry().right()+1 < dock->window()->rect().right())
                 painter->drawLine(dock->rect().topRight(), dock->rect().bottomRight());
         }
-        painter->restore();
+        painter->setPen(savedPen);
     }
 
     const QFont f(painter->font());

@@ -293,15 +293,15 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect = QRect())
             p->fillRect(r, Qt::black);
             p->setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
-        const float o(p->opacity());
+        const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
+        p->setRenderHint(QPainter::Antialiasing, false);
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()), XHandler::opacity());
-        p->setPen(Qt::black);
-        p->setOpacity(dConf.shadows.opacity/2);
+        p->setPen(QColor(0, 0, 0, 255.0f*(dConf.shadows.opacity/2.0f)));
         p->drawLine(r.topLeft(), r.topRight());
-        p->setOpacity(dConf.shadows.opacity);
+        p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        p->setOpacity(o);
         Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, dConf.shadows.opacity/2);
+        p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     else if (bar->documentMode())
     {
@@ -492,11 +492,13 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
     p.begin(&closer);
     p.drawTiledPixmap(closer.rect().translated(0, 1), tmp);
     p.drawTiledPixmap(closer.rect(), tmp2);
+    if (!isSelected && !(option->state & State_MouseOver))
+    {
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.fillRect(closer.rect(), QColor(0, 0, 0, 127.0f));
+    }
     p.end();
-
-    if (!isSelected)
-        painter->setOpacity(0.75f);
-    painter->drawTiledPixmap(option->rect, closer);
+    painter->drawPixmap(option->rect, closer);
     return true;
 }
 

@@ -120,7 +120,6 @@ StyleProject::polish(QWidget *widget)
 
 //    if (widget->inherits("BE::CalendarWidget") && widget->parentWidget())
 //        widget->parentWidget()->setWindowFlags(widget->parentWidget()->windowFlags()|Qt::Window|Qt::FramelessWindowHint);
-
     if (widget->isWindow())
     {
         if (qobject_cast<QMainWindow *>(widget))
@@ -128,10 +127,6 @@ StyleProject::polish(QWidget *widget)
             if (dConf.compactMenu
                     && widget->findChild<QMenuBar *>())
                 Handlers::Window::addCompactMenu(widget);
-
-//            if (!dConf.uno.enabled
-//                    && !(widget->isMaximized() || widget->isFullScreen()))
-//                widget->setContentsMargins(4, 0, 4, 4);
 
             if (XHandler::opacity() < 1.0f
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
@@ -143,7 +138,7 @@ StyleProject::polish(QWidget *widget)
         }
         else if (qobject_cast<QDialog *>(widget))
         {
-            bool needHandler(dConf.hackDialogs && widget->isModal());
+            bool needHandler(!dConf.uno.enabled || (dConf.hackDialogs && widget->isModal()));
             if (!dConf.uno.enabled
                     && XHandler::opacity() < 1.0f
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
