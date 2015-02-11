@@ -40,15 +40,17 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         QPalette::ColorRole fg(Ops::fgRole(area, QPalette::WindowText)), bg(Ops::bgRole(area, QPalette::Window));
         const int m(2);
         slider.adjust(m, m, -m, -m);
+
         QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
-        if ((bgc.alpha() < 0xff || bg != QPalette::Base) && widget)
+        if (opt->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
+                && ((bgc.alpha() < 0xff || bg != QPalette::Base ) && widget))
         {
             const QRect geo(widget->mapTo(widget->window(), QPoint()), widget->size());
             widget->window()->render(painter, geo.topLeft(), QRegion(geo), QWidget::DrawWindowBackground);
-            fg = QPalette::WindowText;
         }
         else
-            painter->fillRect(groove, bgc);
+            painter->fillRect(groove, opt->palette.color(QPalette::Window));
+
         if (bg == QPalette::Base
                 && area
                 && area->frameShadow() == QFrame::Sunken
@@ -146,9 +148,10 @@ StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter
     if (dConf.scrollers.style == 0)
     {
         const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
-        if (dConf.opacity == 1.0f && (option->palette.color(bg).alpha() < 0xff || bg != QPalette::Base) && widget)
+        if (option->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
+                && (dConf.opacity == 1.0f && (option->palette.color(bg).alpha() < 0xff || bg != QPalette::Base) && widget))
         {
-            const QRect geo(widget->mapTo(widget->window(), QPoint()), widget->size());
+            const QRect geo(widget->mapTo(widget->window(), option->rect.topLeft()), widget->size());
             widget->window()->render(painter, geo.topLeft(), QRegion(geo), QWidget::DrawWindowBackground);
         }
         else if (dConf.uno.enabled)

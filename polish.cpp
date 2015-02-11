@@ -212,6 +212,19 @@ StyleProject::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(widget->window()))
             Handlers::ScrollWatcher::watch(area);
 
+//        if (area->viewport()->autoFillBackground())
+//        {
+//            QPalette::ColorRole bg = area->viewport()->backgroundRole();
+//            if (bg == QPalette::Base
+//                    && area->viewport()->palette().color(bg).alpha() < 0xff)
+//            {
+//                qDebug() << area;
+//                area->viewport()->setBackgroundRole(QPalette::Window);
+//                area->setPalette(area->window()->palette());
+//                area->viewport()->setAutoFillBackground(false);
+//            }
+//        }
+
         if (QAbstractItemView *view = qobject_cast<QAbstractItemView *>(area))
         {
             view->viewport()->setAttribute(Qt::WA_Hover);

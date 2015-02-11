@@ -193,7 +193,7 @@ Ops::bgRole(const QWidget *w, const QPalette::ColorRole fallBack)
     if (!w)
         return fallBack;
     if (const QAbstractScrollArea *area = qobject_cast<const QAbstractScrollArea *>(w))
-        if (area->viewport()->autoFillBackground())
+        if (area->viewport()->autoFillBackground() && area->viewport()->palette().color(area->viewport()->backgroundRole()).alpha() == 0xff)
             return area->viewport()->backgroundRole();
     return w->backgroundRole();
 }
@@ -204,7 +204,7 @@ Ops::fgRole(const QWidget *w, const QPalette::ColorRole fallBack)
     if (!w)
         return fallBack;
     if (const QAbstractScrollArea *area = qobject_cast<const QAbstractScrollArea *>(w))
-        if (area->viewport()->autoFillBackground())
+        if (area->viewport()->autoFillBackground() && area->viewport()->palette().color(area->viewport()->foregroundRole()).alpha() == 0xff)
             return area->viewport()->foregroundRole();
     return w->foregroundRole();
 }
