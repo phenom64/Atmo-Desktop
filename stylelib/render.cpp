@@ -938,8 +938,8 @@ Render::drawClickable(Shadow s,
     else if (s==Raised && !isToolBox)
     {
         QLinearGradient lg(0, 0, 0, r.height());
-        lg.setColorAt(0.0f, QColor(255, 255, 255, dConf.shadows.opacity*255.0f));
-        lg.setColorAt(0.5f, Qt::transparent);
+        lg.setColorAt(0.0f, QColor(255, 255, 255, dConf.shadows.opacity*1.1f*bgLum));
+        lg.setColorAt(0.5f, QColor(255, 255, 255, dConf.shadows.opacity*0.5f*bgLum));
         QBrush b(lg);
         renderShadow(Rect, r, p, rnd, sides, 1.0f, &b);
 

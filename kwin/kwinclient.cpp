@@ -478,13 +478,12 @@ KwinClient::paint(QPainter &p)
 
     QString text(caption());
     QRect textRect(p.fontMetrics().boundingRect(tr, Qt::AlignCenter, text));
-    if (textRect.width() >= tr.width())
+    const int maxW(tr.width()-(qMax(m_leftButtons, m_rightButtons)*2));
+    if (p.fontMetrics().width(text) > maxW)
     {
-        const int maxW(textRect.width()-(qMax(m_leftButtons, m_rightButtons)*2));
-        if (p.fontMetrics().width(text) > maxW)
-            text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+        text = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+        textRect = p.fontMetrics().boundingRect(tr, Qt::AlignCenter, text);
     }
-
     if (isActive())
     {
         const int rgb(isDark?0:255);
@@ -512,12 +511,13 @@ KwinClient::paint(QPainter &p)
         p.drawText(rightTextRect, Qt::AlignCenter, rightText);
         break;
     }
+
     if (needPaint)
         p.drawText(textRect, Qt::AlignCenter, text);
 
     int n;
     if (dConf.deco.icon)
-        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowIcon, n))
+        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowIcon, n, 0, 1))
         {
             QRect ir(QPoint(), QSize(16, 16));
             ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));

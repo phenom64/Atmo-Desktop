@@ -41,11 +41,18 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         const int m(2);
         slider.adjust(m, m, -m, -m);
         QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
-        if (bgc.alpha() < 0xff)
-            bgc = opt->palette.color(QPalette::Window);
-        Color::ensureContrast(bgc, fgc);
-        painter->fillRect(groove, bgc);
-        if (bg == QPalette::Base)
+        if ((bgc.alpha() < 0xff || bg != QPalette::Base) && widget)
+        {
+            const QRect geo(widget->mapTo(widget->window(), QPoint()), widget->size());
+            widget->window()->render(painter, geo.topLeft(), QRegion(geo), QWidget::DrawWindowBackground);
+            fg = QPalette::WindowText;
+        }
+        else
+            painter->fillRect(groove, bgc);
+        if (bg == QPalette::Base
+                && area
+                && area->frameShadow() == QFrame::Sunken
+                && area->frameShape() == QFrame::StyledPanel)
         {
             QLine l(groove.topLeft(), groove.bottomLeft());
             if (opt->orientation == Qt::Horizontal)
@@ -56,7 +63,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
             else
                 slider.setRight(slider.right()+1);
             const QPen saved(painter->pen());
-            painter->setPen(QColor(0, 0, 0, 32));
+            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
             painter->drawLine(l);
             painter->setPen(saved);
         }
@@ -139,7 +146,13 @@ StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter
     if (dConf.scrollers.style == 0)
     {
         const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
-        painter->fillRect(option->rect, option->palette.color(bg));
+        if (dConf.opacity == 1.0f && (option->palette.color(bg).alpha() < 0xff || bg != QPalette::Base) && widget)
+        {
+            const QRect geo(widget->mapTo(widget->window(), QPoint()), widget->size());
+            widget->window()->render(painter, geo.topLeft(), QRegion(geo), QWidget::DrawWindowBackground);
+        }
+        else if (dConf.uno.enabled)
+            painter->fillRect(option->rect, option->palette.color(bg));
     }
     else if (dConf.scrollers.style == 1)
     {

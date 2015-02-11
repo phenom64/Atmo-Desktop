@@ -177,14 +177,13 @@ public:
     ~ScrollWatcher(){}
     static void watch(QAbstractScrollArea *area);
     static inline ScrollWatcher *instance() { return &s_instance; }
-    void regenBg(QMainWindow *win);
-    static QImage bg(qlonglong win);
+    static void drawContBg(QPainter *p, QWidget *w, const QRect r, const QPoint &offset = QPoint());
     static void detachMem(QMainWindow *win);
-    static bool hasBg(qulonglong win) { return s_winBg.contains(win); }
 
 protected:
-    explicit ScrollWatcher(QObject *parent = 0);
+    ScrollWatcher(){}
     bool eventFilter(QObject *, QEvent *);
+    void regenBg(QMainWindow *win);
 
 protected slots:
     void updateWin(QWidget *mainWin);
@@ -192,7 +191,6 @@ protected slots:
 
 private:
     static ScrollWatcher s_instance;
-    static QMap<qlonglong, QImage> s_winBg;
     static QMap<QMainWindow *, QSharedMemory *> s_mem;
 };
 

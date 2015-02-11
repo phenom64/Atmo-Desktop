@@ -167,14 +167,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 
         const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
         QToolBar *bar = qobject_cast<QToolBar *>(widget->parentWidget());
-        Render::Sides sides = Render::All;
-        if (bar)
-        {
-            if (Handlers::ToolBar::isDirty(bar))
-                Handlers::ToolBar::processToolBar(bar);
-            sides = Handlers::ToolBar::sides(btn);
-        }
-        const bool isFull(sides == Render::All);
+
         QSize sz(contentsSize);
         bool hor(bar ? bar->orientation() == Qt::Horizontal : true);
         if (!hor)
@@ -186,28 +179,40 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         }
         sz+=QSize(hor?8:4, hor?4:8);
 
-        int *hvsz = hor?&sz.rwidth():&sz.rheight();
-        int ends = hor?(Render::Left|Render::Right):(Render::Top|Render::Bottom);
-
-        if (bar && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
+        if (!dConf.toolbtn.flat)
         {
-            if (isFull)
-                *hvsz += 16;
-            else if (sides & ends)
-                *hvsz += (2+(dConf.toolbtn.shadow==Render::Carved)*2);
-            if (btn && btn->group())
-                *hvsz += 8;
-            if (btn && btn->isCheckable() && !isFull)
-                *hvsz += 2;
-        }
-        static const int minSz(23);
-        if (hor && sz.height() < minSz)
-            sz.setHeight(minSz);
-        else if (!hor && sz.width() < minSz)
-            sz.setWidth(minSz);
+            Render::Sides sides = Render::All;
+            if (bar)
+            {
+                if (Handlers::ToolBar::isDirty(bar))
+                    Handlers::ToolBar::processToolBar(bar);
+                sides = Handlers::ToolBar::sides(btn);
+            }
+            const bool isFull(sides == Render::All);
 
-        if (Ops::hasMenu(btn, optbtn))
-            *hvsz+=16;
+            int *hvsz = hor?&sz.rwidth():&sz.rheight();
+            int ends = hor?(Render::Left|Render::Right):(Render::Top|Render::Bottom);
+
+            if (bar && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
+            {
+                if (isFull)
+                    *hvsz += 16;
+                else if (sides & ends)
+                    *hvsz += (2+(dConf.toolbtn.shadow==Render::Carved)*2);
+                if (btn && btn->group())
+                    *hvsz += 8;
+                if (btn && btn->isCheckable() && !isFull)
+                    *hvsz += 2;
+            }
+            static const int minSz(23);
+            if (hor && sz.height() < minSz)
+                sz.setHeight(minSz);
+            else if (!hor && sz.width() < minSz)
+                sz.setWidth(minSz);
+
+            if (Ops::hasMenu(btn, optbtn))
+                *hvsz+=16;
+        }
         return sz;
     }
     case CT_LineEdit:

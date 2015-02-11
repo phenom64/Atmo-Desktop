@@ -359,18 +359,11 @@ ToolBar::sides(const QToolButton *btn)
 void
 ToolBar::fixSpacer(qulonglong toolbar)
 {
-    QToolBar *tb(0);
-    const QList<QWidget *> widgets = qApp->allWidgets();
-    for (int i = 0; i < widgets.count(); ++i)
-    {
-        QWidget *w(widgets.at(i));
-        if ((qulonglong)w == toolbar)
-        {
-            tb = static_cast<QToolBar *>(w);
-            break;
-        }
-    }
-    if (!tb || tb->window()->property(CSDBUTTONS).toBool() || !qobject_cast<QMainWindow *>(tb->parentWidget()))
+    QToolBar *tb = getChild<QToolBar *>(toolbar);
+    if (!tb
+            || tb->window()->property(CSDBUTTONS).toBool()
+            || !qobject_cast<QMainWindow *>(tb->parentWidget())
+            || tb->findChild<QTabBar *>())
         return;
 
     tb->removeEventFilter(this);
@@ -906,8 +899,8 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     {
         p->drawTiledPixmap(r, QPixmap::fromX11Pixmap(*unoBg), offset);
         XHandler::freeData(unoBg);
-        if (dConf.uno.contAware && ScrollWatcher::hasBg((qlonglong)win) && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
-            p->drawImage(QPoint(0, 0), ScrollWatcher::bg((qlonglong)win), r.translated(offset));
+        if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
+            ScrollWatcher::drawContBg(p, win, r, offset);
 
         if (csd)
         {
@@ -1240,14 +1233,8 @@ Drag::canDrag(QWidget *w)
 //-------------------------------------------------------------------------------------------------
 
 Q_DECL_EXPORT ScrollWatcher ScrollWatcher::s_instance;
-QMap<qlonglong, QImage> ScrollWatcher::s_winBg;
 QMap<QMainWindow *, QSharedMemory *> ScrollWatcher::s_mem;
 static QList<QWidget *> s_watched;
-
-ScrollWatcher::ScrollWatcher(QObject *parent) : QObject(parent)
-{
-//    connect(this, SIGNAL(updateRequest()), this, SLOT(updateLater()), Qt::QueuedConnection);
-}
 
 void
 ScrollWatcher::watch(QAbstractScrollArea *area)
@@ -1277,8 +1264,6 @@ ScrollWatcher::detachMem(QMainWindow *win)
         if (m->isAttached())
             m->detach();
     }
-    if (s_winBg.contains((qulonglong)win))
-        s_winBg.remove((qulonglong)win);
 }
 
 void
@@ -1350,6 +1335,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
         for (int i = 0; i < areas.count(); ++i)
         {
             QAbstractScrollArea *area(areas.at(i));
+
             if (!area->isVisible()
                     || area->verticalScrollBar()->minimum() == area->verticalScrollBar()->maximum()
                     || area->verticalScrollBar()->value() == area->verticalScrollBar()->minimum())
@@ -1358,7 +1344,10 @@ ScrollWatcher::regenBg(QMainWindow *win)
             if (topLeft.y()-1 > (uno-unoHeight(win, Handlers::TitleBar)) || area->verticalScrollBar()->value() == area->verticalScrollBar()->minimum())
                 continue;
 
+            area->setAttribute(Qt::WA_UpdatesDisabled, true);
             QWidget *vp(area->viewport());
+            vp->setAttribute(Qt::WA_UpdatesDisabled, true);
+            vp->setAttribute(Qt::WA_ForceUpdatesDisabled, true);
             const bool hadFilter(s_watched.contains(vp));
             if (hadFilter)
                 vp->removeEventFilter(this);
@@ -1392,6 +1381,9 @@ ScrollWatcher::regenBg(QMainWindow *win)
             area->blockSignals(false);
             if (hadFilter)
                 vp->installEventFilter(this);
+            vp->setAttribute(Qt::WA_ForceUpdatesDisabled, false);
+            vp->setAttribute(Qt::WA_UpdatesDisabled, false);
+            area->setAttribute(Qt::WA_UpdatesDisabled, false);
         }
         if (int blurRadius = dConf.uno.blur)
             Render::expblur(img, blurRadius);
@@ -1403,15 +1395,25 @@ ScrollWatcher::regenBg(QMainWindow *win)
             p.fillRect(img.rect(), QColor(0, 0, 0, dConf.uno.opacity*255.0f));
             p.end();
         }
-        s_winBg.insert((qlonglong)win, img);
         m->unlock();
     }
 }
 
-QImage
-ScrollWatcher::bg(qlonglong win)
+void
+ScrollWatcher::drawContBg(QPainter *p, QWidget *w, const QRect r, const QPoint &offset)
 {
-    return s_winBg.value(win, QImage());
+    QSharedMemory *m(0);
+    if (s_mem.contains(static_cast<QMainWindow *>(w)))
+        m = s_mem.value(static_cast<QMainWindow *>(w));
+    if (!m || !m->isAttached())
+        return;
+
+    if (m->lock())
+    {
+        const uchar *data(reinterpret_cast<const uchar *>(m->constData()));
+        p->drawImage(QPoint(0, 0), QImage(data, w->width(), unoHeight(w, All), QImage::Format_ARGB32_Premultiplied), r.translated(offset));
+        m->unlock();
+    }
 }
 
 bool

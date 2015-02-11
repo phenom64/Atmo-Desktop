@@ -430,10 +430,13 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
             mr.setRight(arrow.left());
         else
             mr.setBottom(arrow.top());
-        painter->setPen(QColor(0, 0, 0, 32));
-        QPoint first(hor?mr.topRight():mr.bottomLeft());
-        QPoint second(hor?mr.bottomRight():mr.bottomRight());
-        painter->drawLine(first, second);
+        if (!dConf.toolbtn.flat && bar)
+        {
+            painter->setPen(QColor(0, 0, 0, 32));
+            QPoint first(hor?mr.topRight():mr.bottomLeft());
+            QPoint second(hor?mr.bottomRight():mr.bottomRight());
+            painter->drawLine(first, second);
+        }
         Ops::drawArrow(painter, opt->palette.color(fg), arrow, Ops::Down, 7);
     }
     QRect ir(mr);
