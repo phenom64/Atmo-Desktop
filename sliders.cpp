@@ -42,14 +42,17 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         slider.adjust(m, m, -m, -m);
 
         QColor bgc(opt->palette.color(bg)), fgc(opt->palette.color(fg));
-        if (opt->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
+
+        if (widget && widget->inherits("QWebView"))
+            painter->fillRect(groove, option->palette.color(QPalette::Base));
+        else if (opt->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
                 && ((bgc.alpha() < 0xff || bg != QPalette::Base ) && widget))
         {
             const QRect geo(widget->mapTo(widget->window(), QPoint()), widget->size());
-            widget->window()->render(painter, geo.topLeft(), QRegion(geo), QWidget::DrawWindowBackground);
+            widget->window()->render(painter, geo.topLeft(), geo, QWidget::DrawWindowBackground);
         }
         else
-            painter->fillRect(groove, opt->palette.color(QPalette::Window));
+            painter->fillRect(groove, bgc);
 
         if (bg == QPalette::Base
                 && area
@@ -145,14 +148,21 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 bool
 StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (option && widget && widget->inherits("QWebView"))
+    {
+        painter->fillRect(option->rect, option->palette.color(QPalette::Base));
+        return true;
+    }
     if (dConf.scrollers.style == 0)
     {
         const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
         if (option->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
                 && (dConf.opacity == 1.0f && (option->palette.color(bg).alpha() < 0xff || bg != QPalette::Base) && widget))
         {
-            const QRect geo(widget->mapTo(widget->window(), option->rect.topLeft()), widget->size());
-            widget->window()->render(painter, geo.topLeft(), QRegion(geo), QWidget::DrawWindowBackground);
+            const QRect geo(widget->mapTo(widget->window(), option->rect.topLeft()), option->rect.size());
+            QPixmap pix(option->rect.size());
+            widget->window()->render(&pix, geo.topLeft(), geo, QWidget::DrawWindowBackground);
+            painter->drawPixmap(option->rect, pix);
         }
         else if (dConf.uno.enabled)
             painter->fillRect(option->rect, option->palette.color(bg));
