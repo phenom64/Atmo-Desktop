@@ -27,8 +27,6 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     painter->save();
-
-    painter->setRenderHint(QPainter::Antialiasing);
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
     const bool isMenuBar(qobject_cast<const QMenuBar *>(widget));
@@ -88,7 +86,9 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
         const int rnd(isMenuBar*(qMin(qMin(h, opt->rect.width())/2, dConf.pushbtn.rnd)));
+        painter->setRenderHint(QPainter::Antialiasing);
         painter->drawRoundedRect(opt->rect, rnd, rnd);
+        painter->setRenderHint(QPainter::Antialiasing, false);
     }
 
     if (dConf.menues.icons && isMenu)

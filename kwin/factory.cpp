@@ -1,6 +1,7 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QPainter>
+#include <QAbstractEventDispatcher>
 
 #include "kwinclient.h"
 #include "factory.h"
@@ -16,12 +17,52 @@ KDecoration
     return new KwinClient(bridge, this);
 }
 
+Factory *Factory::s_instance = 0;
+
 //Atom Factory::s_wmAtom;
+QAbstractEventDispatcher::EventFilter ev;
+
+bool
+Factory::xEventFilter(void *message)
+{
+    if (static_cast<XEvent *>(message)->type != PropertyNotify)
+        return ev?(*ev)(message):false;
+
+    XPropertyEvent *xpe = static_cast<XPropertyEvent *>(message);
+
+    if (xpe->atom == XHandler::xAtom(XHandler::DecoBgPix))
+    {
+        qDebug() << "got decopx prop event" << xpe->window;
+        if (xpe->state == PropertyNewValue)
+        {
+            QList<KwinClient *> clients = s_instance->findChildren<KwinClient *>();
+            for (int i = 0; i < clients.count(); ++i)
+            {
+                KwinClient *client = clients.at(i);
+                if (client->windowId() == xpe->window)
+                {
+                    if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(xpe->window, XHandler::DecoBgPix))
+                    {
+                        client->setBgPix(*bgPix);
+                        XHandler::freeData(bgPix);
+                    }
+                }
+            }
+        }
+        else if (xpe->state == PropertyDelete)
+            qDebug() << "bg deleted from window" << xpe->window;
+    }
+    return ev?(*ev)(message):false;
+}
 
 Factory::Factory()
     : QObject()
     , KDecorationFactory()
 {
+    if (s_instance)
+        qWarning("already created factory...");
+    s_instance = this;
+    ev = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
     ShadowHandler::removeDelete();
@@ -113,7 +154,7 @@ Factory::update(WId window, unsigned int changed)
         if (d->windowId() == window)
         {
             if (changed == 256)
-                d->updateContBg();
+                d->update();
             else
                 d->reset(changed);
         }

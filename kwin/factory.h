@@ -17,8 +17,11 @@ public:
     bool supports(Ability ability) const;
     void update(WId window, unsigned int changed);
 
+    static bool xEventFilter(void *message);
+
 private:
 //    static Atom s_wmAtom;
+    static Factory *s_instance;
 };
 
 

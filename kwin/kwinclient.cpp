@@ -9,6 +9,7 @@
 #include <QPixmap>
 #include <QCoreApplication>
 #include <QBuffer>
+#include <KWindowSystem>
 
 #include "kwinclient.h"
 #include "../stylelib/ops.h"
@@ -142,6 +143,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_uno(true)
     , m_frameSize(0)
     , m_compositingActive(true)
+    , m_hor(false)
 {
     setParent(factory);
     Settings::read();
@@ -238,7 +240,10 @@ KwinClient::updateMask()
 {
     const int w(width()), h(height());
     if (isModal())
+    {
+        widget()->update();
         return;
+    }
 
     if (m_compositingActive)
     {
@@ -263,6 +268,12 @@ KwinClient::updateMask()
 }
 
 void
+KwinClient::update()
+{
+    widget()->update();
+}
+
+void
 KwinClient::resize(const QSize &s)
 {
     widget()->resize(s);
@@ -280,7 +291,7 @@ KwinClient::borders(int &left, int &right, int &top, int &bottom) const
 void
 KwinClient::captionChange()
 {
-    widget()->repaint();
+    widget()->update();
 }
 
 QColor
@@ -303,7 +314,14 @@ bool
 KwinClient::eventFilter(QObject *o, QEvent *e)
 {
     if (o != widget())
+    {
+        if (o->isWidgetType())
+        {
+            QWidget *w = static_cast<QWidget *>(o);
+            qDebug() << w->winId() << windowId();
+        }
         return false;
+    }
     switch (e->type())
     {
     case QEvent::Paint:
@@ -390,29 +408,31 @@ KwinClient::paint(QPainter &p)
         p.drawRect(positionRect(PositionTopRight));
         p.drawRect(positionRect(PositionBottomLeft));
         p.drawRect(positionRect(PositionBottomRight));
-        p.setRenderHint(QPainter::Antialiasing);
+
         p.setBrush(Qt::NoBrush);
         p.setPen(QColor(255, 255, 255, 63));
         int rnd(!isModal()*4);
+        p.setRenderHint(QPainter::Antialiasing);
         p.drawRoundedRect(QRectF(widget()->rect()).adjusted(0.5f, 0.5f, -0.5f, -0.5f), rnd, rnd);
+        p.setRenderHint(QPainter::Antialiasing, false);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         r.adjust(0.5f, 0.5f, -0.5f, -0.5f);
         p.fillRect(r, Qt::black);
         p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    }
 
+    }
     p.setPen(Qt::NoPen);
     p.setBrush(Qt::NoBrush);
     QRect tr(m_titleLayout->geometry());
     if (tr.height() < titleHeight())
         tr.setHeight(titleHeight());
 
-    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-    {
-        p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg), tr.topLeft());
-        XHandler::freeData(bg);
-    }
-    else if (!m_bgPix[isActive()].isNull())
+//    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+//    {
+//        p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg), tr.topLeft());
+//        XHandler::freeData(bg);
+//    }
+    /*else */if (!m_bgPix[isActive()].isNull())
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
@@ -540,7 +560,7 @@ KwinClient::paint(QPainter &p)
         p.setClipping(false);
     }
     else if (!isModal() && m_compositingActive)
-        Render::shapeCorners(widget(), &p, Render::All);
+        Render::shapeCorners(&p, Render::All);
 
     for (int i = 0; i < m_buttons.count(); ++i)
         m_buttons.at(i)->paint(p);
@@ -557,12 +577,6 @@ KwinClient::activeChange()
 {
     if (!isPreview())
         ShadowHandler::installShadows(windowId(), isActive());
-    widget()->update();
-}
-
-void
-KwinClient::updateContBg()
-{
     widget()->update();
 }
 
@@ -633,6 +647,18 @@ KwinClient::readCompositing()
     updateMask();
 }
 
+void
+KwinClient::setBgPix(unsigned long pix)
+{
+    QPixmap px = QPixmap::fromX11Pixmap(pix);
+    m_bgPix[0] = QPixmap(px.size());
+    QPainter p(&m_bgPix[0]);
+    p.setCompositionMode(QPainter::CompositionMode_Source);
+    p.drawPixmap(m_bgPix[0].rect(), px);
+    p.end();
+    m_bgPix[1] = m_bgPix[0];
+}
+
 /**
  * These flags specify which settings changed when rereading dConf.
  * Each setting in class KDecorationOptions specifies its matching flag.
@@ -675,6 +701,7 @@ KwinClient::reset(unsigned long changed)
             m_contAware = wd->data & WindowData::ContAware;
             m_headHeight = height;
             m_needSeparator = wd->data & WindowData::Separator;
+            m_hor = wd->data & WindowData::Horizontal;
             m_custcol[Text] = QColor::fromRgba(wd->text);
             m_custcol[Bg] = QColor::fromRgba(wd->bg);
             m_opacity = (float)((wd->data & WindowData::Opacity) >> 8)/100.0f;

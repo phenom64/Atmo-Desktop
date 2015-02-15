@@ -44,6 +44,19 @@ protected:
 namespace Handlers
 {
 
+template<typename T>
+static T getChild(const qulonglong child)
+{
+    const QList<QWidget *> widgets = qApp->allWidgets();
+    for (int i = 0; i < widgets.count(); ++i)
+    {
+        QWidget *w(widgets.at(i));
+        if (reinterpret_cast<qulonglong>(w) == child)
+            return static_cast<T>(w);
+    }
+    return 0;
+}
+
 class Q_DECL_EXPORT ToolBar : public QObject
 {
     Q_OBJECT
@@ -59,23 +72,6 @@ public:
     static void processToolBar(QToolBar *bar, bool forceSizeUpdate = false);
     static bool isDirty(QToolBar *bar);
 
-    template<typename T>
-    static T getChild(qulonglong child)
-    {
-        T c(0);
-        const QList<QWidget *> widgets = qApp->allWidgets();
-        for (int i = 0; i < widgets.count(); ++i)
-        {
-            QWidget *w(widgets.at(i));
-            if ((qulonglong)w == child)
-            {
-                c = static_cast<T>(w);
-                return c;
-            }
-        }
-        return 0;
-    }
-
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
     void checkForArrowPress(QToolButton *tb, const QPoint pos);
@@ -88,6 +84,7 @@ protected slots:
     void setupNoTitleBarWindow(qulonglong bar);
     void fixSpacer(qulonglong toolbar);
     void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
+    void separateToolButtons(QWidget *toolbar, int *actions, int n);
 
 private:
     static ToolBar s_instance;
@@ -126,9 +123,12 @@ public:
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
     static void updateDeco(WId window, unsigned int changed = 63);
     static void updateWindowDataLater(QWidget *win);
+    static QPixmap unoBgPix(QWidget *win, int h);
+    static QPixmap bgPix(const QSize &sz, const QColor &bgColor);
 
 public slots:
     void updateWindowData(qulonglong window);
+    void updateDecoBg(QWidget *w);
 
 signals:
     void windowDataChanged(QWidget *win);
@@ -184,6 +184,7 @@ protected:
     ScrollWatcher(){}
     bool eventFilter(QObject *, QEvent *);
     void regenBg(QMainWindow *win);
+    static QSharedMemory *mem(QMainWindow *win);
 
 protected slots:
     void updateWin(QWidget *mainWin);

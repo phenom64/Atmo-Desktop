@@ -23,6 +23,7 @@
 #include <QDialog>
 #include <QStatusBar>
 #include <QToolBox>
+//#include <QWebView>
 
 #include "styleproject.h"
 #include "overlay.h"
@@ -72,13 +73,15 @@ StyleProject::polish(QWidget *widget)
 {
     if (!widget)
         return;
-    if (qobject_cast<Handlers::Balloon *>(widget))
+    if (qobject_cast<Handlers::Balloon *>(widget)
+            || qobject_cast<SplitterExt *>(widget)
+            || qobject_cast<Buttons *>(widget)
+            || qobject_cast<TitleWidget *>(widget))
         return;
-    if (qobject_cast<SplitterExt *>(widget))
-        return;
-    if (qobject_cast<Buttons *>(widget))
-        return;
-    if (qobject_cast<TitleWidget *>(widget))
+//    if (qobject_cast<QWebView *>(widget))
+    if (widget->inherits("QWebView")
+            || widget->inherits("QWebPage")
+            || widget->inherits("QWebFrame"))
         return;
 
 #if 0
@@ -146,7 +149,7 @@ StyleProject::polish(QWidget *widget)
                 applyTranslucency(widget);
                 needHandler = true;
             }
-            if (needHandler)
+//            if (needHandler)
                 Handlers::Window::manage(widget);
         }
         if (widget->windowType() == Qt::Popup
@@ -420,49 +423,12 @@ StyleProject::unpolish(QWidget *widget)
 }
 
 void
-StyleProject::hackLayout(QWidget *w)
-{
-    if (qobject_cast<QTabWidget *>(w) || qobject_cast<QSplitter *>(w))
-        return;
-    QBoxLayout *l(static_cast<QBoxLayout *>(w->layout()));
-
-    const QList<QWidget *> kids(w->findChildren<QWidget *>());
-    QList<const QWidget *> clickable;
-    for (int i = 0; i < kids.count(); ++i)
-    {
-        const QWidget *kid = kids.at(i);
-        if (kid->parentWidget() != w && !kid->isVisibleTo(w))
-            continue;
-        const bool isClickable = qobject_cast<const QAbstractButton *>(kid) ||
-                qobject_cast<const QComboBox *>(kid) ||
-                qobject_cast<const QAbstractSlider *>(kid) ||
-//                qobject_cast<const QGroupBox *>(kid) ||
-                qobject_cast<const QLineEdit *>(kid) ||
-                qobject_cast<const QProgressBar *>(kid) ||
-//                qobject_cast<const QLabel *>(kid) ||
-//                qobject_cast<const QTabWidget *>(kid) ||
-                kid->inherits("KTitleWidget")
-                ; //widget w/ possible clickables...
-        if (isClickable)
-            clickable << kid;
-//        if (hasClickables) //one is enough
-//            break;
-    }
-    if (!clickable.isEmpty())
-    {
-//        qDebug() << "adjusting layout" << l << l->spacing() << l->contentsMargins() << w->contentsMargins();
-        const int m(pixelMetric(PM_DefaultLayoutSpacing));
-        l->setSpacing(m);
-        l->setContentsMargins(m, m, m, m);
-    }
-}
-
-void
 StyleProject::polish(QPalette &p)
 {
     QCommonStyle::polish(p);
     if (dConf.palette)
         p = *dConf.palette;
+    Render::generateData(p);
 }
 
 void

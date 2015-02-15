@@ -91,7 +91,6 @@ OverLay::paintEvent(QPaintEvent *)
 
     raise();
     QPainter p(this);
-
 #define FOCUS 0
 #if FOCUS
     if (m_hasFocus)
@@ -117,7 +116,6 @@ OverLay::paintEvent(QPaintEvent *)
     p.setPen(QPen(QColor(0, 0, 0, m_alpha), 1));
     p.setBrush(Qt::NoBrush);
     QRect r(rect());
-
     if (m_lines & Top)
     {
         p.drawLine(r.topLeft(), r.topRight());

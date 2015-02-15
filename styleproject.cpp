@@ -47,7 +47,7 @@ StyleProject::StyleProject() : QCommonStyle()
     init();
     assignMethods();
     Settings::read();
-    Render::generateData();
+//    Render::generateData();
 }
 
 StyleProject::~StyleProject()

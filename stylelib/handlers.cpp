@@ -38,6 +38,8 @@
 
 static QRegion paintRegion(QMainWindow *win)
 {
+    if (!win)
+        return QRegion();
     QRegion r(win->rect());
     QList<QToolBar *> children(win->findChildren<QToolBar *>());
     for (int i = 0; i < children.count(); ++i)
@@ -264,7 +266,7 @@ ToolBar::adjustMargins(QToolBar *toolBar)
             else
             {
                 toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-                toolBar->QWidget::setContentsMargins(0, 0, dConf.uno.enabled*toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
+                toolBar->QWidget::setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
             }
         }
         else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
@@ -290,6 +292,18 @@ ToolBar::processToolBar(QToolBar *bar, bool forceSizeUpdate)
 }
 
 void
+ToolBar::separateToolButtons(QWidget *toolbar, int *actions, int n)
+{
+//    if (!actions)
+//        return;
+//    QToolBar *bar = static_cast<QToolBar *>(toolbar);
+//    int a[n];
+//    for (int i = 0; i < n; ++i)
+//        a[i] = actions[i];
+//    for (int i = bar->actions().count(); i > 0; --i)
+}
+
+void
 ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
 {
     QToolBar *bar = getChild<QToolBar *>(toolbar);
@@ -303,6 +317,7 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
         s_dirty.insert(bar, true);
         return;
     }
+    bar->removeEventFilter(this);
     if (!bar->isVisible())
     {
         const QList<QAction *> actions(bar->actions());
@@ -314,8 +329,23 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
                 Render::Sides sides(Render::All);
                 if (i && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i-1))))
                     sides &= ~(bar->orientation() == Qt::Horizontal?Render::Left:Render::Top);
-                if (i+1 < actions.count() && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i+1))))
-                    sides &= ~(bar->orientation() == Qt::Horizontal?Render::Right:Render::Bottom);
+                if (i+1 < actions.count())
+                {
+                    QAction *right(actions.at(i+1));
+                    if (qobject_cast<QToolButton *>(bar->widgetForAction(right)))
+                        sides &= ~(bar->orientation() == Qt::Horizontal?Render::Right:Render::Bottom);
+                    //                    else if (!right->isSeparator() && bar->widgetForAction(right) && bar->isVisible())
+                    //                    {
+                    //                        qDebug() << "inserting separator before" << right << bar->widgetForAction(right);
+                    //                        bar->insertSeparator(right);
+                    //                    }
+                }
+//                else if (i == actions.count()-1 && bar->isVisible() && !actions.at(i)->isSeparator())
+//                {
+//                    qDebug() << "adding separator";
+//                    bar->addSeparator();
+//                }
+
                 s_sides.insert(btn, sides);
             }
         }
@@ -345,6 +375,7 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
         }
     }
     s_dirty.insert(bar, false);
+    bar->installEventFilter(this);
 }
 
 Render::Sides
@@ -390,11 +421,23 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     QToolBar *childParent(0);
     if (!tbn && !tb)
         childParent = qobject_cast<QToolBar *>(o->parent());
+
     switch (e->type())
     {
     case QEvent::ChildAdded:
     case QEvent::ChildRemoved:
     {
+//        QChildEvent *ce = static_cast<QChildEvent *>(e);
+//        if (tb
+//                && ce->child()->isWidgetType()
+//                && !static_cast<QWidget *>(ce->child())->isWindow())
+//        {
+//            QWidget *child = static_cast<QWidget *>(ce->child());
+//            static int i(0);
+//            qDebug() << child << ++i;
+//            QMetaObject::invokeMethod(this, "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)tb));
+
+//        }
         if (tb)
             s_dirty.insert(tb, true);
         return false;
@@ -715,46 +758,43 @@ Window::eventFilter(QObject *o, QEvent *e)
         {
             QPainter p(w);
             p.setPen(Qt::NoPen);
-            p.setRenderHint(QPainter::Antialiasing);
             QColor bgColor(w->palette().color(w->backgroundRole()));
             if (XHandler::opacity() < 1.0f)
                 bgColor.setAlpha(XHandler::opacity()*255.0f);
             p.setBrush(bgColor);
+            p.setRenderHint(QPainter::Antialiasing);
             p.drawRoundedRect(w->rect(), 4, 4);
             p.end();
             return false;
         }
         else if (w->isWindow())
         {
+//            return false;
             unsigned char *addV(XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight));
-            if (addV || w->property(CSDBUTTONS).toBool())
+            const QColor bgColor(w->palette().color(w->backgroundRole()));
+            QPainter p(w);
+            Render::Sides sides(Render::All);
+            if (!w->property(CSDBUTTONS).toBool())
+                sides &= ~Render::Top;
+            if (dConf.uno.enabled)
             {
-                const QColor bgColor(w->palette().color(w->backgroundRole()));
-                QPainter p(w);
-                Render::Sides sides(Render::All);
-                if (!w->property(CSDBUTTONS).toBool())
-                    sides &= ~Render::Top;
-                if (dConf.uno.enabled)
-                {
-                    if (XHandler::opacity() < 1.0f
-                            && qobject_cast<QMainWindow *>(w))
-                        p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
-                    p.fillRect(w->rect(), bgColor);
-                }
-                else if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
-                {
-                    QPoint offset(0, addV?*addV:0);
-                    p.drawTiledPixmap(w->rect(), QPixmap::fromX11Pixmap(*bgPix), offset);
-                    XHandler::freeData(bgPix);
-                }
-                if (/*XHandler::opacity() < 1.0f && */!w->isModal())
-                    Render::shapeCorners(w, &p, sides);
-                p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
-                if (dConf.uno.enabled)
-                    if (int th = Handlers::unoHeight(w, ToolBars))
-                        p.drawLine(0, th, w->width(), th);
-                p.end();
+                if (XHandler::opacity() < 1.0f
+                        && qobject_cast<QMainWindow *>(w))
+                    p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
+                p.fillRect(w->rect(), bgColor);
             }
+            else if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
+            {
+                p.drawTiledPixmap(w->rect(), QPixmap::fromX11Pixmap(*bgPix), QPoint(0, addV?*addV:0));
+                XHandler::freeData(bgPix);
+            }
+            if (!w->isModal())
+                Render::shapeCorners(&p, sides);
+            p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+            if (dConf.uno.enabled)
+                if (int th = Handlers::unoHeight(w, ToolBars))
+                    p.drawLine(0, th, w->width(), th);
+            p.end();
             if (addV)
                 XHandler::freeData(addV);
         }
@@ -823,17 +863,42 @@ Window::eventFilter(QObject *o, QEvent *e)
             tb->insertSeparator(before);
             menuBar->hide();
         }
-        if (!dConf.uno.enabled)
-        {
+//        if (!dConf.uno.enabled)
+//        {
             if (w->isWindow())
                 updateWindowDataLater(w);
-        }
+            if (!dConf.uno.enabled)
+                QMetaObject::invokeMethod(this,
+                                          "updateDecoBg",
+                                          Qt::QueuedConnection,
+                                          Q_ARG(QWidget*,w));
+//                updateDecoBg(w->winId(), w->size(), w->palette().color(QPalette::Window).rgba());
+//        }
         return false;
     }
     case QEvent::Resize:
     {
         if (w->isWindow() && w->property(CSDBUTTONS).toBool())
             applyMask(w);
+        if (!dConf.uno.enabled && w->isWindow())
+        {
+            QResizeEvent *re = static_cast<QResizeEvent *>(e);
+            const bool horChanged = dConf.windows.hor && re->oldSize().width() != re->size().width();
+            const bool verChanged = !dConf.windows.hor && re->oldSize().height() != re->size().height();
+            QSize sz(re->size());
+            if (verChanged)
+                if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
+                {
+                    sz.rheight() += *th;
+                    XHandler::freeData(th);
+                }
+            if (horChanged  || verChanged)
+                updateDecoBg(w);
+//                QMetaObject::invokeMethod(this,
+//                                          "updateDecoBg",
+//                                          Qt::QueuedConnection,
+//                                          Q_ARG(QWidget*,w));
+        }
         return false;
     }
 #if 0
@@ -869,6 +934,33 @@ Window::eventFilter(QObject *o, QEvent *e)
     default: break;
     }
     return false;
+}
+
+void
+Window::updateDecoBg(QWidget *w)
+{
+    QSize sz(w->size());
+    if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
+    {
+        sz.rheight() += *th;
+        XHandler::freeData(th);
+    }
+    QPixmap pix(bgPix(sz, w->palette().color(QPalette::Window)));
+    Qt::HANDLE h(0);
+    XHandler::x11Pix(pix, h);
+
+    unsigned long *bgPx = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix);
+
+    if (h)
+        XHandler::setXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix, XHandler::Long, &h);
+    else
+        XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
+
+    if (bgPx)
+    {
+        XHandler::freePix(*bgPx);
+        XHandler::freeData(bgPx); //superfluous?
+    }
 }
 
 bool
@@ -994,7 +1086,8 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     return hd[All];
 }
 
-static QPixmap unoBgPix(QWidget *win, int h)
+QPixmap
+Window::unoBgPix(QWidget *win, int h)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
@@ -1028,52 +1121,49 @@ static QPixmap unoBgPix(QWidget *win, int h)
     return p;
 }
 
-static QPixmap bgPix(QWidget *win)
+QPixmap
+Window::bgPix(const QSize &sz, const QColor &bgColor)
 {
-#if 0
-    const bool hor(dConf.windows.hor);
-    QLinearGradient lg(0, 0, hor*win->width(), !hor*win->height());
-    QColor bc(win->palette().color(win->backgroundRole()));
-    lg.setStops(Settings::gradientStops(dConf.windows.gradient, bc));
+    int w = dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.width() : dConf.windows.noise?Render::noise().width() : 1;
+    int h = !dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.height() : dConf.windows.noise?Render::noise().height() : 1;
+    QPixmap pix(w, h);
+    if (XHandler::opacity() < 1.0f)
+        pix.fill(Qt::transparent);
 
-    unsigned char *addV(XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight));
-    if (!addV)
-        return QPixmap();
-    const unsigned int n(dConf.windows.noise);
-    const int w(hor?win->width():(n?Render::noise().width():1));
-    const int h(!hor?win->height()+*addV:(n?Render::noise().height():1));
-    QPixmap p(w, h);
-    p.fill(Qt::transparent);
-    QPainter pt(&p);
-    pt.fillRect(p.rect(), lg);
-
-    if (n)
+    QPainter pt(&pix);
+    if (!dConf.windows.gradient.isEmpty())
     {
-        pt.setOpacity(n*0.01f);
-        pt.drawTiledPixmap(p.rect(), Render::noise());
-        if (XHandler::opacity() < 1.0f)
-        {
-            pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            pt.fillRect(p.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
-        }
+        QLinearGradient lg(0, 0, dConf.windows.hor*pix.width(), !dConf.windows.hor*pix.height());
+        lg.setStops(Settings::gradientStops(dConf.windows.gradient, bgColor));
+        pt.fillRect(pix.rect(), lg);
     }
-    pt.end();
-    XHandler::freeData(addV);
-    return p;
-#endif
+    else
+        pt.fillRect(pix.rect(), bgColor);
 
-    const int l(dConf.windows.noise);
-    QPixmap pix(win->size());
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    p.drawPixmap(pix.rect(), Render::mid(Render::noise(), win->palette().color(QPalette::Window), l, 100-l));
+    if (dConf.windows.noise)
+    {
+        static QPixmap noisePix;
+        if (noisePix.isNull())
+        {
+            noisePix = QPixmap(Render::noise().size());
+            noisePix.fill(Qt::transparent);
+            QPainter p(&noisePix);
+            p.drawPixmap(noisePix.rect(), Render::noise());
+            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            p.fillRect(noisePix.rect(), QColor(0, 0, 0, dConf.windows.noise*2.55f));
+            p.end();
+        }
+        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+        pt.drawTiledPixmap(pix.rect(), noisePix);
+    }
+
     if (XHandler::opacity() < 1.0f)
     {
-        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        p.fillRect(win->rect(), QColor(0, 0, 0, dConf.opacity*255.0f));
-        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        pt.fillRect(pix.rect(), QColor(0, 0, 0, dConf.opacity*255.0f));
+        pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
-    p.end();
+    pt.end();
     return pix;
 }
 
@@ -1094,19 +1184,8 @@ Window::updateWindowDataLater(QWidget *win)
 void
 Window::updateWindowData(qulonglong window)
 {
-    QWidget *win(0);
-    const QList<QWidget *> widgets = qApp->allWidgets();
-    for (int i = 0; i < widgets.count(); ++i)
-    {
-        QWidget *w(widgets.at(i));
-        if ((qulonglong)w == window)
-        {
-            win = w;
-            break;
-        }
-    }
-
-    if (!win || !win->isWindow() || !win->testAttribute(Qt::WA_WState_Created))
+    QWidget *win = getChild<QWidget *>(window);
+    if (!win || !win->isWindow())
         return;
 
     const int oldHeight(unoHeight(win, All));
@@ -1116,6 +1195,7 @@ Window::updateWindowData(qulonglong window)
     wd.data = 0;
     wd.data |= dConf.uno.enabled*WindowData::Uno;
     wd.data |= bool(dConf.uno.enabled&&dConf.uno.contAware)*WindowData::ContAware;
+    wd.data |= (dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor)*WindowData::Horizontal;
     wd.data |= (height<<16)&WindowData::UnoHeight;
     wd.data |= WindowData::Separator*ns;
     wd.data |= ((int(win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100)<<8)&WindowData::Opacity);
@@ -1134,28 +1214,40 @@ Window::updateWindowData(qulonglong window)
 
     const WId id(win->winId());
 
+    if (dConf.uno.enabled)
+    {
     unsigned long handle(0);
     unsigned long *x11pixmap = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
 
     if (x11pixmap)
         handle = *x11pixmap;
-
+//#if 0
+    bool isChecked(false);
+    static QMap<QWidget *, quint64> s_check;
+    quint64 check(0);
     if (dConf.uno.enabled)
+        check = height;
+    check |= (wd.bg<<32);
+    if (!s_check.contains(win) || check != s_check.value(win))
     {
-        uint check = height;
-        if (dConf.uno.hor)
-            check = check<<16|win->width();
-        if (oldHeight != height  || !x11pixmap)
-            XHandler::x11Pix(unoBgPix(win, height), handle, win);
+        isChecked = true;
+        s_check.insert(win, check);
     }
-    else if (!x11pixmap)
-        XHandler::x11Pix(bgPix(win), handle, win);
+//#endif
+//    if (dConf.uno.enabled)
+//    {
+        if (oldHeight != height  || !x11pixmap || isChecked)
+            XHandler::x11Pix(unoBgPix(win, height), handle, win);
+//    }
+//    else if (!x11pixmap)
+//        XHandler::x11Pix(bgPix(win), handle, win);
 
-    if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
+    if (isChecked && (handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
         XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
 
     if (x11pixmap)
         XHandler::freeData(x11pixmap);
+    }
 
     win->update();
     if (dConf.uno.enabled)
@@ -1303,12 +1395,9 @@ ScrollWatcher::updateWin(QWidget *mainWin)
         Handlers::Window::updateDeco(win->winId(), 256);
 }
 
-void
-ScrollWatcher::regenBg(QMainWindow *win)
+QSharedMemory
+*ScrollWatcher::mem(QMainWindow *win)
 {
-    const int uno(unoHeight(win, Handlers::All)), titleHeight(unoHeight(win, Handlers::TitleBar));;
-    if (uno == titleHeight)
-        return;
     QSharedMemory *m(0);
     if (s_mem.contains(win))
         m = s_mem.value(win);
@@ -1317,14 +1406,30 @@ ScrollWatcher::regenBg(QMainWindow *win)
         m = new QSharedMemory(QString::number(win->winId()), win);
         s_mem.insert(win, m);
     }
-
     if (!m->isAttached())
     {
         const int dataSize(2048*128*4);
         if (!m->create(dataSize))
-            return;
+            return 0;
+        if (m->lock())
+        {
+            uchar *data = reinterpret_cast<uchar *>(m->data());
+            QImage img(data, 2048, 128, QImage::Format_ARGB32_Premultiplied);
+            img.fill(Qt::transparent);
+            m->unlock();
+        }
     }
+    return m;
+}
 
+void
+ScrollWatcher::regenBg(QMainWindow *win)
+{
+    const int uno(unoHeight(win, All)), titleHeight(unoHeight(win, TitleBar));;
+    if (uno == titleHeight || !uno)
+        return;
+
+    if (QSharedMemory *m = mem(win))
     if (m->lock())
     {
         uchar *data = reinterpret_cast<uchar *>(m->data());
@@ -1344,7 +1449,6 @@ ScrollWatcher::regenBg(QMainWindow *win)
             if (topLeft.y()-1 > (uno-unoHeight(win, Handlers::TitleBar)) || area->verticalScrollBar()->value() == area->verticalScrollBar()->minimum())
                 continue;
 
-            area->setAttribute(Qt::WA_UpdatesDisabled, true);
             QWidget *vp(area->viewport());
             vp->setAttribute(Qt::WA_UpdatesDisabled, true);
             vp->setAttribute(Qt::WA_ForceUpdatesDisabled, true);
@@ -1383,10 +1487,9 @@ ScrollWatcher::regenBg(QMainWindow *win)
                 vp->installEventFilter(this);
             vp->setAttribute(Qt::WA_ForceUpdatesDisabled, false);
             vp->setAttribute(Qt::WA_UpdatesDisabled, false);
-            area->setAttribute(Qt::WA_UpdatesDisabled, false);
         }
-        if (int blurRadius = dConf.uno.blur)
-            Render::expblur(img, blurRadius);
+        if (dConf.uno.blur)
+            Render::expblur(img, dConf.uno.blur);
 
         if (dConf.uno.opacity < 1.0f)
         {
@@ -1425,17 +1528,19 @@ ScrollWatcher::eventFilter(QObject *o, QEvent *e)
              && qobject_cast<QAbstractScrollArea *>(o->parent()))
     {
         QWidget *w(static_cast<QWidget *>(o));
+        QWidget *win(w->window());
         QPaintEvent *pe(static_cast<QPaintEvent *>(e));
         QAbstractScrollArea *a(static_cast<QAbstractScrollArea *>(w->parentWidget()));
         if (!s_watched.contains(w)
+                || a->mapTo(win, QPoint()).y()-1 > unoHeight(win, ToolBarAndTabBar)
                 || a->verticalScrollBar()->minimum() == a->verticalScrollBar()->maximum()
                 || pe->rect().top() > unoHeight(w->window(), All))
             return false;
-        QWidget *win(w->window());
+
         o->removeEventFilter(this);
         QCoreApplication::sendEvent(o, e);
         o->installEventFilter(this);
-        if (w->parentWidget()->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, Handlers::ToolBarAndTabBar))
+        if (a->mapTo(win, QPoint(0, 0)).y()-1 <= unoHeight(win, ToolBarAndTabBar))
             QMetaObject::invokeMethod(this, "updateWin", Qt::QueuedConnection, Q_ARG(QWidget*,win));
         return true;
     }

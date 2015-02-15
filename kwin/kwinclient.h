@@ -65,7 +65,8 @@ public:
     void resize(const QSize &s);
     void shadeChange() {}
     void reset(unsigned long changed);
-    void updateContBg();
+    void update();
+    void setBgPix(unsigned long pix);
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -88,7 +89,7 @@ private:
     QPixmap m_bgPix[2];
     float m_opacity;
     int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize;
-    bool m_needSeparator, m_contAware, m_uno, m_compositingActive;
+    bool m_needSeparator, m_contAware, m_uno, m_compositingActive, m_hor;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;

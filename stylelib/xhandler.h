@@ -7,7 +7,7 @@
 class WindowData
 {
 public:
-    enum DataType { Separator = 0x1, ContAware = 0x2, Uno = 0x4, Opacity = 0xff00, UnoHeight = 0xff0000, Buttons = 0xf000000, Frame = 0xf0000000 };
+    enum DataType { Separator = 0x1, ContAware = 0x2, Uno = 0x4, Horizontal = 0x8, Opacity = 0xff00, UnoHeight = 0xff0000, Buttons = 0xf000000, Frame = 0xf0000000 };
     QRgb text, bg;
     unsigned int data;
 };
@@ -32,6 +32,7 @@ public:
     {
         return reinterpret_cast<T *>(fetchProperty(w, v, n, offset, length));
     }
+    static unsigned long xAtom(Value v);
     static void freeData(void *data);
     static void deleteXProperty(const WId w, const Value v);
     static void mwRes(const QPoint &globalPoint, const WId &win, bool resize = false);
@@ -41,6 +42,8 @@ public:
     static QPixmap x11Pix(const QPixmap &pix);
     static void freePix(QPixmap pix);
     static void freePix(const Qt::HANDLE handle);
+    static void updateBgPix(const WId w);
+    static QPixmap emptyX11Pix(const QSize &sz, const WId w);
     static XHandler *instance();
 
     XHandler(QObject *parent = 0);

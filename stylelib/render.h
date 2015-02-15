@@ -29,7 +29,7 @@ public:
     static Render *instance();
     static void deleteInstance();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
-    static inline void generateData() { instance()->_generateData(); }
+    static inline void generateData(const QPalette &pal) { instance()->_generateData(pal); }
     static inline void renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MAXRND, const Sides sides = All, const QPoint &offSet = QPoint())
     { instance()->_renderMask(rect, painter, brush, roundNess, sides, offSet); }
     static inline void renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess = MAXRND, const Sides sides = All, const float opacity = 1.0f, const QBrush *brush = 0)
@@ -40,7 +40,7 @@ public:
     static Sides checkedForParentEdges(const QWidget *w, Sides from = All);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
     static QPixmap colorized(QPixmap pix, const QBrush &b);
-    static QPixmap noise() { return instance()->m_noise; }
+    static inline QPixmap &noise() { return instance()->m_noise; }
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
     static void drawClickable(Shadow s,
@@ -62,23 +62,25 @@ public:
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
-    static void shapeCorners(const QWidget *w, QPainter *p, Sides s, int roundNess = 4);
+    static void shapeCorners(QPainter *p, Sides s, int roundNess = 4);
 
 protected:
-    void _generateData();
+    void _generateData(const QPalette &pal);
     void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet);
     void _renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
     void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush);
     void _renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o);
     void initMaskParts();
-    void initShadowParts();
+    void initShadowParts(const QPalette &pal);
     void initTabs();
-    void makeNoise();
+    void makeNoise(const QPalette &pal);
     void splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source);
     bool isCornerPart(const Part part) const;
     static bool needPart(const Part part, const Sides sides);
     QPixmap genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides) const;
     static QRect partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow = false);
+    static QImage stretched(QImage img);
+    static QImage stretched(QImage img, const QColor &c);
 
 private:
     static Render m_instance;

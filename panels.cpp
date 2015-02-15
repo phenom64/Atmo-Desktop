@@ -52,7 +52,7 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
         {
             Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget);
             if (!dConf.deco.frameSize)
-                Render::shapeCorners(widget, painter, Render::All & ~Render::Top);
+                Render::shapeCorners(painter, Render::All & ~Render::Top);
         }
         const QPen &savedPen = painter->pen();
         painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
@@ -88,7 +88,7 @@ StyleProject::drawToolBar(const QStyleOption *option, QPainter *painter, const Q
                     && (!widget->parentWidget()->mask().isEmpty()
                         || widget->parentWidget()->windowFlags() & Qt::FramelessWindowHint))
             {
-                Render::shapeCorners(widget, painter, sides);
+                Render::shapeCorners(painter, sides);
                 const QRectF bevel(widget->x()+0.5f, 0.5f, widget->width()-0.5f, 10.0f);
                 QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
                 lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, Color::luminosity(option->palette.color(widget->backgroundRole()))*1.1f)));

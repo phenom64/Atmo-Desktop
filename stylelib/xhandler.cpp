@@ -21,6 +21,12 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False)
 };
 
+unsigned long
+XHandler::xAtom(Value v)
+{
+    return atom[v];
+}
+
 XHandler XHandler::s_instance;
 
 XHandler
@@ -132,10 +138,10 @@ XHandler::compositingActive()
 float
 XHandler::opacity()
 {
-    if (compositingActive())
+//    if (compositingActive())
         return dConf.opacity;
-    else
-        return 1.0f;
+//    else
+//        return 1.0f;
 }
 
 QPixmap
@@ -166,6 +172,13 @@ XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win)
 }
 
 QPixmap
+XHandler::emptyX11Pix(const QSize &sz, const WId w)
+{
+    const Pixmap p = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), sz.width(), sz.height(), 32);
+    return QPixmap::fromX11Pixmap(p, QPixmap::ExplicitlyShared);
+}
+
+QPixmap
 XHandler::x11Pix(const QPixmap &pix)
 {
     const Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
@@ -187,4 +200,16 @@ void
 XHandler::freePix(const Qt::HANDLE handle)
 {
     XFreePixmap(QX11Info::display(), handle);
+}
+
+void
+XHandler::updateBgPix(const WId w)
+{
+    XEvent xpe;
+    xpe.xproperty.atom = atom[DecoBgPix];
+    xpe.xproperty.display = QX11Info::display();
+    xpe.xproperty.state = PropertyNewValue;
+    xpe.xproperty.type = PropertyNotify;
+    xpe.xproperty.window = w;
+    XSendEvent(QX11Info::display(), w, False, PropertyChangeMask, &xpe);
 }
