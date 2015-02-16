@@ -16,21 +16,13 @@ set(KWIN_SRCS
 set(KWIN_HDRS
     kwinclient.h
     factory.h
-    factorydbusadaptor.h
     sizegrip.h)
     
 set(KWIN_MOC_HDRS
     kwinclient.h
     factory.h
-    factorydbusadaptor.h
     sizegrip.h)
 
-set(QT_USE_DBUS TRUE)
-    
-#kde4_add_plugin mocs, so no need to moc the moc headers,
-#however, factorydbusadaptor has no source file, so needs
-#separate handling
-qt4_wrap_cpp(KWIN_MOC_DBUS factorydbusadaptor.h)
 kde4_add_plugin(kwin3_styleproject ${KWIN_SRCS} ${KWIN_MOC_DBUS})
 target_link_libraries(kwin3_styleproject stylelib styleproject_config_lib ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} kdecorations ${X11_LIBRARIES})
 install(TARGETS kwin3_styleproject DESTINATION ${PLUGIN_INSTALL_DIR})

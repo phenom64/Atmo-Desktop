@@ -17,8 +17,22 @@ class Q_DECL_EXPORT XHandler : public QObject
 {
     Q_OBJECT
 public:
-    enum Value { WindowIcon = 0, KwinShadows, KwinBlur, WindowData, StoreActiveShadow, StoreInActiveShadow, DecoTitleHeight, DecoBgPix, ContPix, ValueCount };
+    enum Value { WindowIcon = 0, KwinShadows, KwinBlur, WindowData, StoreActiveShadow, StoreInActiveShadow, DecoTitleHeight, DecoBgPix, ContPix, Repaint, ValueCount };
     enum Size { Byte = 8, Short = 16, Long = 32, LongLong = 64 };
+    enum Operation {
+        _NET_WM_MOVERESIZE_SIZE_TOPLEFT      =0,
+        _NET_WM_MOVERESIZE_SIZE_TOP          =1,
+        _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     =2,
+        _NET_WM_MOVERESIZE_SIZE_RIGHT        =3,
+        _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  =4,
+        _NET_WM_MOVERESIZE_SIZE_BOTTOM       =5,
+        _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   =6,
+        _NET_WM_MOVERESIZE_SIZE_LEFT         =7,
+        _NET_WM_MOVERESIZE_MOVE              =8,   /* movement only */
+        _NET_WM_MOVERESIZE_SIZE_KEYBOARD     =9,   /* size via keyboard */
+        _NET_WM_MOVERESIZE_MOVE_KEYBOARD     =10,   /* move via keyboard */
+        _NET_WM_MOVERESIZE_CANCEL            =11   /* cancel operation */
+    };
     typedef unsigned int TypeSize;
     template<typename T> static void setXProperty(const WId w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
@@ -42,7 +56,7 @@ public:
     static QPixmap x11Pix(const QPixmap &pix);
     static void freePix(QPixmap pix);
     static void freePix(const Qt::HANDLE handle);
-    static void updateBgPix(const WId w);
+    static void updateDeco(const WId w);
     static QPixmap emptyX11Pix(const QSize &sz, const WId w);
     static XHandler *instance();
 

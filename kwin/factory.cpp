@@ -5,7 +5,6 @@
 
 #include "kwinclient.h"
 #include "factory.h"
-#include "factorydbusadaptor.h"
 #include "../stylelib/xhandler.h"
 #include "../stylelib/shadowhandler.h"
 
@@ -40,20 +39,50 @@ KwinClient
 bool
 Factory::xEventFilter(void *message)
 {
-    if (static_cast<XEvent *>(message)->type != PropertyNotify)
-        return ev?(*ev)(message):false;
-
-    XPropertyEvent *xpe = static_cast<XPropertyEvent *>(message);
-
-    if (xpe->atom == XHandler::xAtom(XHandler::DecoBgPix)
-            && xpe->state == PropertyNewValue)
+    XEvent *xe = static_cast<XEvent *>(message);
+    if (!xe)
+        return false;
+    switch (xe->type)
     {
-        if (KwinClient *client = deco(xpe->window))
-        if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(xpe->window, XHandler::DecoBgPix))
+    case PropertyNotify:
+    {
+        XPropertyEvent *xpe = static_cast<XPropertyEvent *>(message);
+        if (xpe->state != PropertyNewValue)
+            break;
+
+        if (xpe->atom == XHandler::xAtom(XHandler::DecoBgPix))
         {
-            client->setBgPix(*bgPix);
-            XHandler::freeData(bgPix);
+            if (KwinClient *client = deco(xpe->window))
+            if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(xpe->window, XHandler::DecoBgPix))
+            {
+                client->setBgPix(*bgPix);
+                XHandler::freeData(bgPix);
+            }
+            return true;
         }
+        else if (xpe->atom == XHandler::xAtom(XHandler::WindowData))
+        {
+            if (KwinClient *client = deco(xpe->window))
+            if (WindowData *wd = XHandler::getXProperty<WindowData>(xpe->window, XHandler::WindowData))
+            {
+                client->setWindowData(*wd);
+                XHandler::freeData(wd);
+            }
+            return true;
+        }
+        break;
+    }
+    case ClientMessage:
+    {
+        if (xe->xclient.message_type == XHandler::xAtom(XHandler::Repaint))
+        {
+            if (KwinClient *client = deco(xe->xclient.window))
+                client->update();
+            return true;
+        }
+        break;
+    }
+    default: break;
     }
     return ev?(*ev)(message):false;
 }
@@ -69,8 +98,6 @@ Factory::Factory()
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
     ShadowHandler::removeDelete();
-    new FactoryDbusAdaptor(this);
-    QDBusConnection::sessionBus().registerObject("/StyleProjectFactory", this);
 }
 
 Factory::~Factory()
@@ -144,22 +171,5 @@ Factory::supports(Ability ability) const
 //    case AbilityClientGrouping:
     //END ABI stability stuff
     default: return false;
-    }
-}
-
-void
-Factory::update(WId window, unsigned int changed)
-{
-    QList<KwinClient *> decos(findChildren<KwinClient *>());
-    for (int i = 0; i < decos.count(); ++i)
-    {
-        KwinClient *d = decos.at(i);
-        if (d->windowId() == window)
-        {
-            if (changed == 256)
-                d->update();
-            else
-                d->reset(changed);
-        }
     }
 }

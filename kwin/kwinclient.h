@@ -43,6 +43,7 @@ private:
     KwinClient *m_client;
 };
 
+class WindowData;
 class KwinClient : public KDecoration
 {
     Q_OBJECT
@@ -66,7 +67,11 @@ public:
     void shadeChange() {}
     void reset(unsigned long changed);
     void update();
+    void updateButtons();
+    void updateBgPixmaps();
+    void updateDataFromX();
     void setBgPix(unsigned long pix);
+    void setWindowData(WindowData wd);
 
 protected:
     bool eventFilter(QObject *, QEvent *);

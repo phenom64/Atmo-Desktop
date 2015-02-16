@@ -1145,14 +1145,6 @@ Window::bgPix(const QSize &sz, const QColor &bgColor)
     return pix;
 }
 
-template<typename T> static void updateChildren(QWidget *win)
-{
-    const QList<T> kids = win->findChildren<T>();
-    const int size(kids.size());
-    for (int i = 0; i < size; ++i)
-        kids.at(i)->update();
-}
-
 void
 Window::updateWindowDataLater(QWidget *win)
 {
@@ -1191,67 +1183,37 @@ Window::updateWindowData(qulonglong window)
         return;
 
     const WId id(win->winId());
-
     if (dConf.uno.enabled)
     {
-    unsigned long handle(0);
-    unsigned long *x11pixmap = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
+        unsigned long handle(0);
+        unsigned long *x11pixmap = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
 
-    if (x11pixmap)
-        handle = *x11pixmap;
-//#if 0
-    bool isChecked(false);
-    static QMap<QWidget *, quint64> s_check;
-    quint64 check(0);
-    if (dConf.uno.enabled)
-        check = height;
-    check |= (wd.bg<<32);
-    if (!s_check.contains(win) || check != s_check.value(win))
-    {
-        isChecked = true;
-        s_check.insert(win, check);
-    }
-//#endif
-//    if (dConf.uno.enabled)
-//    {
+        if (x11pixmap)
+            handle = *x11pixmap;
+        bool isChecked(false);
+        static QMap<QWidget *, quint64> s_check;
+        quint64 check(0);
+        if (dConf.uno.enabled)
+            check = height;
+        check |= (wd.bg<<32);
+        if (!s_check.contains(win) || check != s_check.value(win))
+        {
+            isChecked = true;
+            s_check.insert(win, check);
+        }
         if (oldHeight != height  || !x11pixmap || isChecked)
             XHandler::x11Pix(unoBgPix(win, height), handle, win);
-//    }
-//    else if (!x11pixmap)
-//        XHandler::x11Pix(bgPix(win), handle, win);
 
-    if (isChecked && (handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
-        XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+        if (isChecked && (handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
+            XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
 
-    if (x11pixmap)
-        XHandler::freeData(x11pixmap);
+        if (x11pixmap)
+            XHandler::freeData(x11pixmap);
     }
 
     win->update();
-    if (dConf.uno.enabled)
-    {
-        updateChildren<QToolBar *>(win);
-        updateChildren<QMenuBar *>(win);
-        updateChildren<QTabBar *>(win);
-        updateChildren<QStatusBar *>(win);
-    }
-
-    XHandler::setXProperty<unsigned int>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<unsigned int *>(&wd), 3);
-    updateDeco(win->winId(), 1);
+    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<WindowData *>(&wd), 3);
     emit instance()->windowDataChanged(win);
-}
-
-static QDBusMessage methodCall(const QString &method)
-{
-    return QDBusMessage::createMethodCall("org.kde.kwin", "/StyleProjectFactory", "org.kde.DBus.StyleProjectFactory", method);
-}
-
-void
-Window::updateDeco(WId window, unsigned int changed)
-{
-    QDBusMessage msg = methodCall("update");
-    msg << QVariant::fromValue((unsigned int)window) << QVariant::fromValue(changed);
-    QDBusConnection::sessionBus().send(msg);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1370,7 +1332,7 @@ ScrollWatcher::updateWin(QWidget *mainWin)
                     tb->update();
             }
     if (!dConf.removeTitleBars)
-        Handlers::Window::updateDeco(win->winId(), 256);
+        XHandler::updateDeco(win->winId());
 }
 
 QSharedMemory

@@ -646,6 +646,65 @@ KwinClient::readCompositing()
 }
 
 void
+KwinClient::updateButtons()
+{
+    m_buttons.clear();
+    while (QLayoutItem *item = m_titleLayout->takeAt(0))
+    {
+        if (item->widget())
+            delete item->widget();
+        else if (item->spacerItem())
+            delete item->spacerItem();
+        else
+            delete item;
+    }
+    populate(options()->titleButtonsLeft(), m_leftButtons);
+    m_titleLayout->addStretch();
+    populate(options()->titleButtonsRight(), m_rightButtons);
+}
+
+void
+KwinClient::updateBgPixmaps()
+{
+    if (m_uno)
+    {
+        m_needSeparator = true;
+        m_buttonStyle = dConf.deco.buttons;
+        for (int i = 0; i < 2; ++i)
+        {
+            QRect r(0, 0, width(), m_headHeight);
+            QLinearGradient lg(r.topLeft(), r.bottomLeft());
+            lg.setColorAt(0.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::white, 4, 1));
+            lg.setColorAt(1.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::black, 4, 1));
+            QPixmap p(Render::noise().size().width(), m_headHeight);
+            p.fill(Qt::transparent);
+            QPainter pt(&p);
+            pt.fillRect(p.rect(), lg);
+            pt.end();
+            m_bgPix[i] = Render::mid(p, Render::noise(), 40, 1);
+        }
+    }
+}
+
+void
+KwinClient::updateDataFromX()
+{
+    if (isPreview())
+        return;
+    if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+    {
+        setBgPix(*bgPix);
+        XHandler::freeData(bgPix);
+    }
+    if (WindowData *wd = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData))
+    {
+        setWindowData(*wd);
+        XHandler::freeData(wd);
+    }
+    QTimer::singleShot(2000, this, SLOT(readCompositing()));
+}
+
+void
 KwinClient::setBgPix(unsigned long pix)
 {
     QPixmap px = QPixmap::fromX11Pixmap(pix);
@@ -657,6 +716,23 @@ KwinClient::setBgPix(unsigned long pix)
     p.setCompositionMode(QPainter::CompositionMode_Source);
     p.drawPixmap(m_pix.rect(), px);
     p.end();
+    widget()->update();
+}
+
+void
+KwinClient::setWindowData(WindowData wd)
+{
+    const int height((wd.data & WindowData::UnoHeight) >> 16);
+    m_contAware = wd.data & WindowData::ContAware;
+    m_headHeight = height;
+    m_needSeparator = wd.data & WindowData::Separator;
+    m_hor = wd.data & WindowData::Horizontal;
+    m_custcol[Text] = QColor::fromRgba(wd.text);
+    m_custcol[Bg] = QColor::fromRgba(wd.bg);
+    m_opacity = (float)((wd.data & WindowData::Opacity) >> 8)/100.0f;
+    m_uno = wd.data & WindowData::Uno;
+    m_buttonStyle = ((wd.data & WindowData::Buttons) >> 24) -1;
+    m_frameSize = (wd.data & WindowData::Frame) >> 28;
     widget()->update();
 }
 
@@ -678,66 +754,10 @@ void
 KwinClient::reset(unsigned long changed)
 {
     if (changed & SettingButtons)
-    {
-        m_buttons.clear();
-        while (QLayoutItem *item = m_titleLayout->takeAt(0))
-        {
-            if (item->widget())
-                delete item->widget();
-            else if (item->spacerItem())
-                delete item->spacerItem();
-            else
-                delete item;
-        }
-        populate(options()->titleButtonsLeft(), m_leftButtons);
-        m_titleLayout->addStretch();
-        populate(options()->titleButtonsRight(), m_rightButtons);
-    }
-    if (changed & SettingDecoration)
-    {
-        WindowData *wd = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData);
-        if (wd && !isPreview())
-        {
-            const int height((wd->data & WindowData::UnoHeight) >> 16);
-            m_contAware = wd->data & WindowData::ContAware;
-            m_headHeight = height;
-            m_needSeparator = wd->data & WindowData::Separator;
-            m_hor = wd->data & WindowData::Horizontal;
-            m_custcol[Text] = QColor::fromRgba(wd->text);
-            m_custcol[Bg] = QColor::fromRgba(wd->bg);
-            m_opacity = (float)((wd->data & WindowData::Opacity) >> 8)/100.0f;
-            m_uno = wd->data & WindowData::Uno;
-            m_buttonStyle = ((wd->data & WindowData::Buttons) >> 24) -1;
-            m_frameSize = (wd->data & WindowData::Frame) >> 28;
-            XHandler::freeData(wd);
-        }
-        else if (m_uno)
-        {
-            m_needSeparator = true;
-            m_buttonStyle = dConf.deco.buttons;
-            for (int i = 0; i < 2; ++i)
-            {
-                QRect r(0, 0, width(), m_headHeight);
-                QLinearGradient lg(r.topLeft(), r.bottomLeft());
-                lg.setColorAt(0.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::white, 4, 1));
-                lg.setColorAt(1.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::black, 4, 1));
-                QPixmap p(Render::noise().size().width(), m_headHeight);
-                p.fill(Qt::transparent);
-                QPainter pt(&p);
-                pt.fillRect(p.rect(), lg);
-                pt.end();
-                m_bgPix[i] = Render::mid(p, Render::noise(), 40, 1);
-            }
-        }
-    }
+        updateButtons();
+    if (changed & (SettingDecoration|SettingColors))
+        updateBgPixmaps();
     if (changed & SettingCompositing)
-    {
-        if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-        {
-            setBgPix(*bgPix);
-            XHandler::freeData(bgPix);
-        }
-        QTimer::singleShot(2000, this, SLOT(readCompositing()));
-    }
+        updateDataFromX();
     updateMask();
 }

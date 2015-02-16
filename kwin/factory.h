@@ -15,7 +15,6 @@ public:
     ~Factory();
     KDecoration *createDecoration(KDecorationBridge *bridge);
     bool supports(Ability ability) const;
-    void update(WId window, unsigned int changed);
 
     static bool xEventFilter(void *message);
     static KwinClient *deco(unsigned long w);

@@ -37,7 +37,6 @@ public:
 
     static Ops *instance();
     static void deleteInstance();
-
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);

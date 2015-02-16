@@ -121,7 +121,6 @@ public:
     static void release(QWidget *w);
     static void addCompactMenu(QWidget *w);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
-    static void updateDeco(WId window, unsigned int changed = 63);
     static void updateWindowDataLater(QWidget *win);
     static QPixmap unoBgPix(QWidget *win, int h);
     static QPixmap bgPix(const QSize &sz, const QColor &bgColor);

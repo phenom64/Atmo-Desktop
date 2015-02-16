@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QTimer>
+//#include <QAbstractEventDispatcher>
 #include "../config/settings.h"
 
 static Atom atom[XHandler::ValueCount] =
@@ -18,7 +19,8 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREINACTIVESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECOBGPIX", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False)
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False),
+    XInternAtom(QX11Info::display(), "_STYLEPROJECT_REPAINT", False)
 };
 
 unsigned long
@@ -97,19 +99,7 @@ XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
     xev.xclient.format = 32;
     xev.xclient.data.l[0] = globalPoint.x();
     xev.xclient.data.l[1] = globalPoint.y();
-//#define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
-//#define _NET_WM_MOVERESIZE_SIZE_TOP          1
-//#define _NET_WM_MOVERESIZE_SIZE_TOPRIGHT     2
-//#define _NET_WM_MOVERESIZE_SIZE_RIGHT        3
-//#define _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT  4
-//#define _NET_WM_MOVERESIZE_SIZE_BOTTOM       5
-//#define _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT   6
-//#define _NET_WM_MOVERESIZE_SIZE_LEFT         7
-//#define _NET_WM_MOVERESIZE_MOVE              8   /* movement only */
-//#define _NET_WM_MOVERESIZE_SIZE_KEYBOARD     9   /* size via keyboard */
-//#define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
-//#define _NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
-    xev.xclient.data.l[2] = resize?4:8;
+    xev.xclient.data.l[2] = resize?_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT:_NET_WM_MOVERESIZE_MOVE;
     xev.xclient.data.l[3] = Button1;
     xev.xclient.data.l[4] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
@@ -203,13 +193,15 @@ XHandler::freePix(const Qt::HANDLE handle)
 }
 
 void
-XHandler::updateBgPix(const WId w)
+XHandler::updateDeco(const WId w)
 {
-    XEvent xpe;
-    xpe.xproperty.atom = atom[DecoBgPix];
-    xpe.xproperty.display = QX11Info::display();
-    xpe.xproperty.state = PropertyNewValue;
-    xpe.xproperty.type = PropertyNotify;
-    xpe.xproperty.window = w;
-    XSendEvent(QX11Info::display(), w, False, PropertyChangeMask, &xpe);
+    XEvent xce;
+    xce.xclient.type = ClientMessage;
+    xce.xclient.message_type = xAtom(Repaint);
+    xce.xclient.display = QX11Info::display();
+    xce.xclient.window = w;
+    xce.xclient.format = 32;
+    xce.xclient.data.l[0] = 0;
+    XUngrabPointer(QX11Info::display(), QX11Info::appTime());
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(QX11Info().screen()), False, SubstructureNotifyMask, &xce);
 }
