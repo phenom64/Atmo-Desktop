@@ -166,6 +166,8 @@ QSettings
 {
     if (conf.m_paletteSettings)
         return conf.m_paletteSettings;
+    if (!conf.m_settings)
+        return 0;
     const QString paletteFileName(conf.m_settings->value(READPALETTE).toString());
     if (paletteFileName.isEmpty())
         return 0;

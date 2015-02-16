@@ -1229,7 +1229,7 @@ Render::stretched(QImage img)
     QRgb *pixels = reinterpret_cast<QRgb *>(img.bits());
     for (int i = 0; i < size; ++i)
     {
-        const int rgb(stretch(qGray(pixels[i]), 8.0f));
+        const int rgb(stretch(qGray(pixels[i])));
         pixels[i] = qRgb(rgb, rgb, rgb);
     }
     return image;

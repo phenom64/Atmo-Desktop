@@ -22,6 +22,21 @@ Factory *Factory::s_instance = 0;
 //Atom Factory::s_wmAtom;
 QAbstractEventDispatcher::EventFilter ev;
 
+KwinClient
+*Factory::deco(unsigned long w)
+{
+    if (!s_instance)
+        return 0;
+    QList<KwinClient *> clients = s_instance->findChildren<KwinClient *>();
+    for (int i = 0; i < clients.count(); ++i)
+    {
+        KwinClient *client = clients.at(i);
+        if (client->windowId() == w)
+            return client;
+    }
+    return 0;
+}
+
 bool
 Factory::xEventFilter(void *message)
 {
@@ -30,27 +45,15 @@ Factory::xEventFilter(void *message)
 
     XPropertyEvent *xpe = static_cast<XPropertyEvent *>(message);
 
-    if (xpe->atom == XHandler::xAtom(XHandler::DecoBgPix))
+    if (xpe->atom == XHandler::xAtom(XHandler::DecoBgPix)
+            && xpe->state == PropertyNewValue)
     {
-        qDebug() << "got decopx prop event" << xpe->window;
-        if (xpe->state == PropertyNewValue)
+        if (KwinClient *client = deco(xpe->window))
+        if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(xpe->window, XHandler::DecoBgPix))
         {
-            QList<KwinClient *> clients = s_instance->findChildren<KwinClient *>();
-            for (int i = 0; i < clients.count(); ++i)
-            {
-                KwinClient *client = clients.at(i);
-                if (client->windowId() == xpe->window)
-                {
-                    if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(xpe->window, XHandler::DecoBgPix))
-                    {
-                        client->setBgPix(*bgPix);
-                        XHandler::freeData(bgPix);
-                    }
-                }
-            }
+            client->setBgPix(*bgPix);
+            XHandler::freeData(bgPix);
         }
-        else if (xpe->state == PropertyDelete)
-            qDebug() << "bg deleted from window" << xpe->window;
     }
     return ev?(*ev)(message):false;
 }

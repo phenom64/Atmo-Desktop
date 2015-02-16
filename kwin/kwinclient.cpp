@@ -427,12 +427,9 @@ KwinClient::paint(QPainter &p)
     if (tr.height() < titleHeight())
         tr.setHeight(titleHeight());
 
-//    if (unsigned long *bg = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
-//    {
-//        p.drawTiledPixmap(tr, QPixmap::fromX11Pixmap(*bg), tr.topLeft());
-//        XHandler::freeData(bg);
-//    }
-    /*else */if (!m_bgPix[isActive()].isNull())
+    if (!m_pix.isNull())
+        p.drawTiledPixmap(tr, m_pix);
+    else if (!m_bgPix[isActive()].isNull())
         p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
@@ -443,23 +440,21 @@ KwinClient::paint(QPainter &p)
     //bevel
     if ((!dConf.deco.frameSize || maximizeMode() == MaximizeFull) && !isModal())
     {
-        static QPixmap bevelCorner[3];
-        static int prevLum(0);
-        if (bevelCorner[0].isNull() || prevLum != bgLum)
+        if (m_bevelCorner[0].isNull() || m_prevLum != bgLum)
         {
-            prevLum = bgLum;
-            if (!bevelCorner[0])
+            m_prevLum = bgLum;
+            if (!m_bevelCorner[0])
             {
                 for (int i = 0; i < 2; ++i)
                 {
-                    bevelCorner[i] = QPixmap(5, 5);
-                    bevelCorner[i].fill(Qt::transparent);
+                    m_bevelCorner[i] = QPixmap(5, 5);
+                    m_bevelCorner[i].fill(Qt::transparent);
                 }
-                bevelCorner[2] = QPixmap(1, 1);
-                bevelCorner[2].fill(Qt::transparent);
+                m_bevelCorner[2] = QPixmap(1, 1);
+                m_bevelCorner[2].fill(Qt::transparent);
             }
 
-            QPixmap tmp(11, 10);
+            QPixmap tmp(9, 9);
             tmp.fill(Qt::transparent);
             QPainter pt(&tmp);
             pt.setRenderHint(QPainter::Antialiasing);
@@ -467,17 +462,20 @@ KwinClient::paint(QPainter &p)
             QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
             lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
             lg.setColorAt(0.5f, Qt::transparent);
-            pt.setBrush(Qt::NoBrush);
-            pt.setPen(QPen(lg, 1.0f));
-            pt.drawRoundedRect(bevel, 5, 5);
+            pt.setBrush(lg);
+            pt.setPen(Qt::NoPen);
+            pt.drawEllipse(tmp.rect());
+            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            pt.setBrush(Qt::black);
+            pt.drawEllipse(tmp.rect().adjusted(1, 1, -1, -1));
             pt.end();
-            bevelCorner[0] = tmp.copy(QRect(0, 0, 5, 5));
-            bevelCorner[1] = tmp.copy(QRect(6, 0, 5, 5));
-            bevelCorner[2] = tmp.copy(5, 0, 1, 1);
+            m_bevelCorner[0] = tmp.copy(QRect(0, 0, 4, 4));
+            m_bevelCorner[1] = tmp.copy(QRect(6, 0, 4, 4));
+            m_bevelCorner[2] = tmp.copy(5, 0, 1, 1);
         }
-        p.drawPixmap(QRect(tr.topLeft(), bevelCorner[0].size()), bevelCorner[0]);
-        p.drawPixmap(QRect(tr.topRight()-QPoint(bevelCorner[1].width(), 0), bevelCorner[1].size()), bevelCorner[1]);
-        p.drawTiledPixmap(tr.adjusted(bevelCorner[0].width(), 0, -bevelCorner[1].width(), -(tr.height()-1)), bevelCorner[2]);
+        p.drawPixmap(QRect(tr.topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
+        p.drawPixmap(QRect(tr.topRight()-QPoint(m_bevelCorner[1].width()-1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
+        p.drawTiledPixmap(tr.adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(tr.height()-1)), m_bevelCorner[2]);
     }
 
     if (m_contAware)
@@ -651,12 +649,15 @@ void
 KwinClient::setBgPix(unsigned long pix)
 {
     QPixmap px = QPixmap::fromX11Pixmap(pix);
-    m_bgPix[0] = QPixmap(px.size());
-    QPainter p(&m_bgPix[0]);
+    if (px.isNull())
+        return;
+    m_pix = QPixmap(px.size());
+    m_pix.fill(Qt::transparent);
+    QPainter p(&m_pix);
     p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.drawPixmap(m_bgPix[0].rect(), px);
+    p.drawPixmap(m_pix.rect(), px);
     p.end();
-    m_bgPix[1] = m_bgPix[0];
+    widget()->update();
 }
 
 /**
@@ -730,6 +731,13 @@ KwinClient::reset(unsigned long changed)
         }
     }
     if (changed & SettingCompositing)
+    {
+        if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+        {
+            setBgPix(*bgPix);
+            XHandler::freeData(bgPix);
+        }
         QTimer::singleShot(2000, this, SLOT(readCompositing()));
+    }
     updateMask();
 }

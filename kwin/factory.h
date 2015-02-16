@@ -6,7 +6,7 @@
 #include <X11/Xatom.h>
 
 #include "kwinclient.h"
-
+class KwinClient;
 class Factory : public QObject, public KDecorationFactory
 {
     Q_OBJECT
@@ -18,6 +18,7 @@ public:
     void update(WId window, unsigned int changed);
 
     static bool xEventFilter(void *message);
+    static KwinClient *deco(unsigned long w);
 
 private:
 //    static Atom s_wmAtom;

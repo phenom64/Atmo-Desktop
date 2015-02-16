@@ -863,24 +863,20 @@ Window::eventFilter(QObject *o, QEvent *e)
             tb->insertSeparator(before);
             menuBar->hide();
         }
-//        if (!dConf.uno.enabled)
-//        {
-            if (w->isWindow())
-                updateWindowDataLater(w);
-            if (!dConf.uno.enabled)
-                QMetaObject::invokeMethod(this,
-                                          "updateDecoBg",
-                                          Qt::QueuedConnection,
-                                          Q_ARG(QWidget*,w));
-//                updateDecoBg(w->winId(), w->size(), w->palette().color(QPalette::Window).rgba());
-//        }
+        if (w->isWindow())
+            updateWindowDataLater(w);
+        if (!dConf.uno.enabled)
+            QMetaObject::invokeMethod(this,
+                                      "updateDecoBg",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(QWidget*,w));
         return false;
     }
     case QEvent::Resize:
     {
         if (w->isWindow() && w->property(CSDBUTTONS).toBool())
             applyMask(w);
-        if (!dConf.uno.enabled && w->isWindow())
+        if (!dConf.uno.enabled && !dConf.windows.gradient.isEmpty() && w->isWindow())
         {
             QResizeEvent *re = static_cast<QResizeEvent *>(e);
             const bool horChanged = dConf.windows.hor && re->oldSize().width() != re->size().width();
@@ -894,27 +890,9 @@ Window::eventFilter(QObject *o, QEvent *e)
                 }
             if (horChanged  || verChanged)
                 updateDecoBg(w);
-//                QMetaObject::invokeMethod(this,
-//                                          "updateDecoBg",
-//                                          Qt::QueuedConnection,
-//                                          Q_ARG(QWidget*,w));
         }
         return false;
     }
-#if 0
-    case QEvent::WindowStateChange:
-    {
-        if (dConf.uno.enabled
-                || !qobject_cast<QMainWindow *>(w))
-            return false;
-
-        if (w->isMaximized() || w->isFullScreen())
-            w->setContentsMargins(0, 0, 0, 0);
-        else
-            w->setContentsMargins(4, 0, 4, 4);
-        return false;
-    }
-#endif
     case QEvent::Close:
     case QEvent::PaletteChange:
     {
