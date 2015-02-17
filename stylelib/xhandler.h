@@ -18,7 +18,7 @@ class Q_DECL_EXPORT XHandler : public QObject
     Q_OBJECT
 public:
     enum Value { WindowIcon = 0, KwinShadows, KwinBlur, WindowData, StoreActiveShadow, StoreInActiveShadow, DecoTitleHeight, DecoBgPix, ContPix, Repaint, ValueCount };
-    enum Size { Byte = 8, Short = 16, Long = 32, LongLong = 64 };
+    enum Size { Byte = 8, Short = 16, Long = 32 };
     enum Operation {
         _NET_WM_MOVERESIZE_SIZE_TOPLEFT      =0,
         _NET_WM_MOVERESIZE_SIZE_TOP          =1,
@@ -36,11 +36,12 @@ public:
     typedef unsigned int TypeSize;
     template<typename T> static void setXProperty(const WId w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
-        const TypeSize realSize(sizeof(T));
-        if (realSize > size/8)
-            n *= realSize;
+        //reminder to self, the realByteSize is dependent on the type submitten to this method, no magic involved
+        const TypeSize byteSize(size/8), realByteSize(sizeof(T));
+        if (realByteSize > byteSize)
+            n *= realByteSize/byteSize;
 
-        changeProperty(w, v, qMin<TypeSize>(size, Long), reinterpret_cast<unsigned char *>(d), n);
+        changeProperty(w, v, size, reinterpret_cast<unsigned char *>(d), n);
     }
     template<typename T> static T *getXProperty(const WId w, const Value v, int &n = _n, unsigned long offset = 0L, unsigned long length = 0xffffffff)
     {

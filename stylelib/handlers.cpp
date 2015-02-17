@@ -572,6 +572,7 @@ static void applyMask(QWidget *widget)
         r += QRegion(2, 0, w-4, h);
         widget->setMask(r);
     }
+    widget->update();
 }
 
 void
@@ -1211,8 +1212,9 @@ Window::updateWindowData(qulonglong window)
             XHandler::freeData(x11pixmap);
     }
 
-    win->update();
-    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Short, reinterpret_cast<WindowData *>(&wd), 3);
+//    win->update();
+    win->repaint();
+    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Long, reinterpret_cast<WindowData *>(&wd));
     emit instance()->windowDataChanged(win);
 }
 

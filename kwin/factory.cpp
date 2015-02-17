@@ -19,7 +19,7 @@ KDecoration
 Factory *Factory::s_instance = 0;
 
 //Atom Factory::s_wmAtom;
-QAbstractEventDispatcher::EventFilter ev;
+static QAbstractEventDispatcher::EventFilter s_x11eventFilter = 0;
 
 KwinClient
 *Factory::deco(unsigned long w)
@@ -84,17 +84,16 @@ Factory::xEventFilter(void *message)
     }
     default: break;
     }
-    return ev?(*ev)(message):false;
+    return s_x11eventFilter?(*s_x11eventFilter)(message):false;
 }
 
 Factory::Factory()
     : QObject()
     , KDecorationFactory()
 {
-    if (s_instance)
-        qWarning("already created factory...");
     s_instance = this;
-    ev = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
+    if (!s_x11eventFilter)
+        s_x11eventFilter = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
     ShadowHandler::removeDelete();
@@ -103,6 +102,13 @@ Factory::Factory()
 Factory::~Factory()
 {
     ShadowHandler::removeDelete();
+    if (this == s_instance)
+    {
+        s_instance = 0;
+
+        QAbstractEventDispatcher::instance()->setEventFilter(s_x11eventFilter);
+        s_x11eventFilter = 0;
+    }
 }
 
 bool

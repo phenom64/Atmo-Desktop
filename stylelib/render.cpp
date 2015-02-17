@@ -715,41 +715,58 @@ static int randInt(int low, int high)
 void
 Render::makeNoise(const QPalette &pal)
 {
-    static int s(512);
-    QImage noise(s, s, QImage::Format_ARGB32_Premultiplied);
-    noise.fill(Qt::transparent);
-    QRgb *rgb = reinterpret_cast<QRgb *>(noise.bits());
-    const int size(s*s);
-
-    const QColor bgColor(pal.color(QPalette::Window));
-//    int r,g,b;
-//    bgColor.getRgb(&r, &g, &b);
-//    const int mid((r+g+b)/3);
-    for (int i = 0; i < size; ++i)
+    if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
     {
-        int v(randInt(0, 255));
-        rgb[i] = QColor(v, v, v).rgb();
+        QImage img(3, 4, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[12] = { 170, 255, 0, 85, 170, 0, 85, 0, 170, 0, 85, 128 };
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        m_noise = QPixmap::fromImage(img);
     }
-    if (dConf.uno.enabled&&dConf.uno.noiseStyle || !dConf.uno.enabled&&dConf.windows.noiseStyle)
+    else
     {
-        const int b(32);
-        QImage small = noise.copy(0, 0, 256, 256);
-        expblur(small, b, Qt::Horizontal);
-        small = stretched(small);
-        const QImage horFlip(small.mirrored(true, false));
-        const QImage verFlip(small.mirrored(false));
-        const QImage bothFlip(small.mirrored(true, true));
-
+        static int s(512);
+        QImage noise(s, s, QImage::Format_ARGB32_Premultiplied);
         noise.fill(Qt::transparent);
-        QPainter p(&noise);
-        p.drawImage(QPoint(), small);
-        p.drawImage(QPoint(256, 0), horFlip);
-        p.drawImage(QPoint(0, 256), verFlip);
-        p.drawImage(QPoint(256, 256), bothFlip);
-        p.end();
-        noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
+        QRgb *rgb = reinterpret_cast<QRgb *>(noise.bits());
+        const int size(s*s);
+
+        //    const QColor bgColor(pal.color(QPalette::Window));
+        //    int r,g,b;
+        //    bgColor.getRgb(&r, &g, &b);
+        //    const int mid((r+g+b)/3);
+        for (int i = 0; i < size; ++i)
+        {
+            int v(randInt(0, 255));
+            rgb[i] = QColor(v, v, v).rgb();
+        }
+        if (dConf.uno.enabled&&dConf.uno.noiseStyle == 1 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 1)
+        {
+            const int b(32);
+            QImage small = noise.copy(0, 0, 256, 256);
+            expblur(small, b, Qt::Horizontal);
+            small = stretched(small);
+            const QImage horFlip(small.mirrored(true, false));
+            const QImage verFlip(small.mirrored(false));
+            const QImage bothFlip(small.mirrored(true, true));
+
+            noise.fill(Qt::transparent);
+            QPainter p(&noise);
+            p.drawImage(QPoint(), small);
+            p.drawImage(QPoint(256, 0), horFlip);
+            p.drawImage(QPoint(0, 256), verFlip);
+            p.drawImage(QPoint(256, 256), bothFlip);
+            p.end();
+            noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
+        }
+        m_noise = QPixmap::fromImage(noise);
     }
-    m_noise = QPixmap::fromImage(noise);
 }
 
 QPixmap
