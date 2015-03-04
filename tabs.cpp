@@ -511,12 +511,16 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         QLine l, s, bl;
         QRect orgRect(r);
         bool isUp(false);
+        const bool hasGradient(!dConf.tabs.gradient.isEmpty());
+        QLinearGradient lg;
         switch (bar->shape())
         {
         case QTabBar::RoundedNorth:
         case QTabBar::TriangularNorth:
         {
             isUp = true;
+            if (hasGradient)
+                lg = QLinearGradient(r.topLeft(), r.bottomLeft());
             s.setPoints(r.topLeft(), r.topRight());
             r.setTop(r.top()+1);
             l.setPoints(r.topLeft(), r.topRight());
@@ -526,6 +530,8 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         case QTabBar::RoundedSouth:
         case QTabBar::TriangularSouth:
         {
+            if (hasGradient)
+                lg = QLinearGradient(r.bottomLeft(), r.topLeft());
             if (dConf.uno.enabled)
             {
                 const QPoint below(bar->mapTo(bar->window(), bar->rect().bottomRight()+QPoint(0, 2)));
@@ -541,6 +547,8 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         case QTabBar::RoundedWest:
         case QTabBar::TriangularWest:
         {
+            if (hasGradient)
+                lg = QLinearGradient(r.topLeft(), r.topRight());
             s.setPoints(r.topLeft(), r.bottomLeft());
             r.setLeft(r.left()+1);
             l.setPoints(r.topLeft(), r.bottomLeft());
@@ -550,6 +558,8 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         case QTabBar::RoundedEast:
         case QTabBar::TriangularEast:
         {
+            if (hasGradient)
+                lg = QLinearGradient(r.topRight(), r.topLeft());
             s.setPoints(r.topRight(), r.bottomRight());
             r.setRight(r.right()-1);
             l.setPoints(r.topRight(), r.bottomRight());
@@ -559,9 +569,15 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         default: break;
         }
         QColor c = Color::mid(bar->palette().color(bar->backgroundRole()), bar->palette().color(bar->foregroundRole()), 5, 1);
-        p->fillRect(orgRect, c);
+        QBrush b(c);
+        if (hasGradient)
+        {
+            lg.setStops(dConf.gradientStops(dConf.tabs.gradient, c));
+            b = QBrush(lg);
+        }
+        p->fillRect(orgRect, b);
         const QPen pen(p->pen());
-        const QBrush b(p->brush());
+        const QBrush brush(p->brush());
 
         p->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         p->setBrush(Qt::NoBrush);
@@ -574,7 +590,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         }
 
         p->setPen(pen);
-        p->setBrush(b);
+        p->setBrush(brush);
     }
 }
 
