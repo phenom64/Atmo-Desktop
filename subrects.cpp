@@ -212,8 +212,8 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
             textRect = QRect();
 
         int trans(0);
-        if (bar->documentMode() && !safBar)
-            trans = opt->state & State_Selected?-4:-2;
+        if (bar->documentMode() && !safBar && !isVertical(tab, bar))
+            trans = /*opt->state & State_Selected?-4:*/-2;
 
         switch (r)
         {
@@ -290,11 +290,11 @@ QRect
 StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
-    castOpt(ComboBox, cb, opt);
+    const QStyleOptionComboBox *cb = qstyleoption_cast<const QStyleOptionComboBox *>(opt);
     if (!cb)
         return ret;
     const int arrowSize(20);
-    const int m(Render::shadowMargin(cb->editable?dConf.input.shadow:dConf.pushbtn.shadow));
+    const int m(cb->editable?Render::shadowMargin(dConf.input.shadow):0);
     switch (sc)
     {
     case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...

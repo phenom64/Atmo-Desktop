@@ -562,7 +562,7 @@ static void applyMask(QWidget *widget)
             ShadowHandler::manage(widget);
         }
         unsigned int d(0);
-        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
     }
     else
     {
@@ -825,7 +825,7 @@ Window::eventFilter(QObject *o, QEvent *e)
             {
                 w->setAttribute(Qt::WA_TranslucentBackground);
                 unsigned int d(0);
-                XHandler::setXProperty<unsigned int>(w->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+                XHandler::setXProperty<unsigned int>(w->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
             }
 
             int y(p->mapToGlobal(p->rect().topLeft()).y());
@@ -839,7 +839,7 @@ Window::eventFilter(QObject *o, QEvent *e)
             w->move(x, y);
         }
         else if (dConf.compactMenu
-                 &&w->testAttribute(Qt::WA_WState_Created)
+                 && w->testAttribute(Qt::WA_WState_Created)
                  && m_menuWins.contains(w))
         {
             QMainWindow *mw(static_cast<QMainWindow *>(w));
@@ -905,8 +905,15 @@ Window::eventFilter(QObject *o, QEvent *e)
                 XHandler::freePix(*bgPx);
                 XHandler::freeData(bgPx); //superfluous?
             }
+            if (WindowData *wd = XHandler::getXProperty<WindowData>(w->winId(), XHandler::WindowData))
+            {
+                XHandler::deleteXProperty(w->winId(), XHandler::WindowData);
+                XHandler::freeData(wd);
+            }
             if (e->type() == QEvent::PaletteChange)
+            {
                 updateWindowDataLater(w);
+            }
         }
         break;
     }
@@ -1083,9 +1090,20 @@ Window::unoBgPix(QWidget *win, int h)
     p.fill(Qt::transparent);
     QPainter pt(&p);
     pt.fillRect(p.rect(), lg);
-    pt.end();
     if (n)
-        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
+    {
+//        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
+        QPixmap noise(Render::noise().size());
+        noise.fill(Qt::transparent);
+        QPainter ptt(&noise);
+        ptt.drawTiledPixmap(noise.rect(), Render::noise());
+        ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        ptt.fillRect(noise.rect(), QColor(0, 0, 0, n*2.55f));
+        ptt.end();
+        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+        pt.drawTiledPixmap(p.rect(), noise);
+    }
+    pt.end();
 
     if (XHandler::opacity() < 1.0f)
     {
@@ -1093,8 +1111,8 @@ Window::unoBgPix(QWidget *win, int h)
         p.fill(Qt::transparent);
         pt.begin(&p);
         pt.drawPixmap(p.rect(), copy);
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.fillRect(p.rect(), QColor(0, 0, 0, 255.0f-(XHandler::opacity()*255.0f)));
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        pt.fillRect(p.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
         pt.end();
     }
     return p;
@@ -1159,28 +1177,32 @@ Window::updateWindowData(qulonglong window)
     if (!win || !win->isWindow())
         return;
 
-    const int oldHeight(unoHeight(win, All));
     unsigned int ns(1);
-    WindowData wd;
     const unsigned int height(getHeadHeight(win, ns));
-    wd.data = 0;
-    wd.data |= dConf.uno.enabled*WindowData::Uno;
-    wd.data |= bool(dConf.uno.enabled&&dConf.uno.contAware)*WindowData::ContAware;
-    wd.data |= (dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor)*WindowData::Horizontal;
-    wd.data |= (height<<16)&WindowData::UnoHeight;
-    wd.data |= WindowData::Separator*ns;
-    wd.data |= ((int(win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*100.0f):100)<<8)&WindowData::Opacity);
-    wd.data |= (dConf.deco.buttons+1)<<24;
-    wd.data |= (dConf.deco.frameSize)<<28;
+
+    WindowData wd;
+    wd.setValue<bool>(WindowData::Separator, ns);
+    wd.setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
+    wd.setValue<bool>(WindowData::Uno, dConf.uno.enabled);
+    wd.setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
+    wd.setValue<int>(WindowData::Opacity, win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*255.0f):255);
+    wd.setValue<int>(WindowData::UnoHeight, height);
+    wd.setValue<int>(WindowData::Buttons, dConf.deco.buttons);
+    wd.setValue<int>(WindowData::Frame, dConf.deco.frameSize);
 
     QPalette pal(win->palette());
     if (!pal.color(win->backgroundRole()).alpha() < 0xff) //im looking at you spotify you faggot!!!!!!!!!!!111111
         pal = QApplication::palette();
 
-    wd.text = pal.color(win->foregroundRole()).rgba();
+    wd.fg = pal.color(win->foregroundRole()).rgba();
     wd.bg = pal.color(win->backgroundRole()).rgba();
 
-    if (!height && dConf.uno.enabled)
+    WindowData *oldWd = XHandler::getXProperty<WindowData>(win->winId(), XHandler::WindowData);
+    const bool needUpdate(!oldWd || *oldWd != wd);
+    if (oldWd)
+        XHandler::freeData(oldWd);
+
+    if ((!height && dConf.uno.enabled) || !needUpdate)
         return;
 
     const WId id(win->winId());
@@ -1191,30 +1213,18 @@ Window::updateWindowData(qulonglong window)
 
         if (x11pixmap)
             handle = *x11pixmap;
-        bool isChecked(false);
-        static QMap<QWidget *, quint64> s_check;
-        quint64 check(0);
-        if (dConf.uno.enabled)
-            check = height;
-        check |= (wd.bg<<32);
-        if (!s_check.contains(win) || check != s_check.value(win))
-        {
-            isChecked = true;
-            s_check.insert(win, check);
-        }
-        if (oldHeight != height  || !x11pixmap || isChecked)
-            XHandler::x11Pix(unoBgPix(win, height), handle, win);
 
-        if (isChecked && (handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
-            XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, reinterpret_cast<unsigned long *>(&handle));
+        XHandler::x11Pix(unoBgPix(win, height), handle, win);
+
+        if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
+            XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, &handle);
 
         if (x11pixmap)
             XHandler::freeData(x11pixmap);
     }
 
-//    win->update();
     win->repaint();
-    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Long, reinterpret_cast<WindowData *>(&wd));
+    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Byte, &wd);
     emit instance()->windowDataChanged(win);
 }
 
@@ -1633,7 +1643,7 @@ Balloon::updateShadow()
     for (int i = 8; i < 12; ++i)
         data[i] = s_padding;
 
-    XHandler::setXProperty<unsigned long>(winId(), XHandler::KwinShadows, XHandler::Long, data, 12);
+    XHandler::setXProperty<unsigned long>(winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
 }
 
 void

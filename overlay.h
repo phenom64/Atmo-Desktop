@@ -32,13 +32,13 @@ public:
     enum Position { West = 0, North = 1, East = 2, South = 3, PosCount = 4 };
     typedef uint Sides;
     ~OverLay();
-    static bool manage(QFrame *frame, int opacity);
-    static bool release(QFrame *frame);
-    static bool hasOverLay(const QFrame *frame);
+    static bool manage(QWidget *frame, int opacity);
+    static bool release(QWidget *frame);
+    static bool hasOverLay(const QWidget *frame);
     inline Sides lines() { return m_lines; }
 
 protected:
-    OverLay(QFrame *parent = 0, int opacity = 0);
+    OverLay(QWidget *parent = 0, int opacity = 0);
     void paintEvent(QPaintEvent *);
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);
@@ -54,7 +54,7 @@ private:
     int m_alpha;
     bool m_hasFocus;
     Sides m_lines;
-    QFrame *m_frame;
+    QWidget *m_frame;
     QWidget *m_window;
     QPoint m_position[PosCount];
 };

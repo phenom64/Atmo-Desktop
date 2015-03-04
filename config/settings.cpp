@@ -286,6 +286,7 @@ Settings::read()
     conf.input.gradient = stringToGrad(conf.m_settings->value(READINPUTGRAD).toString());
     conf.input.tint = tintColor(conf.m_settings->value(READINPUTTINT).toString());
     //tabs
+    conf.tabs.safari = conf.m_settings->value(READTABSAF).toInt();
     conf.tabs.rnd = conf.m_settings->value(READTABRND).toInt();
     conf.tabs.shadow = conf.m_settings->value(READTABSHADOW).toInt();
     conf.tabs.gradient = stringToGrad(conf.m_settings->value(READTABGRAD).toString());
@@ -308,6 +309,7 @@ Settings::read()
     conf.windows.hor = conf.m_settings->value(READWINHOR).toBool();
     //menues
     conf.menues.icons = conf.m_settings->value(READMENUICONS).toBool();
+    conf.menues.globStrut = conf.m_settings->value(READMENUGLOBSTRUT).toBool();
     //sliders
     conf.sliders.size = conf.m_settings->value(READSLIDERSIZE).toInt();
     conf.sliders.dot = conf.m_settings->value(READSLIDERDOT).toBool();

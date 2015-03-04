@@ -58,7 +58,7 @@ OverLayHandler::eventFilter(QObject *o, QEvent *e)
     return false;
 }
 
-OverLay::OverLay(QFrame *parent, int opacity)
+OverLay::OverLay(QWidget *parent, int opacity)
     : QWidget(parent)
     , m_alpha(opacity)
     , m_lines(All)
@@ -170,13 +170,13 @@ static QRect windowGeo(QWidget *widget)
 void
 OverLay::updateOverlay()
 {
-    if (!(m_frame->frameShape() == QFrame::StyledPanel && m_frame->frameShadow() == QFrame::Sunken))
-    {
-        hide();
-        deleteLater();
-        return;
-    }
-    static QMap<QFrame *, QSize> sm;
+//    if (!(m_frame->frameShape() == QFrame::StyledPanel && m_frame->frameShadow() == QFrame::Sunken))
+//    {
+//        hide();
+//        deleteLater();
+//        return;
+//    }
+    static QMap<QWidget *, QSize> sm;
     if (sm.value(m_frame, QSize()) != m_frame->size())
     {
         sm.insert(m_frame, m_frame->size());
@@ -210,7 +210,7 @@ OverLay::updateOverlay()
 
         const bool isSplitter((qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter") && w->style()->pixelMetric(QStyle::PM_SplitterWidth) == 1);
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
-        const bool isTabBar(l[i] == Top && qobject_cast<QTabBar *>(w));
+        const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode());
         if ( isStatusBar || isSplitter || isTabBar )
             sides &= ~l[i];
         else if (QFrame *f = getFrameForWidget(w, pos[i]))
@@ -241,14 +241,12 @@ OverLay::updateOverlay()
 }
 
 bool
-OverLay::manage(QFrame *frame, int opacity)
+OverLay::manage(QWidget *frame, int opacity)
 {
     if (!frame || hasOverLay(frame))
         return false;
 
-    if (frame->frameShadow() == QFrame::Sunken
-            && frame->frameShape() == QFrame::StyledPanel
-            && qobject_cast<QMainWindow *>(frame->window()))
+    if (qobject_cast<QMainWindow *>(frame->window()))
     {
         new OverLay(frame, opacity);
         return true;
@@ -257,7 +255,7 @@ OverLay::manage(QFrame *frame, int opacity)
 }
 
 bool
-OverLay::release(QFrame *frame)
+OverLay::release(QWidget *frame)
 {
     if (OverLay *o = frame->findChild<OverLay*>())
         if (o->parent() == frame)
@@ -323,7 +321,7 @@ OverLay::parentChanged()
 }
 
 bool
-OverLay::hasOverLay(const QFrame *frame)
+OverLay::hasOverLay(const QWidget *frame)
 {
     if (!frame)
         return false;

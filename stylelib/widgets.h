@@ -8,7 +8,7 @@
 class Q_DECL_EXPORT ButtonBase
 {
 public:
-    enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, StyleCount };
+    enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, FollowToolBtn, StyleCount };
     typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid, Highlight };
     enum Type { Close,
@@ -30,7 +30,8 @@ public:
     virtual const bool isHovered() const { return m_hasMouse; }
     void paint(QPainter &p);
     bool processMouseEvent(QMouseEvent *e);
-    void unhover() { m_hasMouse = false; }
+    void unhover() { m_hasMouse = false; m_hoverLock = false; hoverChanged(); }
+    void hover();
     const Type type() const { return m_type; }
 
 protected:
@@ -65,7 +66,7 @@ private:
     typedef void (ButtonBase::*PaintEvent)(QPainter &);
     PaintEvent m_paintEvent[TypeCount];
     Type m_type;
-    bool m_hasPress, m_hasMouse;
+    bool m_hasPress, m_hasMouse, m_hoverLock;
     QMap<quint64, QPixmap> m_bgPix;
 };
 

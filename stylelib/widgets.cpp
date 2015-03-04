@@ -13,10 +13,13 @@
 #include "xhandler.h"
 #include "macros.h"
 
+#define ISIZE 4
+
 ButtonBase::ButtonBase(Type type)
     : m_type(type)
     , m_hasPress(false)
     , m_hasMouse(false)
+    , m_hoverLock(false)
 {
     for (int i = 0; i < TypeCount; ++i)
         m_paintEvent[i] = 0;
@@ -46,11 +49,26 @@ ButtonBase::paint(QPainter &p)
         (this->*m_paintEvent[m_type])(p);
 }
 
+void
+ButtonBase::hover()
+{
+    m_hoverLock = true;
+    bool hadMouse(m_hasMouse);
+    m_hasMouse = true;
+    if (hadMouse != m_hasMouse)
+        hoverChanged();
+}
+
 bool
 ButtonBase::processMouseEvent(QMouseEvent *e)
 {
     switch (e->type())
     {
+    case QEvent::MouseButtonDblClick:
+    {
+        e->accept();
+        return true;
+    }
     case QEvent::MouseButtonPress:
     {
         e->accept();
@@ -70,6 +88,8 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
     }
     case QEvent::MouseMove:
     {
+        if (m_hoverLock)
+            return true;
         bool hadMouse(m_hasMouse);
         m_hasMouse = buttonRect().contains(e->pos());
         if (hadMouse != m_hasMouse)
@@ -204,18 +224,19 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         p.restore();
         break;
     }
-#if 0
-    case 4:
+    case FollowToolBtn:
     {
-        p.save();
-        p.setPen(QPen(c, 2.0f));
-        r.shrink(1);
-        p.setBrush(Qt::NoBrush);
-        p.drawEllipse(r);
-        p.restore();
+        r.adjust(2, 2, -2, -2);
+        QLinearGradient lg(0, 0, 0, r.height()-Render::shadowMargin(dConf.toolbtn.shadow));
+        lg.setStops(Settings::gradientStops(dConf.toolbtn.gradient, c));
+        QBrush b(lg);
+        const bool hasDark(dConf.shadows.darkRaisedEdges);
+        dConf.shadows.darkRaisedEdges = false;
+        Render::drawClickable(dConf.toolbtn.shadow, r, &p, 32, dConf.shadows.opacity, 0, 0, &b);
+        dConf.shadows.darkRaisedEdges = hasDark;
+        r.adjust(4, 4, -4, -4);
         break;
     }
-#endif
     default: break;
     }
 }
@@ -283,7 +304,9 @@ ButtonBase::paintCloseButton(QPainter &p)
             if (isHovered())
             {
                 pt.setBrush(color(Fg));
-                pt.drawEllipse(rect.adjusted(3, 3, -3, -3));
+                QRect r(QPoint(), QSize(ISIZE, ISIZE));
+                r.moveCenter(rect.center());
+                pt.drawEllipse(r);
             }
             pt.end();
             m_bgPix.insert(check, pix);
@@ -337,7 +360,23 @@ ButtonBase::paintMaxButton(QPainter &p)
             if (isHovered())
             {
                 pt.setBrush(color(Fg));
-                pt.drawEllipse(rect.adjusted(3, 3, -3, -3));
+                QRect r(QPoint(), QSize(ISIZE, ISIZE));
+                r.moveCenter(rect.center());
+                pt.setPen(QPen(color(Fg), 2.0f));
+                if (isMaximized())
+                {
+                    pt.translate(0.5f, 0.5f);
+                    pt.drawLine(r.topRight(), r.bottomLeft());
+                }
+                else
+                {
+                    int x1, y1, x2, y2;
+                    r.getRect(&x1, &y1, &x2, &y2);
+                    int halfX(x1+(x2/2));
+                    int halfY(y1+(y2/2));
+                    pt.drawLine(halfX, y1, halfX, y1+y2);
+                    pt.drawLine(x1, halfY, x1+x2, halfY);
+                }
             }
             pt.end();
             m_bgPix.insert(check, pix);
@@ -388,8 +427,14 @@ ButtonBase::paintMinButton(QPainter &p)
             drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
             if (isHovered())
             {
+                QRect r(QPoint(), QSize(ISIZE, ISIZE));
+                r.moveCenter(rect.center());
                 pt.setBrush(color(Fg));
-                pt.drawEllipse(rect.adjusted(3, 3, -3, -3));
+                pt.setPen(QPen(color(Fg), 2.0f));
+                int x1, y1, x2, y2;
+                r.getRect(&x1, &y1, &x2, &y2);
+                int halfY(y1+(y2/2));
+                pt.drawLine(x1, halfY, x1+x2, halfY);
             }
             pt.end();
             m_bgPix.insert(check, pix);

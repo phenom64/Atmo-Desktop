@@ -57,7 +57,7 @@ static void applyTranslucency(QWidget *widget)
     widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
     widget->setVisible(wasVisible);
     unsigned int d(0);
-    XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+    XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
 }
 
 /* a non-const environment that is called
@@ -259,7 +259,7 @@ StyleProject::polish(QWidget *widget)
         installFilter(widget);
         ShadowHandler::manage(widget);
         unsigned int d(0);
-        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::KwinBlur, XHandler::Long, &d);
+        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
     }
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
     {
@@ -303,9 +303,7 @@ StyleProject::polish(QWidget *widget)
         if (tabBar->expanding() && !dConf.uno.enabled)
             tabBar->setExpanding(false);
 
-        if (dConf.app == Settings::Konsole
-                && safari
-                && tabBar->parentWidget())
+        if (dConf.app == Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
         {
             tabBar->parentWidget()->setObjectName("konsole_tabbar_parent");
             installFilter(tabBar->parentWidget());
@@ -362,37 +360,11 @@ StyleProject::polish(QWidget *widget)
         if (dConf.balloonTips)
             Handlers::BalloonHelper::manage(widget);
     }
-//    else if (widget->isWindow())
-//    {
-//        bool needTrans(XHandler::opacity() < 1.0f);
-
-//        if (needTrans)
-//            needTrans = !(widget->windowType() == Qt::Desktop
-//                          || widget->testAttribute(Qt::WA_X11NetWmWindowTypeDesktop)
-//                          || widget->testAttribute(Qt::WA_TranslucentBackground)
-//                          || widget->testAttribute(Qt::WA_NoSystemBackground)
-//                          || widget->testAttribute(Qt::WA_OpaquePaintEvent)
-//                          || widget->testAttribute(Qt::WA_PaintOnScreen));
-
-//        if (needTrans)
-//            needTrans = !(!widget->parentWidget() && widget->children().isEmpty()); //some widget in gwenview making gwenview crash on exit...
-
-//        if (needTrans)
-//            applyTranslucency(widget);
-
-//        bool needShadows(false);
-//        Handlers::Window::manage(widget);
-
-//        if (qobject_cast<QDockWidget *>(widget)
-//                || qobject_cast<QToolBar *>(widget))
-//            needShadows = true;
-
-//        if (needShadows)
-//            ShadowHandler::manage(widget);
-//    }
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment
     if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))
+    if (static_cast<QFrame *>(widget)->frameShadow() == QFrame::Sunken
+            && static_cast<QFrame *>(widget)->frameShape() == QFrame::StyledPanel)
         OverLay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity*255.0f);
     QCommonStyle::polish(widget);
 }
@@ -411,10 +383,10 @@ StyleProject::unpolish(QWidget *widget)
         ProgressHandler::release(pb);
     else if (QTabBar *tb = qobject_cast<QTabBar *>(widget))
         Anim::Tabs::release(tb);
-    else if (QFrame *f = qobject_cast<QFrame *>(widget))
-        OverLay::release(f);
     else if (QToolButton *tb = qobject_cast<QToolButton *>(widget))
         Anim::ToolBtns::release(tb);
+    else if (QFrame *f = qobject_cast<QFrame *>(widget))
+        OverLay::release(f);
 #if !defined(QT_NO_DBUS)
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         Bespin::MacMenu::release(menuBar);

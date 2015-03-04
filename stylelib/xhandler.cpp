@@ -11,6 +11,8 @@
 
 static Atom atom[XHandler::ValueCount] =
 {
+    XInternAtom(QX11Info::display(), "_NET_WORKAREA", False),
+    XInternAtom(QX11Info::display(), "_NET_CURRENT_DESKTOP", False),
     XInternAtom(QX11Info::display(), "_NET_WM_ICON", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_SHADOW", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_BLUR_BEHIND_REGION", False),
@@ -65,10 +67,8 @@ unsigned char
     Atom type;
     int format;
     unsigned long nitems, after;
-    unsigned char *d = 0;
-    unsigned char **data = &d;
-//    Atom a = ((v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM);
-    XGetWindowProperty(QX11Info::display(), w, atom[v], offset, length, False, XA_CARDINAL, &type, &format, &nitems, &after, data);
+    unsigned char *d(0);
+    XGetWindowProperty(QX11Info::display(), w, atom[v], offset, length, False, XA_CARDINAL, &type, &format, &nitems, &after, &d);
     n = nitems;
     return d;
 }
@@ -204,4 +204,36 @@ XHandler::updateDeco(const WId w)
     xce.xclient.data.l[0] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime());
     XSendEvent(QX11Info::display(), QX11Info::appRootWindow(QX11Info().screen()), False, SubstructureNotifyMask, &xce);
+}
+
+QPoint
+XHandler::strutTopLeft()
+{
+    int n(0);
+    unsigned int *desktop = getXProperty<unsigned int>(QX11Info::appRootWindow(), _NET_CURRENT_DESKTOP);
+    if (!desktop)
+        return QPoint();
+    const unsigned char d(*desktop);
+    freeData(desktop);
+    unsigned long *struts = getXProperty<unsigned long>(QX11Info::appRootWindow(), _NET_WORKAREA, n, d*4);
+    if (!struts)
+        return QPoint();
+    freeData(struts);
+    if (n < 2)
+        return QPoint();
+    return QPoint(struts[0], struts[1]);
+}
+
+///------------------------------------------------------------------------------------------------------------------
+
+void
+WindowData::set(const WId id, WindowData *wd)
+{
+    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Byte, wd);
+}
+
+WindowData
+*WindowData::get(const WId id)
+{
+    return XHandler::getXProperty<WindowData>(id, XHandler::WindowData);
 }

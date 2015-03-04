@@ -47,6 +47,7 @@ StyleProject::StyleProject() : QCommonStyle()
     init();
     assignMethods();
     Settings::read();
+    XHandler::strutTopLeft();
 //    Render::generateData();
 }
 

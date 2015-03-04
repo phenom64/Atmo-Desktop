@@ -48,11 +48,12 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
             painter->fillRect(groove, option->palette.color(QPalette::Base));
             fg = QPalette::Text;
         }
-        else if (opt->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
-                && ((bgc.alpha() < 0xff || bg != QPalette::Base ) && widget))
+        else if (bar && painter->device() == bar
+                 && opt->palette.color(QPalette::Window) == bar->window()->palette().color(QPalette::Window)
+                 && (bgc.alpha() < 0xff || bg != QPalette::Base ))
         {
-            const QRect geo(widget->mapTo(widget->window(), QPoint()), widget->size());
-            widget->window()->render(painter, geo.topLeft(), geo, QWidget::DrawWindowBackground);
+            const QRect geo(bar->mapTo(bar->window(), QPoint()), bar->size());
+            bar->window()->render(painter, geo.topLeft(), geo, QWidget::DrawWindowBackground);
         }
         else
             painter->fillRect(groove, bgc);
@@ -153,23 +154,6 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 bool
 StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-//    if (dConf.scrollers.style == 0)
-//    {
-//        const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Window));
-//        if (!widget->isWindow()
-//                && option->palette.color(QPalette::Window) == widget->window()->palette().color(QPalette::Window)
-//                && (dConf.opacity == 1.0f && (option->palette.color(bg).alpha() < 0xff || bg != QPalette::Base) && widget))
-//        {
-
-//            const QRect geo(widget->mapTo(widget->window(), option->rect.topLeft()), option->rect.size());
-//            QPixmap pix(option->rect.size());
-//            pix.fill(Qt::transparent);
-//            widget->window()->render(&pix, geo.topLeft(), geo, QWidget::DrawWindowBackground);
-//            painter->drawPixmap(option->rect, pix);
-//        }
-//        else if (dConf.uno.enabled)
-//            painter->fillRect(option->rect, option->palette.color(bg));
-//    }
     if (dConf.scrollers.style == 0)
     {
         if (option && widget && (widget->inherits("QWebView") || widget->inherits("KHTMLView")))

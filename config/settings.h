@@ -41,6 +41,7 @@
 #define INPUTGRAD           "input.gradient"
 #define INPUTTINT           "input.tinthue"
 
+#define TABSAF              "tabs.safari"
 #define TABRND              "tabs.rnd"
 #define TABSHADOW           "tabs.shadow"
 #define TABGRAD             "tabs.gradient"
@@ -58,6 +59,7 @@
 #define UNOCONTBLUR         "uno.contentblurradius"
 
 #define MENUICONS           "menues.icons"
+#define MENUGLOBSTRUT       "menues.globalmenustruts"
 
 #define SLIDERSIZE          "sliders.size"
 #define SLIDERDOT           "sliders.dot"
@@ -137,6 +139,7 @@
 #define DEFINPUTGRAD            "0.0:-5, 1.0:5"
 #define DEFINPUTTINT            "-1:0"
 
+#define DEFTABSAF               true
 #define DEFTABRND               4
 #define DEFTABSHADOW            3
 #define DEFTABGRAD              "0.0:5, 1.0:-5"
@@ -154,6 +157,7 @@
 #define DEFUNOCONTBLUR          2
 
 #define DEFMENUICONS            false
+#define DEFMENUGLOBSTRUT        false
 
 #define DEFSLIDERSIZE           16
 #define DEFSLIDERDOT            true
@@ -214,6 +218,7 @@
 #define READINPUTGRAD           INPUTGRAD, DEFINPUTGRAD
 #define READINPUTTINT           INPUTTINT, DEFINPUTTINT
 
+#define READTABSAF              TABSAF, DEFTABSAF
 #define READTABRND              TABRND, DEFTABRND
 #define READTABSHADOW           TABSHADOW, DEFTABSHADOW
 #define READTABGRAD             TABGRAD, DEFTABGRAD
@@ -231,6 +236,7 @@
 #define READUNOCONTBLUR         UNOCONTBLUR, DEFUNOCONTBLUR
 
 #define READMENUICONS           MENUICONS, DEFMENUICONS
+#define READMENUGLOBSTRUT       MENUGLOBSTRUT, DEFMENUGLOBSTRUT
 
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSLIDERDOT           SLIDERDOT, DEFSLIDERDOT
@@ -328,6 +334,7 @@ public:
     {
         int rnd, safrnd, closeButtonSide, shadow;
         Gradient gradient;
+        bool safari;
     } tabs;
     struct uno
     {
@@ -345,7 +352,7 @@ public:
     } windows;
     struct menues
     {
-        bool icons;
+        bool icons, globStrut;
     } menues;
     struct views
     {

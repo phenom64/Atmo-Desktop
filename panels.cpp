@@ -134,12 +134,16 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
     if (widget && !widget->property("DSP_hasmenuarrow").toBool())
         bgc.setAlpha(XHandler::opacity()*255.0f);
 
-    painter->save();
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(bgc);
-    painter->drawRoundedRect(option->rect, 4, 4);
-    painter->restore();
+//    painter->save();
+//    painter->setRenderHint(QPainter::Antialiasing);
+//    painter->setPen(Qt::NoPen);
+//    painter->setBrush(bgc);
+    Render::Sides sides(Render::All);
+    if (widget && widget->mapToGlobal(QPoint()).y() == XHandler::strutTopLeft().y())
+        sides &= ~Render::Top;
+    Render::renderMask(option->rect, painter, bgc, 4, sides);
+//    painter->drawRoundedRect(option->rect, 4, 4);
+//    painter->restore();
     return true;
 }
 

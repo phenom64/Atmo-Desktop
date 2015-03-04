@@ -215,7 +215,7 @@ void
 ShadowHandler::installShadows(WId w, bool active)
 {
     if (w != QX11Info::appRootWindow())
-        XHandler::setXProperty<unsigned long>(w, XHandler::KwinShadows, XHandler::Long, shadows(active), 12);
+        XHandler::setXProperty<unsigned long>(w, XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows(active), 12);
 }
 
 void
@@ -240,7 +240,7 @@ ShadowHandler::installShadows(QMenu *m)
     QPoint muPoint(m->mapToGlobal(m->rect().topLeft()));
     const bool up(tbPoint.y()<muPoint.y());
     if (m->winId() != QX11Info::appRootWindow() && tbPoint.x() == muPoint.x())
-        XHandler::setXProperty<unsigned long>(m->winId(), XHandler::KwinShadows, XHandler::Long, menuShadow(up, m, tb), 12);
+        XHandler::setXProperty<unsigned long>(m->winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, menuShadow(up, m, tb), 12);
     else
         installShadows(m->winId());
 }
@@ -256,7 +256,7 @@ void
 ShadowHandler::release(QWidget *w)
 {
     w->removeEventFilter(instance());
-    XHandler::deleteXProperty(w->winId(), XHandler::KwinShadows);
+    XHandler::deleteXProperty(w->winId(), XHandler::_KDE_NET_WM_SHADOW);
 }
 
 void

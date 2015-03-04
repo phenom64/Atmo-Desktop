@@ -820,7 +820,7 @@ Render::drawClickable(Shadow s,
                       const Sides sides,
                       const QPoint &offSet)
 {
-    const int maxRnd(qFloor(qMin<float>(r.height(), r.width())/2.0f)-1);
+    const int maxRnd(qFloor(qMin<float>(r.height(), r.width())/2.0f));
     rnd = qMin(rnd, maxRnd);
     if (s >= ShadowCount)
         return;
@@ -844,8 +844,7 @@ Render::drawClickable(Shadow s,
     if (s == Raised)
         rnd = qMin(maxRnd, rnd+1); //we inset the mask of raised scheisse...
 
-//    bool needStrong(qobject_cast<const QSlider *>(w));
-    int bgLum(255), fgLum(0), pbgLum(255), pfgLum(0);
+    int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
     if (w)
     {
         int count(0);
@@ -944,9 +943,12 @@ Render::drawClickable(Shadow s,
     else if (r.height() != r.width() || qobject_cast<const QToolButton *>(w))
         r.sAdjust(0, 0, 0, -1);
 
+    /// BEGIN ACTUAL PLATE PAINTING
+
     if (mask)
     {
-        renderMask(r, &pt, *mask, rnd, sides, offSet);
+        const bool n(s == Sunken && bgLum > pbgLum);
+        renderMask(r.sAdjusted(n, n, -n, -n), &pt, *mask, rnd, sides, offSet);
         rnd = qMin(rnd, qFloor(qMin(r.height(), r.width())/2.0f));
     }
     else if (s==Carved)
@@ -957,6 +959,8 @@ Render::drawClickable(Shadow s,
         renderMask(r, &pt, newMask, rnd, sides, offSet);
         pt.setCompositionMode(mode);
     }
+
+    /// END PLATE
 
     if (s==Carved)
     {
@@ -977,15 +981,16 @@ Render::drawClickable(Shadow s,
     {
         pt.setCompositionMode(QPainter::CompositionMode_Overlay);
         QLinearGradient lg(0, 0, 0, r.height());
-        lg.setColorAt(0.0f, QColor(255, 255, 255, opacity*1.5f*bgLum));
+        const float lumop(qMin<float>(255.0f, opacity*1.5f*bgLum));
+        lg.setColorAt(0.0f, QColor(255, 255, 255, lumop));
         lg.setColorAt(0.5f, QColor(255, 255, 255, opacity*0.75f*bgLum));
         QBrush b(lg);
         renderShadow(Rect, r, &pt, rnd, sides, 1.0f, &b);
 
-        if (dConf.shadows.darkRaisedEdges && sides & (Left|Right))
+        if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
             QLinearGradient edges(0, 0, r.width(), 0);
-            const QColor edge(QColor(0, 0, 0, opacity*222.0f));
+            const QColor edge(QColor(0, 0, 0, lumop));
             const float position(5.0f/r.width());
             if (sides & Left)
             {
@@ -1091,7 +1096,7 @@ Render::shadowMargin(const Shadow s)
     {
     case Sunken:
     case Etched:
-    case Raised: return 1; break;
+    case Raised: return 3; break;
     case Yosemite: return 0; break;
     case Carved: return 3; break;
     default: return 0;

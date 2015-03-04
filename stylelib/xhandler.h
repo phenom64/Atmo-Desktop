@@ -7,9 +7,55 @@
 class WindowData
 {
 public:
-    enum DataType { Separator = 0x1, ContAware = 0x2, Uno = 0x4, Horizontal = 0x8, Opacity = 0xff00, UnoHeight = 0xff0000, Buttons = 0xf000000, Frame = 0xf0000000 };
-    QRgb text, bg;
-    unsigned int data;
+    enum DataType {     //data is a 32 bit integer
+        Separator =     1<<0,       //first 8 bits reserved for booleans...
+        ContAware =     1<<1,
+        Uno =           1<<2,
+        Horizontal =    1<<3,
+        Opacity =       0x0000ff00,
+        UnoHeight =     0x00ff0000, //the height of the head is never more then 255 right? ..right?
+        Buttons =       0x0f000000, //enough long as we dont have more then 15 buttons styles
+        Frame =         0xf0000000  //same here... long as we dont set framesize over 15, unsure if this is enough....
+    };
+    typedef unsigned int Type;
+    unsigned int data, fg, bg;
+    WindowData() : data(0), fg(0), bg(0) {}
+//    explicit WindowData(const WindowData &wd) : data(wd.data), fg(wd.fg), bg(wd.bg) {}
+    template<typename T> void setValue(const Type type, const T value = T())
+    {
+        switch (type)
+        {
+        case Separator:
+        case ContAware:
+        case Uno:
+        case Horizontal: data |= (type*value); break; //just boolean vals...
+        case Opacity: data |= ((value << 8) & WindowData::Opacity); break;
+        case UnoHeight: data |= ((value << 16) & WindowData::UnoHeight); break;
+        case Buttons: data |= ((value + 1) << 24); break;
+        case Frame: data |= (value << 28); break;
+        default: break;
+        }
+    }
+    template<typename T> const T value(const Type type) const
+    {
+        switch (type)
+        {
+        case Separator:
+        case ContAware:
+        case Uno:
+        case Horizontal: return T(data & type);
+        case Opacity: return T((data & WindowData::Opacity) >> 8);
+        case UnoHeight: return T((data & WindowData::UnoHeight) >> 16);
+        case Buttons: return T(((data & WindowData::Buttons) >> 24) - 1);
+        case Frame: return T((data & WindowData::Frame) >> 28);
+        default: return T();
+        }
+    }
+    inline void operator=(const WindowData &wd) { this->data = wd.data; this->fg = wd.fg; this->bg = wd.bg; }
+    inline bool operator==(const WindowData &wd) const { return (this->data == wd.data && this->fg == wd.fg && this->bg == wd.bg); }
+    inline bool operator!=(const WindowData &wd) const { return !operator==(wd); }
+    static void set(const WId id, WindowData *wd);
+    static WindowData *get(const WId id);
 };
 
 static int _n = 0;
@@ -17,7 +63,19 @@ class Q_DECL_EXPORT XHandler : public QObject
 {
     Q_OBJECT
 public:
-    enum Value { WindowIcon = 0, KwinShadows, KwinBlur, WindowData, StoreActiveShadow, StoreInActiveShadow, DecoTitleHeight, DecoBgPix, ContPix, Repaint, ValueCount };
+    enum Value { _NET_WORKAREA = 0,
+                 _NET_CURRENT_DESKTOP,
+                 _NET_WM_ICON,
+                 _KDE_NET_WM_SHADOW,
+                 _KDE_NET_WM_BLUR_BEHIND_REGION,
+                 WindowData,
+                 StoreActiveShadow,
+                 StoreInActiveShadow,
+                 DecoTitleHeight,
+                 DecoBgPix,
+                 ContPix,
+                 Repaint,
+                 ValueCount };
     enum Size { Byte = 8, Short = 16, Long = 32 };
     enum Operation {
         _NET_WM_MOVERESIZE_SIZE_TOPLEFT      =0,
@@ -60,6 +118,7 @@ public:
     static void updateDeco(const WId w);
     static QPixmap emptyX11Pix(const QSize &sz, const WId w);
     static XHandler *instance();
+    static QPoint strutTopLeft();
 
     XHandler(QObject *parent = 0);
     ~XHandler();

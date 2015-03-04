@@ -1,6 +1,5 @@
 
 #include <X11/Xatom.h>
-#include "../stylelib/xhandler.h"
 
 #include <kwindowinfo.h>
 #include <QPainter>
@@ -17,6 +16,7 @@
 #include "../stylelib/render.h"
 #include "../stylelib/color.h"
 #include "../config/settings.h"
+#include "../stylelib/xhandler.h"
 
 #define MARGIN (isModal()?3:6)
 #define SPACING 4
@@ -133,13 +133,13 @@ DButton::shade() const
 KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
+    , m_contAware(false)
     , m_headHeight(0)
     , m_needSeparator(true)
     , m_factory(factory)
-    , m_opacity(1.0f)
+    , m_opacity(0xff)
     , m_sizeGrip(0)
     , m_mem(0)
-    , m_contAware(false)
     , m_uno(true)
     , m_frameSize(0)
     , m_compositingActive(true)
@@ -247,7 +247,7 @@ KwinClient::updateMask()
 
     if (m_compositingActive)
     {
-        if (m_opacity < 1.0f || dConf.deco.frameSize > 3)
+        if (m_opacity != 0xff || dConf.deco.frameSize > 3)
             clearMask();
         else
         {
@@ -373,6 +373,28 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
             processMousePressEvent(me);
         return true;
     }
+    case QEvent::Enter:
+    case QEvent::HoverEnter:
+    {
+        for (int i = 0; i < m_buttons.size(); ++i)
+        {
+            DButton *button(m_buttons.at(i));
+            if (button->type() < Button::OnAllDesktops) //is min|max|close
+                button->hover();
+        }
+        return true;
+    }
+    case QEvent::Leave:
+    case QEvent::HoverLeave:
+    {
+        for (int i = 0; i < m_buttons.size(); ++i)
+        {
+            DButton *button(m_buttons.at(i));
+            if (button->type() < Button::OnAllDesktops) //is min|max|close
+                button->unhover();
+        }
+        return true;
+    }
     case QEvent::Wheel:
     {
         titlebarMouseWheelOperation(static_cast<QWheelEvent *>(e)->delta());
@@ -383,6 +405,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         for (int i = 0; i < m_buttons.size(); ++i)
             m_buttons.at(i)->unhover();
         widget()->repaint();
+        return true;
     }
     default: break;
     }
@@ -535,7 +558,7 @@ KwinClient::paint(QPainter &p)
 
     int n;
     if (dConf.deco.icon)
-        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::WindowIcon, n, 0, 1))
+        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::_NET_WM_ICON, n, 0, 1))
         {
             QRect ir(QPoint(), QSize(16, 16));
             ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
@@ -722,17 +745,17 @@ KwinClient::setBgPix(unsigned long pix)
 void
 KwinClient::setWindowData(WindowData wd)
 {
-    const int height((wd.data & WindowData::UnoHeight) >> 16);
-    m_contAware = wd.data & WindowData::ContAware;
-    m_headHeight = height;
-    m_needSeparator = wd.data & WindowData::Separator;
-    m_hor = wd.data & WindowData::Horizontal;
-    m_custcol[Text] = QColor::fromRgba(wd.text);
+    m_contAware = wd.value<bool>(WindowData::ContAware);
+    m_headHeight = wd.value<int>(WindowData::UnoHeight);
+    m_needSeparator = wd.value<bool>(WindowData::Separator);
+    m_hor = wd.value<bool>(WindowData::Horizontal);
+    m_opacity = wd.value<int>(WindowData::Opacity);
+    m_uno = wd.value<bool>(WindowData::Uno);
+    m_buttonStyle = wd.value<int>(WindowData::Buttons);
+    m_frameSize = wd.value<int>(WindowData::Frame);
+
+    m_custcol[Text] = QColor::fromRgba(wd.fg);
     m_custcol[Bg] = QColor::fromRgba(wd.bg);
-    m_opacity = (float)((wd.data & WindowData::Opacity) >> 8)/100.0f;
-    m_uno = wd.data & WindowData::Uno;
-    m_buttonStyle = ((wd.data & WindowData::Buttons) >> 24) -1;
-    m_frameSize = (wd.data & WindowData::Frame) >> 28;
     widget()->update();
 }
 

@@ -91,9 +91,10 @@ Factory::Factory()
     : QObject()
     , KDecorationFactory()
 {
-    s_instance = this;
-    if (!s_x11eventFilter)
+    if (!s_x11eventFilter && !s_instance)
         s_x11eventFilter = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
+    s_instance = this;
+
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
     ShadowHandler::removeDelete();
@@ -105,7 +106,6 @@ Factory::~Factory()
     if (this == s_instance)
     {
         s_instance = 0;
-
         QAbstractEventDispatcher::instance()->setEventFilter(s_x11eventFilter);
         s_x11eventFilter = 0;
     }

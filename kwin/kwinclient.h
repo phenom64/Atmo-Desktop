@@ -92,8 +92,7 @@ private:
     QColor m_custcol[CustColCount];
     Factory *m_factory;
     QPixmap m_bgPix[2], m_bevelCorner[3], m_pix;
-    float m_opacity;
-    int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize, m_prevLum;
+    int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize, m_prevLum, m_opacity;
     bool m_needSeparator, m_contAware, m_uno, m_compositingActive, m_hor;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
