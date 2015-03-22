@@ -2,6 +2,7 @@
 #define STYLEPROJECT_H
 
 #include <QCommonStyle>
+#include <QStylePlugin>
 #include <QEvent>
 #include <QStyleOption>
 #include "stylelib/macros.h"
@@ -161,6 +162,17 @@ private:
     StylePrimitive m_pe[PESize];
     EventFilter m_ev[EVSize];
     SubControlRect m_sc[CCSize];
+};
+
+class ProjectStylePlugin : public QStylePlugin
+{
+    Q_OBJECT
+#if QT_VERSION >= 0x050000
+    Q_PLUGIN_METADATA(IID QStyleFactoryInterface_iid FILE "styleproject.json")
+#endif
+public:
+    QStringList keys() const;
+    QStyle *create(const QString &key);
 };
 
 #endif // STYLEPROJECT_H

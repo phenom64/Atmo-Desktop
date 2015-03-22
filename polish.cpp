@@ -44,9 +44,14 @@
 #include "macmenu.h"
 #endif
 
+static void applyBlur(QWidget *widget)
+{
+    unsigned int d(0);
+    XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+}
+
 static void applyTranslucency(QWidget *widget)
 {
-    qDebug() << widget;
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
     const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
@@ -56,8 +61,6 @@ static void applyTranslucency(QWidget *widget)
     widget->setWindowIcon(icn);
     widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
     widget->setVisible(wasVisible);
-    unsigned int d(0);
-    XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
 }
 
 /* a non-const environment that is called
@@ -125,6 +128,8 @@ StyleProject::polish(QWidget *widget)
 //        widget->parentWidget()->setWindowFlags(widget->parentWidget()->windowFlags()|Qt::Window|Qt::FramelessWindowHint);
     if (widget->isWindow())
     {
+        if (widget->testAttribute(Qt::WA_TranslucentBackground))
+            applyBlur(widget);
         if (qobject_cast<QMainWindow *>(widget))
         {
             if (dConf.compactMenu
@@ -152,9 +157,13 @@ StyleProject::polish(QWidget *widget)
 //            if (needHandler)
                 Handlers::Window::manage(widget);
         }
+
+        const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint) && widget->windowRole().startsWith("MainWindow")));
+
         if (widget->windowType() == Qt::Popup
                 || widget->windowType() == Qt::ToolTip
-                || widget->windowType() == Qt::Dialog)
+                || widget->windowType() == Qt::Dialog
+                || isFrameLessMainWindow)
             ShadowHandler::manage(widget);
     }
 

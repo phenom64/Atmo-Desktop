@@ -29,8 +29,8 @@ public:
         case ContAware:
         case Uno:
         case Horizontal: data |= (type*value); break; //just boolean vals...
-        case Opacity: data |= ((value << 8) & WindowData::Opacity); break;
-        case UnoHeight: data |= ((value << 16) & WindowData::UnoHeight); break;
+        case Opacity: data |= ((value << 8) & Opacity); break;
+        case UnoHeight: data |= ((value << 16) & UnoHeight); break;
         case Buttons: data |= ((value + 1) << 24); break;
         case Frame: data |= (value << 28); break;
         default: break;
@@ -44,10 +44,10 @@ public:
         case ContAware:
         case Uno:
         case Horizontal: return T(data & type);
-        case Opacity: return T((data & WindowData::Opacity) >> 8);
-        case UnoHeight: return T((data & WindowData::UnoHeight) >> 16);
-        case Buttons: return T(((data & WindowData::Buttons) >> 24) - 1);
-        case Frame: return T((data & WindowData::Frame) >> 28);
+        case Opacity: return T((data & Opacity) >> 8);
+        case UnoHeight: return T((data & UnoHeight) >> 16);
+        case Buttons: return T(((data & Buttons) >> 24) - 1);
+        case Frame: return T((data & Frame) >> 28);
         default: return T();
         }
     }
@@ -68,6 +68,7 @@ public:
                  _NET_WM_ICON,
                  _KDE_NET_WM_SHADOW,
                  _KDE_NET_WM_BLUR_BEHIND_REGION,
+                 _NET_FRAME_EXTENTS,
                  WindowData,
                  StoreActiveShadow,
                  StoreInActiveShadow,
@@ -119,6 +120,7 @@ public:
     static QPixmap emptyX11Pix(const QSize &sz, const WId w);
     static XHandler *instance();
     static QPoint strutTopLeft();
+    static void getDecoBorders(int &left, int &right, int &top, int &bottom, const WId id);
 
     XHandler(QObject *parent = 0);
     ~XHandler();

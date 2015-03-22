@@ -277,7 +277,7 @@ class Q_DECL_EXPORT Settings : public QObject
 {
     Q_OBJECT
 public:
-    enum AppName { Eiskalt, Konversation, Konsole, KWin, None }; //app specific hacks should be avoided when possible.
+    enum AppName { Eiskalt, Konversation, Konsole, KWin, BEShell, Yakuake, None }; //app specific hacks should be avoided when possible.
     typedef uint App;
     App app;
     float opacity;
@@ -367,6 +367,7 @@ public:
     static void read();
     static void readPalette();
     static QSettings *paletteSettings();
+    static Gradient stringToGrad(const QString &string);
 
 public slots:
     void writePalette();

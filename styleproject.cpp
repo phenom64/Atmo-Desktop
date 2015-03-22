@@ -1,4 +1,3 @@
-#include <QStylePlugin>
 #include <QWidget>
 #include <QStyleOptionComplex>
 #include <QStyleOptionSlider>
@@ -27,19 +26,21 @@
 #include "stylelib/handlers.h"
 #include "config/settings.h"
 
-class ProjectStylePlugin : public QStylePlugin
-{
-public:
-    QStringList keys() const { return QStringList() << "StyleProject"; }
-    QStyle *create(const QString &key)
-    {
-        if (!key.compare("styleproject", Qt::CaseInsensitive))
-            return new StyleProject();
-        return 0;
-    }
-};
 
+QStringList
+ProjectStylePlugin::keys() const { return QStringList() << "StyleProject"; }
+
+QStyle
+*ProjectStylePlugin::create(const QString &key)
+{
+    if (!key.compare("styleproject", Qt::CaseInsensitive))
+        return new StyleProject();
+    return 0;
+}
+
+#if QT_VERSION < 0x050000
 Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
+#endif
 
 StyleProject::StyleProject() : QCommonStyle()
 {
@@ -89,12 +90,47 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
 //    return;
     if (text.isEmpty())
         return;
-    painter->save();
+
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
 //    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
 //        flags &= ~Qt::AlignHCenter;
+#if 0
+    if (true)
+    {
+        QPixmap pix(rect.size());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        QFont f(painter->font());
+        f.setPointSize(painter->fontInfo().pointSize());
+        p.setFont(f);
+        const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
+        if (enabled
+                && pal.brush(bgRole).style() == Qt::SolidPattern
+                && !pal.brush(bgRole).gradient()
+                && pal.color(textRole).alpha() == 0xff
+                && textRole != QPalette::NoRole
+                && bgRole != QPalette::NoRole)
+        {
+            const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
+            const int rgb(isDark?0:255);
+            const QColor bevel(rgb, rgb, rgb, 127);
+            p.setPen(bevel);
+            p.drawText(pix.rect().translated(0, 1), flags, text);
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p.setPen(Qt::black);
+            p.drawText(rect, flags, text);
+        }
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        p.setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
+        p.drawText(pix.rect(), flags, text);
+        p.end();
+        painter->drawPixmap(rect, pix);
+        return;
+    }
+#endif
+    painter->save();
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
     if (enabled
             && pal.brush(bgRole).style() == Qt::SolidPattern

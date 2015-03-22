@@ -16,6 +16,7 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_NET_WM_ICON", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_SHADOW", False),
     XInternAtom(QX11Info::display(), "_KDE_NET_WM_BLUR_BEHIND_REGION", False),
+    XInternAtom(QX11Info::display(), "_NET_FRAME_EXTENTS", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_MAINWINDOWDATA", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREACTIVESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREINACTIVESHADOW", False),
@@ -222,6 +223,24 @@ XHandler::strutTopLeft()
     if (n < 2)
         return QPoint();
     return QPoint(struts[0], struts[1]);
+}
+
+void
+XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const WId id)
+{
+    int n;
+    unsigned long *data = getXProperty<unsigned long>(id, _NET_FRAME_EXTENTS, n);
+    if (n != 4)
+        left = right = top = bottom = 0;
+    else
+    {
+        left = data[0];
+        right = data[1];
+        top = data[2];
+        bottom = data[3];
+    }
+    if (data)
+        freeData(data);
 }
 
 ///------------------------------------------------------------------------------------------------------------------

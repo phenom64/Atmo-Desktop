@@ -5,7 +5,16 @@
 #include <QObject>
 #include <X11/Xatom.h>
 
+#include "../stylelib/xhandler.h"
 #include "kwinclient.h"
+#include "../config/settings.h"
+
+typedef struct {
+    QColor color[2];
+    Gradient gradient;
+    unsigned int noiseRatio;
+} DecoData;
+
 class KwinClient;
 class Factory : public QObject, public KDecorationFactory
 {
@@ -18,6 +27,7 @@ public:
 
     static bool xEventFilter(void *message);
     static KwinClient *deco(unsigned long w);
+    static DecoData decoData(const QString &winClass, bool &ok);
 
 private:
 //    static Atom s_wmAtom;

@@ -28,6 +28,7 @@
 #include "macmenu-dbus.h"
 
 #include <QtDebug>
+#include <QFileInfo>
 
 using namespace Bespin;
 
@@ -167,6 +168,7 @@ MacMenu::activate(QMenuBar *menu)
     actions[menu] = menu->actions();
 
     // find a nice header
+#if 0
     QString title = menu->window()->windowTitle();
     const QStringList appArgs = QCoreApplication::arguments();
     QString name = appArgs.isEmpty() ? "" : appArgs.at(0).section('/', -1);
@@ -190,6 +192,20 @@ MacMenu::activate(QMenuBar *menu)
         if (title.isEmpty())
             title = "QApplication";
     }
+#else
+    QString title;
+    if (qApp)
+    {
+        if (!qApp->arguments().isEmpty())
+            title = qApp->arguments().first();
+        else if (!qApp->applicationName().isEmpty())
+            title = qApp->applicationName();
+        else
+            title = QFileInfo(qApp->applicationFilePath()).fileName();
+    }
+    if (title.contains("/"))
+        title = QFileInfo(title).fileName();
+#endif
 
     // register the menu via dbus
     QStringList entries;
@@ -323,6 +339,7 @@ MacMenu::popup(qlonglong key, int idx, int x, int y)
             {
                 connect (pop, SIGNAL(aboutToHide()), this, SLOT(menuClosed()));
                 XBAR_SEND( MSG("setOpenPopup") << idx );
+                pop->setProperty("DSP_SHAPETOP", true);
                 pop->popup(QPoint(x,y));
             }
             else
@@ -403,8 +420,11 @@ MacMenu::menuClosed()
         XBAR_SEND( MSG("setOpenPopup") << -500 );
 
         if (QMenu *menu = qobject_cast<QMenu*>(_sender))
-        if (QMenuBar *bar = bar4menu(menu))
-            bar->activateWindow();
+        {
+            menu->setProperty("DSP_SHAPETOP", false);
+            if (QMenuBar *bar = bar4menu(menu))
+                bar->activateWindow();
+        }
     }
 }
 

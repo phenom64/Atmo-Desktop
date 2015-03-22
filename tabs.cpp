@@ -389,11 +389,11 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 //    painter->setPen(QColor(255, 255, 255, 192));
 //    painter->drawLine(l);
 
-//    if (!isLast || (isSelected && !isOnly))
-//    {
+    if (r.right()+8 < painter->device()->width())
+    {
         painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         painter->drawLine(s);
-//    }
+    }
     painter->setPen(pen);
     return true;
 }
@@ -538,8 +538,11 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
                 if (qobject_cast<QStatusBar *>(bar->window()->childAt(below)))
                     aboveStatusBar = true;
             }
-            s.setPoints(r.bottomLeft(), r.bottomRight());
-            r.setBottom(r.bottom()-1);
+            if (!aboveStatusBar)
+            {
+                s.setPoints(r.bottomLeft(), r.bottomRight());
+                r.setBottom(r.bottom()-1);
+            }
             l.setPoints(r.bottomLeft(), r.bottomRight());
             bl.setPoints(r.topLeft(), r.topRight());
             break;
@@ -581,13 +584,16 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
 
         p->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         p->setBrush(Qt::NoBrush);
-        p->drawRect(orgRect.adjusted(0, 0, -1, -!aboveStatusBar));
-
+//        p->drawRect(orgRect.adjusted(0, 0, -1, -!aboveStatusBar));
+        if (!s.isNull())
+            p->drawLine(s);
+        p->drawLine(bl);
         if (isUp)
         {
             p->setPen(QColor(255, 255, 255, 63));
             p->drawLine(l);
         }
+
 
         p->setPen(pen);
         p->setBrush(brush);

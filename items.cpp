@@ -18,11 +18,12 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "config/settings.h"
+#include "stylelib/render.h"
 
 bool
 StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(MenuItem, opt, option);
+    const QStyleOptionMenuItem *opt = qstyleoption_cast<const QStyleOptionMenuItem *>(option);
     if (!opt)
         return true;
 
@@ -143,17 +144,20 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ViewItem, opt, option);
+    const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
     if (!opt)
         return true;
+
+    if (opt->backgroundBrush != Qt::NoBrush)
+        painter->fillRect(opt->rect, opt->backgroundBrush);
 
     if (!(opt->SUNKEN || opt->HOVER))
         return true;
 
     painter->save();
-    castObj(const QAbstractItemView *, abstractView, widget);
-    castObj(const QTreeView *, treeView, widget);
-    castObj(const QListView *, listView, widget);
+    const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
+//    const QTreeView *treeView = qobject_cast<const QTreeView *>(widget);
+    const QListView *listView = qobject_cast<const QListView *>(widget);
     const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
     QColor h(opt->palette.color(QPalette::Highlight));
     if (!(opt->SUNKEN))
@@ -177,15 +181,20 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     }
     else
     {
-        painter->fillRect(opt->rect, brush);
-        if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
+        if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && opt->rect.x())
+            Render::renderMask(opt->rect, painter, brush, dConf.input.rnd, Render::All & ~Render::Right);
+        else
         {
-            painter->save();
-            painter->setPen(QColor(0, 0, 0, 64));
-            painter->translate(0.0f, 0.5f);
-            painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
-            painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
-            painter->restore();
+            painter->fillRect(opt->rect, brush);
+            if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
+            {
+                painter->save();
+                painter->setPen(QColor(0, 0, 0, 64));
+                painter->translate(0.0f, 0.5f);
+                painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
+                painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
+                painter->restore();
+            }
         }
     }
     painter->restore();
@@ -195,7 +204,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
 bool
 StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ViewItemV4, opt, option);
+    const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
     if (!opt)
         return true;
     drawViewItemBg(option, painter, widget);

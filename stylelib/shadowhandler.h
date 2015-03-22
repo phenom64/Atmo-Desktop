@@ -12,6 +12,7 @@ public:
     static unsigned long *menuShadow(bool up, QMenu *m, QToolButton *tb);
     static void installShadows(WId w, bool active = false);
     static void installShadows(QMenu *m);
+    static void removeShadows(WId w);
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static void removeDelete();

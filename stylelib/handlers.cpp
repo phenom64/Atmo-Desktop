@@ -51,7 +51,7 @@ static QRegion paintRegion(QMainWindow *win)
         r -= QRegion(c->geometry());
     }
     if (QStatusBar *bar = win->findChild<QStatusBar *>())
-        if (bar->isVisible())
+        if (bar->isVisible() && bar->mapTo(win, bar->rect().bottomRight()).y() == win->rect().bottom())
         {
             if (bar->parentWidget() == win)
                 r -= QRegion(bar->geometry());
@@ -394,7 +394,8 @@ ToolBar::fixSpacer(qulonglong toolbar)
     if (!tb
             || tb->window()->property(CSDBUTTONS).toBool()
             || !qobject_cast<QMainWindow *>(tb->parentWidget())
-            || tb->findChild<QTabBar *>())
+            || tb->findChild<QTabBar *>()
+            || !tb->styleSheet().isEmpty())
         return;
 
     tb->removeEventFilter(this);
@@ -404,7 +405,6 @@ ToolBar::fixSpacer(qulonglong toolbar)
         w->setFixedSize(8, 8);
         s_spacers.insert(tb, tb->insertWidget(tb->actions().first(), w));
     }
-
     tb->removeAction(s_spacers.value(tb));
     tb->insertAction(tb->actions().first(), s_spacers.value(tb));
     s_spacers.value(tb)->setVisible(!tb->isMovable());
@@ -1174,7 +1174,7 @@ void
 Window::updateWindowData(qulonglong window)
 {
     QWidget *win = getChild<QWidget *>(window);
-    if (!win || !win->isWindow())
+    if (!win || !win->isWindow() || !win->testAttribute(Qt::WA_WState_Created))
         return;
 
     unsigned int ns(1);
@@ -1185,7 +1185,7 @@ Window::updateWindowData(qulonglong window)
     wd.setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
     wd.setValue<bool>(WindowData::Uno, dConf.uno.enabled);
     wd.setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
-    wd.setValue<int>(WindowData::Opacity, win->testAttribute(Qt::WA_TranslucentBackground)?(unsigned int)(XHandler::opacity()*255.0f):255);
+    wd.setValue<int>(WindowData::Opacity, XHandler::opacity()*255.0f);
     wd.setValue<int>(WindowData::UnoHeight, height);
     wd.setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     wd.setValue<int>(WindowData::Frame, dConf.deco.frameSize);

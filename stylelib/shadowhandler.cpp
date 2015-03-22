@@ -50,18 +50,20 @@ static QPixmap *pix[2][8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 
 //static QPixmap *(menupix[2])[8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
 static QPixmap *menupix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+enum Pos { Top = 0, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft };
+
 static QRect part(int part, int size, int d = 1)
 {
     switch (part)
     {
-    case 0: return QRect(size, 0, d, size); //top?
-    case 1: return QRect(size+d, 0, size, size);
-    case 2: return QRect(size+d, size, size, d);
-    case 3: return QRect(size+d, size+d, size, size);
-    case 4: return QRect(size, size+d, d, size);
-    case 5: return QRect(0, size+d, size, size);
-    case 6: return QRect(0, size, size, d);
-    case 7: return QRect(0, 0, size, size);
+    case Top:           return QRect(size,      0,      1,      size);
+    case TopRight:      return QRect(size+d,    0,      size,   size);
+    case Right:         return QRect(size+d,    size,   size,   1);
+    case BottomRight:   return QRect(size+d,    size+d, size,   size);
+    case Bottom:        return QRect(size,      size+d, 1,      size);
+    case BottomLeft:    return QRect(0,         size+d, size,   size);
+    case Left:          return QRect(0,         size,   size,   1);
+    case TopLeft:       return QRect(0,         0,      size,   size);
     default: return QRect();
     }
 }
@@ -76,23 +78,48 @@ unsigned long
         int size(dConf.deco.shadowSize);
         if (!active)
             size/=2;
+
+
         unsigned long *data = new unsigned long[12];
 
         int s(size*2+1);
         QImage img(s, s, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
 
+
+#if 0
+        const int inset(2);
+        const int sd[4] = { size-inset, size-inset, size-inset, size-inset }; //t r b l
+        QRect r(img.rect());
+        r.adjust(sd[3], sd[0], -sd[1], -sd[2]);
+
+        QPainter p(&img);
+        p.fillRect(r, Qt::black);
+        p.end();
+
+        Render::expblur(img, (size-inset)/3);
+
+        p.begin(&img);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setBrush(QColor(0, 0, 0, 85));
+        p.setPen(Qt::NoPen);
+        p.drawRoundedRect(r.adjusted(-1, -1, 1, 1), 5, 5);
+//        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        p.setBrush(Qt::black);
+//        p.drawRoundedRect(r, 5, 5);
+        p.end();
+#endif
         QPainter p(&img);
         p.setRenderHint(QPainter::Antialiasing);
         p.setPen(Qt::NoPen);
         p.setBrush(Qt::NoBrush);
         QRadialGradient rg(QRectF(img.rect()).center(), size);
         rg.setColorAt(0.0f, QColor(0, 0, 0, 160));
-        rg.setColorAt(0.3f, QColor(0, 0, 0, 85));
-        rg.setColorAt(0.6f, QColor(0, 0, 0, 31));
-        rg.setColorAt(0.9f, Qt::transparent);
+//        rg.setColorAt(0.3f, QColor(0, 0, 0, 85));
+        rg.setColorAt(0.8f, QColor(0, 0, 0, 15));
+        rg.setColorAt(1.0f, Qt::transparent);
         p.fillRect(img.rect(), rg);
-        const int sd[4] = { size*0.75f, size*0.8f, size*0.9f, size*0.8f };
+        const int sd[4] = { size*0.5f, size*0.7f, size*0.9f, size*0.7f };
         QRect r(0, 0, s, s);
         r.adjust(sd[3], sd[0], -sd[1], -sd[2]);
         p.setBrush(QColor(0, 0, 0, 85));
@@ -243,6 +270,13 @@ ShadowHandler::installShadows(QMenu *m)
         XHandler::setXProperty<unsigned long>(m->winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, menuShadow(up, m, tb), 12);
     else
         installShadows(m->winId());
+}
+
+void
+ShadowHandler::removeShadows(WId w)
+{
+    if (w != QX11Info::appRootWindow())
+        XHandler::deleteXProperty(w, XHandler::_KDE_NET_WM_SHADOW);
 }
 
 void

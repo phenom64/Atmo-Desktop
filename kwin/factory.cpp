@@ -2,6 +2,9 @@
 #include <QDBusMessage>
 #include <QPainter>
 #include <QAbstractEventDispatcher>
+#include <QDir>
+#include <QSettings>
+#include <QMap>
 
 #include "kwinclient.h"
 #include "factory.h"
@@ -9,6 +12,38 @@
 #include "../stylelib/shadowhandler.h"
 
 KWIN_DECORATION(Factory)
+
+static QMap<QString, DecoData> s_data;
+
+static void readWindowData()
+{
+    s_data.clear();
+    static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
+    QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
+    foreach (const QString winClass, s.childGroups())
+    {
+        s.beginGroup(winClass);
+        DecoData d;
+        d.color[0] = QColor(s.value("fgcolor", "0xff000000").toString().toUInt(0, 16));
+        d.color[1] = QColor(s.value("bgcolor", "0xffffffff").toString().toUInt(0, 16));
+        d.gradient = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+        d.noiseRatio = s.value("noise", 20).toUInt();
+        s_data.insert(winClass, d);
+        s.endGroup();
+    }
+}
+
+DecoData
+Factory::decoData(const QString &winClass, bool &ok)
+{
+    if (s_data.contains(winClass))
+    {
+        ok = true;
+        return s_data.value(winClass);
+    }
+    ok = false;
+    return DecoData();
+}
 
 KDecoration
 *Factory::createDecoration(KDecorationBridge *bridge)
@@ -84,7 +119,7 @@ Factory::xEventFilter(void *message)
     }
     default: break;
     }
-    return s_x11eventFilter?(*s_x11eventFilter)(message):false;
+    return s_x11eventFilter&&(*s_x11eventFilter)(message);
 }
 
 Factory::Factory()
@@ -94,6 +129,7 @@ Factory::Factory()
     if (!s_x11eventFilter && !s_instance)
         s_x11eventFilter = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
     s_instance = this;
+    readWindowData();
 
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);

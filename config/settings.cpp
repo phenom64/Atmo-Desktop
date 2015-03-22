@@ -29,7 +29,8 @@ Settings::~Settings()
     }
 }
 
-static Gradient stringToGrad(const QString &string)
+Gradient
+Settings::stringToGrad(const QString &string)
 {
     const QStringList pairs(string.split(",", QString::SkipEmptyParts));
     Gradient gradient;
@@ -229,7 +230,11 @@ Settings::read()
     else if (conf.m_appName == "konsole")
         conf.app = Konsole;
     else if (conf.m_appName == "kwin")
-        conf.app == KWin;
+        conf.app = KWin;
+    else if (conf.m_appName == "be.shell")
+        conf.app = BEShell;
+    else if (conf.m_appName == "yakuake")
+        conf.app = Yakuake;
     else
         conf.app = None;
 
@@ -286,7 +291,7 @@ Settings::read()
     conf.input.gradient = stringToGrad(conf.m_settings->value(READINPUTGRAD).toString());
     conf.input.tint = tintColor(conf.m_settings->value(READINPUTTINT).toString());
     //tabs
-    conf.tabs.safari = conf.m_settings->value(READTABSAF).toInt();
+    conf.tabs.safari = conf.m_settings->value(READTABSAF).toBool();
     conf.tabs.rnd = conf.m_settings->value(READTABRND).toInt();
     conf.tabs.shadow = conf.m_settings->value(READTABSHADOW).toInt();
     conf.tabs.gradient = stringToGrad(conf.m_settings->value(READTABGRAD).toString());

@@ -10,6 +10,7 @@
 #include "sizegrip.h"
 #include "factory.h"
 #include "../stylelib/widgets.h"
+#include "../config/settings.h"
 
 class Factory;
 class KwinClient;
@@ -78,8 +79,9 @@ protected:
     void paint(QPainter &p);
     void populate(const QString &buttons, int &size);
     void updateMask();
-    QColor bgColor() const;
-    QColor fgColor() const;
+    void checkForDataFromWindowClass();
+    QColor bgColor(const bool *active = 0) const;
+    QColor fgColor(const bool *active = 0) const;
     const QRect positionRect(const KDecorationDefines::Position pos) const;
     const int titleHeight() const;
 
@@ -93,12 +95,14 @@ private:
     Factory *m_factory;
     QPixmap m_bgPix[2], m_bevelCorner[3], m_pix;
     int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize, m_prevLum, m_opacity;
+    unsigned int m_noise;
     bool m_needSeparator, m_contAware, m_uno, m_compositingActive, m_hor;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;
     Buttons m_buttons;
     QSharedMemory *m_mem;
+    Gradient m_gradient;
 };
 
 #endif //KWINCLIENT_H

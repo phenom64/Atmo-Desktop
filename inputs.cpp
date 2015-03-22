@@ -40,7 +40,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
     if (widget && widget->objectName() == "qt_spinbox_lineedit")
         return true;
 
-    QBrush mask(option->palette.brush(QPalette::Base));
+    QBrush mask(option->palette.base());
     if (mask.style() == Qt::SolidPattern || mask.style() == Qt::NoBrush)
     {
         QColor c(mask.color());
