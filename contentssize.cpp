@@ -124,7 +124,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
                             w-=wi->width();
                     }
                 }
-                sz.setWidth(w/bar->count());
+                sz.setWidth(bar->count() == 1 ? bar->width() : (w/bar->count())-1);
             }
             else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
