@@ -14,8 +14,7 @@
 class QToolBar;
 class QTabBar;
 class QProgressBar;
-class QStyleOptionTabV3;
-class Q_DECL_EXPORT StyleProject : public QCommonStyle
+class Q_GUI_EXPORT StyleProject : public QCommonStyle
 {
     Q_OBJECT
     Q_CLASSINFO ("X-KDE-CustomElements", "true")

@@ -6,7 +6,7 @@
 #include <QAbstractButton>
 #include <QLayout>
 #include <QDockWidget>
-#include <Q3GroupBox>
+#include <QGroupBox>
 #include <QDebug>
 #include <QProgressBar>
 #include <QLabel>

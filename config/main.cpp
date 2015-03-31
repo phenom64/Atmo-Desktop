@@ -5,12 +5,9 @@
 
 int main(int argc, char *argv[])
 {
-    char c[256] = { "asdfasdfasdfasdfasdf" };
-    printf("%s\n", c);
-
-
-    QApplication app(argc, argv);
-    StyleConfig sc;
-    sc.show();
-    return app.exec();
+    return 0;
+//    QApplication app(argc, argv);
+//    StyleConfig sc;
+//    sc.show();
+//    return app.exec();
 }

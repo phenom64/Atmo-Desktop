@@ -236,7 +236,7 @@ Settings::read()
     else if (conf.m_appName == "yakuake")
         conf.app = Yakuake;
     else
-        conf.app = None;
+        conf.app = Unspecific;
 
     const QDir settingsDir(CONFIGPATH);
     QString settingsFileName("dsp");

@@ -15,34 +15,39 @@ KWIN_DECORATION(Factory)
 
 static QMap<QString, DecoData> s_data;
 
+static void addDataForWinClass(const QString &winClass, QSettings &s)
+{
+    DecoData d;
+    d.color[0] = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
+    d.color[1] = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
+    d.gradient = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+    d.noiseRatio = s.value("noise", 20).toUInt();
+    s_data.insert(winClass, d);
+}
+
 static void readWindowData()
 {
     s_data.clear();
     static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
     QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
+    bool hasDefault(false);
     foreach (const QString winClass, s.childGroups())
     {
         s.beginGroup(winClass);
-        DecoData d;
-        d.color[0] = QColor(s.value("fgcolor", "0xff000000").toString().toUInt(0, 16));
-        d.color[1] = QColor(s.value("bgcolor", "0xffffffff").toString().toUInt(0, 16));
-        d.gradient = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
-        d.noiseRatio = s.value("noise", 20).toUInt();
-        s_data.insert(winClass, d);
+        hasDefault |= (winClass == "default");
+        addDataForWinClass(winClass, s);
         s.endGroup();
     }
+    if (!hasDefault)
+        addDataForWinClass("default", s);
 }
 
 DecoData
-Factory::decoData(const QString &winClass, bool &ok)
+Factory::decoData(const QString &winClass)
 {
     if (s_data.contains(winClass))
-    {
-        ok = true;
         return s_data.value(winClass);
-    }
-    ok = false;
-    return DecoData();
+    return s_data.value("default");
 }
 
 KDecoration

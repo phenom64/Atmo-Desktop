@@ -40,8 +40,10 @@
  * his macmenu! yeah! so now we get
  * macmenues in styleproject!
  */
+#if QT_VERSION < 0x050000
 #if !defined(QT_NO_DBUS)
 #include "macmenu.h"
+#endif
 #endif
 
 static void applyBlur(QWidget *widget)
@@ -146,13 +148,13 @@ StyleProject::polish(QWidget *widget)
         }
         else if (qobject_cast<QDialog *>(widget))
         {
-            bool needHandler(!dConf.uno.enabled || (dConf.hackDialogs && widget->isModal()));
+//            bool needHandler(!dConf.uno.enabled || (dConf.hackDialogs && widget->isModal()));
             if (!dConf.uno.enabled
                     && XHandler::opacity() < 1.0f
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
             {
                 applyTranslucency(widget);
-                needHandler = true;
+//                needHandler = true;
             }
 //            if (needHandler)
                 Handlers::Window::manage(widget);
@@ -277,8 +279,10 @@ StyleProject::polish(QWidget *widget)
         widget->setForegroundRole(QPalette::WindowText);
         widget->setBackgroundRole(QPalette::Window);
         installFilter(widget);
+#if QT_VERSION < 0x050000
 #if !defined(QT_NO_DBUS)
         Bespin::MacMenu::manage(menuBar);
+#endif
 #endif
     }
     else if (qobject_cast<QToolBox *>(widget))
@@ -396,9 +400,11 @@ StyleProject::unpolish(QWidget *widget)
         Anim::ToolBtns::release(tb);
     else if (QFrame *f = qobject_cast<QFrame *>(widget))
         OverLay::release(f);
+#if QT_VERSION < 0x050000
 #if !defined(QT_NO_DBUS)
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         Bespin::MacMenu::release(menuBar);
+#endif
 #endif
     QCommonStyle::unpolish(widget);
 }

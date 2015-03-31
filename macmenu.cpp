@@ -15,7 +15,6 @@
  *   Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 #include <QActionEvent>
 #include <QApplication>
 #include <QtDBus/QDBusConnectionInterface>
@@ -29,6 +28,8 @@
 
 #include <QtDebug>
 #include <QFileInfo>
+
+#if QT_VERSION < 0x050000
 
 using namespace Bespin;
 
@@ -538,3 +539,4 @@ MacMenu::eventFilter(QObject *o, QEvent *ev)
 
 #undef MSG
 #undef XBAR_SEND
+#endif //QT_VERSION

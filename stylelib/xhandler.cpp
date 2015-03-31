@@ -2,10 +2,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include "fixx11h.h"
+
 #include <QX11Info>
-#include <QMouseEvent>
 #include <QPainter>
-#include <QTimer>
+#include <stdio.h>
 //#include <QAbstractEventDispatcher>
 #include "../config/settings.h"
 
@@ -40,8 +40,7 @@ XHandler
     return &s_instance;
 }
 
-XHandler::XHandler(QObject *parent)
-    : QObject(parent)
+XHandler::XHandler()
 //      m_timer(new QTimer(this))
 {
 //    connect(m_timer, SIGNAL(timeout()), this, SLOT(clearX11PixmapsSlot()));
@@ -53,7 +52,7 @@ XHandler::~XHandler()
 }
 
 void
-XHandler::changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems)
+XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems)
 {
     if (!data)
         return;
@@ -63,7 +62,7 @@ XHandler::changeProperty(const WId w, const Value v, const TypeSize size, const 
 }
 
 unsigned char
-*XHandler::fetchProperty(const WId w, const Value v, int &n, unsigned long offset, unsigned long length)
+*XHandler::fetchProperty(const XWindow w, const Value v, int &n, unsigned long offset, unsigned long length)
 {
     Atom type;
     int format;
@@ -75,7 +74,7 @@ unsigned char
 }
 
 void
-XHandler::deleteXProperty(const WId w, const Value v)
+XHandler::deleteXProperty(const XWindow w, const Value v)
 {
     XDeleteProperty(QX11Info::display(), w, atom[v]);
     XSync(QX11Info::display(), False);
@@ -88,7 +87,7 @@ XHandler::freeData(void *data)
 }
 
 void
-XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
+XHandler::mwRes(const QPoint &globalPoint, const XWindow &win, bool resize)
 {
     static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
     //this is stole.... errrhmm copied from qsizegrip.cpp
@@ -104,14 +103,14 @@ XHandler::mwRes(const QPoint &globalPoint, const WId &win, bool resize)
     xev.xclient.data.l[3] = Button1;
     xev.xclient.data.l[4] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(QX11Info().screen()), False,
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False,
                SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 }
 
 bool
 XHandler::compositingActive()
 {
-#if 1
+#if QT_VERSION < 0x050000
     return QX11Info::isCompositingManagerRunning();
 #else
     static Atom *net_wm_cm = 0;
@@ -136,8 +135,9 @@ XHandler::opacity()
 }
 
 QPixmap
-XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win)
+XHandler::x11Pix(const QPixmap &pix, XWindow &handle, const XWindow winId)
 {
+#if QT_VERSION < 0x050000
     if (pix.isNull())
     {
         handle = 0;
@@ -146,8 +146,8 @@ XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win)
 
     if (handle && pix.size() != QPixmap::fromX11Pixmap(handle).size())
     {
-        if (win)
-            deleteXProperty(win->winId(), DecoBgPix);
+        if (winId)
+            deleteXProperty(winId, DecoBgPix);
         freePix(handle);
         handle = 0;
     }
@@ -160,18 +160,26 @@ XHandler::x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win)
     pt.end();
     handle = x;
     return p;
+#else
+    return QPixmap();
+#endif
 }
 
 QPixmap
-XHandler::emptyX11Pix(const QSize &sz, const WId w)
+XHandler::emptyX11Pix(const QSize &sz, const XWindow w)
 {
+#if QT_VERSION < 0x050000
     const Pixmap p = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), sz.width(), sz.height(), 32);
     return QPixmap::fromX11Pixmap(p, QPixmap::ExplicitlyShared);
+#else
+    return QPixmap();
+#endif
 }
 
 QPixmap
 XHandler::x11Pix(const QPixmap &pix)
 {
+#if QT_VERSION < 0x050000
     const Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
     QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
     QPainter pt(&p);
@@ -179,22 +187,29 @@ XHandler::x11Pix(const QPixmap &pix)
     pt.drawPixmap(p.rect(), pix);
     pt.end();
     return p;
+#else
+    return QPixmap();
+#endif
 }
 
 void
 XHandler::freePix(QPixmap pix)
 {
+#if QT_VERSION < 0x050000
     freePix(pix.handle());
+#endif
 }
 
 void
-XHandler::freePix(const Qt::HANDLE handle)
+XHandler::freePix(const XWindow handle)
 {
+#if QT_VERSION < 0x050000
     XFreePixmap(QX11Info::display(), handle);
+#endif
 }
 
 void
-XHandler::updateDeco(const WId w)
+XHandler::updateDeco(const XWindow w)
 {
     XEvent xce;
     xce.xclient.type = ClientMessage;
@@ -204,7 +219,7 @@ XHandler::updateDeco(const WId w)
     xce.xclient.format = 32;
     xce.xclient.data.l[0] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime());
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(QX11Info().screen()), False, SubstructureNotifyMask, &xce);
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureNotifyMask, &xce);
 }
 
 QPoint
@@ -226,7 +241,7 @@ XHandler::strutTopLeft()
 }
 
 void
-XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const WId id)
+XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id)
 {
     int n;
     unsigned long *data = getXProperty<unsigned long>(id, _NET_FRAME_EXTENTS, n);
@@ -241,18 +256,4 @@ XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const WId
     }
     if (data)
         freeData(data);
-}
-
-///------------------------------------------------------------------------------------------------------------------
-
-void
-WindowData::set(const WId id, WindowData *wd)
-{
-    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Byte, wd);
-}
-
-WindowData
-*WindowData::get(const WId id)
-{
-    return XHandler::getXProperty<WindowData>(id, XHandler::WindowData);
 }

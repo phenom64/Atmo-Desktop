@@ -27,7 +27,7 @@ public:
 
     static bool xEventFilter(void *message);
     static KwinClient *deco(unsigned long w);
-    static DecoData decoData(const QString &winClass, bool &ok);
+    static DecoData decoData(const QString &winClass);
 
 private:
 //    static Atom s_wmAtom;

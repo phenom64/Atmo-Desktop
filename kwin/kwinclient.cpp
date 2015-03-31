@@ -794,15 +794,13 @@ void
 KwinClient::checkForDataFromWindowClass()
 {
     KWindowInfo info(windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
-    bool ok;
-    DecoData d = Factory::decoData(info.windowClassClass(), ok);
-    if (ok)
-    {
+    DecoData d = Factory::decoData(info.windowClassClass());
+    if (d.color[Text].alpha() == 0xff)
         m_custcol[Text] = d.color[Text];
+    if (d.color[Bg].alpha() == 0xff)
         m_custcol[Bg] = d.color[Bg];
-        m_noise = d.noiseRatio;
-    }
     m_gradient = d.gradient;
+    m_noise = d.noiseRatio;
 }
 
 /**

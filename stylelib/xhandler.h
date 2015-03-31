@@ -1,8 +1,8 @@
 #ifndef XHANDLER_H
 #define XHANDLER_H
 
-#include <QWidget>
-#include <QDebug>
+#include <QMetaType>
+#include <QDataStream>
 
 class WindowData
 {
@@ -54,14 +54,14 @@ public:
     inline void operator=(const WindowData &wd) { this->data = wd.data; this->fg = wd.fg; this->bg = wd.bg; }
     inline bool operator==(const WindowData &wd) const { return (this->data == wd.data && this->fg == wd.fg && this->bg == wd.bg); }
     inline bool operator!=(const WindowData &wd) const { return !operator==(wd); }
-    static void set(const WId id, WindowData *wd);
-    static WindowData *get(const WId id);
 };
 
 static int _n = 0;
-class Q_DECL_EXPORT XHandler : public QObject
+class QPixmap;
+class QPoint;
+class Q_DECL_EXPORT XHandler /*: public QObject*/
 {
-    Q_OBJECT
+//    Q_OBJECT
 public:
     enum Value { _NET_WORKAREA = 0,
                  _NET_CURRENT_DESKTOP,
@@ -93,7 +93,8 @@ public:
         _NET_WM_MOVERESIZE_CANCEL            =11   /* cancel operation */
     };
     typedef unsigned int TypeSize;
-    template<typename T> static void setXProperty(const WId w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
+    typedef unsigned long XWindow;
+    template<typename T> static void setXProperty(const XWindow w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
         //reminder to self, the realByteSize is dependent on the type submitten to this method, no magic involved
         const TypeSize byteSize(size/8), realByteSize(sizeof(T));
@@ -102,32 +103,32 @@ public:
 
         changeProperty(w, v, size, reinterpret_cast<unsigned char *>(d), n);
     }
-    template<typename T> static T *getXProperty(const WId w, const Value v, int &n = _n, unsigned long offset = 0L, unsigned long length = 0xffffffff)
+    template<typename T> static T *getXProperty(const XWindow w, const Value v, int &n = _n, unsigned long offset = 0L, unsigned long length = 0xffffffff)
     {
         return reinterpret_cast<T *>(fetchProperty(w, v, n, offset, length));
     }
     static unsigned long xAtom(Value v);
     static void freeData(void *data);
-    static void deleteXProperty(const WId w, const Value v);
-    static void mwRes(const QPoint &globalPoint, const WId &win, bool resize = false);
+    static void deleteXProperty(const XWindow w, const Value v);
+    static void mwRes(const QPoint &globalPoint, const XWindow &win, bool resize = false);
     static bool compositingActive();
     static float opacity();
-    static QPixmap x11Pix(const QPixmap &pix, Qt::HANDLE &handle, const QWidget *win = 0);
+    static QPixmap x11Pix(const QPixmap &pix, XWindow &handle, const XWindow winId = 0);
     static QPixmap x11Pix(const QPixmap &pix);
     static void freePix(QPixmap pix);
-    static void freePix(const Qt::HANDLE handle);
-    static void updateDeco(const WId w);
-    static QPixmap emptyX11Pix(const QSize &sz, const WId w);
+    static void freePix(const XWindow handle);
+    static void updateDeco(const XWindow w);
+    static QPixmap emptyX11Pix(const QSize &sz, const XWindow w);
     static XHandler *instance();
     static QPoint strutTopLeft();
-    static void getDecoBorders(int &left, int &right, int &top, int &bottom, const WId id);
+    static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
 
-    XHandler(QObject *parent = 0);
+    XHandler();
     ~XHandler();
 
 protected:
-    static void changeProperty(const WId w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
-    static unsigned char *fetchProperty(const WId w, const Value v, int &n, unsigned long offset, unsigned long length);
+    static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
+    static unsigned char *fetchProperty(const XWindow w, const Value v, int &n, unsigned long offset, unsigned long length);
 
 private:
     static XHandler s_instance;

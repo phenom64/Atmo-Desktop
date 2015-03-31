@@ -10,8 +10,6 @@
 #include <QMainWindow>
 #include <QTabBar>
 #include <QToolBar>
-#include <QDBusMessage>
-#include <QDBusConnection>
 #include <QEvent>
 #include <QLayout>
 #include <QStyle>
@@ -784,11 +782,13 @@ Window::eventFilter(QObject *o, QEvent *e)
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
                 p.fillRect(w->rect(), bgColor);
             }
+#if QT_VERSION < 0x050000
             else if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
             {
                 p.drawTiledPixmap(w->rect(), QPixmap::fromX11Pixmap(*bgPix), QPoint(0, addV?*addV:0));
                 XHandler::freeData(bgPix);
             }
+#endif
             if (!w->isModal())
                 Render::shapeCorners(&p, sides);
             p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
@@ -925,6 +925,7 @@ Window::eventFilter(QObject *o, QEvent *e)
 void
 Window::updateDecoBg(QWidget *w)
 {
+#if QT_VERSION < 0x050000
     QSize sz(w->size());
     if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
     {
@@ -947,6 +948,7 @@ Window::updateDecoBg(QWidget *w)
         XHandler::freePix(*bgPx);
         XHandler::freeData(bgPx); //superfluous?
     }
+#endif
 }
 
 bool
@@ -975,7 +977,9 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     }
     if (unsigned long *unoBg = XHandler::getXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix))
     {
+#if QT_VERSION < 0x050000
         p->drawTiledPixmap(r, QPixmap::fromX11Pixmap(*unoBg), offset);
+#endif
         XHandler::freeData(unoBg);
         if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             ScrollWatcher::drawContBg(p, win, r, offset);
@@ -1214,7 +1218,7 @@ Window::updateWindowData(qulonglong window)
         if (x11pixmap)
             handle = *x11pixmap;
 
-        XHandler::x11Pix(unoBgPix(win, height), handle, win);
+        XHandler::x11Pix(unoBgPix(win, height), handle, win->winId());
 
         if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
             XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, &handle);
@@ -1583,8 +1587,10 @@ static QPixmap pix[8];
 
 static void clearPix()
 {
+#if QT_VERSION < 0x050000
     for (int i = 0; i < 8; ++i)
         XHandler::freePix(pix[i].handle());
+#endif
     s_isInit = false;
 }
 
@@ -1609,7 +1615,7 @@ Balloon::genPixmaps()
 {
     if (s_isInit)
         clearPix();
-
+#if QT_VERSION < 0x050000
     QPixmap px(size()+QSize(s_padding*2, s_padding*2));
     px.fill(Qt::transparent);
     static const int m(8);
@@ -1631,11 +1637,13 @@ Balloon::genPixmaps()
     pix[6] = XHandler::x11Pix(px.copy(0, s_padding, s_padding, px.height()-s_padding*2)); //left
     pix[7] = XHandler::x11Pix(px.copy(0, 0, s_padding, s_padding)); //topleft
     s_isInit = true;
+#endif
 }
 
 void
 Balloon::updateShadow()
 {
+#if QT_VERSION < 0x050000
     unsigned long data[12];
     genPixmaps();
     for (int i = 0; i < 8; ++i)
@@ -1644,6 +1652,7 @@ Balloon::updateShadow()
         data[i] = s_padding;
 
     XHandler::setXProperty<unsigned long>(winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
+#endif
 }
 
 void

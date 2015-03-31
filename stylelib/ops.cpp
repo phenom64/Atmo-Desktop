@@ -3,8 +3,6 @@
 #include <QMainWindow>
 #include <QToolBar>
 #include <QDebug>
-#include <QDBusConnection>
-#include <QDBusMessage>
 #include <QColor>
 #include <QMap>
 #include <QPainter>

@@ -28,12 +28,15 @@
 
 
 QStringList
-ProjectStylePlugin::keys() const { return QStringList() << "StyleProject"; }
+ProjectStylePlugin::keys() const
+{
+    return QStringList() << "StyleProject";
+}
 
 QStyle
 *ProjectStylePlugin::create(const QString &key)
 {
-    if (!key.compare("styleproject", Qt::CaseInsensitive))
+    if (key.toLower() == "styleproject")
         return new StyleProject();
     return 0;
 }
@@ -48,7 +51,6 @@ StyleProject::StyleProject() : QCommonStyle()
     init();
     assignMethods();
     Settings::read();
-    XHandler::strutTopLeft();
 //    Render::generateData();
 }
 

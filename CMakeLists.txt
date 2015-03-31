@@ -1,58 +1,64 @@
-project(styleproject)
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.11)
+option(QT5BUILD "build for qt5" OFF)
 
-set(QT_USE_QTDBUS TRUE)
+set(PROJECT styleproject)
+if (QT5BUILD)
+    set(PROJECT styleproject_qt5)
+endif ()
 
-find_package(Qt4 REQUIRED)
-include(${QT_USE_FILE})
-find_package(KDE4 REQUIRED)
+project(${PROJECT})
+
 find_package(X11 REQUIRED)
 
-include(KDE4Defaults)
-include(MacroLibrary)
-add_definitions(${KDE4_DEFINITIONS})
-include_directories(${KDE4_INCLUDES})
+set(QT_USE_QTDBUS ON)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_definitions(${QT_DEFINITIONS} ${QT_QTDBUS_DEFINITIONS})
+if (QT5BUILD)
+    find_package(Qt5Widgets REQUIRED)
+    find_package(Qt5Gui REQUIRED)
+    find_package(Qt5Widgets REQUIRED)
+    find_package(Qt5X11Extras)
+    find_package(Qt5DBus)
+    include_directories(${Qt5Widgets_INCLUDE_DIRS} ${Qt5X11Extras_INCLUDE_DIRS})
+    add_definitions(${Qt5Widgets_DEFINITIONS})
+else (QT5BUILD)
+    find_package(Qt4 REQUIRED)
+    find_package(KDE4 REQUIRED)
+    include(${QT_USE_FILE})
+    add_definitions(${KDE4_DEFINITIONS})
+    include_directories(${KDE4_INCLUDES})
+    include(KDE4Defaults)
+    include(MacroLibrary)
+    add_definitions(${QT_DEFINITIONS} ${QT_QTDBUS_DEFINITIONS})
+endif (QT5BUILD)
+
 set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 add_subdirectory(config)
 add_subdirectory(stylelib)
 
-set(SRCS
-    buttons.cpp
-    events.cpp
-    init.cpp
-    inputs.cpp
-    items.cpp
-    macmenu.cpp
-    overlay.cpp
-    panels.cpp
-    pixelmetric.cpp
-    polish.cpp
-    sliders.cpp
-    styleproject.cpp
-    tabs.cpp
-    stylehint.cpp
-    contentssize.cpp
-    subrects.cpp)
-    
-set(HDRS
-    macmenu-dbus.h
-    macmenu.h
-    overlay.h
-    styleproject.h)
-    
-set(MOC_HDRS
-    macmenu-dbus.h
-    macmenu.h
-    overlay.h
-    styleproject.h)
+file(GLOB SRCS *.cpp)
+file(GLOB HDRS *.h)    
+set(MOC_HDRS macmenu-dbus.h macmenu.h overlay.h styleproject.h)
 
-qt4_wrap_cpp(MOC_SRCS ${MOC_HDRS})
-add_library(styleproject SHARED ${SRCS} ${HDRS} ${MOC_SRCS})
-target_link_libraries(styleproject stylelib ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
+if (QT5BUILD)
+    qt5_wrap_cpp(MOC_SRCS ${MOC_HDRS})
+    set_property(SOURCE moc_styleproject.cpp APPEND PROPERTY OBJECT_DEPEND ${CMAKE_CURRENT_SOURCE_DIR}/styleproject.json)
+else (QT5BUILD)
+    qt4_wrap_cpp(MOC_SRCS ${MOC_HDRS})
+endif (QT5BUILD)
 
-install(TARGETS styleproject LIBRARY DESTINATION ${QT_PLUGINS_DIR}/styles)
+add_library(${PROJECT} SHARED ${SRCS} ${HDRS} ${MOC_SRCS})
 
-install(FILES styleproject.themerc DESTINATION ${DATA_INSTALL_DIR}/kstyle/themes)
-add_subdirectory(kwin)
+if (QT5BUILD)
+    target_link_libraries(${PROJECT} stylelib_qt5 styleproject_config_lib_qt5 Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus Qt5X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
+    get_target_property(QMAKE Qt5::qmake IMPORTED_LOCATION)
+    exec_program(${QMAKE} ARGS "-query QT_INSTALL_PLUGINS" OUTPUT_VARIABLE PLUGINPATH)
+    install(TARGETS ${PROJECT} LIBRARY DESTINATION ${PLUGINPATH}/styles)
+else (QT5BUILD)
+    target_link_libraries(${PROJECT} stylelib styleproject_config_lib ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
+    install(TARGETS ${PROJECT} LIBRARY DESTINATION ${QT_PLUGINS_DIR}/styles)
+    install(FILES styleproject.themerc DESTINATION ${DATA_INSTALL_DIR}/kstyle/themes)
+    add_subdirectory(kwin)
+endif (QT5BUILD)

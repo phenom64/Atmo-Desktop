@@ -18,6 +18,8 @@
 
 #ifndef MAC_MENU_ADAPTOR_H
 #define MAC_MENU_ADAPTOR_H
+#include <QtGlobal>
+#if QT_VERSION < 0x050000
 
 #include <QtDBus/QDBusAbstractAdaptor>
 #include "macmenu.h"
@@ -47,5 +49,5 @@ public slots:
    Q_NOREPLY void raise(qlonglong key) { mm->raise(key); }
 };
 } // namespace
-
+#endif //QT_VERSION
 #endif //MAC_MENU_ADAPTOR_H
