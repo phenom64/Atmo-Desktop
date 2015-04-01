@@ -5,9 +5,8 @@
 
 int main(int argc, char *argv[])
 {
-    return 0;
-//    QApplication app(argc, argv);
-//    StyleConfig sc;
-//    sc.show();
-//    return app.exec();
+    QApplication app(argc, argv);
+    StyleConfig sc;
+    sc.show();
+    return app.exec();
 }

@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.8.11)
 option(QT5BUILD "build for qt5" OFF)
 
-set(PROJECT styleproject)
 if (QT5BUILD)
     set(PROJECT styleproject_qt5)
-endif ()
+else (QT5BUILD)
+    set(PROJECT styleproject)
+endif (QT5BUILD)
 
 project(${PROJECT})
 
@@ -34,13 +35,19 @@ else (QT5BUILD)
     add_definitions(${QT_DEFINITIONS} ${QT_QTDBUS_DEFINITIONS})
 endif (QT5BUILD)
 
-set(LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 add_subdirectory(config)
-add_subdirectory(stylelib)
 
+#souce
 file(GLOB SRCS *.cpp)
 file(GLOB HDRS *.h)    
-set(MOC_HDRS macmenu-dbus.h macmenu.h overlay.h styleproject.h)
+
+#stylelib source...
+file(GLOB_RECURSE libSRCS stylelib/*.cpp)
+set(SRCS ${SRCS} ${libSRCS})
+file(GLOB_RECURSE libHDRS stylelib/*.h)
+set(HDRS ${HDRS} ${libHDRS})
+
+set(MOC_HDRS stylelib/handlers.h stylelib/animhandler.h stylelib/progresshandler.h stylelib/ops.h stylelib/widgets.h macmenu-dbus.h macmenu.h overlay.h styleproject.h)
 
 if (QT5BUILD)
     qt5_wrap_cpp(MOC_SRCS ${MOC_HDRS})
@@ -52,12 +59,12 @@ endif (QT5BUILD)
 add_library(${PROJECT} SHARED ${SRCS} ${HDRS} ${MOC_SRCS})
 
 if (QT5BUILD)
-    target_link_libraries(${PROJECT} stylelib_qt5 styleproject_config_lib_qt5 Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus Qt5X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
+    target_link_libraries(${PROJECT} styleproject_config_lib_qt5 Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus Qt5X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
     get_target_property(QMAKE Qt5::qmake IMPORTED_LOCATION)
     exec_program(${QMAKE} ARGS "-query QT_INSTALL_PLUGINS" OUTPUT_VARIABLE PLUGINPATH)
     install(TARGETS ${PROJECT} LIBRARY DESTINATION ${PLUGINPATH}/styles)
 else (QT5BUILD)
-    target_link_libraries(${PROJECT} stylelib styleproject_config_lib ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
+    target_link_libraries(${PROJECT} styleproject_config_lib ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
     install(TARGETS ${PROJECT} LIBRARY DESTINATION ${QT_PLUGINS_DIR}/styles)
     install(FILES styleproject.themerc DESTINATION ${DATA_INSTALL_DIR}/kstyle/themes)
     add_subdirectory(kwin)

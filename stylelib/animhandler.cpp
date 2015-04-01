@@ -1,5 +1,4 @@
 #include "animhandler.h"
-#include "../styleproject.h"
 #include "ops.h"
 #include <QWidget>
 #include <QEvent>
@@ -90,7 +89,7 @@ Basic::animate()
         }
         bool mouse(w->underMouse());
         if (mouse)
-            if (castObj(QAbstractSlider *, slider, w))
+            if (QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(w))
             {
                 QStyleOptionSlider sopt;
                 sopt.initFrom(slider);

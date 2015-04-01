@@ -59,9 +59,8 @@ public:
 static int _n = 0;
 class QPixmap;
 class QPoint;
-class Q_DECL_EXPORT XHandler /*: public QObject*/
+class Q_DECL_EXPORT XHandler
 {
-//    Q_OBJECT
 public:
     enum Value { _NET_WORKAREA = 0,
                  _NET_CURRENT_DESKTOP,
@@ -118,21 +117,12 @@ public:
     static void freePix(QPixmap pix);
     static void freePix(const XWindow handle);
     static void updateDeco(const XWindow w);
-    static QPixmap emptyX11Pix(const QSize &sz, const XWindow w);
-    static XHandler *instance();
     static QPoint strutTopLeft();
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
-
-    XHandler();
-    ~XHandler();
 
 protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const XWindow w, const Value v, int &n, unsigned long offset, unsigned long length);
-
-private:
-    static XHandler s_instance;
-//    QTimer *m_timer;
 };
 
 #endif //XHANDLER_H

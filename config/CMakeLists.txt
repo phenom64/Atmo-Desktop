@@ -25,27 +25,24 @@ endif (QT5BUILD)
 
 # standalone application to launch from terminal w/o going to systemsettings
 project(${PRO_NAME})
-add_executable(${PRO_NAME} main.cpp ${configSRCS} ${MOC_SRCS} ${UI_HDRS})
+add_executable(${PRO_NAME} ${configSRCS} ${MOC_SRCS})
 if (QT5BUILD)
     target_link_libraries(${PRO_NAME} Qt5::Core Qt5::Gui Qt5::Widgets)
-    get_target_property(QT_QMAKE_EXECUTABLE Qt5::qmake IMPORTED_LOCATION)
-    exec_program(${QT_QMAKE_EXECUTABLE} ARGS "-query QT_INSTALL_BINS" OUTPUT_VARIABLE INSTALLPATH)
-    install(TARGETS ${PRO_NAME} DESTINATION ${INSTALLPATH})
 else (QT5BUILD)
     target_link_libraries(${PRO_NAME} ${QT_LIBRARIES})
-    install(TARGETS ${PRO_NAME} DESTINATION ${QT_BINARY_DIR})
 endif (QT5BUILD)
+install(TARGETS ${PRO_NAME} DESTINATION bin)
 
 # shared library
 project(${LIB_NAME})
-add_library(${LIB_NAME} SHARED ${configSRCS} ${MOC_SRCS} ${UI_HDRS})
+add_library(${LIB_NAME} SHARED ${configSRCS} ${MOC_SRCS})
 
 if (QT5BUILD)
     target_link_libraries(${LIB_NAME} Qt5::Core Qt5::Gui Qt5::Widgets)
 else (QT5BUILD)
     target_link_libraries(${LIB_NAME} ${QT_LIBRARIES})
 endif (QT5BUILD)
-install(TARGETS ${LIB_NAME} LIBRARY DESTINATION ${LIBRARY_DIR})
+install(TARGETS ${LIB_NAME} LIBRARY DESTINATION lib)
 
 # the systemsettings module in kde
 if (NOT QT5BUILD)

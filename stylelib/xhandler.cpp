@@ -32,25 +32,6 @@ XHandler::xAtom(Value v)
     return atom[v];
 }
 
-XHandler XHandler::s_instance;
-
-XHandler
-*XHandler::instance()
-{
-    return &s_instance;
-}
-
-XHandler::XHandler()
-//      m_timer(new QTimer(this))
-{
-//    connect(m_timer, SIGNAL(timeout()), this, SLOT(clearX11PixmapsSlot()));
-}
-
-XHandler::~XHandler()
-{
-
-}
-
 void
 XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems)
 {
@@ -160,17 +141,6 @@ XHandler::x11Pix(const QPixmap &pix, XWindow &handle, const XWindow winId)
     pt.end();
     handle = x;
     return p;
-#else
-    return QPixmap();
-#endif
-}
-
-QPixmap
-XHandler::emptyX11Pix(const QSize &sz, const XWindow w)
-{
-#if QT_VERSION < 0x050000
-    const Pixmap p = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), sz.width(), sz.height(), 32);
-    return QPixmap::fromX11Pixmap(p, QPixmap::ExplicitlyShared);
 #else
     return QPixmap();
 #endif

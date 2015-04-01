@@ -2,6 +2,7 @@
 #include "settings.h"
 #include <QSettings>
 
+#if QT_VERSION < 0x050000
 extern "C"
 {
     Q_DECL_EXPORT QWidget* allocate_kstyle_config(QWidget* parent)
@@ -9,6 +10,7 @@ extern "C"
         return new StyleConfig(parent);
     }
 }
+#endif
 
 StyleConfig::StyleConfig(QWidget *parent) : QWidget(parent)
 {
