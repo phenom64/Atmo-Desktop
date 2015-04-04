@@ -139,7 +139,7 @@ StyleProject::drawMenu(const QStyleOption *option, QPainter *painter, const QWid
 //    painter->setPen(Qt::NoPen);
 //    painter->setBrush(bgc);
     Render::Sides sides(Render::All);
-    if (widget && widget->mapToGlobal(QPoint()).y() == XHandler::strutTopLeft().y())
+    if (widget && widget->property("DSP_SHAPETOP").toBool())
         sides &= ~Render::Top;
     Render::renderMask(option->rect, painter, bgc, 4, sides);
 //    painter->drawRoundedRect(option->rect, 4, 4);

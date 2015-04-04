@@ -29,8 +29,6 @@
 #include <QtDebug>
 #include <QFileInfo>
 
-#if QT_VERSION < 0x050000
-
 using namespace Bespin;
 
 static MacMenu *instance = 0;
@@ -539,4 +537,3 @@ MacMenu::eventFilter(QObject *o, QEvent *ev)
 
 #undef MSG
 #undef XBAR_SEND
-#endif //QT_VERSION

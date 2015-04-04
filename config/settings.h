@@ -59,7 +59,6 @@
 #define UNOCONTBLUR         "uno.contentblurradius"
 
 #define MENUICONS           "menues.icons"
-#define MENUGLOBSTRUT       "menues.globalmenustruts"
 
 #define SLIDERSIZE          "sliders.size"
 #define SLIDERDOT           "sliders.dot"
@@ -157,7 +156,6 @@
 #define DEFUNOCONTBLUR          2
 
 #define DEFMENUICONS            false
-#define DEFMENUGLOBSTRUT        false
 
 #define DEFSLIDERSIZE           16
 #define DEFSLIDERDOT            true
@@ -236,7 +234,6 @@
 #define READUNOCONTBLUR         UNOCONTBLUR, DEFUNOCONTBLUR
 
 #define READMENUICONS           MENUICONS, DEFMENUICONS
-#define READMENUGLOBSTRUT       MENUGLOBSTRUT, DEFMENUGLOBSTRUT
 
 #define READSLIDERSIZE          SLIDERSIZE, DEFSLIDERSIZE
 #define READSLIDERDOT           SLIDERDOT, DEFSLIDERDOT
@@ -352,7 +349,7 @@ public:
     } windows;
     struct menues
     {
-        bool icons, globStrut;
+        bool icons;
     } menues;
     struct views
     {

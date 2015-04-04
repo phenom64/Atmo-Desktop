@@ -117,7 +117,6 @@ public:
     static void freePix(QPixmap pix);
     static void freePix(const XWindow handle);
     static void updateDeco(const XWindow w);
-    static QPoint strutTopLeft();
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
 
 protected:

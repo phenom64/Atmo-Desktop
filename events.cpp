@@ -194,29 +194,6 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
         w->setMouseTracking(true);
         w->setAttribute(Qt::WA_Hover);
-        if (!dConf.menues.globStrut || !w->parentWidget())
-            return false;
-        QMenuBar *bar = qobject_cast<QMenuBar *>(w->parentWidget());
-        if (!bar) //damnit kate, what the f**k are you doing...
-        {
-            if (QMenuBar *tmpBar = w->parentWidget()->window()->findChild<QMenuBar *>())
-            {
-                const QList<QAction *> actions = tmpBar->actions();
-                for (int i = 0; i < actions.count(); ++i)
-                   if (actions.at(i)->menu() == w)
-                   {
-                       bar = tmpBar;
-                       break;
-                   }
-            }
-        }
-        if (bar)
-        {
-            QPoint gp(w->mapToGlobal(QPoint()));
-            QPoint strutp(XHandler::strutTopLeft());
-            if (gp.y() < strutp.y())
-                w->move(gp.x(), strutp.y());
-        }
         return false;
     }
     else if (qobject_cast<QTabBar *>(w))

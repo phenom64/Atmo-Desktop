@@ -314,7 +314,6 @@ Settings::read()
     conf.windows.hor = conf.m_settings->value(READWINHOR).toBool();
     //menues
     conf.menues.icons = conf.m_settings->value(READMENUICONS).toBool();
-    conf.menues.globStrut = conf.m_settings->value(READMENUGLOBSTRUT).toBool();
     //sliders
     conf.sliders.size = conf.m_settings->value(READSLIDERSIZE).toInt();
     conf.sliders.dot = conf.m_settings->value(READSLIDERDOT).toBool();

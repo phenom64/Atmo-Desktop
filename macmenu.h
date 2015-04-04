@@ -19,7 +19,6 @@
 #ifndef MAC_MENU_H
 #define MAC_MENU_H
 
-#if QT_VERSION < 0x050000
 #include <QMap>
 #include <QObject>
 #include <QStringList>
@@ -82,5 +81,4 @@ private slots:
 };
 
 } // namespace
-#endif //QT_VERSION
 #endif //MAC_MENU_H

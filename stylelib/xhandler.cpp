@@ -192,24 +192,6 @@ XHandler::updateDeco(const XWindow w)
     XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureNotifyMask, &xce);
 }
 
-QPoint
-XHandler::strutTopLeft()
-{
-    int n(0);
-    unsigned int *desktop = getXProperty<unsigned int>(QX11Info::appRootWindow(), _NET_CURRENT_DESKTOP);
-    if (!desktop)
-        return QPoint();
-    const unsigned char d(*desktop);
-    freeData(desktop);
-    unsigned long *struts = getXProperty<unsigned long>(QX11Info::appRootWindow(), _NET_WORKAREA, n, d*4);
-    if (!struts)
-        return QPoint();
-    freeData(struts);
-    if (n < 2)
-        return QPoint();
-    return QPoint(struts[0], struts[1]);
-}
-
 void
 XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id)
 {
