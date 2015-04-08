@@ -84,8 +84,7 @@ XHandler::mwRes(const QPoint &globalPoint, const XWindow &win, bool resize)
     xev.xclient.data.l[3] = Button1;
     xev.xclient.data.l[4] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False,
-               SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 }
 
 bool
@@ -115,67 +114,64 @@ XHandler::opacity()
 //        return 1.0f;
 }
 
-QPixmap
-XHandler::x11Pix(const QPixmap &pix, XWindow &handle, const XWindow winId)
+unsigned long
+XHandler::x11Pixmap(const QImage &qtImg)
 {
-#if QT_VERSION < 0x050000
-    if (pix.isNull())
-    {
-        handle = 0;
-        return pix;
-    }
-
-    if (handle && pix.size() != QPixmap::fromX11Pixmap(handle).size())
-    {
-        if (winId)
-            deleteXProperty(winId, DecoBgPix);
-        freePix(handle);
-        handle = 0;
-    }
-
-    const Pixmap x = handle?handle:XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
-    QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
-    QPainter pt(&p);
-    pt.setCompositionMode(QPainter::CompositionMode_Source);
-    pt.drawPixmap(p.rect(), pix);
-    pt.end();
-    handle = x;
-    return p;
+// Stolen from virtuality
+    XImage ximage;
+    ximage.width            = qtImg.width();
+    ximage.height           = qtImg.height();
+    ximage.xoffset          = 0;
+    ximage.format           = ZPixmap;
+    // This is a hack to prevent the image data from detaching
+    ximage.data             = (char*) const_cast<const QImage*>(&qtImg)->bits();
+#if Q_BYTE_ORDER == Q_BIG_ENDIAN
+    ximage.byte_order       = MSBFirst;
 #else
-    return QPixmap();
+    ximage.byte_order       = LSBFirst;
 #endif
+    ximage.bitmap_unit      = 32;
+    ximage.bitmap_bit_order = ximage.byte_order;
+    ximage.bitmap_pad       = 32;
+    ximage.depth            = 32;
+    ximage.bytes_per_line   = qtImg.bytesPerLine();
+    ximage.bits_per_pixel   = 32;
+    ximage.red_mask         = 0x00ff0000;
+    ximage.green_mask       = 0x0000ff00;
+    ximage.blue_mask        = 0x000000ff;
+    ximage.obdata           = 0;
+    XInitImage(&ximage);
+    Pixmap pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), qtImg.width(), qtImg.height(), 32);
+    GC gc = XCreateGC(QX11Info::display(), pix, 0, 0);
+    XPutImage(QX11Info::display(), pix, gc, &ximage, 0, 0, 0, 0, qtImg.width(), qtImg.height());
+    XFreeGC(QX11Info::display(), gc);
+    XFlush(QX11Info::display());
+    return pix;
 }
 
-QPixmap
-XHandler::x11Pix(const QPixmap &pix)
+QImage
+XHandler::fromX11Pix(unsigned long x11Pix, const QSize &sz)
 {
-#if QT_VERSION < 0x050000
-    const Pixmap x = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), pix.width(), pix.height(), 32);
-    QPixmap p = QPixmap::fromX11Pixmap(x, QPixmap::ExplicitlyShared);
-    QPainter pt(&p);
-    pt.setCompositionMode(QPainter::CompositionMode_Source);
-    pt.drawPixmap(p.rect(), pix);
-    pt.end();
-    return p;
-#else
-    return QPixmap();
-#endif
+    if (XImage *xi = XGetImage(QX11Info::display(), x11Pix, 0, 0, sz.width(), sz.height(), AllPlanes, ZPixmap))
+    {
+        QImage img(sz.width(), sz.height(), QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        unsigned int size(sz.width() * sz.height());
+        QRgb *rgb = reinterpret_cast<QRgb *>(xi->data);
+        QRgb *newRgb = reinterpret_cast<QRgb *>(img.bits());
+        for (int i = 0; i < size; ++i)
+            newRgb[i] = rgb[i];
+        freeData(xi->data);
+        freeData(xi);
+        return img;
+    }
+    return QImage();
 }
 
 void
-XHandler::freePix(QPixmap pix)
+XHandler::freePix(const XPixmap pixmap)
 {
-#if QT_VERSION < 0x050000
-    freePix(pix.handle());
-#endif
-}
-
-void
-XHandler::freePix(const XWindow handle)
-{
-#if QT_VERSION < 0x050000
-    XFreePixmap(QX11Info::display(), handle);
-#endif
+    XFreePixmap(QX11Info::display(), pixmap);
 }
 
 void

@@ -1,6 +1,6 @@
 /*
- *   Bespin style for Qt4
- *   Copyright 2007-2012 by Thomas Lübking <thomas.luebking@gmail.com>
+ *   Virtuality Style for Qt4 and Qt5
+ *   Copyright 2009-2014 by Thomas Lübking <thomas.luebking@gmail.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Library General Public License version 2
@@ -18,12 +18,11 @@
 
 #ifndef MAC_MENU_ADAPTOR_H
 #define MAC_MENU_ADAPTOR_H
-#include <QtGlobal>
 
 #include <QtDBus/QDBusAbstractAdaptor>
 #include "macmenu.h"
 
-namespace Bespin
+namespace BE
 {
 
 class MacMenuAdaptor : public QDBusAbstractAdaptor
@@ -48,4 +47,5 @@ public slots:
    Q_NOREPLY void raise(qlonglong key) { mm->raise(key); }
 };
 } // namespace
+
 #endif //MAC_MENU_ADAPTOR_H

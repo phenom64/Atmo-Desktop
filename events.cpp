@@ -16,6 +16,7 @@
 #include <QTimer>
 #include <QStatusBar>
 #include <QPushButton>
+#include <QDebug>
 
 #include "styleproject.h"
 #include "stylelib/xhandler.h"
@@ -71,6 +72,13 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
             static_cast<QLabel *>(w)->setAlignment(Qt::AlignCenter);
         break;
     }
+#if 0
+    case QEvent::HoverEnter:
+    {
+        qDebug() << w << w->parentWidget();
+        break;
+    }
+#endif
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);

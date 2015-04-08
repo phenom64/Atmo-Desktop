@@ -1,6 +1,6 @@
 /*
- *   Bespin style for Qt4
- *   Copyright 2007-2012 by Thomas Lübking <thomas.luebking@gmail.com>
+ *   Virtuality Style for Qt4 and Qt5
+ *   Copyright 2009-2014 by Thomas Lübking <thomas.luebking@gmail.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Library General Public License version 2
@@ -22,14 +22,14 @@
 #include <QMap>
 #include <QObject>
 #include <QStringList>
-#include <QWeakPointer>
+#include <QPointer>
 
 class QMenuBar;
 class QAction;
 class QActionEvent;
 
 
-namespace Bespin
+namespace BE
 {
 
 class FullscreenWatcher : public QObject
@@ -52,7 +52,7 @@ public:
     void hover(qlonglong key, int idx,  int x, int y);
     void popDown(qlonglong key);
     void raise(qlonglong key);
-    typedef QWeakPointer<QMenuBar> QMenuBar_p;
+    typedef QPointer<QMenuBar> QMenuBar_p;
 public slots:
     void activate();
     void deactivate();
@@ -81,4 +81,5 @@ private slots:
 };
 
 } // namespace
+
 #endif //MAC_MENU_H

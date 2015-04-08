@@ -925,30 +925,26 @@ Window::eventFilter(QObject *o, QEvent *e)
 void
 Window::updateDecoBg(QWidget *w)
 {
-#if QT_VERSION < 0x050000
     QSize sz(w->size());
     if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
     {
         sz.rheight() += *th;
         XHandler::freeData(th);
     }
-    QPixmap pix(bgPix(sz, w->palette().color(QPalette::Window)));
-    Qt::HANDLE h(0);
-    XHandler::x11Pix(pix, h);
 
-    unsigned long *bgPx = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix);
-
-    if (h)
-        XHandler::setXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix, XHandler::Long, &h);
-    else
-        XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
-
-    if (bgPx)
+    if (SharedBgPixData *bgPxData = XHandler::getXProperty<SharedBgPixData>(w->winId(), XHandler::DecoBgPix))
     {
-        XHandler::freePix(*bgPx);
-        XHandler::freeData(bgPx); //superfluous?
+        XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
+        XHandler::freePix(bgPxData->bgPix);
+        XHandler::freeData(bgPxData);
     }
-#endif
+
+    QImage img(windowBg(sz, w->palette().color(QPalette::Window)));
+    SharedBgPixData data;
+    data.bgPix = XHandler::x11Pixmap(img);
+    data.h = img.height();
+    data.w = img.width();
+    XHandler::setXProperty<SharedBgPixData>(w->winId(), XHandler::DecoBgPix, XHandler::Short, &data);
 }
 
 bool
@@ -975,12 +971,13 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
         offset.ry()+=*titleHeight;
         XHandler::freeData(titleHeight);
     }
-    if (unsigned long *unoBg = XHandler::getXProperty<unsigned long>(win->winId(), XHandler::DecoBgPix))
+    if (SharedBgPixData *x11Data = XHandler::getXProperty<SharedBgPixData>(win->winId(), XHandler::DecoBgPix))
     {
-#if QT_VERSION < 0x050000
-        p->drawTiledPixmap(r, QPixmap::fromX11Pixmap(*unoBg), offset);
-#endif
-        XHandler::freeData(unoBg);
+        QImage unoBg = XHandler::fromX11Pix(x11Data->bgPix, QSize(x11Data->w, x11Data->h));
+        QPoint bo(p->brushOrigin());
+        p->setBrushOrigin(-offset);
+        p->fillRect(r, unoBg);
+        p->setBrushOrigin(bo);
         if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             ScrollWatcher::drawContBg(p, win, r, offset);
 
@@ -1004,6 +1001,7 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
                 p->drawPixmap(pix.rect().translated(-offset), pix);
             }
         }
+        XHandler::freeData(x11Data);
         return true;
     }
     return false;
@@ -1076,8 +1074,8 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     return hd[All];
 }
 
-QPixmap
-Window::unoBgPix(QWidget *win, int h)
+QImage
+Window::unoBg(QWidget *win, int h)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
@@ -1090,10 +1088,10 @@ Window::unoBgPix(QWidget *win, int h)
 
     const unsigned int n(dConf.uno.noise);
     const int w(hor?win->width():(n?Render::noise().width():1));
-    QPixmap p(w, h);
-    p.fill(Qt::transparent);
-    QPainter pt(&p);
-    pt.fillRect(p.rect(), lg);
+    QImage img(w, h, QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter pt(&img);
+    pt.fillRect(img.rect(), lg);
     if (n)
     {
 //        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
@@ -1105,41 +1103,41 @@ Window::unoBgPix(QWidget *win, int h)
         ptt.fillRect(noise.rect(), QColor(0, 0, 0, n*2.55f));
         ptt.end();
         pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-        pt.drawTiledPixmap(p.rect(), noise);
+        pt.drawTiledPixmap(img.rect(), noise);
     }
     pt.end();
 
     if (XHandler::opacity() < 1.0f)
     {
-        QPixmap copy(p);
-        p.fill(Qt::transparent);
-        pt.begin(&p);
-        pt.drawPixmap(p.rect(), copy);
+        QImage copy(img);
+        img.fill(Qt::transparent);
+        pt.begin(&img);
+        pt.drawImage(img.rect(), copy);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        pt.fillRect(p.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
+        pt.fillRect(img.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
         pt.end();
     }
-    return p;
+    return img;
 }
 
-QPixmap
-Window::bgPix(const QSize &sz, const QColor &bgColor)
+QImage
+Window::windowBg(const QSize &sz, const QColor &bgColor)
 {
     int w = dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.width() : dConf.windows.noise?Render::noise().width() : 1;
     int h = !dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.height() : dConf.windows.noise?Render::noise().height() : 1;
-    QPixmap pix(w, h);
+    QImage img(w, h, QImage::Format_ARGB32);
     if (XHandler::opacity() < 1.0f)
-        pix.fill(Qt::transparent);
+        img.fill(Qt::transparent);
 
-    QPainter pt(&pix);
+    QPainter pt(&img);
     if (!dConf.windows.gradient.isEmpty())
     {
-        QLinearGradient lg(0, 0, dConf.windows.hor*pix.width(), !dConf.windows.hor*pix.height());
+        QLinearGradient lg(0, 0, dConf.windows.hor*img.width(), !dConf.windows.hor*img.height());
         lg.setStops(Settings::gradientStops(dConf.windows.gradient, bgColor));
-        pt.fillRect(pix.rect(), lg);
+        pt.fillRect(img.rect(), lg);
     }
     else
-        pt.fillRect(pix.rect(), bgColor);
+        pt.fillRect(img.rect(), bgColor);
 
     if (dConf.windows.noise)
     {
@@ -1155,17 +1153,17 @@ Window::bgPix(const QSize &sz, const QColor &bgColor)
             p.end();
         }
         pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-        pt.drawTiledPixmap(pix.rect(), noisePix);
+        pt.drawTiledPixmap(img.rect(), noisePix);
     }
 
     if (XHandler::opacity() < 1.0f)
     {
         pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        pt.fillRect(pix.rect(), QColor(0, 0, 0, dConf.opacity*255.0f));
+        pt.fillRect(img.rect(), QColor(0, 0, 0, dConf.opacity*255.0f));
         pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
     pt.end();
-    return pix;
+    return img;
 }
 
 void
@@ -1212,19 +1210,18 @@ Window::updateWindowData(qulonglong window)
     const WId id(win->winId());
     if (dConf.uno.enabled)
     {
-        unsigned long handle(0);
-        unsigned long *x11pixmap = XHandler::getXProperty<unsigned long>(id, XHandler::DecoBgPix);
-
-        if (x11pixmap)
-            handle = *x11pixmap;
-
-        XHandler::x11Pix(unoBgPix(win, height), handle, win->winId());
-
-        if ((handle && !x11pixmap) || (x11pixmap && *x11pixmap != handle))
-            XHandler::setXProperty<unsigned long>(id, XHandler::DecoBgPix, XHandler::Long, &handle);
-
-        if (x11pixmap)
-            XHandler::freeData(x11pixmap);
+        if (SharedBgPixData *x11Data = XHandler::getXProperty<SharedBgPixData>(id, XHandler::DecoBgPix))
+        {
+            XHandler::deleteXProperty(id, XHandler::DecoBgPix);
+            XHandler::freePix(x11Data->bgPix);
+            XHandler::freeData(x11Data);
+        }
+        QImage img(unoBg(win, height));
+        SharedBgPixData x11Data;
+        x11Data.bgPix = XHandler::x11Pixmap(img);
+        x11Data.h = img.height();
+        x11Data.w = img.width();
+        XHandler::setXProperty<SharedBgPixData>(id, XHandler::DecoBgPix, XHandler::Short, &x11Data);
     }
 
     win->repaint();
@@ -1258,7 +1255,7 @@ Drag::eventFilter(QObject *o, QEvent *e)
     if (w->cursor().shape() != Qt::ArrowCursor)
         return false;
     QMouseEvent *me(static_cast<QMouseEvent *>(e));
-    if (!w->rect().contains(me->pos()))
+    if (!w->rect().contains(me->pos()) || me->button() != Qt::LeftButton)
         return false;
     bool cd(canDrag(w));
     if (QTabBar *tabBar = qobject_cast<QTabBar *>(w))
@@ -1583,14 +1580,12 @@ Balloon::Balloon() : QWidget(), m_label(new QLabel(this))
 }
 
 static bool s_isInit(false);
-static QPixmap pix[8];
+static unsigned long pix[8];
 
 static void clearPix()
 {
-#if QT_VERSION < 0x050000
     for (int i = 0; i < 8; ++i)
-        XHandler::freePix(pix[i].handle());
-#endif
+        XHandler::freePix(pix[i]);
     s_isInit = false;
 }
 
@@ -1615,44 +1610,40 @@ Balloon::genPixmaps()
 {
     if (s_isInit)
         clearPix();
-#if QT_VERSION < 0x050000
-    QPixmap px(size()+QSize(s_padding*2, s_padding*2));
-    px.fill(Qt::transparent);
+
+    QImage img(size()+QSize(s_padding*2, s_padding*2), QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
     static const int m(8);
-    const QRect r(px.rect().adjusted(m, m, -m, -m));
-    QPainter p(&px);
-    p.drawImage(px.rect().topLeft(), balloonTipShadow(r.translated(0, 4), 8));
+    const QRect r(img.rect().adjusted(m, m, -m, -m));
+    QPainter p(&img);
+    p.drawImage(img.rect().topLeft(), balloonTipShadow(r.translated(0, 4), 8));
     p.setRenderHint(QPainter::Antialiasing);
     p.setPen(QPen(QColor(255, 255, 255, 255), 2.0f));
     p.setBrush(palette().color(QPalette::ToolTipBase));
     p.drawPath(balloonPath(r));
     p.end();
 
-    pix[0] = XHandler::x11Pix(px.copy(s_padding, 0, px.width()-s_padding*2, s_padding)); //top
-    pix[1] = XHandler::x11Pix(px.copy(px.width()-s_padding, 0, s_padding, s_padding)); //topright
-    pix[2] = XHandler::x11Pix(px.copy(px.width()-s_padding, s_padding, s_padding, px.height()-s_padding*2)); //right
-    pix[3] = XHandler::x11Pix(px.copy(px.width()-s_padding, px.height()-s_padding, s_padding, s_padding)); //bottomright
-    pix[4] = XHandler::x11Pix(px.copy(s_padding, px.height()-s_padding, px.width()-s_padding*2, s_padding)); //bottom
-    pix[5] = XHandler::x11Pix(px.copy(0, px.height()-s_padding, s_padding, s_padding)); //bottomleft
-    pix[6] = XHandler::x11Pix(px.copy(0, s_padding, s_padding, px.height()-s_padding*2)); //left
-    pix[7] = XHandler::x11Pix(px.copy(0, 0, s_padding, s_padding)); //topleft
+    pix[0] = XHandler::x11Pixmap(img.copy(s_padding, 0, img.width()-s_padding*2, s_padding)); //top
+    pix[1] = XHandler::x11Pixmap(img.copy(img.width()-s_padding, 0, s_padding, s_padding)); //topright
+    pix[2] = XHandler::x11Pixmap(img.copy(img.width()-s_padding, s_padding, s_padding, img.height()-s_padding*2)); //right
+    pix[3] = XHandler::x11Pixmap(img.copy(img.width()-s_padding, img.height()-s_padding, s_padding, s_padding)); //bottomright
+    pix[4] = XHandler::x11Pixmap(img.copy(s_padding, img.height()-s_padding, img.width()-s_padding*2, s_padding)); //bottom
+    pix[5] = XHandler::x11Pixmap(img.copy(0, img.height()-s_padding, s_padding, s_padding)); //bottomleft
+    pix[6] = XHandler::x11Pixmap(img.copy(0, s_padding, s_padding, img.height()-s_padding*2)); //left
+    pix[7] = XHandler::x11Pixmap(img.copy(0, 0, s_padding, s_padding)); //topleft
     s_isInit = true;
-#endif
 }
 
 void
 Balloon::updateShadow()
 {
-#if QT_VERSION < 0x050000
     unsigned long data[12];
     genPixmaps();
     for (int i = 0; i < 8; ++i)
-        data[i] = pix[i].handle();
+        data[i] = pix[i];
     for (int i = 8; i < 12; ++i)
         data[i] = s_padding;
-
     XHandler::setXProperty<unsigned long>(winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
-#endif
 }
 
 void

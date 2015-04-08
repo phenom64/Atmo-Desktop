@@ -31,6 +31,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
     const bool isMenuBar(qobject_cast<const QMenuBar *>(widget));
+    const bool isPlasmaGMenu(dConf.app == Settings::Plasma && widget->inherits("BE::GMenu"));
     const bool isMenu(qobject_cast<const QMenu *>(widget));
     const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!opt->text.isEmpty());
@@ -109,7 +110,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
         Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
 
-    if (hasMenu)
+    if (isMenu && hasMenu)
         Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right, dConf.arrowSize);
 
     QStringList text(opt->text.split("\t"));
@@ -118,7 +119,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 
     for (int i = 0; i < 2 && i < text.count(); ++i)
     {
-        if (isMenuBar)
+        if (isMenuBar && !isPlasmaGMenu)
         {
             const QMenuBar *bar(static_cast<const QMenuBar *>(widget));
             drawMenuBar(option, painter, widget);
@@ -135,7 +136,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
                 painter->setFont(f);
             }
         }
-        drawItemText(painter, isMenuBar?opt->rect:textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
+        drawItemText(painter, isMenuBar?opt->rect:textRect, (isMenuBar||isPlasmaGMenu)?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
     }
     painter->restore();
     return true;

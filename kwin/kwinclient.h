@@ -71,7 +71,7 @@ public:
     void updateButtons();
     void updateBgPixmaps();
     void updateDataFromX();
-    void setBgPix(unsigned long pix);
+    void setBgPix(const unsigned long pix, const QSize &sz);
     void setWindowData(WindowData wd);
 
 protected:

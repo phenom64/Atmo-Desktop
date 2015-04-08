@@ -122,8 +122,8 @@ public:
     static void addCompactMenu(QWidget *w);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
     static void updateWindowDataLater(QWidget *win);
-    static QPixmap unoBgPix(QWidget *win, int h);
-    static QPixmap bgPix(const QSize &sz, const QColor &bgColor);
+    static QImage unoBg(QWidget *win, int h);
+    static QImage windowBg(const QSize &sz, const QColor &bgColor);
 
 public slots:
     void updateWindowData(qulonglong window);

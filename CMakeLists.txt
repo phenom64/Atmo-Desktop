@@ -12,10 +12,10 @@ project(${PROJECT})
 find_package(X11 REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(QT_USE_DBUS ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if (QT5BUILD)
+    find_package(Qt5Core REQUIRED)
     find_package(Qt5Widgets REQUIRED)
     find_package(Qt5Gui REQUIRED)
     find_package(Qt5Widgets REQUIRED)
@@ -28,6 +28,15 @@ if (QT5BUILD)
         set(QTDBUS_FOUND ON)
     endif (Qt5DBus_FOUND)
     add_definitions(${Qt5Widgets_DEFINITIONS})
+    
+    # uninstall target, stolen from http://www.cmake.org/Wiki/CMake_FAQ#Can_I_do_.22make_uninstall.22_with_CMake.3F
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+        IMMEDIATE @ONLY)
+
+    add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 else (QT5BUILD)
     find_package(Qt4 REQUIRED)
     find_package(KDE4)
@@ -63,10 +72,11 @@ set(SRCS ${SRCS} config/settings.cpp)
 set(HDRS ${HDRS} config/settings.h)
 set(MOC_HDRS ${MOC_HDRS} config/settings.h)
 
-if (QTDBUS_FOUND AND NOT QT5BUILD)
+if (QTDBUS_FOUND)
+    message(STATUS "Found qtdbus, building bespin macmenu support")
     set(SRCS ${SRCS} macmenu.cpp)
     set(MOC_HDRS ${MOC_HDRS} macmenu.h macmenu-dbus.h)
-endif (QTDBUS_FOUND AND NOT QT5BUILD)
+endif (QTDBUS_FOUND)
 
 set_property(SOURCE moc_styleproject.cpp APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/styleproject.json)
 

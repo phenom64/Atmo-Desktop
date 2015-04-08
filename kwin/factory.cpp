@@ -93,10 +93,12 @@ Factory::xEventFilter(void *message)
         if (xpe->atom == XHandler::xAtom(XHandler::DecoBgPix))
         {
             if (KwinClient *client = deco(xpe->window))
-            if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(xpe->window, XHandler::DecoBgPix))
+            if (SharedBgPixData *bgPixData = XHandler::getXProperty<SharedBgPixData>(xpe->window, XHandler::DecoBgPix))
             {
-                client->setBgPix(*bgPix);
-                XHandler::freeData(bgPix);
+                client->setBgPix(bgPixData->bgPix, QSize(bgPixData->w, bgPixData->h));
+//                XHandler::deleteXProperty(xpe->window, XHandler::DecoBgPix);
+//                XHandler::freePix(bgPixData->bgPix);
+                XHandler::freeData(bgPixData);
             }
             return true;
         }

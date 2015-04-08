@@ -1,6 +1,6 @@
 /*
- *   Bespin style for Qt4
- *   Copyright 2007-2012 by Thomas Lübking <thomas.luebking@gmail.com>
+ *   Virtuality Style for Qt4 and Qt5
+ *   Copyright 2009-2014 by Thomas Lübking <thomas.luebking@gmail.com>
  *
  *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Library General Public License version 2
@@ -15,6 +15,7 @@
  *   Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #include <QActionEvent>
 #include <QApplication>
 #include <QtDBus/QDBusConnectionInterface>
@@ -27,9 +28,8 @@
 #include "macmenu-dbus.h"
 
 #include <QtDebug>
-#include <QFileInfo>
 
-using namespace Bespin;
+using namespace BE;
 
 static MacMenu *instance = 0;
 static QStringList title_seps;
@@ -167,7 +167,6 @@ MacMenu::activate(QMenuBar *menu)
     actions[menu] = menu->actions();
 
     // find a nice header
-#if 0
     QString title = menu->window()->windowTitle();
     const QStringList appArgs = QCoreApplication::arguments();
     QString name = appArgs.isEmpty() ? "" : appArgs.at(0).section('/', -1);
@@ -191,20 +190,6 @@ MacMenu::activate(QMenuBar *menu)
         if (title.isEmpty())
             title = "QApplication";
     }
-#else
-    QString title;
-    if (qApp)
-    {
-        if (!qApp->arguments().isEmpty())
-            title = qApp->arguments().first();
-        else if (!qApp->applicationName().isEmpty())
-            title = qApp->applicationName();
-        else
-            title = QFileInfo(qApp->applicationFilePath()).fileName();
-    }
-    if (title.contains("/"))
-        title = QFileInfo(title).fileName();
-#endif
 
     // register the menu via dbus
     QStringList entries;
@@ -413,17 +398,16 @@ MacMenu::menuClosed()
     if (!_sender)
         return;
 
+    _sender->setProperty("DSP_SHAPETOP", false);
+
     disconnect (sender(), SIGNAL(aboutToHide()), this, SLOT(menuClosed()));
     if (!inHover)
     {
         XBAR_SEND( MSG("setOpenPopup") << -500 );
 
         if (QMenu *menu = qobject_cast<QMenu*>(_sender))
-        {
-            menu->setProperty("DSP_SHAPETOP", false);
-            if (QMenuBar *bar = bar4menu(menu))
-                bar->activateWindow();
-        }
+        if (QMenuBar *bar = bar4menu(menu))
+            bar->activateWindow();
     }
 }
 

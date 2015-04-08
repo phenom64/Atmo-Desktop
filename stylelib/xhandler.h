@@ -56,6 +56,13 @@ public:
     inline bool operator!=(const WindowData &wd) const { return !operator==(wd); }
 };
 
+class SharedBgPixData
+{
+public:
+    unsigned long bgPix;
+    unsigned short w, h;
+};
+
 static int _n = 0;
 class QPixmap;
 class QPoint;
@@ -92,7 +99,7 @@ public:
         _NET_WM_MOVERESIZE_CANCEL            =11   /* cancel operation */
     };
     typedef unsigned int TypeSize;
-    typedef unsigned long XWindow;
+    typedef unsigned long XWindow, XPixmap;
     template<typename T> static void setXProperty(const XWindow w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
         //reminder to self, the realByteSize is dependent on the type submitten to this method, no magic involved
@@ -112,10 +119,9 @@ public:
     static void mwRes(const QPoint &globalPoint, const XWindow &win, bool resize = false);
     static bool compositingActive();
     static float opacity();
-    static QPixmap x11Pix(const QPixmap &pix, XWindow &handle, const XWindow winId = 0);
-    static QPixmap x11Pix(const QPixmap &pix);
-    static void freePix(QPixmap pix);
-    static void freePix(const XWindow handle);
+    static QImage fromX11Pix(unsigned long x11Pix, const QSize &sz);
+    static XPixmap x11Pixmap(const QImage &qtImg);
+    static void freePix(const XPixmap pixmap);
     static void updateDeco(const XWindow w);
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
 

@@ -221,7 +221,6 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         sz+=QSize(8, pixelMetric(PM_DefaultFrameWidth, opt, widget));
         if (sz.height() < 23)
             sz.setHeight(23);
-
         return sz;
     }
     case CT_SpinBox:
@@ -230,7 +229,6 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
 //        castOpt(SpinBox, sp, opt);
         sz.rwidth()+=(Render::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
         sz.setHeight(qMax(23, sz.height()));
-
         return sz;
     }
 //        case CT_MenuItem:
@@ -305,6 +303,36 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         w+=h;
         h = qMax(23, h);
         return QSize(w, h);
+    }
+    case CT_ScrollBar:
+    {
+        return contentsSize;
+    }
+    case CT_ItemViewItem:
+    {
+        QFontMetrics metrics = qApp->fontMetrics();
+        if (widget)
+            metrics = widget->fontMetrics();
+
+        QSize sz(contentsSize);
+        if (const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt))
+        {
+            const bool hor(item->decorationPosition < QStyleOptionViewItemV4::Top);
+            static const int m(2);
+
+            if (hor)
+            {
+                sz.setHeight(qMax(item->decorationSize.height()*!item->icon.isNull(), item->fontMetrics.height()) + m);
+                sz.setWidth(item->decorationSize.width() + item->fontMetrics.width(item->text) + m);
+            }
+            else
+            {
+                sz.setHeight(item->decorationSize.height() + item->fontMetrics.height() + m);
+                sz.setWidth(item->fontMetrics.width(item->text) + m);
+            }
+            return sz;
+        }
+        return contentsSize;
     }
     default: break;
     }

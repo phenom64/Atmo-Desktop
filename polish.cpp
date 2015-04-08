@@ -40,10 +40,8 @@
  * his macmenu! yeah! so now we get
  * macmenues in styleproject!
  */
-#if QT_VERSION < 0x050000
 #if !defined(QT_NO_DBUS)
 #include "macmenu.h"
-#endif
 #endif
 
 static void applyBlur(QWidget *widget)
@@ -262,7 +260,7 @@ StyleProject::polish(QWidget *widget)
     else if (qobject_cast<QMenu *>(widget))
     {
         if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-            widget->setAttribute(Qt::WA_TranslucentBackground);
+            applyTranslucency(widget);
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
         widget->setForegroundRole(QPalette::Text);
@@ -274,16 +272,15 @@ StyleProject::polish(QWidget *widget)
     }
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
     {
+#if !defined(QT_NO_DBUS)
+        BE::MacMenu::manage(menuBar);
+        menuBar->move(9000, 9000); //que?
+#endif
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
         widget->setForegroundRole(QPalette::WindowText);
         widget->setBackgroundRole(QPalette::Window);
         installFilter(widget);
-#if QT_VERSION < 0x050000
-#if !defined(QT_NO_DBUS)
-        Bespin::MacMenu::manage(menuBar);
-#endif
-#endif
     }
     else if (qobject_cast<QToolBox *>(widget))
     {
@@ -367,7 +364,7 @@ StyleProject::polish(QWidget *widget)
     else if (widget->inherits("QTipLabel")) //tooltip
     {
         if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-            widget->setAttribute(Qt::WA_TranslucentBackground);
+            applyTranslucency(widget);
 
         ShadowHandler::manage(widget);
         if (dConf.balloonTips)
@@ -400,11 +397,9 @@ StyleProject::unpolish(QWidget *widget)
         Anim::ToolBtns::release(tb);
     else if (QFrame *f = qobject_cast<QFrame *>(widget))
         OverLay::release(f);
-#if QT_VERSION < 0x050000
 #if !defined(QT_NO_DBUS)
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
-        Bespin::MacMenu::release(menuBar);
-#endif
+        BE::MacMenu::release(menuBar);
 #endif
     QCommonStyle::unpolish(widget);
 }

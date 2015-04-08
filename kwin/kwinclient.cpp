@@ -730,10 +730,12 @@ KwinClient::updateDataFromX()
 {
     if (isPreview())
         return;
-    if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(windowId(), XHandler::DecoBgPix))
+    if (SharedBgPixData *bgPixData = XHandler::getXProperty<SharedBgPixData>(windowId(), XHandler::DecoBgPix))
     {
-        setBgPix(*bgPix);
-        XHandler::freeData(bgPix);
+        setBgPix(bgPixData->bgPix, QSize(bgPixData->w, bgPixData->h));
+//        XHandler::deleteXProperty(xpe->window, XHandler::DecoBgPix);
+//        XHandler::freePix(bgPixData->bgPix);
+        XHandler::freeData(bgPixData);
     }
     if (WindowData *wd = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData))
     {
@@ -744,16 +746,17 @@ KwinClient::updateDataFromX()
 }
 
 void
-KwinClient::setBgPix(unsigned long pix)
+KwinClient::setBgPix(const unsigned long pix, const QSize &sz)
 {
-    QPixmap px = QPixmap::fromX11Pixmap(pix);
-    if (px.isNull())
+//    QPixmap px = QPixmap::fromX11Pixmap(pix);
+    QImage img = XHandler::fromX11Pix(pix, sz);
+    if (img.isNull())
         return;
-    m_pix = QPixmap(px.size());
+    m_pix = QPixmap(img.size());
     m_pix.fill(Qt::transparent);
     QPainter p(&m_pix);
     p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.drawPixmap(m_pix.rect(), px);
+    p.drawImage(m_pix.rect(), img);
     p.end();
     widget()->update();
 }

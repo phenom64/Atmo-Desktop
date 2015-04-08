@@ -235,6 +235,8 @@ Settings::read()
         conf.app = BEShell;
     else if (conf.m_appName == "yakuake")
         conf.app = Yakuake;
+    else if (conf.m_appName == "plasma-desktop")
+        conf.app = Plasma;
     else
         conf.app = Unspecific;
 

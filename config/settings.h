@@ -270,11 +270,13 @@ class QSettings;
 
 #define dConf Settings::conf
 
+
+
 class Q_DECL_EXPORT Settings : public QObject
 {
     Q_OBJECT
 public:
-    enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Unspecific }; //app specific hacks should be avoided when possible.
+    enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, Unspecific }; //app specific hacks should be avoided when possible.
     typedef uint App;
     App app;
     float opacity;
