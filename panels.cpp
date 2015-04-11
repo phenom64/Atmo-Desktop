@@ -282,7 +282,7 @@ StyleProject::drawFrame(const QStyleOption *option, QPainter *painter, const QWi
 #undef RESTOREPEN
 
     const QFrame *frame = qobject_cast<const QFrame *>(widget);
-    if (OverLay::hasOverLay(frame))
+    if (Overlay::hasOverlay(frame))
         return true;
 
     QRect r(option->rect);

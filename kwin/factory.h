@@ -9,10 +9,11 @@
 #include "kwinclient.h"
 #include "../config/settings.h"
 
-typedef struct {
+typedef struct _DecoData {
     QColor color[2];
     Gradient gradient;
     unsigned int noiseRatio;
+    bool separator;
 } DecoData;
 
 class KwinClient;

@@ -1,9 +1,15 @@
+#include <qmetatype.h>
+#include <QDataStream>
+#include <QDebug>
+#include <QWidget>
 #include "xhandler.h"
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 #include "fixx11h.h"
 
 #include <QX11Info>
+
 #include <QPainter>
 #include <stdio.h>
 //#include <QAbstractEventDispatcher>
@@ -65,6 +71,46 @@ void
 XHandler::freeData(void *data)
 {
     XFree(data);
+}
+
+void
+XHandler::move(QWidget *w, const QPoint &pt)
+{
+    QWidget *win = w->window();
+    QPoint ppt(w->mapTo(win, pt));
+    const QPoint &gp = win->mapToGlobal(ppt);
+    XEvent xrev;
+    xrev.xbutton.serial = 0; //?????
+    xrev.xbutton.button = Button1;
+    xrev.xbutton.display = QX11Info::display();
+    xrev.xbutton.root = QX11Info::appRootWindow();
+    xrev.xbutton.same_screen = True;
+    xrev.xbutton.send_event = False;
+    xrev.xbutton.state = Button1Mask;
+    xrev.xbutton.window = win->winId();
+    xrev.xbutton.time = QX11Info::appTime();
+    xrev.xbutton.type = ButtonRelease;
+    xrev.xbutton.x_root = gp.x();
+    xrev.xbutton.y_root = gp.y();
+    xrev.xbutton.x = ppt.x();
+    xrev.xbutton.y = ppt.y();
+    XSendEvent(QX11Info::display(), win->winId(), False, Button1Mask|ButtonReleaseMask, &xrev);
+
+    static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
+    XEvent xev;
+    xev.xclient.type = ClientMessage;
+    xev.xclient.message_type = netWmMoveResize;
+    xev.xclient.display = QX11Info::display();
+    xev.xclient.window = win->winId();
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = gp.x();
+    xev.xclient.data.l[1] = gp.y();
+    xev.xclient.data.l[2] = _NET_WM_MOVERESIZE_MOVE;
+    xev.xclient.data.l[3] = Button1;
+    xev.xclient.data.l[4] = 0;
+    XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    XSync(QX11Info::display(), False);
 }
 
 void
@@ -149,21 +195,27 @@ XHandler::x11Pixmap(const QImage &qtImg)
     return pix;
 }
 
+#if QT_VERSION >= 0x050000
+void imageCleanup(void *cleanupInfo)
+{
+    if (XImage *xi = static_cast<XImage *>(cleanupInfo))
+        XDestroyImage(xi);
+}
+#endif
+
 QImage
 XHandler::fromX11Pix(unsigned long x11Pix, const QSize &sz)
 {
     if (XImage *xi = XGetImage(QX11Info::display(), x11Pix, 0, 0, sz.width(), sz.height(), AllPlanes, ZPixmap))
     {
+#if QT_VERSION < 0x050000
         QImage img(sz.width(), sz.height(), QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        unsigned int size(sz.width() * sz.height());
-        QRgb *rgb = reinterpret_cast<QRgb *>(xi->data);
-        QRgb *newRgb = reinterpret_cast<QRgb *>(img.bits());
-        for (int i = 0; i < size; ++i)
-            newRgb[i] = rgb[i];
-        freeData(xi->data);
-        freeData(xi);
+        memcpy(img.bits(), xi->data, xi->width*xi->height*4);
+        XDestroyImage(xi);
         return img;
+#else
+        return QImage(reinterpret_cast<unsigned char *>(xi->data), xi->width, xi->height, QImage::Format_ARGB32, imageCleanup, xi);
+#endif
     }
     return QImage();
 }

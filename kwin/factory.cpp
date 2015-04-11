@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QSettings>
 #include <QMap>
+#include <QDebug>
 
 #include "kwinclient.h"
 #include "factory.h"
@@ -22,6 +23,7 @@ static void addDataForWinClass(const QString &winClass, QSettings &s)
     d.color[1] = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
     d.gradient = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noiseRatio = s.value("noise", 20).toUInt();
+    d.separator = s.value("separator", true).toBool();
     s_data.insert(winClass, d);
 }
 

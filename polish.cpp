@@ -356,7 +356,7 @@ StyleProject::polish(QWidget *widget)
         {
             frame->setFrameShadow(QFrame::Sunken);
             frame->setFrameShape(QFrame::StyledPanel);
-            OverLay::manage(frame, 255.0f*dConf.shadows.opacity);
+            Overlay::manage(frame, 255.0f*dConf.shadows.opacity);
             installFilter(frame);
             frame->setContentsMargins(0, 0, 0, 0);
         }
@@ -375,7 +375,7 @@ StyleProject::polish(QWidget *widget)
     if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))
     if (static_cast<QFrame *>(widget)->frameShadow() == QFrame::Sunken
             && static_cast<QFrame *>(widget)->frameShape() == QFrame::StyledPanel)
-        OverLay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity*255.0f);
+        Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity*255.0f);
     QCommonStyle::polish(widget);
 }
 
@@ -396,7 +396,7 @@ StyleProject::unpolish(QWidget *widget)
     else if (QToolButton *tb = qobject_cast<QToolButton *>(widget))
         Anim::ToolBtns::release(tb);
     else if (QFrame *f = qobject_cast<QFrame *>(widget))
-        OverLay::release(f);
+        Overlay::release(f);
 #if !defined(QT_NO_DBUS)
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         BE::MacMenu::release(menuBar);

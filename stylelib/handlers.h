@@ -161,6 +161,7 @@ public:
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static bool canDrag(QWidget *w);
+//    Drag(QObject *parent);
     ~Drag(){}
 protected:
     Drag(QObject *parent = 0):QObject(parent){}

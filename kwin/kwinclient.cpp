@@ -804,6 +804,7 @@ KwinClient::checkForDataFromWindowClass()
         m_custcol[Bg] = d.color[Bg];
     m_gradient = d.gradient;
     m_noise = d.noiseRatio;
+    m_needSeparator = d.separator;
 }
 
 /**

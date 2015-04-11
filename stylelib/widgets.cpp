@@ -770,10 +770,13 @@ SplitterExt::event(QEvent *e)
         QMouseEvent *me(static_cast<QMouseEvent *>(e));
         QMouseEvent m(me->type(), m_splitter->mapFromGlobal(QCursor::pos()), QCursor::pos(), me->button(), me->buttons(), me->modifiers());
         QCoreApplication::sendEvent(m_splitter, &m);
-        m_hasPress = false;
-        hide();
-        setParent(0);
-        m_splitter = 0;
+        if (e->type() == QEvent::MouseButtonRelease || !m_hasPress)
+        {
+            m_hasPress = false;
+            hide();
+            setParent(0);
+            m_splitter = 0;
+        }
         return true;
     }
     case QEvent::MouseMove:

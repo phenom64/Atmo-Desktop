@@ -139,7 +139,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
             return 8;
 
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
-        if (OverLay::hasOverLay(frame))
+        if (Overlay::hasOverlay(frame))
             return 0;
 
         if (frame && frame->frameShadow() == QFrame::Raised)

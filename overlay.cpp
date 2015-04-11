@@ -19,29 +19,29 @@
 #include <QStackedWidget>
 #include <QMainWindow>
 
-OverLayHandler OverLayHandler::s_instance;
-static QList<OverLay *> s_overLays;
+OverlayHandler OverlayHandler::s_instance;
+static QList<Overlay *> s_overLays;
 
 void
-OverLayHandler::manage(OverLay *o)
+OverlayHandler::manage(Overlay *o)
 {
     o->window()->removeEventFilter(instance());
     o->window()->installEventFilter(instance());
     if (!s_overLays.contains(o))
         s_overLays << o;
-    connect(o, SIGNAL(destroyed()), instance(), SLOT(overLayDeleted()));
+    connect(o, SIGNAL(destroyed()), instance(), SLOT(overlayDeleted()));
 }
 
 void
-OverLayHandler::overLayDeleted()
+OverlayHandler::overlayDeleted()
 {
-    OverLay *o(static_cast<OverLay *>(sender()));
+    Overlay *o(static_cast<Overlay *>(sender()));
     if (s_overLays.contains(o))
         s_overLays.removeOne(o);
 }
 
 bool
-OverLayHandler::eventFilter(QObject *o, QEvent *e)
+OverlayHandler::eventFilter(QObject *o, QEvent *e)
 {
     if (SplitterExt::isActive())
         return false;
@@ -58,7 +58,7 @@ OverLayHandler::eventFilter(QObject *o, QEvent *e)
     return false;
 }
 
-OverLay::OverLay(QWidget *parent, int opacity)
+Overlay::Overlay(QWidget *parent, int opacity)
     : QWidget(parent)
     , m_alpha(opacity)
     , m_lines(All)
@@ -70,7 +70,7 @@ OverLay::OverLay(QWidget *parent, int opacity)
         deleteLater();
         return;
     }
-    OverLayHandler::manage(this);
+    OverlayHandler::manage(this);
     setAttribute(Qt::WA_TransparentForMouseEvents);
     m_frame->installEventFilter(this);  //m_frame guaranteed by manage()
     const QList<QStackedWidget *> stacks(m_frame->window()->findChildren<QStackedWidget *>());
@@ -78,13 +78,13 @@ OverLay::OverLay(QWidget *parent, int opacity)
         stacks.at(i)->installEventFilter(this);
 }
 
-OverLay::~OverLay()
+Overlay::~Overlay()
 {
     m_frame = 0;
 }
 
 void
-OverLay::paintEvent(QPaintEvent *)
+Overlay::paintEvent(QPaintEvent *)
 {
     if (!isVisible())
         return;
@@ -137,7 +137,7 @@ OverLay::paintEvent(QPaintEvent *)
 }
 
 bool
-OverLay::eventFilter(QObject *o, QEvent *e)
+Overlay::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e || !o->isWidgetType())
         return false;
@@ -168,7 +168,7 @@ static QRect windowGeo(QWidget *widget)
 }
 
 void
-OverLay::updateOverlay()
+Overlay::updateOverlay()
 {
 //    if (!(m_frame->frameShape() == QFrame::StyledPanel && m_frame->frameShadow() == QFrame::Sunken))
 //    {
@@ -215,7 +215,7 @@ OverLay::updateOverlay()
             sides &= ~l[i];
         else if (QFrame *f = getFrameForWidget(w, pos[i]))
         {
-            if (OverLay *lay = f->findChild<OverLay*>())
+            if (Overlay *lay = f->findChild<Overlay *>())
                 if (lay->parentWidget() == f)
                     if (lay->lines() & wl[i])
                         sides &= ~l[i];
@@ -241,23 +241,23 @@ OverLay::updateOverlay()
 }
 
 bool
-OverLay::manage(QWidget *frame, int opacity)
+Overlay::manage(QWidget *frame, int opacity)
 {
-    if (!frame || hasOverLay(frame))
+    if (!frame || hasOverlay(frame))
         return false;
 
     if (qobject_cast<QMainWindow *>(frame->window()))
     {
-        new OverLay(frame, opacity);
+        new Overlay(frame, opacity);
         return true;
     }
     return false;
 }
 
 bool
-OverLay::release(QWidget *frame)
+Overlay::release(QWidget *frame)
 {
-    if (OverLay *o = frame->findChild<OverLay*>())
+    if (Overlay *o = frame->findChild<Overlay *>())
         if (o->parent() == frame)
         {
             o->deleteLater();
@@ -267,7 +267,7 @@ OverLay::release(QWidget *frame)
 }
 
 QRegion
-OverLay::mask() const
+Overlay::mask() const
 {
     const int &d = m_hasFocus ? 6 : 1;
     const QRegion &outer(rect()), &inner(rect().adjusted(d, d, -d, -d));
@@ -275,14 +275,14 @@ OverLay::mask() const
 }
 
 QRect
-OverLay::mappedRect(const QWidget *widget)
+Overlay::mappedRect(const QWidget *widget)
 {
     QPoint topLeft(widget->mapTo(widget->window(), widget->rect().topLeft()));
     return QRect(topLeft, widget->size());
 }
 
 bool
-OverLay::frameIsInteresting(const QFrame *frame, const Position pos) const
+Overlay::frameIsInteresting(const QFrame *frame, const Position pos) const
 {
     if (frame && frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
         if (mappedRect(frame).contains(m_position[pos]))
@@ -291,7 +291,7 @@ OverLay::frameIsInteresting(const QFrame *frame, const Position pos) const
 }
 
 QFrame
-*OverLay::getFrameForWidget(QWidget *w, const Position pos) const
+*Overlay::getFrameForWidget(QWidget *w, const Position pos) const
 {
     QFrame *frame = 0;
     while (w->parentWidget())
@@ -312,7 +312,7 @@ QFrame
 }
 
 void
-OverLay::parentChanged()
+Overlay::parentChanged()
 {
 //    if (m_frame->parentWidget())
 //        m_frame->window() = m_frame->window();
@@ -321,11 +321,11 @@ OverLay::parentChanged()
 }
 
 bool
-OverLay::hasOverLay(const QWidget *frame)
+Overlay::hasOverlay(const QWidget *frame)
 {
     if (!frame)
         return false;
-    if (OverLay *o = frame->findChild<OverLay *>())
+    if (Overlay *o = frame->findChild<Overlay *>())
         if (o->parentWidget() == frame)
             return true;
     return false;

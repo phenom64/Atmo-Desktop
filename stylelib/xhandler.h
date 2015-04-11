@@ -1,8 +1,7 @@
 #ifndef XHANDLER_H
 #define XHANDLER_H
 
-#include <QMetaType>
-#include <QDataStream>
+#include <qglobal.h>
 
 class WindowData
 {
@@ -65,7 +64,9 @@ public:
 
 static int _n = 0;
 class QPixmap;
+class QImage;
 class QPoint;
+class QWidget;
 class Q_DECL_EXPORT XHandler
 {
 public:
@@ -117,6 +118,7 @@ public:
     static void freeData(void *data);
     static void deleteXProperty(const XWindow w, const Value v);
     static void mwRes(const QPoint &globalPoint, const XWindow &win, bool resize = false);
+    static void move(QWidget *w, const QPoint &pt);
     static bool compositingActive();
     static float opacity();
     static QImage fromX11Pix(unsigned long x11Pix, const QSize &sz);

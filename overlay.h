@@ -5,40 +5,40 @@
 
 class QFrame;
 class QScrollBar;
-class OverLay;
+class Overlay;
 
-class OverLayHandler : public QObject
+class OverlayHandler : public QObject
 {
     Q_OBJECT
 public:
-    static OverLayHandler *instance() { return &s_instance; }
-    static void manage(OverLay *o);
+    static OverlayHandler *instance() { return &s_instance; }
+    static void manage(Overlay *o);
 
 protected:
     bool eventFilter(QObject *, QEvent *);
 
 protected slots:
-    void overLayDeleted();
+    void overlayDeleted();
 
 private:
-    static OverLayHandler s_instance;
+    static OverlayHandler s_instance;
 };
 
-class OverLay : public QWidget
+class Overlay : public QWidget
 {
     Q_OBJECT
 public:
     enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
     enum Position { West = 0, North = 1, East = 2, South = 3, PosCount = 4 };
     typedef uint Sides;
-    ~OverLay();
+    ~Overlay();
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
-    static bool hasOverLay(const QWidget *frame);
+    static bool hasOverlay(const QWidget *frame);
     inline Sides lines() { return m_lines; }
 
 protected:
-    OverLay(QWidget *parent = 0, int opacity = 0);
+    Overlay(QWidget *parent = 0, int opacity = 0);
     void paintEvent(QPaintEvent *);
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);

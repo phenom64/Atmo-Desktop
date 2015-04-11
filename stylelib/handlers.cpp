@@ -8,6 +8,7 @@
 #include "shadowhandler.h"
 
 #include <QMainWindow>
+#include <QCoreApplication>
 #include <QTabBar>
 #include <QToolBar>
 #include <QEvent>
@@ -974,10 +975,13 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     if (SharedBgPixData *x11Data = XHandler::getXProperty<SharedBgPixData>(win->winId(), XHandler::DecoBgPix))
     {
         QImage unoBg = XHandler::fromX11Pix(x11Data->bgPix, QSize(x11Data->w, x11Data->h));
-        QPoint bo(p->brushOrigin());
-        p->setBrushOrigin(-offset);
-        p->fillRect(r, unoBg);
-        p->setBrushOrigin(bo);
+        if (!unoBg.isNull())
+        {
+            QPoint bo(p->brushOrigin());
+            p->setBrushOrigin(-offset);
+            p->fillRect(r, unoBg);
+            p->setBrushOrigin(bo);
+        }
         if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             ScrollWatcher::drawContBg(p, win, r, offset);
 
@@ -1233,6 +1237,27 @@ Window::updateWindowData(qulonglong window)
 
 Drag Drag::s_instance;
 
+//QCoreApplication::EventFilter oldFilter = 0;
+//static bool isFiltering = false;
+
+//bool dragWatcher(void *message, long *result)
+//{
+//    if (XEvent *xe = static_cast<XEvent *>(message))
+//    {
+//        qDebug() << xe
+//    }
+//    return false;
+//}
+
+//Drag::Drag(QObject *parent) : QObject(parent)
+//{
+//    if (!isFiltering)
+//    {
+//        oldFilter = qApp->setEventFilter(dragWatcher);
+//        isFiltering = true;
+//    }
+//}
+
 Drag
 *Drag::instance()
 {
@@ -1256,13 +1281,15 @@ Drag::eventFilter(QObject *o, QEvent *e)
         return false;
     QMouseEvent *me(static_cast<QMouseEvent *>(e));
     if (!w->rect().contains(me->pos()) || me->button() != Qt::LeftButton)
-        return false;
+        return false; 
     bool cd(canDrag(w));
     if (QTabBar *tabBar = qobject_cast<QTabBar *>(w))
-        cd = tabBar->tabAt(me->pos()) == -1;
-    if (cd)
-        XHandler::mwRes(me->globalPos(), w->window()->winId());
-    return false;
+        cd = (tabBar->tabAt(me->pos()) == -1);
+    if (!cd)
+        return false;
+
+    XHandler::move(w, me->pos());
+    return true;
 }
 
 bool
