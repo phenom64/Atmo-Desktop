@@ -27,6 +27,10 @@
 #include "stylelib/animhandler.h"
 #include "stylelib/shadowhandler.h"
 
+#if !defined(QT_NO_DBUS)
+#include "macmenu.h"
+#endif
+
 bool
 StyleProject::eventFilter(QObject *o, QEvent *e)
 {
@@ -196,6 +200,14 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
         if (dConf.uno.enabled)
             Handlers::Window::updateWindowDataLater(w->window());
+#if !defined(QT_NO_DBUS)
+        if (BE::MacMenu::isActive())
+        {
+                w->setFixedSize(1, 1);
+                w->updateGeometry();
+                w->setFixedSize(0, 0);
+        }
+#endif
         return false;
     }
     else if (qobject_cast<QMenu *>(w))

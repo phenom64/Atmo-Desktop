@@ -35,6 +35,10 @@
 #include <QDesktopWidget>
 #include <QGroupBox>
 
+#if !defined(QT_NO_DBUS)
+#include "macmenu.h"
+#endif
+
 static QRegion paintRegion(QMainWindow *win)
 {
     if (!win)
@@ -675,6 +679,7 @@ ToolBar::setupNoTitleBarWindow(qulonglong bar)
 
 Window Window::s_instance;
 QMap<QWidget *, Handlers::Data> Window::s_unoData;
+static QMap<QWidget *, QImage> s_unoBg;
 
 Window::Window(QObject *parent)
     : QObject(parent)
@@ -769,8 +774,6 @@ Window::eventFilter(QObject *o, QEvent *e)
         }
         else if (w->isWindow())
         {
-//            return false;
-            unsigned char *addV(XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight));
             const QColor bgColor(w->palette().color(w->backgroundRole()));
             QPainter p(w);
             Render::Sides sides(Render::All);
@@ -783,13 +786,11 @@ Window::eventFilter(QObject *o, QEvent *e)
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
                 p.fillRect(w->rect(), bgColor);
             }
-#if QT_VERSION < 0x050000
-            else if (unsigned long *bgPix = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
+            else /// TODO
             {
-                p.drawTiledPixmap(w->rect(), QPixmap::fromX11Pixmap(*bgPix), QPoint(0, addV?*addV:0));
-                XHandler::freeData(bgPix);
+//                unsigned char addV(unoHeight(w, TitleBar));
+                p.fillRect(w->rect(), bgColor);
             }
-#endif
             if (!w->isModal())
                 Render::shapeCorners(&p, sides);
             p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
@@ -797,8 +798,6 @@ Window::eventFilter(QObject *o, QEvent *e)
                 if (int th = Handlers::unoHeight(w, ToolBars))
                     p.drawLine(0, th, w->width(), th);
             p.end();
-            if (addV)
-                XHandler::freeData(addV);
         }
         return false;
     }
@@ -885,11 +884,8 @@ Window::eventFilter(QObject *o, QEvent *e)
             const bool verChanged = !dConf.windows.hor && re->oldSize().height() != re->size().height();
             QSize sz(re->size());
             if (verChanged)
-                if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
-                {
-                    sz.rheight() += *th;
-                    XHandler::freeData(th);
-                }
+                if (unsigned char th = unoHeight(w, TitleBar))
+                    sz.rheight() += th;
             if (horChanged  || verChanged)
                 updateDecoBg(w);
         }
@@ -900,11 +896,11 @@ Window::eventFilter(QObject *o, QEvent *e)
     {
         if (w->isWindow())
         {
-            if (unsigned long *bgPx = XHandler::getXProperty<unsigned long>(w->winId(), XHandler::DecoBgPix))
+            if (SharedBgPixData *bgPxData = XHandler::getXProperty<SharedBgPixData>(w->winId(), XHandler::DecoBgPix))
             {
                 XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
-                XHandler::freePix(*bgPx);
-                XHandler::freeData(bgPx); //superfluous?
+                XHandler::freePix(bgPxData->bgPix);
+                XHandler::freeData(bgPxData);
             }
             if (WindowData *wd = XHandler::getXProperty<WindowData>(w->winId(), XHandler::WindowData))
             {
@@ -965,23 +961,15 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget()) //weird case where mainwindow is embedded in another window
         return false;
 
-    const bool csd(/*(win->windowFlags() & Qt::FramelessWindowHint) && */win->property(CSDBUTTONS).toBool());
+    const bool csd(win->property(CSDBUTTONS).toBool());
     if (!csd)
-    if (unsigned char *titleHeight = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight))
+        offset.ry()+= unoHeight(win, TitleBar);
+    if (s_unoBg.contains(win))
     {
-        offset.ry()+=*titleHeight;
-        XHandler::freeData(titleHeight);
-    }
-    if (SharedBgPixData *x11Data = XHandler::getXProperty<SharedBgPixData>(win->winId(), XHandler::DecoBgPix))
-    {
-        QImage unoBg = XHandler::fromX11Pix(x11Data->bgPix, QSize(x11Data->w, x11Data->h));
-        if (!unoBg.isNull())
-        {
-            QPoint bo(p->brushOrigin());
-            p->setBrushOrigin(-offset);
-            p->fillRect(r, unoBg);
-            p->setBrushOrigin(bo);
-        }
+        QPoint bo(p->brushOrigin());
+        p->setBrushOrigin(-offset);
+        p->fillRect(r, s_unoBg.value(win));
+        p->setBrushOrigin(bo);
         if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             ScrollWatcher::drawContBg(p, win, r, offset);
 
@@ -991,13 +979,13 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
             if (!icon.isNull() && !qobject_cast<const QStatusBar *>(w))
             {
                 QPixmap pix(icon.pixmap(128));
-//                QTransform tf;
-//                tf.translate(pix.width()/2, pix.height()/2);
-//                tf.rotate(-60.0f, Qt::YAxis);
-//                tf.translate(-pix.width()/2, -pix.height()/2);
-//                pix = pix.transformed(tf, Qt::SmoothTransformation);
+                //                QTransform tf;
+                //                tf.translate(pix.width()/2, pix.height()/2);
+                //                tf.rotate(-60.0f, Qt::YAxis);
+                //                tf.translate(-pix.width()/2, -pix.height()/2);
+                //                pix = pix.transformed(tf, Qt::SmoothTransformation);
                 offset.ry()+=(pix.height()-clientUno)/2;
-//                offset.rx()-=(win->findChild<Buttons *>()->width());
+                //                offset.rx()-=(win->findChild<Buttons *>()->width());
                 QPainter pt(&pix);
                 pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
                 pt.fillRect(pix.rect(), QColor(0, 0, 0, 170));
@@ -1005,7 +993,6 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
                 p->drawPixmap(pix.rect().translated(-offset), pix);
             }
         }
-        XHandler::freeData(x11Data);
         return true;
     }
     return false;
@@ -1038,9 +1025,11 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     hd[ToolBars] = hd[ToolBarAndTabBar] = 0;
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(win))
     {
-        QMenuBar *menuBar = mw->findChild<QMenuBar *>();
-        if (menuBar && menuBar->isVisible())
-            hd[All] += menuBar->height();
+        if (QMenuBar *menuBar = mw->findChild<QMenuBar *>())
+        {
+            if (menuBar->isVisible())
+                hd[All] += menuBar->height();
+        }
 
         QList<QToolBar *> tbs(mw->findChildren<QToolBar *>());
         for (int i = 0; i<tbs.count(); ++i)
@@ -1221,13 +1210,13 @@ Window::updateWindowData(qulonglong window)
             XHandler::freeData(x11Data);
         }
         QImage img(unoBg(win, height));
+        s_unoBg.insert(win, img);
         SharedBgPixData x11Data;
         x11Data.bgPix = XHandler::x11Pixmap(img);
         x11Data.h = img.height();
         x11Data.w = img.width();
         XHandler::setXProperty<SharedBgPixData>(id, XHandler::DecoBgPix, XHandler::Short, &x11Data);
     }
-
     win->repaint();
     XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Byte, &wd);
     emit instance()->windowDataChanged(win);
@@ -1289,7 +1278,7 @@ Drag::eventFilter(QObject *o, QEvent *e)
         return false;
 
     XHandler::move(w, me->pos());
-    return true;
+    return false;
 }
 
 bool

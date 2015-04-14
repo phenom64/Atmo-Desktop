@@ -1,3 +1,15 @@
+#include "styleproject.h"
+#include "overlay.h"
+#include "stylelib/ops.h"
+#include "stylelib/shadowhandler.h"
+#include "stylelib/progresshandler.h"
+#include "stylelib/animhandler.h"
+#include "stylelib/handlers.h"
+#include "stylelib/xhandler.h"
+#include "config/settings.h"
+#include "stylelib/color.h"
+
+#include <QWidget>
 #include <QToolBar>
 #include <QFrame>
 #include <QMainWindow>
@@ -23,18 +35,13 @@
 #include <QDialog>
 #include <QStatusBar>
 #include <QToolBox>
+#include <QDebug>
 //#include <QWebView>
 
-#include "styleproject.h"
-#include "overlay.h"
-#include "stylelib/ops.h"
-#include "stylelib/shadowhandler.h"
-#include "stylelib/progresshandler.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/handlers.h"
-#include "stylelib/xhandler.h"
-#include "config/settings.h"
-#include "stylelib/color.h"
+#if QT_VERSION >= 0x050000
+#include <QWindow>
+#include <private/qwidget_p.h>
+#endif
 
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
@@ -50,7 +57,8 @@ static void applyBlur(QWidget *widget)
     XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
 }
 
-static void applyTranslucency(QWidget *widget)
+void
+StyleProject::applyTranslucency(QWidget *widget)
 {
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
@@ -76,6 +84,13 @@ StyleProject::polish(QWidget *widget)
 {
     if (!widget)
         return;
+#if 0
+    if (widget->parentWidget())
+        qDebug() << widget << widget->parentWidget();
+
+    installFilter(widget);
+#endif
+
     if (qobject_cast<Handlers::Balloon *>(widget)
             || qobject_cast<SplitterExt *>(widget)
             || qobject_cast<Buttons *>(widget)
@@ -86,13 +101,6 @@ StyleProject::polish(QWidget *widget)
             || widget->inherits("QWebPage")
             || widget->inherits("QWebFrame"))
         return;
-
-#if 0
-    if (widget->parentWidget())
-        qDebug() << widget << widget->parentWidget();
-
-    installFilter(widget);
-#endif
 
     //some special handling
     if (dConf.splitterExt
@@ -124,20 +132,14 @@ StyleProject::polish(QWidget *widget)
     if (Handlers::Drag::canDrag(widget))
         Handlers::Drag::manage(widget);
 
-//    if (widget->inherits("BE::CalendarWidget") && widget->parentWidget())
-//        widget->parentWidget()->setWindowFlags(widget->parentWidget()->windowFlags()|Qt::Window|Qt::FramelessWindowHint);
     if (widget->isWindow())
     {
-        if (widget->testAttribute(Qt::WA_TranslucentBackground))
-            applyBlur(widget);
         if (qobject_cast<QMainWindow *>(widget))
         {
-            if (dConf.compactMenu
-                    && widget->findChild<QMenuBar *>())
+            if (dConf.compactMenu && widget->findChild<QMenuBar *>())
                 Handlers::Window::addCompactMenu(widget);
 
-            if (XHandler::opacity() < 1.0f
-                    && !widget->testAttribute(Qt::WA_TranslucentBackground))
+            if (XHandler::opacity() < 1.0f && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
 
             Handlers::Window::manage(widget);
@@ -146,27 +148,23 @@ StyleProject::polish(QWidget *widget)
         }
         else if (qobject_cast<QDialog *>(widget))
         {
-//            bool needHandler(!dConf.uno.enabled || (dConf.hackDialogs && widget->isModal()));
             if (!dConf.uno.enabled
                     && XHandler::opacity() < 1.0f
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
-            {
                 applyTranslucency(widget);
-//                needHandler = true;
-            }
-//            if (needHandler)
-                Handlers::Window::manage(widget);
+            Handlers::Window::manage(widget);
         }
-
-        const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint) && widget->windowRole().startsWith("MainWindow")));
-
+        const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint)
+                                          && widget->windowRole().startsWith("MainWindow")));
         if (widget->windowType() == Qt::Popup
                 || widget->windowType() == Qt::ToolTip
                 || widget->windowType() == Qt::Dialog
                 || isFrameLessMainWindow)
             ShadowHandler::manage(widget);
+        if (widget->testAttribute(Qt::WA_TranslucentBackground)
+                || (qobject_cast<QDialog *>(widget) && !(widget->windowFlags() & Qt::FramelessWindowHint)))
+            applyBlur(widget);
     }
-
     if (qobject_cast<QToolBar *>(widget->parent()))
         Handlers::ToolBar::manage(widget);
 
@@ -224,26 +222,13 @@ StyleProject::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(widget->window()))
             Handlers::ScrollWatcher::watch(area);
 
-//        if (area->viewport()->autoFillBackground())
-//        {
-//            QPalette::ColorRole bg = area->viewport()->backgroundRole();
-//            if (bg == QPalette::Base
-//                    && area->viewport()->palette().color(bg).alpha() < 0xff)
-//            {
-//                qDebug() << area;
-//                area->viewport()->setBackgroundRole(QPalette::Window);
-//                area->setPalette(area->window()->palette());
-//                area->viewport()->setAutoFillBackground(false);
-//            }
-//        }
-
         if (QAbstractItemView *view = qobject_cast<QAbstractItemView *>(area))
         {
             view->viewport()->setAttribute(Qt::WA_Hover);
             view->setAttribute(Qt::WA_MouseTracking);
             installFilter(view);
 
-            //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example, idiot gay....)
+            //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example...)
             QPalette pal(widget->palette());
             const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
             QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
@@ -267,14 +252,16 @@ StyleProject::polish(QWidget *widget)
         widget->setBackgroundRole(QPalette::Base);
         installFilter(widget);
         ShadowHandler::manage(widget);
-        unsigned int d(0);
-        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+        if (XHandler::opacity() < 1.0f)
+        {
+            unsigned int d(0);
+            XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+        }
     }
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
     {
 #if !defined(QT_NO_DBUS)
         BE::MacMenu::manage(menuBar);
-        menuBar->move(9000, 9000); //que?
 #endif
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);

@@ -314,6 +314,9 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         if (widget)
             metrics = widget->fontMetrics();
 
+        QSize commonSize = QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
+        if (commonSize.isValid())
+            return commonSize;
         QSize sz(contentsSize);
         if (const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt))
         {

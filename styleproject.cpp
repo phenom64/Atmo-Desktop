@@ -1,3 +1,15 @@
+#include "styleproject.h"
+#include "stylelib/render.h"
+#include "stylelib/ops.h"
+#include "stylelib/xhandler.h"
+#include "stylelib/color.h"
+#include "stylelib/animhandler.h"
+#include "stylelib/shadowhandler.h"
+#include "stylelib/progresshandler.h"
+#include "stylelib/animhandler.h"
+#include "stylelib/handlers.h"
+#include "config/settings.h"
+
 #include <QWidget>
 #include <QStyleOptionComplex>
 #include <QStyleOptionSlider>
@@ -13,18 +25,7 @@
 #include <QLayout>
 #include <QProgressBar>
 #include <QRect>
-
-#include "styleproject.h"
-#include "stylelib/render.h"
-#include "stylelib/ops.h"
-#include "stylelib/xhandler.h"
-#include "stylelib/color.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/shadowhandler.h"
-#include "stylelib/progresshandler.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/handlers.h"
-#include "config/settings.h"
+#include <QDialog>
 
 
 QStringList
@@ -45,9 +46,34 @@ QStyle
 Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 #endif
 
+#if QT_VERSION >= 0x050000
+class Filterer : public QObject
+{
+protected:
+    bool eventFilter(QObject *o, QEvent *e)
+    {
+        if (!o->isWidgetType()
+                || !(e->type() == QEvent::WindowTitleChange || e->type() == QEvent::WindowIconChange))
+            return false;
+        QWidget *w = static_cast<QWidget *>(o);
+        if (w->isWindow()
+                && XHandler::opacity() < 1.0f
+                && !w->testAttribute(Qt::WA_TranslucentBackground)
+                && !w->testAttribute(Qt::WA_WState_Created)
+                && (qobject_cast<QMainWindow *>(w) || qobject_cast<QDialog *>(w)))
+            StyleProject::applyTranslucency(w);
+        return false;
+    }
+};
+static Filterer f;
+#endif
+
 StyleProject::StyleProject() : QCommonStyle()
 {
 //    Anim::setStyle(this);
+#if QT_VERSION >= 0x050000
+    qApp->installEventFilter(&f);
+#endif
     init();
     assignMethods();
     Settings::read();

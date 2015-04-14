@@ -24,6 +24,8 @@ public:
     void init();
     void assignMethods();
 
+    static void applyTranslucency(QWidget *widget);
+
     /* reimplemented functions
      * for now only some, we will
      * reimplement as we go

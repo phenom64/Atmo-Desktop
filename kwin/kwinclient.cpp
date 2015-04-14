@@ -686,7 +686,6 @@ KwinClient::updateBgPixmaps()
 {
     if (m_uno)
     {
-        m_needSeparator = true;
         m_buttonStyle = dConf.deco.buttons;
         for (int i = 0; i < 2; ++i)
         {
@@ -733,8 +732,6 @@ KwinClient::updateDataFromX()
     if (SharedBgPixData *bgPixData = XHandler::getXProperty<SharedBgPixData>(windowId(), XHandler::DecoBgPix))
     {
         setBgPix(bgPixData->bgPix, QSize(bgPixData->w, bgPixData->h));
-//        XHandler::deleteXProperty(xpe->window, XHandler::DecoBgPix);
-//        XHandler::freePix(bgPixData->bgPix);
         XHandler::freeData(bgPixData);
     }
     if (WindowData *wd = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData))
@@ -748,7 +745,6 @@ KwinClient::updateDataFromX()
 void
 KwinClient::setBgPix(const unsigned long pix, const QSize &sz)
 {
-//    QPixmap px = QPixmap::fromX11Pixmap(pix);
     QImage img = XHandler::fromX11Pix(pix, sz);
     if (img.isNull())
         return;
