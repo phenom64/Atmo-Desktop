@@ -47,37 +47,39 @@ Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 #endif
 
 #if QT_VERSION >= 0x050000
-class Filterer : public QObject
+class TranslucencyWatcher : public QObject
 {
 protected:
     bool eventFilter(QObject *o, QEvent *e)
     {
-        if (!o->isWidgetType()
-                || !(e->type() == QEvent::WindowTitleChange || e->type() == QEvent::WindowIconChange))
+        if (!o->isWidgetType())
             return false;
+        const bool titleEvent((e->type() == QEvent::WindowTitleChange) || (e->type() == QEvent::WindowIconChange) || (e->type() == QEvent::ChildAdded));
         QWidget *w = static_cast<QWidget *>(o);
-        if (w->isWindow()
-                && XHandler::opacity() < 1.0f
+        if (!w->isWindow() || !titleEvent || w->parentWidget())
+            return false;
+
+        if (XHandler::opacity() < 1.0f
                 && !w->testAttribute(Qt::WA_TranslucentBackground)
                 && !w->testAttribute(Qt::WA_WState_Created)
+                && !w->internalWinId()
                 && (qobject_cast<QMainWindow *>(w) || qobject_cast<QDialog *>(w)))
             StyleProject::applyTranslucency(w);
         return false;
     }
 };
-static Filterer f;
+static TranslucencyWatcher t;
 #endif
 
 StyleProject::StyleProject() : QCommonStyle()
 {
-//    Anim::setStyle(this);
-#if QT_VERSION >= 0x050000
-    qApp->installEventFilter(&f);
-#endif
     init();
     assignMethods();
     Settings::read();
-//    Render::generateData();
+#if QT_VERSION >= 0x050000
+    if (XHandler::opacity() < 1.0f)
+        qApp->installEventFilter(&t);
+#endif
 }
 
 StyleProject::~StyleProject()
