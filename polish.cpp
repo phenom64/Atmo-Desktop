@@ -38,11 +38,6 @@
 #include <QDebug>
 //#include <QWebView>
 
-#if QT_VERSION >= 0x050000
-#include <QWindow>
-#include <private/qwidget_p.h>
-#endif
-
 /* Thomas gave me his blessing to use
  * his macmenu! yeah! so now we get
  * macmenues in styleproject!
@@ -84,13 +79,15 @@ StyleProject::polish(QWidget *widget)
 {
     if (!widget)
         return;
+
+//    if (widget->inherits("KateTabBar")) //that new fancy kate tabbar
+//        qDebug() << widget;
 #if 0
     if (widget->parentWidget())
         qDebug() << widget << widget->parentWidget();
 
     installFilter(widget);
 #endif
-
     if (qobject_cast<Handlers::Balloon *>(widget)
             || qobject_cast<SplitterExt *>(widget)
             || qobject_cast<Buttons *>(widget)
@@ -138,9 +135,10 @@ StyleProject::polish(QWidget *widget)
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())
                 Handlers::Window::addCompactMenu(widget);
-
+#if QT_VERSION < 0x050000
             if (XHandler::opacity() < 1.0f && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
+#endif
 
             Handlers::Window::manage(widget);
             if (dConf.removeTitleBars)
@@ -148,10 +146,12 @@ StyleProject::polish(QWidget *widget)
         }
         else if (qobject_cast<QDialog *>(widget))
         {
+#if QT_VERSION < 0x050000
             if (!dConf.uno.enabled
                     && XHandler::opacity() < 1.0f
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
+#endif
             Handlers::Window::manage(widget);
         }
         const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint)

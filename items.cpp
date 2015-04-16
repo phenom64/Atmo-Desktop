@@ -149,6 +149,8 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!opt)
         return true;
 
+    if (dConf.app == Settings::Konversation && widget && widget->inherits("ViewTree"))
+        return true;
     if (opt->backgroundBrush != Qt::NoBrush)
         painter->fillRect(opt->rect, opt->backgroundBrush);
 
@@ -230,6 +232,7 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
     if (!opt->text.isEmpty())
     {
         QPalette::ColorRole fg(QPalette::Text);
+        painter->setFont(opt->font);
         if (opt->SUNKEN)
         {
             fg = QPalette::HighlightedText;

@@ -56,6 +56,8 @@ protected:
             return false;
         const bool titleEvent((e->type() == QEvent::WindowTitleChange) || (e->type() == QEvent::WindowIconChange) || (e->type() == QEvent::ChildAdded));
         QWidget *w = static_cast<QWidget *>(o);
+//        if (w->isWindow() &&  (qobject_cast<QMainWindow *>(w) || qobject_cast<QDialog *>(w)))
+//            qDebug() << e->type() << w << w->internalWinId() << w->testAttribute(Qt::WA_WState_Created) << w->testAttribute(Qt::WA_TranslucentBackground) << w->parentWidget();
         if (!w->isWindow() || !titleEvent || w->parentWidget())
             return false;
 

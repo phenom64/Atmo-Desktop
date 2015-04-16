@@ -155,12 +155,14 @@ MacMenu::activate(QMenuBar *menu)
     menu->removeEventFilter(this);
 
     // and WOWWWW - no more per window menubars...
-    menu->setFixedSize(0,0);
+    menu->setFixedSize(1,1);
     //NOTICE i used to set the menu's parent->layout()->setMenuBar(0) to get rid of the free space
     // but this leads to side effects (e.g. kcalc won't come up anymore...)
     // so now the stylehint for the free space below checks the menubar height and returns
     // a negative value so that final result will be 1 px heigh...
     menu->updateGeometry();
+    menu->setFixedSize(0,0);
+    menu->move(9000,9000);
 
     // we need to hold a copy of this list to handle action removes
     // (as we get the event after the action has been removed from the widget...)

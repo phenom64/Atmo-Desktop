@@ -201,11 +201,18 @@ StyleProject::showEvent(QObject *o, QEvent *e)
         if (dConf.uno.enabled)
             Handlers::Window::updateWindowDataLater(w->window());
 #if !defined(QT_NO_DBUS)
+        /* Sometimes the menubar shows itself as a glitghy
+         * square painting some undefined data in the topleft
+         * corner for some reason I've yet to understand...
+         *
+         * NOTE: *only* qt5 apps are affected
+         */
         if (BE::MacMenu::isActive())
         {
-                w->setFixedSize(1, 1);
-                w->updateGeometry();
-                w->setFixedSize(0, 0);
+            w->setFixedSize(1, 1);
+            w->updateGeometry();
+            w->setFixedSize(0, 0);
+            w->move(9000,9000); //will you just go away please?
         }
 #endif
         return false;
