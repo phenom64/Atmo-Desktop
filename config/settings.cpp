@@ -8,26 +8,9 @@
 #include <QLabel>
 #include <QTimer>
 
-Q_DECL_EXPORT Settings Settings::conf;
-
-Settings::Settings(QObject *parent) : QObject(parent), palette(0), m_settings(0)
-{
-    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(writePalette()));
-}
-
-Settings::~Settings()
-{
-    if (conf.m_settings)
-    {
-        delete conf.m_settings;
-        conf.m_settings = 0;
-    }
-    if (conf.m_paletteSettings)
-    {
-        delete conf.m_paletteSettings;
-        conf.m_paletteSettings = 0;
-    }
-}
+QSettings *Settings::s_settings = 0;
+QSettings *Settings::s_paletteSettings = 0;
+Settings::Conf Settings::conf;
 
 Gradient
 Settings::stringToGrad(const QString &string)
@@ -107,20 +90,20 @@ void
 Settings::writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c)
 {
     const QString &color = QString::number(c.rgba(), 16);
-    conf.m_paletteSettings->beginGroup(groups[g]);
-    conf.m_paletteSettings->setValue(roles[r], color);
-    conf.m_paletteSettings->endGroup();
+    s_paletteSettings->beginGroup(groups[g]);
+    s_paletteSettings->setValue(roles[r], color);
+    s_paletteSettings->endGroup();
 }
 
 QColor
 Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
 {
-    conf.m_paletteSettings->beginGroup(groups[g]);
-    const QString color = conf.m_paletteSettings->value(roles[r], QString()).toString();
+    s_paletteSettings->beginGroup(groups[g]);
+    const QString color = s_paletteSettings->value(roles[r], QString()).toString();
     QColor c;
     if (color.size() == 8)
         c = QColor::fromRgba(color.toUInt(0, 16));
-    conf.m_paletteSettings->endGroup();
+    s_paletteSettings->endGroup();
     return c;
 }
 
@@ -154,7 +137,10 @@ Settings::readPalette()
             else
             {
                 if (conf.palette)
+                {
                     delete conf.palette;
+                    conf.palette = 0;
+                }
                 return;
             }
             conf.palette->setColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, c);
@@ -165,22 +151,19 @@ Settings::readPalette()
 QSettings
 *Settings::paletteSettings()
 {
-    if (conf.m_paletteSettings)
-        return conf.m_paletteSettings;
-    if (!conf.m_settings)
+    if (s_paletteSettings)
+        return s_paletteSettings;
+    if (!s_settings)
         return 0;
-    const QString paletteFileName(conf.m_settings->value(READPALETTE).toString());
+    const QString paletteFileName(s_settings->value(READPALETTE).toString());
     if (paletteFileName.isEmpty())
         return 0;
 
     QString settingsPath(CONFIGPATH);
     settingsPath.append(QString("/%1.conf").arg(paletteFileName));
 
-//    if (!QFileInfo(settingsPath).exists())
-//        return 0;
-
-    conf.m_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
-    return conf.m_paletteSettings;
+    s_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
+    return s_paletteSettings;
 }
 
 static const QString appName()
@@ -222,6 +205,17 @@ static const QString getPreset(QSettings *s, const QString &appName)
 void
 Settings::read()
 {
+    if (s_settings)
+    {
+        delete s_settings;
+        s_settings = 0;
+    }
+    if (s_paletteSettings)
+    {
+        delete s_paletteSettings;
+        s_paletteSettings = 0;
+    }
+
     conf.m_appName = appName();
     if (conf.m_appName == "eiskaltdcpp-qt")
         conf.app = Eiskalt;
@@ -242,100 +236,110 @@ Settings::read()
 
     const QDir settingsDir(CONFIGPATH);
     QString settingsFileName("dsp");
-    conf.m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
-    const QString preset(getPreset(conf.m_settings, conf.m_appName));
+    s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+    const QString preset(getPreset(s_settings, conf.m_appName));
     const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
     if (!preset.isEmpty() && presetFile.exists())
     {
         settingsFileName = preset;
-        delete conf.m_settings;
-        conf.m_settings = 0;
+        if (s_settings)
+        {
+            delete s_settings;
+            s_settings = 0;
+        }
     }
 
-    if (!conf.m_settings)
-        conf.m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+    if (!s_settings)
+        s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
 
-#define READINT(_VAR_) conf.m_settings->value(_VAR_).toInt();
+#define READINT(_VAR_) s_settings->value(_VAR_).toInt()
+#define READBOOL(_VAR_) s_settings->value(_VAR_).toBool()
+#define READFLOAT(_VAR_) s_settings->value(_VAR_).toFloat()
+#define READSTRING(_VAR_) s_settings->value(_VAR_).toString()
+#define READSTRINGLIST(_VAR_) s_settings->value(_VAR_).toStringList()
     //globals
-    conf.opacity = conf.m_settings->value(READOPACITY).toFloat()/100.0f;
-    conf.blackList = conf.m_settings->value(READBLACKLIST).toStringList();
+    conf.opacity                = READFLOAT(READOPACITY)/100.0f;
+    conf.blackList              = READSTRINGLIST(READBLACKLIST);
     if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
         conf.opacity = 1.0f;
-    conf.removeTitleBars = conf.m_settings->value(READREMOVETITLE).toBool();
-    conf.titlePos = conf.removeTitleBars?conf.m_settings->value(READTITLEPOS).toInt():-1;
-    conf.hackDialogs = conf.m_settings->value(READHACKDIALOGS).toBool();
-    conf.compactMenu = conf.m_settings->value(READCOMPACTMENU).toBool();
-    conf.splitterExt = conf.m_settings->value(READSPLITTEREXT).toBool();
-    conf.balloonTips = conf.m_settings->value(READBALLOONTIPS).toBool();
-    conf.arrowSize = READINT(READARROWSIZE);
-
+    conf.removeTitleBars        = READBOOL(READREMOVETITLE);
+    conf.titlePos               = conf.removeTitleBars?READINT(READTITLEPOS):-1;
+    conf.hackDialogs            = READBOOL(READHACKDIALOGS);
+    conf.compactMenu            = READBOOL(READCOMPACTMENU);
+    conf.splitterExt            = READBOOL(READSPLITTEREXT);
+    conf.balloonTips            = READBOOL(READBALLOONTIPS);
+    conf.arrowSize              = READINT(READARROWSIZE);
     //deco
-    conf.deco.buttons = conf.m_settings->value(READDECOBUTTONS).toInt();
-    conf.deco.icon = conf.m_settings->value(READDECOICON).toBool();
-    conf.deco.shadowSize = READINT(READDECOSHADOWSIZE);
-    conf.deco.frameSize = READINT(READDECOFRAME);
+    conf.deco.buttons           = READINT(READDECOBUTTONS);
+    conf.deco.icon              = READBOOL(READDECOICON);
+    conf.deco.shadowSize        = READINT(READDECOSHADOWSIZE);
+    conf.deco.frameSize         = READINT(READDECOFRAME);
     //pushbuttons
-    conf.pushbtn.rnd = conf.m_settings->value(READPUSHBTNRND).toInt();
-    conf.pushbtn.shadow = conf.m_settings->value(READPUSHBTNSHADOW).toInt();
-    conf.pushbtn.gradient = stringToGrad(conf.m_settings->value(READPUSHBTNGRAD).toString());
-    conf.pushbtn.tint = tintColor(conf.m_settings->value(READPUSHBTNTINT).toString());
+    conf.pushbtn.rnd            = READINT(READPUSHBTNRND);
+    conf.pushbtn.shadow         = READINT(READPUSHBTNSHADOW);
+    conf.pushbtn.gradient       = stringToGrad(READSTRING(READPUSHBTNGRAD));
+    conf.pushbtn.tint           = tintColor(READSTRING(READPUSHBTNTINT));
     //toolbuttons
-    conf.toolbtn.rnd = conf.m_settings->value(READTOOLBTNRND).toInt();
-    conf.toolbtn.shadow = conf.m_settings->value(READTOOLBTNSHADOW).toInt();
-    conf.toolbtn.gradient = stringToGrad(conf.m_settings->value(READTOOLBTNGRAD).toString());
-    conf.toolbtn.tint = tintColor(conf.m_settings->value(READTOOLBTNTINT).toString());
-    conf.toolbtn.folCol = conf.m_settings->value(READTOOLBTNFOLCOL).toBool();
-    conf.toolbtn.invAct = conf.m_settings->value(READTOOLBTNINVACT).toBool();
-    conf.toolbtn.flat = conf.m_settings->value(READTOOLBTNFLAT).toBool();
+    conf.toolbtn.rnd            = READINT(READTOOLBTNRND);
+    conf.toolbtn.shadow         = READINT(READTOOLBTNSHADOW);
+    conf.toolbtn.gradient       = stringToGrad(READSTRING(READTOOLBTNGRAD));
+    conf.toolbtn.tint           = tintColor(READSTRING(READTOOLBTNTINT));
+    conf.toolbtn.folCol         = READBOOL(READTOOLBTNFOLCOL);
+    conf.toolbtn.invAct         = READBOOL(READTOOLBTNINVACT);
+    conf.toolbtn.flat           = READBOOL(READTOOLBTNFLAT);
     //inputs
-    conf.input.rnd = conf.m_settings->value(READINPUTRND).toInt();
-    conf.input.shadow = conf.m_settings->value(READINPUTSHADOW).toInt();
-    conf.input.gradient = stringToGrad(conf.m_settings->value(READINPUTGRAD).toString());
-    conf.input.tint = tintColor(conf.m_settings->value(READINPUTTINT).toString());
+    conf.input.rnd              = READINT(READINPUTRND);
+    conf.input.shadow           = READINT(READINPUTSHADOW);
+    conf.input.gradient         = stringToGrad(READSTRING(READINPUTGRAD));
+    conf.input.tint             = tintColor(READSTRING(READINPUTTINT));
     //tabs
-    conf.tabs.safari = conf.m_settings->value(READTABSAF).toBool();
-    conf.tabs.rnd = conf.m_settings->value(READTABRND).toInt();
-    conf.tabs.shadow = conf.m_settings->value(READTABSHADOW).toInt();
-    conf.tabs.gradient = stringToGrad(conf.m_settings->value(READTABGRAD).toString());
-    conf.tabs.safrnd = qMin(conf.m_settings->value(READSAFTABRND).toInt(), 8);
-    conf.tabs.closeButtonSide = conf.m_settings->value(READTABCLOSER).toInt();
+    conf.tabs.safari            = READBOOL(READTABSAF);
+    conf.tabs.rnd               = READINT(READTABRND);
+    conf.tabs.shadow            = READINT(READTABSHADOW);
+    conf.tabs.gradient          = stringToGrad(READSTRING(READTABGRAD));
+    conf.tabs.safrnd            = qMin(READINT(READSAFTABRND), 8);
+    conf.tabs.closeButtonSide   = READINT(READTABCLOSER);
     //uno
-    conf.uno.enabled = conf.m_settings->value(READUNOENABLED).toBool();
-    conf.uno.gradient = stringToGrad(conf.m_settings->value(READUNOGRAD).toString());
-    conf.uno.tint = tintColor(conf.m_settings->value(READUNOTINT).toString());
-    conf.uno.noise = conf.m_settings->value(READUNONOISE).toInt();
-    conf.uno.noiseStyle = conf.m_settings->value(READUNONOISESTYLE).toInt();
-    conf.uno.hor = conf.m_settings->value(READUNOHOR).toBool();
-    conf.uno.contAware = conf.m_settings->value(READUNOCONT).toStringList().contains(QFileInfo(qApp->applicationFilePath()).fileName());
-    conf.uno.opacity = conf.m_settings->value(READUNOOPACITY).toFloat()/100.0f;
-    conf.uno.blur = conf.m_settings->value(READUNOCONTBLUR).toInt();
+    conf.uno.enabled            = READBOOL(READUNOENABLED);
+    conf.uno.gradient           = stringToGrad(READSTRING(READUNOGRAD));
+    conf.uno.tint               = tintColor(READSTRING(READUNOTINT));
+    conf.uno.noise              = READINT(READUNONOISE);
+    conf.uno.noiseStyle         = READINT(READUNONOISESTYLE);
+    conf.uno.hor                = READBOOL(READUNOHOR);
+    conf.uno.contAware          = READSTRINGLIST(READUNOCONT).contains(QFileInfo(qApp->applicationFilePath()).fileName());
+    conf.uno.opacity            = READFLOAT(READUNOOPACITY)/100.0f;
+    conf.uno.blur               = READINT(READUNOCONTBLUR);
     //windows when not uno
-    conf.windows.gradient = stringToGrad(conf.m_settings->value(READWINGRAD).toString());
-    conf.windows.noise = READINT(READWINNOISE);
-    conf.windows.noiseStyle = READINT(READWINNOISESTYLE);
-    conf.windows.hor = conf.m_settings->value(READWINHOR).toBool();
+    conf.windows.gradient       = stringToGrad(READSTRING(READWINGRAD));
+    conf.windows.noise          = READINT(READWINNOISE);
+    conf.windows.noiseStyle     = READINT(READWINNOISESTYLE);
+    conf.windows.hor            = READBOOL(READWINHOR);
     //menues
-    conf.menues.icons = conf.m_settings->value(READMENUICONS).toBool();
+    conf.menues.icons           = READBOOL(READMENUICONS);
     //sliders
-    conf.sliders.size = conf.m_settings->value(READSLIDERSIZE).toInt();
-    conf.sliders.dot = conf.m_settings->value(READSLIDERDOT).toBool();
-    conf.sliders.grooveShadow = conf.m_settings->value(READSLIDERGROOVESHAD).toInt();
-    conf.sliders.grooveGrad = stringToGrad(conf.m_settings->value(READSLIDERGROOVE).toString());
-    conf.sliders.sliderGrad = stringToGrad(conf.m_settings->value(READSLIDERGRAD).toString());
-    conf.sliders.fillGroove = conf.m_settings->value(READSLIDERFILLGROOVE).toBool();
+    conf.sliders.size           = READINT(READSLIDERSIZE);
+    conf.sliders.dot            = READBOOL(READSLIDERDOT);
+    conf.sliders.grooveShadow   = READINT(READSLIDERGROOVESHAD);
+    conf.sliders.grooveGrad     = stringToGrad(READSTRING(READSLIDERGROOVE));
+    conf.sliders.sliderGrad     = stringToGrad(READSTRING(READSLIDERGRAD));
+    conf.sliders.fillGroove     = READBOOL(READSLIDERFILLGROOVE);
     //scrollers
-    conf.scrollers.size = conf.m_settings->value(READSCROLLERSIZE).toInt();
-    conf.scrollers.style = READINT(READSCROLLERSTYLE);
-    conf.scrollers.grooveGrad = stringToGrad(conf.m_settings->value(READSCROLLERGROOVE).toString());
-    conf.scrollers.sliderGrad = stringToGrad(conf.m_settings->value(READSCROLLERGRAD).toString());
+    conf.scrollers.size         = READINT(READSCROLLERSIZE);
+    conf.scrollers.style        = READINT(READSCROLLERSTYLE);
+    conf.scrollers.grooveGrad   = stringToGrad(READSTRING(READSCROLLERGROOVE));
+    conf.scrollers.sliderGrad   = stringToGrad(READSTRING(READSCROLLERGRAD));
     //views
-    conf.views.treelines = conf.m_settings->value(READVIEWTREELINES).toBool();
+    conf.views.treelines        = READBOOL(READVIEWTREELINES);
     //progressbars
-    conf.progressbars.shadow = READINT(READPROGSHADOW);
-    conf.progressbars.rnd = READINT(READPROGRND);
+    conf.progressbars.shadow    = READINT(READPROGSHADOW);
+    conf.progressbars.rnd       = READINT(READPROGRND);
     //shadows
-    conf.shadows.opacity = conf.m_settings->value(READSHADOWOPACITY).toFloat()/100.0f;
-    conf.shadows.darkRaisedEdges = conf.m_settings->value(READSHADOWDARKRAISED).toBool();
+    conf.shadows.opacity        = READFLOAT(READSHADOWOPACITY)/100.0f;
+    conf.shadows.darkRaisedEdges = READBOOL(READSHADOWDARKRAISED);
 #undef READINT
+#undef READBOOL
+#undef READFLOAT
+#undef READSTRING
+#undef READSTRINGLIST
     readPalette();
 }

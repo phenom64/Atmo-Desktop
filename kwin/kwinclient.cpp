@@ -73,15 +73,15 @@ DButton::onClick(const Qt::MouseButton &button)
     switch (type())
     {
     case Close: m_client->closeWindow(); break;
-    case Min: m_client->minimize(); break;
-    case Max: m_client->maximize(button); break;
+    case Minimize: m_client->minimize(); break;
+    case Maximize: m_client->maximize(button); break;
     case OnAllDesktops: m_client->toggleOnAllDesktops(); break;
-    case WindowMenu: m_client->showWindowMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
+    case Menu: m_client->showWindowMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
     case KeepAbove: m_client->setKeepAbove(!m_client->keepAbove()); break;
     case KeepBelow: m_client->setKeepBelow(!m_client->keepBelow()); break;
-    case AppMenu: m_client->showApplicationMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
+    case ApplicationMenu: m_client->showApplicationMenu(m_client->widget()->mapToGlobal(buttonRect().bottomLeft())); break;
     case Shade: m_client->setShade(!m_client->isShade()); break;
-    case QuickHelp: m_client->showContextHelp(); break;
+    case ContextHelp: m_client->showContextHelp(); break;
     default: break;
     }
     m_client->widget()->repaint();
@@ -207,21 +207,21 @@ KwinClient::populate(const QString &buttons, int &sz)
         /*
         * @li 'R' resize button
         */
-        case 'H': t = Button::QuickHelp; break;
+        case 'H': t = Button::ContextHelp; break;
         case 'L': t = Button::Shade; break;
-        case 'N': t = Button::AppMenu; break;
+        case 'N': t = Button::ApplicationMenu; break;
         case 'B': t = Button::KeepBelow; break;
         case 'F': t = Button::KeepAbove; break;
-        case 'M': t = Button::WindowMenu; break;
+        case 'M': t = Button::Menu; break;
         case 'S': t = Button::OnAllDesktops; break;
         case 'X': t = Button::Close; break;
-        case 'I': t = Button::Min; break;
-        case 'A': t = Button::Max; break;
+        case 'I': t = Button::Minimize; break;
+        case 'A': t = Button::Maximize; break;
         case '_': m_titleLayout->addSpacing(SPACING); supported = false; size += SPACING; break;
         default: supported = false; break;
         }
 
-        if (t == Button::QuickHelp && !providesContextHelp())
+        if (t == Button::ContextHelp && !providesContextHelp())
             supported = false;
 
         if (supported)
@@ -372,7 +372,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         for (int i = 0; i < m_buttons.size(); ++i)
         {
             DButton *button(m_buttons.at(i));
-            if (button->type() < Button::OnAllDesktops) //is min|max|close
+            if (button->type() == Button::Minimize || button->type() == Button::Maximize || button->type() == Button::Close)
                 button->hover();
         }
         return true;
@@ -383,7 +383,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         for (int i = 0; i < m_buttons.size(); ++i)
         {
             DButton *button(m_buttons.at(i));
-            if (button->type() < Button::OnAllDesktops) //is min|max|close
+            if (button->type() == Button::Minimize || button->type() == Button::Maximize || button->type() == Button::Close)
                 button->unhover();
         }
         return true;

@@ -139,7 +139,7 @@ StyleProject::polish(QWidget *widget)
             if (XHandler::opacity() < 1.0f && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
 #endif
-
+            Handlers::Dock::manage(widget);
             Handlers::Window::manage(widget);
             if (dConf.removeTitleBars)
                 ShadowHandler::manage(widget);

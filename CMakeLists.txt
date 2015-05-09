@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 2.8.12)
 option(QT5BUILD "build for qt5" OFF)
 
 if (QT5BUILD)
@@ -28,6 +28,8 @@ if (QT5BUILD)
         set(QTDBUS_FOUND ON)
     endif (Qt5DBus_FOUND)
     add_definitions(${Qt5Widgets_DEFINITIONS})
+    find_package(ECM)
+    set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
     
     # uninstall target, stolen from http://www.cmake.org/Wiki/CMake_FAQ#Can_I_do_.22make_uninstall.22_with_CMake.3F
     configure_file(
@@ -70,7 +72,6 @@ set(MOC_HDRS ${MOC_HDRS} stylelib/animhandler.h stylelib/handlers.h stylelib/ops
 #config source...
 set(SRCS ${SRCS} config/settings.cpp)
 set(HDRS ${HDRS} config/settings.h)
-set(MOC_HDRS ${MOC_HDRS} config/settings.h)
 
 if (QTDBUS_FOUND)
     message(STATUS "Found qtdbus, building bespin macmenu support")
@@ -94,6 +95,10 @@ if (QT5BUILD)
     get_target_property(QMAKE Qt5::qmake IMPORTED_LOCATION)
     exec_program(${QMAKE} ARGS "-query QT_INSTALL_PLUGINS" OUTPUT_VARIABLE PLUGINPATH)
     install(TARGETS ${PROJECT} LIBRARY DESTINATION ${PLUGINPATH}/styles)
+    find_package(KDecoration2)
+    if (KDecoration2_FOUND)
+        add_subdirectory(kwin)
+    endif (KDecoration2_FOUND)
 else (QT5BUILD)
     target_link_libraries(${PROJECT} ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
     install(TARGETS ${PROJECT} LIBRARY DESTINATION ${QT_PLUGINS_DIR}/styles)

@@ -51,6 +51,17 @@ static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, Q
     if (!item)
         return cs;
 
+    if (menu)
+    {
+        const QList<QAction *> actions = menu->actions();
+        for (int i = 0; i < actions.size(); ++i)
+        {
+            const QAction *a(actions.at(i));
+            if (a->text() == item->text && a->font().bold())
+                cs.rwidth() += (QFontMetrics(a->font()).width(item->text) - QFontMetrics(item->font).width(item->text));
+        }
+    }
+
     cs += QSize((item->menuHasCheckableItems?32:6)+32, 0); //just to add some decent width to the menu
     if (dConf.menues.icons)
         cs.rwidth()+= 20;
@@ -85,7 +96,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
         sz+=QSize(8, pixelMetric(PM_ButtonMargin, opt, widget));
         if (sz.height() < 23)
             sz.setHeight(23);
-        castOpt(Button, btn, opt);
+        const QStyleOptionButton *btn = qstyleoption_cast<const QStyleOptionButton *>(opt);
         if (btn && !btn->text.isEmpty())
             if (sz.width() < 75)
                 sz.setWidth(75);
@@ -130,10 +141,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
                 sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
 
             if (!safBar)
-            {
                 sz.rheight()+=6;
-//                sz.setWidth(100);
-            }
         }
         if (styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignCenter)
         {
@@ -143,17 +151,11 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             f.setBold(true);
             int boldWidth(QFontMetrics(f).boundingRect(s).width());
             int add(boldWidth-nonBoldWidth);
-//            add+=4; //some extra padding for good measure...
             if (!isVertical(tab, bar))
                 sz.rwidth() += add;
             else
                 sz.rheight() += add;
         }
-//        if (!safBar)
-//        {
-//            sz.rwidth()+=(sz.width()-Render::maskWidth(dConf.tabs.shadow, sz.width()));
-//            sz.rheight()+=(sz.height()-Render::maskHeight(dConf.tabs.shadow, sz.height()));
-//        }
         return sz;
     }
     case CT_ToolButton:
@@ -226,27 +228,38 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_SpinBox:
     {
         QSize sz(contentsSize);
-//        castOpt(SpinBox, sp, opt);
         sz.rwidth()+=(Render::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
         sz.setHeight(qMax(23, sz.height()));
         return sz;
     }
-//        case CT_MenuItem:
     case CT_MenuBarItem:
     {
-        castOpt(MenuItem, item, opt);
+        const QStyleOptionMenuItem *item = qstyleoption_cast<const QStyleOptionMenuItem *>(opt);
         if (!item)
             return contentsSize;
 
         QSize sz(contentsSize+QSize(8, 0));
-        if (castObj(const QMenuBar *, bar, widget))
+        if (widget)
         {
-            const QList<QAction *> actions = bar->actions();
+            const QList<QAction *> actions = widget->actions();
             for (int i = 0; i < actions.size(); ++i)
             {
                 const QAction *a(actions.at(i));
                 if (a->text() == item->text && a->font().bold())
-                    sz.rwidth() += (QFontMetrics(a->font()).width(item->text) - QFontMetrics(item->font).width(item->text));
+                {
+                    /*
+                     * Here we need to get the difference between
+                     * the unbold font and the bold one, and this
+                     * /has/ to be widget->font() cause if css is
+                     * used its the /only/ one that has the font
+                     * set in the styleshit.
+                     */
+                    QFont wf(widget->font());
+                    const int ww(QFontMetrics(wf).width(item->text));
+                    wf.setBold(true);
+                    const int bw(QFontMetrics(wf).width(item->text));
+                    sz.rwidth() += bw - ww;
+                }
             }
         }
         return sz;
@@ -256,7 +269,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_RadioButton:
     case CT_CheckBox:
     {
-        castOpt(Button, btn, opt);
+        const QStyleOptionButton *btn = qstyleoption_cast<const QStyleOptionButton *>(opt);
         if (!btn)
             return contentsSize;
         int w(contentsSize.width());
@@ -278,7 +291,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_ComboBox:
     {
-        castOpt(ComboBox, box, opt);
+        const QStyleOptionComboBox *box = qstyleoption_cast<const QStyleOptionComboBox *>(opt);
         if (!box)
             return contentsSize;
         if (box->editable)

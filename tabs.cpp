@@ -575,7 +575,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         QBrush b(c);
         if (hasGradient)
         {
-            lg.setStops(dConf.gradientStops(dConf.tabs.gradient, c));
+            lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
             b = QBrush(lg);
         }
         p->fillRect(orgRect, b);

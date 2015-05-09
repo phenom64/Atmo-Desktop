@@ -14,6 +14,7 @@ class QMainWindow;
 class QAbstractScrollArea;
 class QTabBar;
 class QToolButton;
+class QDockWidget;
 
 #define HASSTRETCH  "DSP_hasstretch"
 #define CSDBUTTONS  "DSP_hasbuttons"
@@ -233,6 +234,26 @@ protected:
 
 private:
     static BalloonHelper s_instance;
+};
+
+class Q_DECL_EXPORT Dock : public QObject
+{
+    Q_OBJECT
+public:
+    static void manage(QWidget *win);
+    static void release(QWidget *win);
+    static Dock *instance();
+
+protected:
+    void lockDock(QDockWidget *dock);
+    void unlockDock(QDockWidget *dock);
+
+protected slots:
+    void lockWindowLater(QWidget *win);
+    void lockDocks(const bool locked);
+
+private:
+    static Dock *s_instance;
 };
 
 }

@@ -34,6 +34,7 @@
 #include <QToolTip>
 #include <QDesktopWidget>
 #include <QGroupBox>
+#include <QDockWidget>
 
 #if !defined(QT_NO_DBUS)
 #include "macmenu.h"
@@ -96,8 +97,8 @@ Buttons::Buttons(QWidget *parent) : QWidget(parent)
     bl->setContentsMargins(4, 4, 4, 4);
     bl->setSpacing(4);
     bl->addWidget(new Button(Button::Close, this));
-    bl->addWidget(new Button(Button::Min, this));
-    bl->addWidget(new Button(Button::Max, this));
+    bl->addWidget(new Button(Button::Minimize, this));
+    bl->addWidget(new Button(Button::Maximize, this));
     setLayout(bl);
     if (parent)
         parent->window()->installEventFilter(this);
@@ -1789,4 +1790,86 @@ BalloonHelper::eventFilter(QObject *o, QEvent *e)
     }
     default: return false;
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+Dock *Dock::s_instance = 0;
+
+Dock
+*Dock::instance()
+{
+    if (!s_instance)
+        s_instance = new Dock();
+    return s_instance;
+}
+
+void
+Dock::manage(QWidget *win)
+{
+    QMetaObject::invokeMethod(instance(), "lockWindowLater", Qt::QueuedConnection, Q_ARG(QWidget *, win));
+}
+
+void
+Dock::lockWindowLater(QWidget *win)
+{
+    QAction *a = new QAction("DSP::DockLocker", win);
+    a->setObjectName("DSP::DockLocker");
+    a->setShortcut(QKeySequence("Ctrl+Alt+D"));
+    a->setShortcutContext(Qt::ApplicationShortcut);
+    a->setCheckable(true);
+    a->setChecked(false);
+    connect(a, SIGNAL(toggled(bool)), instance(), SLOT(lockDocks(bool)));
+    win->addAction(a);
+    a->toggle();
+}
+
+void
+Dock::release(QWidget *win)
+{
+    if (QAction *a = win->findChild<QAction *>("DSP::DockLocker"))
+        a->deleteLater();
+}
+
+void
+Dock::lockDocks(const bool locked)
+{
+    if (!sender())
+        return;
+    QWidget *win = static_cast<QWidget *>(sender()->parent());
+    QList<QDockWidget *> docks = win->findChildren<QDockWidget *>();
+    for (int i = 0; i < docks.count(); ++i)
+    {
+        if (locked)
+            lockDock(docks.at(i));
+        else
+            unlockDock(docks.at(i));
+    }
+}
+
+static QMap<QDockWidget *, QWidget *> s_customDockTitleBars;
+
+void
+Dock::lockDock(QDockWidget *dock)
+{
+    if (QWidget *w = dock->titleBarWidget())
+        s_customDockTitleBars.insert(dock, w);
+
+    QLabel *l = new QLabel(dock);
+    l->setContentsMargins(0, -l->fontMetrics().height(), 0, -l->fontMetrics().height());
+    l->setObjectName("DSP::DockLockerTitleBar");
+    dock->setTitleBarWidget(l);
+}
+
+void
+Dock::unlockDock(QDockWidget *dock)
+{
+    if (!dock->titleBarWidget() || dock->titleBarWidget()->objectName() != "DSP::DockLockerTitleBar")
+        return;
+    QWidget *w = dock->titleBarWidget();
+    if (s_customDockTitleBars.contains(dock))
+        dock->setTitleBarWidget(s_customDockTitleBars.value(dock));
+    else
+        dock->setTitleBarWidget(0);
+    w->deleteLater();
 }

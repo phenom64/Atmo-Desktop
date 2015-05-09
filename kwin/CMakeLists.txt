@@ -1,12 +1,57 @@
 message(STATUS "preparing kwin deco")
-project(kwin3_styleproject)
-file(GLOB KWIN_SRCS *.cpp)
 
 if (QT5BUILD)
-    message(STATUS "not yet kde5 deco")
+    #NOTE: most of this copied from the default breeze deco and partly rewritten for dsp
+    find_package(KF5 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons I18n)
+    find_package(Qt5 CONFIG REQUIRED COMPONENTS DBus)
+    
+    include(KDEInstallDirs)
+    include(KDECMakeSettings)
+    include(KDECompilerSettings)
+    include(GenerateExportHeader)
+
+    ### XCB
+    find_package(XCB COMPONENTS XCB)
+    set_package_properties(XCB PROPERTIES
+    DESCRIPTION "X protocol C-language Binding"
+    URL "http://xcb.freedesktop.org"
+    TYPE OPTIONAL
+    PURPOSE "Required to pass style properties to native Windows on X11 Platform"
+    )
+
+    set(SRCS kwinclient2.cpp decobutton.cpp)
+    set(HDRS kwinclient2.h decobutton.h)
+    ### build library
+    add_library(dspdecoration MODULE ${SRCS} ${HDRS})
+
+    target_link_libraries(dspdecoration
+        PUBLIC
+            Qt5::Core
+            Qt5::Gui
+            Qt5::DBus
+            styleproject_qt5
+        PRIVATE
+            KDecoration2::KDecoration
+            KF5::ConfigCore
+            KF5::CoreAddons
+            KF5::ConfigWidgets
+            KF5::GuiAddons
+            KF5::I18n
+            KF5::WindowSystem)
+
+    if (XCB_FOUND)
+        target_link_libraries(dspdecoration
+            PUBLIC
+            Qt5::X11Extras
+            XCB::XCB)
+    endif (XCB_FOUND)
+
+    install(TARGETS dspdecoration DESTINATION ${PLUGIN_INSTALL_DIR}/org.kde.kdecoration2)
 else (QT5BUILD)
-        find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
+    find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
     if (KDECORATION_H)
+        project(kwin3_styleproject)
+        set(KWIN_SRCS factory.cpp kwinclient.cpp sizegrip.cpp)
 	message(STATUS "kwin deco header found: " ${KDECORATION_H})
         kde4_add_plugin(kwin3_styleproject ${KWIN_SRCS})
         target_link_libraries(kwin3_styleproject styleproject ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} kdecorations ${X11_LIBRARIES})

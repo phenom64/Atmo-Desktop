@@ -66,8 +66,24 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
             for (int i = 0; i < lbls.count(); ++i)
                 lbls.at(i)->setAlignment(Qt::AlignCenter);
         }
-        else if (dConf.uno.enabled && qobject_cast<QMenuBar *>(w))
-            Handlers::Window::updateWindowDataLater(w->window());
+        else if (qobject_cast<QMenuBar *>(w))
+        {
+            if (dConf.uno.enabled)
+                Handlers::Window::updateWindowDataLater(w->window());
+#if !defined(QT_NO_DBUS)
+            if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
+            {
+                /* Sometimes the menubar shows itself as a glitghy
+                 * square painting some undefined data in the topleft
+                 * corner for some reason I've yet to understand...
+                 *
+                 * NOTE: *only* qt5 apps are affected
+                 */
+                w->setFixedSize(1,1);
+                w->setFixedSize(0,0);
+            }
+#endif
+        }
         break;
     }
     case QEvent::MetaCall:
@@ -200,21 +216,6 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
         if (dConf.uno.enabled)
             Handlers::Window::updateWindowDataLater(w->window());
-#if !defined(QT_NO_DBUS)
-        /* Sometimes the menubar shows itself as a glitghy
-         * square painting some undefined data in the topleft
-         * corner for some reason I've yet to understand...
-         *
-         * NOTE: *only* qt5 apps are affected
-         */
-        if (BE::MacMenu::isActive())
-        {
-            w->setFixedSize(1, 1);
-            w->updateGeometry();
-            w->setFixedSize(0, 0);
-            w->move(9000,9000); //will you just go away please?
-        }
-#endif
         return false;
     }
     else if (qobject_cast<QMenu *>(w))

@@ -21,20 +21,20 @@ ButtonBase::ButtonBase(Type type)
     , m_hasMouse(false)
     , m_hoverLock(false)
 {
-    for (int i = 0; i < TypeCount; ++i)
+    for (int i = 0; i < Custom; ++i)
         m_paintEvent[i] = 0;
 
     m_paintEvent[Close] = &ButtonBase::paintCloseButton;
-    m_paintEvent[Min] = &ButtonBase::paintMinButton;
-    m_paintEvent[Max] = &ButtonBase::paintMaxButton;
+    m_paintEvent[Minimize] = &ButtonBase::paintMinButton;
+    m_paintEvent[Maximize] = &ButtonBase::paintMaxButton;
     m_paintEvent[OnAllDesktops] = &ButtonBase::paintOnAllDesktopsButton;
-    m_paintEvent[WindowMenu] = &ButtonBase::paintWindowMenuButton;
+    m_paintEvent[Menu] = &ButtonBase::paintWindowMenuButton;
     m_paintEvent[KeepAbove] = &ButtonBase::paintKeepAboveButton;
     m_paintEvent[KeepBelow] = &ButtonBase::paintKeepBelowButton;
     m_paintEvent[Shade] = &ButtonBase::paintShadeButton;
-    m_paintEvent[Resize] = &ButtonBase::paintResizeButton;
-    m_paintEvent[QuickHelp] = &ButtonBase::paintQuickHelpButton;
-    m_paintEvent[AppMenu] = &ButtonBase::paintApplicationMenuButton;
+//    m_paintEvent[Resize] = &ButtonBase::paintResizeButton;
+    m_paintEvent[ContextHelp] = &ButtonBase::paintQuickHelpButton;
+    m_paintEvent[ApplicationMenu] = &ButtonBase::paintApplicationMenuButton;
 }
 
 ButtonBase::~ButtonBase()
@@ -45,7 +45,7 @@ ButtonBase::~ButtonBase()
 void
 ButtonBase::paint(QPainter &p)
 {
-    if (m_type < TypeCount && m_paintEvent[m_type])
+    if (m_type < Custom && m_paintEvent[m_type])
         (this->*m_paintEvent[m_type])(p);
 }
 
@@ -241,26 +241,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     }
 }
 
-/** Stolen colors from bespin....
- *  none of them are perfect, but
- *  the uncommented ones are 'good enough'
- *  for me, search the web/pick better
- *  ones yourself if not happy
- */
-
-// static uint fcolors[3] = {0x9C3A3A/*0xFFBF0303*/, 0xFFEB55/*0xFFF3C300*/, 0x77B753/*0xFF00892B*/};
-// Font
-//static uint fcolors[3] = {0xFFBF0303, 0xFFF3C300, 0xFF00892B};
-// Aqua
-// static uint fcolors[3] = { 0xFFD86F6B, 0xFFD8CA6B, 0xFF76D86B };
-
-// static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFFB1DE96 }; <<<-best from bespin
-// Aqua2
-// static uint fcolors[3] = { 0xFFBF2929, 0xFF29BF29, 0xFFBFBF29 };
-
-//static uint fcolors[3] = { 0xFFFF7E71, 0xFFFBD185, 0xFF37CC40 };
-
-static uint fcolors[3] = { 0xFFFE8D88, 0xFFF8C96C, 0xFF8AC96B };
+static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFF8C96C, 0xFF8AC96B, 0xFFFE8D88 };
 
 void
 ButtonBase::paintCloseButton(QPainter &p)
@@ -643,8 +624,8 @@ Button::onClick(const Qt::MouseButton &btn)
     switch (type())
     {
     case Close: window()->close(); break;
-    case Min: window()->showMinimized(); break;
-    case Max: window()->isMaximized()?window()->showNormal():window()->showMaximized(); break;
+    case Minimize: window()->showMinimized(); break;
+    case Maximize: window()->isMaximized()?window()->showNormal():window()->showMaximized(); break;
     default: break;
     }
 }

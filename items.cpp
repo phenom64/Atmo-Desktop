@@ -31,7 +31,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text)), bg(Ops::bgRole(widget, QPalette::Base));
 
     const bool isMenuBar(qobject_cast<const QMenuBar *>(widget));
-    const bool isPlasmaGMenu(dConf.app == Settings::Plasma && widget->inherits("BE::GMenu"));
+//    const bool isPlasmaGMenu(dConf.app == Settings::Plasma && widget->inherits("BE::GMenu"));
     const bool isMenu(qobject_cast<const QMenu *>(widget));
     const bool isSeparator(opt->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!opt->text.isEmpty());
@@ -119,24 +119,27 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 
     for (int i = 0; i < 2 && i < text.count(); ++i)
     {
-        if (isMenuBar && !isPlasmaGMenu)
+        if (isMenuBar)
         {
             const QMenuBar *bar(static_cast<const QMenuBar *>(widget));
             drawMenuBar(option, painter, widget);
-            if (QAction *a = bar->actionAt(opt->rect.center()))
-            {
-                QFont f(a->font());
-                if (f.bold() && qApp->styleSheet().contains("QMenuBar:item", Qt::CaseInsensitive) || qApp->styleSheet().contains("QMenuBar::item", Qt::CaseInsensitive))
+            if (QAction *a = bar->actionAt(opt->rect.topLeft()))
+                if (a->font().bold())
                 {
-                    int w(QFontMetrics(f).width(text.at(i)));
-                    int realw(QFontMetrics(opt->font).width(text.at(i)));
-                    int stretch(realw*100/w);
-                    f.setStretch(stretch);
+                    QFont f(widget->font());
+                    int regularW(QFontMetrics(f).width(text.at(i)));
+                    f.setBold(true);
+                    int boldW(QFontMetrics(f).width(text.at(i)));
+                    if (boldW > opt->rect.width())
+                    {
+                        int stretch(regularW*100/boldW);
+                        f.setStretch(stretch);
+                    }
+                    f.setBold(true);
+                    painter->setFont(f);
                 }
-                painter->setFont(f);
-            }
         }
-        drawItemText(painter, isMenuBar?opt->rect:textRect, (isMenuBar||isPlasmaGMenu)?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
+        drawItemText(painter, isMenuBar?opt->rect:textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
     }
     painter->restore();
     return true;
@@ -184,8 +187,10 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     }
     else
     {
-        if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && opt->rect.x())
+        if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning)
             Render::renderMask(opt->rect, painter, brush, dConf.input.rnd, Render::All & ~Render::Right);
+        else if (opt->viewItemPosition == QStyleOptionViewItemV4::End)
+            Render::renderMask(opt->rect, painter, brush, dConf.input.rnd, Render::All & ~Render::Left);
         else
         {
             painter->fillRect(opt->rect, brush);

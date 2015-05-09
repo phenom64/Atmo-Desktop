@@ -49,7 +49,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
     case SE_ItemViewItemDecoration:
     case SE_ItemViewItemText:
     {
-        castOpt(ViewItemV4, item, opt);
+        const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
         if (!item)
             return QRect();
 

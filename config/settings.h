@@ -3,7 +3,6 @@
 #include <QStringList>
 #include <QPair>
 #include <QGradientStop>
-#include <QObject>
 #include <QPalette>
 //settings vars, these are the vars read from dsp.conf
 
@@ -270,114 +269,110 @@ class QSettings;
 
 #define dConf Settings::conf
 
-
-
-class Q_DECL_EXPORT Settings : public QObject
+class Q_DECL_EXPORT Settings
 {
-    Q_OBJECT
 public:
     enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, Unspecific }; //app specific hacks should be avoided when possible.
     typedef uint App;
-    App app;
-    float opacity;
-    QStringList blackList;
-    bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips;
-    int titlePos, arrowSize;
-    QPalette *palette;
-    struct deco
+    typedef struct _Conf
     {
-        int buttons, shadowSize, frameSize;
-        bool icon;
-    } deco;
-
-    struct pushbtn
-    {
-        int rnd, shadow;
-        Gradient gradient;
-        Tint tint;
-    } pushbtn;
-    struct toolbtn
-    {
-        int rnd, shadow;
-        bool folCol, invAct, flat;
-        Gradient gradient;
-        Tint tint;
-    } toolbtn;
-    struct input
-    {
-        int rnd, shadow;
-        Gradient gradient;
-        Tint tint;
-    } input;
-    struct sliders
-    {
-        bool dot, fillGroove;
-        int size, grooveShadow;
-        Gradient grooveGrad, sliderGrad;
-    } sliders;
-    struct scrollers
-    {
-        int size, style;
-        Gradient grooveGrad, sliderGrad;
-    } scrollers;
-    struct progressbars
-    {
-        int shadow, rnd;
-    } progressbars;
-    struct shadows
-    {
+        QString m_appName;
+        App app;
         float opacity;
-        bool darkRaisedEdges;
-    } shadows;
-    struct tabs
-    {
-        int rnd, safrnd, closeButtonSide, shadow;
-        Gradient gradient;
-        bool safari;
-    } tabs;
-    struct uno
-    {
-        Gradient gradient;
-        Tint tint;
-        unsigned int noise, blur, noiseStyle;
-        float opacity;
-        bool enabled, hor, contAware;
-    } uno;
-    struct windows
-    {
-        Gradient gradient;
-        unsigned int noise, noiseStyle;
-        bool hor;
-    } windows;
-    struct menues
-    {
-        bool icons;
-    } menues;
-    struct views
-    {
-        bool treelines;
-    } views;
+        QStringList blackList;
+        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips;
+        int titlePos, arrowSize;
+        QPalette *palette;
+        struct deco
+        {
+            int buttons, shadowSize, frameSize;
+            bool icon;
+        } deco;
 
-    Settings(QObject *parent = 0);
-    ~Settings();
-    static Settings conf;
+        struct pushbtn
+        {
+            int rnd, shadow;
+            Gradient gradient;
+            Tint tint;
+        } pushbtn;
+        struct toolbtn
+        {
+            int rnd, shadow;
+            bool folCol, invAct, flat;
+            Gradient gradient;
+            Tint tint;
+        } toolbtn;
+        struct input
+        {
+            int rnd, shadow;
+            Gradient gradient;
+            Tint tint;
+        } input;
+        struct sliders
+        {
+            bool dot, fillGroove;
+            int size, grooveShadow;
+            Gradient grooveGrad, sliderGrad;
+        } sliders;
+        struct scrollers
+        {
+            int size, style;
+            Gradient grooveGrad, sliderGrad;
+        } scrollers;
+        struct progressbars
+        {
+            int shadow, rnd;
+        } progressbars;
+        struct shadows
+        {
+            float opacity;
+            bool darkRaisedEdges;
+        } shadows;
+        struct tabs
+        {
+            int rnd, safrnd, closeButtonSide, shadow;
+            Gradient gradient;
+            bool safari;
+        } tabs;
+        struct uno
+        {
+            Gradient gradient;
+            Tint tint;
+            unsigned int noise, blur, noiseStyle;
+            float opacity;
+            bool enabled, hor, contAware;
+        } uno;
+        struct windows
+        {
+            Gradient gradient;
+            unsigned int noise, noiseStyle;
+            bool hor;
+        } windows;
+        struct menues
+        {
+            bool icons;
+        } menues;
+        struct views
+        {
+            bool treelines;
+        } views;
+    } Conf;
+    static Conf conf;
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
+    static Settings *instance();
     static void read();
     static void readPalette();
     static QSettings *paletteSettings();
     static Gradient stringToGrad(const QString &string);
-
-public slots:
-    void writePalette();
+    static void writePalette();
 
 protected:
     static void writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c);
     static QColor readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r);
 
 private:
-    QSettings *m_settings, *m_paletteSettings;
-    QString m_appName;
+    static QSettings *s_settings, *s_paletteSettings;
 };
 
 #endif //SETTINGS_H

@@ -86,6 +86,7 @@ StyleProject::StyleProject() : QCommonStyle()
 
 StyleProject::~StyleProject()
 {
+    Settings::writePalette();
 //    ShadowHandler::deleteInstance();
 //    ProgressHandler::deleteInstance();
 //    Anim::Basic::deleteInstance();

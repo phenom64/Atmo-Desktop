@@ -11,18 +11,21 @@ public:
     enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, FollowToolBtn, StyleCount };
     typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid, Highlight };
-    enum Type { Close,
-                Min,
-                Max,
-                OnAllDesktops,
-                WindowMenu,
-                KeepAbove,
-                KeepBelow,
-                Shade,
-                Resize,
-                QuickHelp,
-                AppMenu,
-                TypeCount };
+    enum Type
+    {
+        Menu,
+        ApplicationMenu,
+        OnAllDesktops,
+        Minimize,
+        Maximize,
+        Close,
+        ContextHelp,
+        Shade,
+        KeepBelow,
+        KeepAbove,
+        Custom
+    };
+
     ButtonBase(Type type);
     virtual ~ButtonBase();
 
@@ -64,7 +67,7 @@ protected:
 
 private:
     typedef void (ButtonBase::*PaintEvent)(QPainter &);
-    PaintEvent m_paintEvent[TypeCount];
+    PaintEvent m_paintEvent[Custom];
     Type m_type;
     bool m_hasPress, m_hasMouse, m_hoverLock;
     QMap<quint64, QPixmap> m_bgPix;
