@@ -242,18 +242,18 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     }
 
     QString text(client().data()->caption());
-    QRect textRect(painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter, text));
+    QRect textRect(painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text));
     const int maxW(titleBar().width()-(qMax(m_leftButtons->geometry().width(), m_rightButtons->geometry().width())*2));
     if (painter->fontMetrics().width(text) > maxW)
     {
         text = painter->fontMetrics().elidedText(text, Qt::ElideRight, maxW);
-        textRect = painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter, text);
+        textRect = painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text);
     }
     if (client().data()->isActive())
     {
         const int rgb(isDark?0:255);
         painter->setPen(QColor(rgb, rgb, rgb, 127));
-        painter->drawText(textRect.translated(0, 1), Qt::AlignCenter, text);
+        painter->drawText(textRect.translated(0, 1), Qt::AlignCenter|Qt::TextHideMnemonic, text);
     }
 
     static const QString character[] = { " :: ", QString(" %1 ").arg(QChar(0x2013)), " - " };
