@@ -203,7 +203,7 @@ Render::_generateData(const QPalette &pal)
     initMaskParts();
     initShadowParts(pal);
     initTabs();
-    makeNoise(pal);
+    _makeNoise();
 }
 
 void
@@ -541,7 +541,7 @@ Render::isCornerPart(const Part part) const
 }
 
 void
-Render::shapeCorners(QPainter *p, Sides s, int roundNess)
+Render::shapeCorners(QPainter *p, Sides s, int roundNess, const QSize &forceSize)
 {
     const QPainter::CompositionMode mode(p->compositionMode());
     p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -551,7 +551,7 @@ Render::shapeCorners(QPainter *p, Sides s, int roundNess)
     {
         if (i != CenterPart && !roundNess)
             continue;
-        p->drawPixmap(partRect(QRect(0, 0, p->device()->width(), p->device()->height()), i, roundNess, s), m_mask[roundNess][i]);
+        p->drawPixmap(partRect(QRect(QPoint(), forceSize.isValid()?forceSize:QSize(p->device()->width(), p->device()->height())), i, roundNess, s), m_mask[roundNess][i]);
     }
     p->setCompositionMode(mode);
 }
@@ -713,7 +713,7 @@ static int randInt(int low, int high)
 }
 
 void
-Render::makeNoise(const QPalette &pal)
+Render::_makeNoise()
 {
     if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
     {
@@ -736,11 +736,6 @@ Render::makeNoise(const QPalette &pal)
         noise.fill(Qt::transparent);
         QRgb *rgb = reinterpret_cast<QRgb *>(noise.bits());
         const int size(s*s);
-
-        //    const QColor bgColor(pal.color(QPalette::Window));
-        //    int r,g,b;
-        //    bgColor.getRgb(&r, &g, &b);
-        //    const int mid((r+g+b)/3);
         for (int i = 0; i < size; ++i)
         {
             int v(randInt(0, 255));

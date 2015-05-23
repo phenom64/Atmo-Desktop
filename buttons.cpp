@@ -441,6 +441,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     }
     QRect ir(mr);
     const Render::Pos rp(Render::pos(sides, bar?bar->orientation():Qt::Horizontal));
+    if (!(widget && widget->inherits("KMultiTabBarTab")))
     switch (opt->toolButtonStyle)
     {
     case Qt::ToolButtonTextBesideIcon:

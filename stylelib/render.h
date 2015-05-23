@@ -62,7 +62,8 @@ public:
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
-    static void shapeCorners(QPainter *p, Sides s, int roundNess = 4);
+    static void shapeCorners(QPainter *p, Sides s, int roundNess = 4, const QSize &forceSize = QSize());
+    static inline void makeNoise() { instance()->_makeNoise(); }
 
 protected:
     void _generateData(const QPalette &pal);
@@ -73,7 +74,7 @@ protected:
     void initMaskParts();
     void initShadowParts(const QPalette &pal);
     void initTabs();
-    void makeNoise(const QPalette &pal);
+    void _makeNoise();
     void splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source);
     bool isCornerPart(const Part part) const;
     static bool needPart(const Part part, const Sides sides);

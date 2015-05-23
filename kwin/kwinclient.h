@@ -36,7 +36,6 @@ protected:
     const bool keepBelow() const;
     const bool shade() const;
 
-    const ButtonStyle buttonStyle() const;
     const QColor color(const ColorRole &c) const;
     const bool isDark() const;
 

@@ -223,7 +223,7 @@ Settings::read()
         conf.app = Konversation;
     else if (conf.m_appName == "konsole")
         conf.app = Konsole;
-    else if (conf.m_appName == "kwin")
+    else if (conf.m_appName == "kwin" || conf.m_appName == "kwin_x11" || conf.m_appName == "kwin_wayland")
         conf.app = KWin;
     else if (conf.m_appName == "be.shell")
         conf.app = BEShell;

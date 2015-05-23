@@ -53,6 +53,7 @@ public:
     inline void operator=(const WindowData &wd) { this->data = wd.data; this->fg = wd.fg; this->bg = wd.bg; }
     inline bool operator==(const WindowData &wd) const { return (this->data == wd.data && this->fg == wd.fg && this->bg == wd.bg); }
     inline bool operator!=(const WindowData &wd) const { return !operator==(wd); }
+    inline const bool isValid() const { return data&&fg&&bg; }
 };
 
 class SharedBgPixData

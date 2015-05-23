@@ -87,12 +87,6 @@ DButton::onClick(const Qt::MouseButton &button)
     m_client->widget()->repaint();
 }
 
-const DButton::ButtonStyle
-DButton::buttonStyle() const
-{
-    return m_client->m_buttonStyle;
-}
-
 const bool
 DButton::isMaximized() const
 {
@@ -227,6 +221,7 @@ KwinClient::populate(const QString &buttons, int &sz)
         if (supported)
         {
             DButton *b = new DButton(t, this);
+            b->setButtonStyle(m_buttonStyle);
             m_buttons << b;
             size += 16+SPACING;
             m_titleLayout->addItem(b);

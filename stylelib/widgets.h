@@ -37,6 +37,9 @@ public:
     void hover();
     const Type type() const { return m_type; }
 
+    inline void setButtonStyle(const ButtonStyle s) { m_buttonStyle = s; }
+    const ButtonStyle buttonStyle() const { return m_buttonStyle; }
+
 protected:
     void drawBase(QColor c, QPainter &p, QRect &r) const;
     void paintCloseButton(QPainter &p);
@@ -56,7 +59,6 @@ protected:
     virtual const bool isMaximized() const = 0;
     virtual const bool isActive() const = 0;
 
-    virtual const ButtonStyle buttonStyle() const;
     virtual const bool onAllDesktops() const { return false; }
     virtual const bool keepAbove() const { return false; }
     virtual const bool keepBelow() const {return false; }
@@ -67,9 +69,10 @@ protected:
 
 private:
     typedef void (ButtonBase::*PaintEvent)(QPainter &);
-    PaintEvent m_paintEvent[Custom];
+    PaintEvent m_paintMethod[Custom];
     Type m_type;
     bool m_hasPress, m_hasMouse, m_hoverLock;
+    int m_buttonStyle;
     QMap<quint64, QPixmap> m_bgPix;
 };
 

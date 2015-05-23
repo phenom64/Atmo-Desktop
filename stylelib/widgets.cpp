@@ -20,21 +20,21 @@ ButtonBase::ButtonBase(Type type)
     , m_hasPress(false)
     , m_hasMouse(false)
     , m_hoverLock(false)
+    , m_buttonStyle(dConf.deco.buttons)
 {
     for (int i = 0; i < Custom; ++i)
-        m_paintEvent[i] = 0;
+        m_paintMethod[i] = 0;
 
-    m_paintEvent[Close] = &ButtonBase::paintCloseButton;
-    m_paintEvent[Minimize] = &ButtonBase::paintMinButton;
-    m_paintEvent[Maximize] = &ButtonBase::paintMaxButton;
-    m_paintEvent[OnAllDesktops] = &ButtonBase::paintOnAllDesktopsButton;
-    m_paintEvent[Menu] = &ButtonBase::paintWindowMenuButton;
-    m_paintEvent[KeepAbove] = &ButtonBase::paintKeepAboveButton;
-    m_paintEvent[KeepBelow] = &ButtonBase::paintKeepBelowButton;
-    m_paintEvent[Shade] = &ButtonBase::paintShadeButton;
-//    m_paintEvent[Resize] = &ButtonBase::paintResizeButton;
-    m_paintEvent[ContextHelp] = &ButtonBase::paintQuickHelpButton;
-    m_paintEvent[ApplicationMenu] = &ButtonBase::paintApplicationMenuButton;
+    m_paintMethod[Close] = &ButtonBase::paintCloseButton;
+    m_paintMethod[Minimize] = &ButtonBase::paintMinButton;
+    m_paintMethod[Maximize] = &ButtonBase::paintMaxButton;
+    m_paintMethod[OnAllDesktops] = &ButtonBase::paintOnAllDesktopsButton;
+    m_paintMethod[Menu] = &ButtonBase::paintWindowMenuButton;
+    m_paintMethod[KeepAbove] = &ButtonBase::paintKeepAboveButton;
+    m_paintMethod[KeepBelow] = &ButtonBase::paintKeepBelowButton;
+    m_paintMethod[Shade] = &ButtonBase::paintShadeButton;
+    m_paintMethod[ContextHelp] = &ButtonBase::paintQuickHelpButton;
+    m_paintMethod[ApplicationMenu] = &ButtonBase::paintApplicationMenuButton;
 }
 
 ButtonBase::~ButtonBase()
@@ -45,8 +45,8 @@ ButtonBase::~ButtonBase()
 void
 ButtonBase::paint(QPainter &p)
 {
-    if (m_type < Custom && m_paintEvent[m_type])
-        (this->*m_paintEvent[m_type])(p);
+    if (m_type < Custom && m_paintMethod[m_type])
+        (this->*m_paintMethod[m_type])(p);
 }
 
 void
@@ -98,12 +98,6 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
     }
     default: return false;
     }
-}
-
-const Button::ButtonStyle
-ButtonBase::buttonStyle() const
-{
-    return dConf.deco.buttons;
 }
 
 /**

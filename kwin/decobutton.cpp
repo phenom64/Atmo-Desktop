@@ -2,78 +2,128 @@
 #include "kwinclient2.h"
 #include "../stylelib/color.h"
 
+
+#include <KDecoration2/Decoration>
+#include <KDecoration2/DecoratedClient>
+#include <QPainter>
+#include <QDebug>
+
 ///-------------------------------------------------------------------------------------------------
 
-DSPButton::DSPButton(QObject *parent, const QVariantList &args)
-    : ButtonBase((ButtonBase::Type)args.at(0).value<KDecoration2::DecorationButtonType>())
-    , DecorationButton(args.at(0).value<KDecoration2::DecorationButtonType>(), args.at(1).value<KDecoration2::Decoration*>(), parent)
+namespace DSP
 {
+
+Button::Button(QObject *parent, const QVariantList &args)
+    : KDecoration2::DecorationButton(args.at(0).value<KDecoration2::DecorationButtonType>(), args.at(1).value<KDecoration2::Decoration*>(), parent)
+    , ButtonBase((ButtonBase::Type)args.at(0).value<KDecoration2::DecorationButtonType>())
+{
+    setGeometry(QRectF(0, 0, 16, 16));
 }
 
-DSPButton::DSPButton(KDecoration2::DecorationButtonType type, const QPointer<KDecoration2::Decoration> &decoration, QObject *parent)
-    : ButtonBase((ButtonBase::Type)type)
-    , KDecoration2::DecorationButton(type, decoration, parent)
+Button::Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObject *parent)
+    : KDecoration2::DecorationButton(type, decoration, parent)
+    , ButtonBase((ButtonBase::Type)type)
 {
+    setGeometry(QRectF(0, 0, 16, 16));
 }
 
-DSPButton *DSPButton::create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent)
+Button
+*Button::create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent)
 {
-    if (DSPDeco *d = qobject_cast<DSPDeco *>(decoration))
-        return new DSPButton(type, d, parent);
+    if (Deco *d = qobject_cast<Deco *>(decoration))
+        return new Button(type, d, parent);
     return 0;
 }
 
 void
-DSPButton::paint(QPainter *painter, const QRect &repaintArea)
+Button::paint(QPainter *painter, const QRect &repaintArea)
 {
     ButtonBase::paint(*painter);
 }
 
 const bool
-DSPButton::isActive() const
+Button::isActive() const
 {
     return decoration()->client().data()->isActive();
 }
 
 const bool
-DSPButton::isMaximized() const
+Button::isMaximized() const
 {
     return decoration()->client().data()->isMaximized();
 }
 
 const bool
-DSPButton::isDark() const
+Button::keepBelow() const
 {
-    KDecoration2::DecoratedClient *client = decoration()->client().data();
-    if (client)
-    {
-        const QColor &bg = client->palette().color(QPalette::Window);
-        const QColor &fg = client->palette().color(QPalette::WindowText);
-        return Color::luminosity(fg) > Color::luminosity(bg);
-    }
-    return false;
+    return decoration()->client().data()->isKeepBelow();
+}
+
+const bool
+Button::keepAbove() const
+{
+    return decoration()->client().data()->isKeepAbove();
+}
+
+const bool
+Button::onAllDesktops() const
+{
+    return decoration()->client().data()->isOnAllDesktops();
+}
+
+const bool
+Button::shade() const
+{
+    return decoration()->client().data()->isShaded();
+}
+
+const bool
+Button::isDark() const
+{
+    return Color::luminosity(color(ButtonBase::Fg)) > Color::luminosity(color(ButtonBase::Fg));
 }
 
 const QColor
-DSPButton::color(const ColorRole &c) const
+Button::color(const ColorRole &c) const
 {
-    KDecoration2::DecoratedClient *client = decoration()->client().data();
-    if (client)
+    if (c == Mid)
     {
-        if (c == Highlight)
-            return client->palette().color(QPalette::Highlight);
-        const QColor &fgc = client->palette().color(QPalette::WindowText);
-        //    if (client->m_custcol[Fg].isValid())
-        //        fgc = m_client->m_custcol[Fg];
-        if (c == Fg)
-            return fgc;
-        const QColor &bgc = client->palette().color(QPalette::Window);
-        //    if (m_client->m_custcol[Bg].isValid())
-        //        bgc = m_client->m_custcol[Bg];
-        if (c == Bg)
-            return bgc;
-        const bool isd(isDark());
-        return Color::mid(fgc, bgc, 1, (!isd*4)+(!isActive()*(isd?2:8)));
+        const QColor &fg = static_cast<Deco *>(decoration().data())->fgColor();
+        const QColor &bg = static_cast<Deco *>(decoration().data())->bgColor();
+        const bool dark(Color::luminosity(fg) > Color::luminosity(bg));
+        return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
     }
+    if (c == ButtonBase::Highlight)
+        return decoration()->client().data()->palette().color(QPalette::Highlight);
+    if (c == ButtonBase::Fg)
+        return static_cast<Deco *>(decoration().data())->fgColor();
+    if (c == ButtonBase::Bg)
+        return static_cast<Deco *>(decoration().data())->bgColor();
     return QColor();
 }
+
+void
+Button::hoverEnterEvent(QHoverEvent *event)
+{
+    KDecoration2::DecorationButton::hoverEnterEvent(event);
+    hover();
+    update();
+}
+
+void
+Button::hoverLeaveEvent(QHoverEvent *event)
+{
+    KDecoration2::DecorationButton::hoverLeaveEvent(event);
+    unhover();
+    update();
+}
+
+void
+Button::mouseReleaseEvent(QMouseEvent *event)
+{
+    KDecoration2::DecorationButton::mouseReleaseEvent(event);
+    update();
+}
+
+} //DSP
+

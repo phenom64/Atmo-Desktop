@@ -1,24 +1,24 @@
 #ifndef KWINCLIENT2_H
 #define KWINCLIENT2_H
 
-#include "decobutton.h"
-
+#include <QDBusAbstractAdaptor>
+#include <KCModule>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
-#include <KDecoration2/DecorationSettings>
-#include <KDecoration2/DecorationButton>
-#include <KDecoration2/DecorationButtonGroup>
-
-#include <KSharedConfig>
-#include <KCModule>
-
 #include <QVariant>
-
-class DSPConfigModule: public KCModule
+#include <QDebug>
+#include "../config/settings.h"
+namespace KDecoration2 { class DecorationButtonGroup; }
+class WindowData;
+class QPixmap;
+class QSharedMemory;
+namespace DSP
+{
+class ConfigModule : public KCModule
 {
     Q_OBJECT
 public:
-    DSPConfigModule(QWidget *parent = 0, const QVariantList &args = QVariantList());
+    ConfigModule(QWidget *parent = 0, const QVariantList &args = QVariantList());
 public slots:
     /**
      * Load the configuration data into the module.
@@ -70,14 +70,35 @@ public slots:
     void defaults() {}
 };
 
-class DSPDeco : public KDecoration2::Decoration
+class DecoData
 {
+public:
+    const bool isValid() const
+    {
+        return bg.alpha()==0xff && fg.alpha()==0xff;
+    }
+    void operator =(const DecoData &d)
+    {
+        fg = d.fg;
+        bg = d.bg;
+        gradient = d.gradient;
+        noiseRatio = d.noiseRatio;
+        separator = d.separator;
+    }
+    QColor fg, bg;
+    Gradient gradient;
+    unsigned int noiseRatio;
+    bool separator;
+};
+
+class Deco : public KDecoration2::Decoration
+{
+    friend class Button;
     Q_OBJECT
 public:
-    explicit DSPDeco(QObject *parent = 0, const QVariantList &args = QVariantList());
-    ~DSPDeco(){}
+    explicit Deco(QObject *parent = 0, const QVariantList &args = QVariantList());
+    ~Deco();
     void paint(QPainter *painter, const QRect &repaintArea);
-    bool event(QEvent *event);
 
 public slots:
     /**
@@ -89,8 +110,73 @@ public slots:
      **/
     void init();
 
+    void updateDataFromX();
+
+protected slots:
+    void widthChanged();
+    void activeChanged(const bool active) { update(); }
+    void captionChanged(const QString &caption) { update(); }
+
+protected:
+    void setBgPix(const unsigned long pix, const QSize &sz);
+    void setWindowData(WindowData wd);
+    void checkForDataFromWindowClass();
+    void updateBgPixmap();
+    void paintBevel(QPainter *painter, const int bgLum);
+
+    const QColor bgColor() const;
+    const QColor fgColor() const;
+
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
+    WindowData *m_windowData;
+    DecoData m_decoData;
+    QPixmap m_pix, m_bevelCorner[3];
+    QSharedMemory *m_mem;
+    int m_prevLum;
 };
 
+class AdaptorManager : public QObject
+{
+    Q_OBJECT
+public:
+    static AdaptorManager *instance();
+    inline void addDeco(DSP::Deco *d) { m_decos << d; }
+    inline void removeDeco(DSP::Deco *d) { m_decos.removeOne(d); }
+    inline const bool hasDecos() const { return !m_decos.isEmpty(); }
+    inline void updateData(uint win)
+    {
+        for (int i = 0; i < m_decos.count(); ++i)
+        {
+            DSP::Deco *d = m_decos.at(i);
+            if (d->client().data()->windowId() == win)
+            {
+                d->updateDataFromX();
+                return;
+            }
+        }
+    }
+    inline void updateDeco(uint win)
+    {
+        for (int i = 0; i < m_decos.count(); ++i)
+        {
+            DSP::Deco *d = m_decos.at(i);
+            if (d->client().data()->windowId() == win)
+            {
+                d->update();
+                return;
+            }
+        }
+    }
+
+protected:
+    AdaptorManager();
+    ~AdaptorManager();
+
+private:
+    static AdaptorManager *s_instance;
+    QList<DSP::Deco *> m_decos;
+};
+
+} //DSP
 #endif //KWINCLIENT2_H

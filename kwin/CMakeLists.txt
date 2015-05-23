@@ -20,7 +20,9 @@ if (QT5BUILD)
     )
 
     set(SRCS kwinclient2.cpp decobutton.cpp)
-    set(HDRS kwinclient2.h decobutton.h)
+    set(HDRS kwinclient2.h decobutton.h decoadaptor.h)
+    
+#     qt5_wrap_cpp(MOC_ADAPTOR decoadaptor.h)
     ### build library
     add_library(dspdecoration MODULE ${SRCS} ${HDRS})
 
@@ -46,7 +48,8 @@ if (QT5BUILD)
             XCB::XCB)
     endif (XCB_FOUND)
 
-    install(TARGETS dspdecoration DESTINATION ${PLUGIN_INSTALL_DIR}/org.kde.kdecoration2)
+#    install(TARGETS dspdecoration DESTINATION ${PLUGIN_INSTALL_DIR}/org.kde.kdecoration2)
+    install(TARGETS dspdecoration DESTINATION lib/qt/plugins/org.kde.kdecoration2)
 else (QT5BUILD)
     find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
     if (KDECORATION_H)

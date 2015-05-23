@@ -36,7 +36,10 @@
 #include <QGroupBox>
 #include <QDockWidget>
 
+
 #if !defined(QT_NO_DBUS)
+#include <QDBusMessage>
+#include <QDBusConnection>
 #include "macmenu.h"
 #endif
 
@@ -1220,6 +1223,12 @@ Window::updateWindowData(qulonglong window)
     }
     win->repaint();
     XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Byte, &wd);
+#if !defined(QT_NO_DBUS)
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
+    msg << (uint)id;
+    QDBusConnection::sessionBus().send(msg);
+#endif
+
     emit instance()->windowDataChanged(win);
 }
 
@@ -1363,6 +1372,12 @@ ScrollWatcher::updateWin(QWidget *mainWin)
             }
     if (!dConf.removeTitleBars)
         XHandler::updateDeco(win->winId());
+#if !defined(QT_NO_DBUS)
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateDeco");
+    msg << (uint)win->winId();
+    QDBusConnection::sessionBus().send(msg);
+#endif
+
 }
 
 QSharedMemory
