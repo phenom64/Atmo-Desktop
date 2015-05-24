@@ -8,6 +8,7 @@
 #include <QVariant>
 #include <QDebug>
 #include "../config/settings.h"
+#include "../stylelib/windowdata.h"
 namespace KDecoration2 { class DecorationButtonGroup; }
 class WindowData;
 class QPixmap;
@@ -70,25 +71,17 @@ public slots:
     void defaults() {}
 };
 
-class DecoData
+class DecoData : public WindowData
 {
 public:
-    const bool isValid() const
-    {
-        return bg.alpha()==0xff && fg.alpha()==0xff;
-    }
-    void operator =(const DecoData &d)
-    {
-        fg = d.fg;
-        bg = d.bg;
-        gradient = d.gradient;
-        noiseRatio = d.noiseRatio;
-        separator = d.separator;
-    }
-    QColor fg, bg;
     Gradient gradient;
     unsigned int noiseRatio;
-    bool separator;
+    void operator =(const DecoData &d)
+    {
+        WindowData::operator =(d);
+        gradient = d.gradient;
+        noiseRatio = d.noiseRatio;
+    }
 };
 
 class Deco : public KDecoration2::Decoration
@@ -110,7 +103,7 @@ public slots:
      **/
     void init();
 
-    void updateDataFromX();
+    void updateData();
 
 protected slots:
     void widthChanged();
@@ -129,7 +122,6 @@ protected:
 
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
-    WindowData *m_windowData;
     DecoData m_decoData;
     QPixmap m_pix, m_bevelCorner[3];
     QSharedMemory *m_mem;
@@ -151,7 +143,7 @@ public:
             DSP::Deco *d = m_decos.at(i);
             if (d->client().data()->windowId() == win)
             {
-                d->updateDataFromX();
+                d->updateData();
                 return;
             }
         }

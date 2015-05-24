@@ -1,5 +1,6 @@
 ﻿#include "handlers.h"
 #include "xhandler.h"
+#include "windowdata.h"
 #include "macros.h"
 #include "color.h"
 #include "render.h"
@@ -896,27 +897,16 @@ Window::eventFilter(QObject *o, QEvent *e)
         return false;
     }
     case QEvent::Close:
+    {
+        WindowData::detach(w->winId());
+        SharedBgImage::detach(w->winId());
+        return false;
+    }
     case QEvent::PaletteChange:
     {
         if (w->isWindow())
-        {
-            if (SharedBgPixData *bgPxData = XHandler::getXProperty<SharedBgPixData>(w->winId(), XHandler::DecoBgPix))
-            {
-                XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
-                XHandler::freePix(bgPxData->bgPix);
-                XHandler::freeData(bgPxData);
-            }
-            if (WindowData *wd = XHandler::getXProperty<WindowData>(w->winId(), XHandler::WindowData))
-            {
-                XHandler::deleteXProperty(w->winId(), XHandler::WindowData);
-                XHandler::freeData(wd);
-            }
-            if (e->type() == QEvent::PaletteChange)
-            {
-                updateWindowDataLater(w);
-            }
-        }
-        break;
+            updateWindowDataLater(w);
+        return false;
     }
     default: break;
     }
@@ -926,26 +916,13 @@ Window::eventFilter(QObject *o, QEvent *e)
 void
 Window::updateDecoBg(QWidget *w)
 {
-    QSize sz(w->size());
-    if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
-    {
-        sz.rheight() += *th;
-        XHandler::freeData(th);
-    }
-
-    if (SharedBgPixData *bgPxData = XHandler::getXProperty<SharedBgPixData>(w->winId(), XHandler::DecoBgPix))
-    {
-        XHandler::deleteXProperty(w->winId(), XHandler::DecoBgPix);
-        XHandler::freePix(bgPxData->bgPix);
-        XHandler::freeData(bgPxData);
-    }
-
-    QImage img(windowBg(sz, w->palette().color(QPalette::Window)));
-    SharedBgPixData data;
-    data.bgPix = XHandler::x11Pixmap(img);
-    data.h = img.height();
-    data.w = img.width();
-    XHandler::setXProperty<SharedBgPixData>(w->winId(), XHandler::DecoBgPix, XHandler::Short, &data);
+    qDebug() << "DSP: Please fix Window::updateDecoBg(QWidget *w), its a dummy.";
+//    QSize sz(w->size());
+//    if (unsigned char *th = XHandler::getXProperty<unsigned char>(w->winId(), XHandler::DecoTitleHeight))
+//    {
+//        sz.rheight() += *th;
+//        XHandler::freeData(th);
+//    }
 }
 
 bool
@@ -968,12 +945,19 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     const bool csd(win->property(CSDBUTTONS).toBool());
     if (!csd)
         offset.ry()+= unoHeight(win, TitleBar);
-    if (s_unoBg.contains(win))
+    if (SharedBgImage::hasData(win->winId()))
     {
-        QPoint bo(p->brushOrigin());
-        p->setBrushOrigin(-offset);
-        p->fillRect(r, s_unoBg.value(win));
-        p->setBrushOrigin(bo);
+        if (QSharedMemory *m = SharedBgImage::sharedMemory(win->winId(), win, false))
+            if ((m->isAttached() ||  m->attach(QSharedMemory::ReadOnly)) && m->lock())
+            {
+                QPoint bo(p->brushOrigin());
+                p->setBrushOrigin(-offset);
+                QSize size = SharedBgImage::size(m->data());
+                const uchar *data = SharedBgImage::data(m->data());
+                p->fillRect(r, QImage(data, size.width(), size.height(), QImage::Format_ARGB32_Premultiplied));
+                p->setBrushOrigin(bo);
+                m->unlock();
+            }
         if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             ScrollWatcher::drawContBg(p, win, r, offset);
 
@@ -1071,8 +1055,8 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
     return hd[All];
 }
 
-QImage
-Window::unoBg(QWidget *win, int h)
+void
+Window::unoBg(QWidget *win, int h, uchar *data, int &w)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
@@ -1084,8 +1068,8 @@ Window::unoBg(QWidget *win, int h)
     lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
 
     const unsigned int n(dConf.uno.noise);
-    const int w(hor?win->width():(n?Render::noise().width():1));
-    QImage img(w, h, QImage::Format_ARGB32);
+    w = (hor?win->width():(n?Render::noise().width():1));
+    QImage img(data, w, h, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     QPainter pt(&img);
     pt.fillRect(img.rect(), lg);
@@ -1114,7 +1098,6 @@ Window::unoBg(QWidget *win, int h)
         pt.fillRect(img.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
         pt.end();
     }
-    return img;
 }
 
 QImage
@@ -1196,39 +1179,32 @@ Window::updateWindowData(qulonglong window)
     wd.fg = pal.color(win->foregroundRole()).rgba();
     wd.bg = pal.color(win->backgroundRole()).rgba();
 
-    WindowData *oldWd = XHandler::getXProperty<WindowData>(win->winId(), XHandler::WindowData);
-    const bool needUpdate(!oldWd || *oldWd != wd);
-    if (oldWd)
-        XHandler::freeData(oldWd);
-
+    const WId id(win->winId());
+    bool needUpdate(true);
+    if (QSharedMemory *m = WindowData::sharedMemory(id, win, false))
+        if (m->isAttached() && m->lock())
+        {
+            WindowData *oldWd = reinterpret_cast<WindowData *>(m->data());
+            needUpdate = (!oldWd || *oldWd != wd);
+            m->unlock();
+        }
     if ((!height && dConf.uno.enabled) || !needUpdate)
         return;
-
-    const WId id(win->winId());
     if (dConf.uno.enabled)
     {
-        if (SharedBgPixData *x11Data = XHandler::getXProperty<SharedBgPixData>(id, XHandler::DecoBgPix))
-        {
-            XHandler::deleteXProperty(id, XHandler::DecoBgPix);
-            XHandler::freePix(x11Data->bgPix);
-            XHandler::freeData(x11Data);
-        }
-        QImage img(unoBg(win, height));
-        s_unoBg.insert(win, img);
-        SharedBgPixData x11Data;
-        x11Data.bgPix = XHandler::x11Pixmap(img);
-        x11Data.h = img.height();
-        x11Data.w = img.width();
-        XHandler::setXProperty<SharedBgPixData>(id, XHandler::DecoBgPix, XHandler::Short, &x11Data);
+        if (QSharedMemory *m = SharedBgImage::sharedMemory(id, win))
+            if ((m->isAttached() || m->attach()) && m->lock())
+            {
+                int w(0);
+                unoBg(win, height, reinterpret_cast<uchar *>(SharedBgImage::data(m->data())), w);
+                unsigned int *sizeData = reinterpret_cast<unsigned int *>(m->data());
+                sizeData[0] = w;
+                sizeData[1] = height;
+                m->unlock();
+            }
     }
     win->repaint();
-    XHandler::setXProperty<WindowData>(id, XHandler::WindowData, XHandler::Byte, &wd);
-#if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
-    msg << (uint)id;
-    QDBusConnection::sessionBus().send(msg);
-#endif
-
+    WindowData::setData(id, win, &wd, true);
     emit instance()->windowDataChanged(win);
 }
 

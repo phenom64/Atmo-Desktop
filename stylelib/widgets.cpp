@@ -428,7 +428,7 @@ ButtonBase::paintOnAllDesktopsButton(QPainter &p)
     {
         QPixmap pix(buttonRect().size());
         const int s(pix.width()/8);
-        const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        const QPen pen(c, s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         QRect rect = pix.rect().adjusted(s, s, -s, -s);
         rect.adjust(s, s, -s, -s);
         pix.fill(Qt::transparent);
@@ -623,18 +623,6 @@ Button::onClick(const Qt::MouseButton &btn)
     default: break;
     }
 }
-
-//void
-//Button::mousePressEvent(QMouseEvent *e)
-//{
-//    ButtonBase::processMouseEvent(e);
-//}
-
-//void
-//Button::mouseReleaseEvent(QMouseEvent *e)
-//{
-//    ButtonBase::processMouseEvent(e);
-//}
 
 const QColor
 Button::color(const ColorRole &c) const

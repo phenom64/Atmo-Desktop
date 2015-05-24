@@ -80,7 +80,7 @@ Button::shade() const
 const bool
 Button::isDark() const
 {
-    return Color::luminosity(color(ButtonBase::Fg)) > Color::luminosity(color(ButtonBase::Fg));
+    return Color::luminosity(color(ButtonBase::Fg)) > Color::luminosity(color(ButtonBase::Bg));
 }
 
 const QColor

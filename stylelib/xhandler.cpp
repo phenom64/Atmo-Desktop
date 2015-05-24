@@ -27,7 +27,6 @@ static Atom atom[XHandler::ValueCount] =
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREACTIVESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREINACTIVESHADOW", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECOBGPIX", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False),
     XInternAtom(QX11Info::display(), "_STYLEPROJECT_REPAINT", False)
 };

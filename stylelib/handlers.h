@@ -123,7 +123,7 @@ public:
     static void addCompactMenu(QWidget *w);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
     static void updateWindowDataLater(QWidget *win);
-    static QImage unoBg(QWidget *win, int h);
+    static void unoBg(QWidget *win, int h, uchar *data, int &w);
     static QImage windowBg(const QSize &sz, const QColor &bgColor);
 
 public slots:
