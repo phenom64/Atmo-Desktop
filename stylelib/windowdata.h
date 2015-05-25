@@ -58,22 +58,18 @@ public:
     inline bool operator!=(const WindowData &wd) const { return !operator==(wd); }
     inline const bool isValid() const { return fg&&bg; }
 
-    static bool hasData(const unsigned int wid);
+    static bool hasData(QObject *parent);
     static QSharedMemory *sharedMemory(const unsigned int wid, QObject *parent, const bool create = true);
-    static void detach(const unsigned int wid);
     static void setData(const unsigned int wid, QObject *parent, WindowData *wd, const bool force = false);
-    static QMap<unsigned int, QSharedMemory *> s_windowData;
 };
 
 class SharedBgImage
 {
 public:
-    static bool hasData(const unsigned int wid);
+    static bool hasData(QObject *parent);
     static QSharedMemory *sharedMemory(const unsigned int wid, QObject *parent, const bool create = true);
     static uchar *data(void *fromData);
     static QSize size(void *fromData);
-    static void detach(const unsigned int wid);
-    static QMap<unsigned int, QSharedMemory *> s_imageData;
 };
 
 #endif //WINDOWDATA_H

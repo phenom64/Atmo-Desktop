@@ -142,7 +142,7 @@ protected slots:
     void menuShow();
 
 private:
-    static Window s_instance;
+    static Window *s_instance;
     QList<QWidget *> m_menuWins;
 };
 

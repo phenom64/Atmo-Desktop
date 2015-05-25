@@ -682,9 +682,8 @@ ToolBar::setupNoTitleBarWindow(qulonglong bar)
 
 //-------------------------------------------------------------------------------------------------
 
-Window Window::s_instance;
+Window *Window::s_instance;
 QMap<QWidget *, Handlers::Data> Window::s_unoData;
-static QMap<QWidget *, QImage> s_unoBg;
 
 Window::Window(QObject *parent)
     : QObject(parent)
@@ -711,7 +710,9 @@ Window::release(QWidget *w)
 Window
 *Window::instance()
 {
-    return &s_instance;
+    if (!s_instance)
+        s_instance = new Window();
+    return s_instance;
 }
 
 void
@@ -896,12 +897,6 @@ Window::eventFilter(QObject *o, QEvent *e)
         }
         return false;
     }
-    case QEvent::Close:
-    {
-        WindowData::detach(w->winId());
-        SharedBgImage::detach(w->winId());
-        return false;
-    }
     case QEvent::PaletteChange:
     {
         if (w->isWindow())
@@ -945,7 +940,7 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     const bool csd(win->property(CSDBUTTONS).toBool());
     if (!csd)
         offset.ry()+= unoHeight(win, TitleBar);
-    if (SharedBgImage::hasData(win->winId()))
+    if (SharedBgImage::hasData(win))
     {
         if (QSharedMemory *m = SharedBgImage::sharedMemory(win->winId(), win, false))
             if ((m->isAttached() ||  m->attach(QSharedMemory::ReadOnly)) && m->lock())

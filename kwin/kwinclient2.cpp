@@ -138,11 +138,8 @@ Deco::Deco(QObject *parent, const QVariantList &args)
 Deco::~Deco()
 {
     AdaptorManager::instance()->removeDeco(this);
-    WindowData::detach(client().data()->windowId());
-    SharedBgImage::detach(client().data()->windowId());
-
-     if (m_mem && m_mem->isAttached())
-         m_mem->detach();
+    if (m_mem && m_mem->isAttached())
+        m_mem->detach();
 }
 
 void
