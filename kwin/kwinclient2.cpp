@@ -138,17 +138,16 @@ Deco::Deco(QObject *parent, const QVariantList &args)
 Deco::~Deco()
 {
     AdaptorManager::instance()->removeDeco(this);
+    WindowData::detach(client().data()->windowId());
+    SharedBgImage::detach(client().data()->windowId());
+
      if (m_mem && m_mem->isAttached())
          m_mem->detach();
-
-     WindowData::detach(client().data()->windowId());
-     SharedBgImage::detach(client().data()->windowId());
 }
 
 void
 Deco::init()
 {
-    AdaptorManager::instance()->addDeco(this);
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
 
     //for whatever reason if I use these convenience constructs it segfaults.
@@ -181,6 +180,7 @@ Deco::init()
 
     if (uint id = client().data()->windowId())
     {
+        AdaptorManager::instance()->addDeco(this);
         unsigned char height(TITLEHEIGHT);
         XHandler::setXProperty<unsigned char>(id, XHandler::DecoTitleHeight, XHandler::Byte, &height); //never higher then 255...
         ShadowHandler::installShadows(id);
@@ -191,11 +191,18 @@ Deco::init()
 }
 
 void
-Deco::widthChanged()
+Deco::widthChanged(const int width)
 {
     m_leftButtons->setPos(QPoint(6, client().data()->isModal()?2:4));
-    m_rightButtons->setPos(QPointF((size().width()-m_rightButtons->geometry().width())-6, client().data()->isModal()?2:4));
-    setTitleBar(QRect(0, 0, client().data()->width(), TITLEHEIGHT));
+    m_rightButtons->setPos(QPointF((width-m_rightButtons->geometry().width())-6, client().data()->isModal()?2:4));
+    setTitleBar(QRect(0, 0, width, TITLEHEIGHT));
+}
+
+void
+Deco::activeChanged(const bool active)
+{
+    update();
+    ShadowHandler::installShadows(client().data()->windowId(), active);
 }
 
 void
@@ -206,7 +213,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     bool needPaintBg(true);
     if (QSharedMemory *m = SharedBgImage::sharedMemory(client().data()->windowId(), this, false))
     {
-        if ((m->isAttached() ||  m->attach(QSharedMemory::ReadOnly)) && m->lock())
+        if ((m->isAttached() || m->attach(QSharedMemory::ReadOnly)) && m->lock())
         {
             const uchar *data = SharedBgImage::data(m->data());
             const QSize size = SharedBgImage::size(m->data());

@@ -106,8 +106,8 @@ public slots:
     void updateData();
 
 protected slots:
-    void widthChanged();
-    void activeChanged(const bool active) { update(); }
+    void widthChanged(const int width);
+    void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
 
 protected:

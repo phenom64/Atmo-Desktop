@@ -47,6 +47,10 @@ if (QT5BUILD)
             Qt5::X11Extras
             XCB::XCB)
     endif (XCB_FOUND)
+    
+    if (X11_FOUND)
+        target_link_libraries(dspdecoration PUBLIC ${X11_X11_LIB} ${X11_LIBRARIES})
+    endif (X11_FOUND)
 
 #    install(TARGETS dspdecoration DESTINATION ${PLUGIN_INSTALL_DIR}/org.kde.kdecoration2)
     install(TARGETS dspdecoration DESTINATION lib/qt/plugins/org.kde.kdecoration2)
