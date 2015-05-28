@@ -45,12 +45,8 @@ DButton::hoverChanged()
 const bool
 DButton::isDark() const
 {
-    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
-    if (m_client->m_custcol[Fg].isValid())
-        fgc = m_client->m_custcol[Fg];
-    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
-    if (m_client->m_custcol[Bg].isValid())
-        bgc = m_client->m_custcol[Bg];
+    QColor fgc(m_client->fgColor());
+    QColor bgc(m_client->bgColor());
     return Color::luminosity(fgc) > Color::luminosity(bgc);
 }
 
@@ -59,14 +55,10 @@ DButton::color(const ColorRole &c) const
 {
     if (c == Highlight)
         return m_client->widget()->palette().color(QPalette::Highlight);
-    QColor fgc(m_client->options()->color(KDecoration::ColorFont, m_client->isActive()));
-    if (m_client->m_custcol[Fg].isValid())
-        fgc = m_client->m_custcol[Fg];
+    const QColor fgc(m_client->fgColor());
     if (c == Fg)
         return fgc;
-    QColor bgc(m_client->options()->color(KDecoration::ColorTitleBar, m_client->isActive()));
-    if (m_client->m_custcol[Bg].isValid())
-        bgc = m_client->m_custcol[Bg];
+    const QColor bgc(m_client->bgColor());
     if (c == Bg)
         return bgc;
     const bool isd(isDark());
