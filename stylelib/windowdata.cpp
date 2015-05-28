@@ -1,5 +1,4 @@
 #include "windowdata.h"
-#include "xhandler.h"
 #include <QObject>
 #include <QDebug>
 

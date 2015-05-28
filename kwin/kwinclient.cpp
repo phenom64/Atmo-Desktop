@@ -186,13 +186,13 @@ DSP::AdaptorManager::AdaptorManager()
     Render::makeNoise();
     readWindowData();
     new DecoAdaptor(this);
-    QDBusConnection::sessionBus().registerService("org.kde.dsp.kdecoration2");
+    QDBusConnection::sessionBus().registerService("org.kde.dsp.kdecoration");
     QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
 }
 
 DSP::AdaptorManager::~AdaptorManager()
 {
-    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kdecoration2");
+    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kdecoration");
     QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
     s_instance = 0;
 }
@@ -215,7 +215,6 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_noise(0)
 {
     setParent(factory);
-    Settings::read();
 }
 
 KwinClient::~KwinClient()
@@ -870,3 +869,5 @@ KwinClient::reset(unsigned long changed)
         updateData();
     updateMask();
 }
+
+#include "decoadaptor.moc"
