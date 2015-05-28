@@ -248,7 +248,6 @@ KwinClient::init()
     l->addLayout(m_titleLayout);
     l->addStretch();
     widget()->setLayout(l);
-    m_separator = true;
     if (!isPreview() && windowId())
     {
         DSP::AdaptorManager::instance()->addDeco(this);
@@ -382,7 +381,7 @@ KwinClient::fgColor() const
 {
     if (m_wd)
     {
-        const QColor &c = m_wd->bg();
+        const QColor &c = m_wd->fg();
         if (c.alpha() == 0xff)
             return c;
     }

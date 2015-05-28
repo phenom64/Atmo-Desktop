@@ -295,7 +295,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     QLinearGradient lg(0, 0, 0, Render::maskHeight(Render::Raised, dConf.sliders.size));
     lg.setStops(Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
     QBrush mask(lg);
-    Render::drawClickable(Render::Raised, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
+    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
 
     if (dConf.sliders.dot)
     {
