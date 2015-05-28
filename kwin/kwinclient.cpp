@@ -1,6 +1,3 @@
-
-#include <X11/Xatom.h>
-
 #include <kwindowinfo.h>
 #include <QPainter>
 #include <QHBoxLayout>
@@ -9,6 +6,8 @@
 #include <QCoreApplication>
 #include <QBuffer>
 #include <KWindowSystem>
+#include <QSettings>
+#include <QDir>
 
 #include "kwinclient.h"
 #include "../stylelib/ops.h"
@@ -17,6 +16,12 @@
 #include "../stylelib/color.h"
 #include "../config/settings.h"
 #include "../stylelib/xhandler.h"
+
+#if !defined(QT_NO_DBUS)
+#include "decoadaptor.h"
+#include <QDBusConnection>
+#include <QDBusMessage>
+#endif
 
 #define MARGIN (isModal()?3:6)
 #define SPACING 4
@@ -123,14 +128,89 @@ DButton::shade() const
     return m_client->isShade();
 }
 
-///-------------------------------------------------------------------
+///-------------------------------------------------------------------------------------------------
+
+QMap<QString, KwinClient::Data> KwinClient::Data::s_data;
+
+static void addDataForWinClass(const QString &winClass, QSettings &s)
+{
+    KwinClient::Data d;
+    d.fg = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
+    d.bg = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
+    d.grad = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+    d.noise = s.value("noise", 20).toUInt();
+    d.separator = s.value("separator", true).toBool();
+    KwinClient::Data::s_data.insert(winClass, d);
+}
+
+static void readWindowData()
+{
+    KwinClient::Data::s_data.clear();
+    static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
+    QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
+    bool hasDefault(false);
+    foreach (const QString winClass, s.childGroups())
+    {
+        s.beginGroup(winClass);
+        hasDefault |= (winClass == "default");
+        addDataForWinClass(winClass, s);
+        s.endGroup();
+    }
+    if (!hasDefault)
+        addDataForWinClass("default", s);
+}
+
+void
+KwinClient::Data::decoData(const QString &winClass, KwinClient *d)
+{
+    KwinClient::Data data;
+    if (s_data.contains(winClass))
+        data = s_data.value(winClass);
+    else
+        data = s_data.value("default");
+    d->m_bg = data.bg;
+    d->m_fg = data.fg;
+    d->m_gradient = data.grad;
+    d->m_noise = data.noise;
+    d->m_separator = data.separator;
+}
+
+///-------------------------------------------------------------------------------------------------
+
+DSP::AdaptorManager *DSP::AdaptorManager::s_instance = 0;
+
+DSP::AdaptorManager
+*DSP::AdaptorManager::instance()
+{
+    if (!s_instance)
+        s_instance = new DSP::AdaptorManager();
+    return s_instance;
+}
+
+DSP::AdaptorManager::AdaptorManager()
+{
+    Settings::read();
+    Render::makeNoise();
+    readWindowData();
+    new DecoAdaptor(this);
+    QDBusConnection::sessionBus().registerService("org.kde.dsp.kdecoration2");
+    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
+}
+
+DSP::AdaptorManager::~AdaptorManager()
+{
+    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kdecoration2");
+    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
+    s_instance = 0;
+}
+
+///-------------------------------------------------------------------------------------------------
 
 KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     : KDecoration(bridge, factory)
     , m_titleLayout(0)
     , m_contAware(false)
-    , m_headHeight(0)
-    , m_needSeparator(true)
+    , m_separator(true)
     , m_factory(factory)
     , m_opacity(0xff)
     , m_sizeGrip(0)
@@ -175,16 +255,29 @@ KwinClient::init()
     l->addLayout(m_titleLayout);
     l->addStretch();
     widget()->setLayout(l);
-    m_headHeight = titleHeight();
-    m_needSeparator = true;
+    m_separator = true;
     if (!isPreview() && windowId())
     {
-        unsigned char height(titleHeight());
-        XHandler::setXProperty<unsigned char>(windowId(), XHandler::DecoTitleHeight, XHandler::Byte, &height); //never higher then 255...
+        DSP::AdaptorManager::instance()->addDeco(this);
+        if (m_wd = WindowData::memory(id, this))
+        {
+            if (!m_wd->value<bool>(WindowData::IsInited, true))
+            {
+                m_wd->setValue<bool>(WindowData::IsInited, true);
+                m_wd->setValue<bool>(WindowData::Separator, true);
+                m_wd->setValue<bool>(WindowData::Uno, true);
+                m_wd->setValue<int>(WindowData::TitleHeight, titleHeight());
+            }
+        }
+        else
+            checkForDataFromWindowClass();
         ShadowHandler::installShadows(windowId());
         if (isResizable() && !m_sizeGrip && !dConf.deco.frameSize)
             m_sizeGrip = new SizeGrip(this);
     }
+    else
+        updateBgPixmap();
+
     reset(127);
 }
 
@@ -221,7 +314,7 @@ KwinClient::populate(const QString &buttons, int &sz)
         if (supported)
         {
             DButton *b = new DButton(t, this);
-            b->setButtonStyle(m_buttonStyle);
+            b->setButtonStyle(dConf.deco.buttons);
             m_buttons << b;
             size += 16+SPACING;
             m_titleLayout->addItem(b);
@@ -294,17 +387,29 @@ KwinClient::captionChange()
 QColor
 KwinClient::fgColor(const bool *active) const
 {
-    if (m_custcol[Text].isValid())
-        return m_custcol[Text];
-    return options()->color(ColorFont, active?*active:isActive());
+    if (m_wd)
+    {
+        const QColor &c = m_wd->bg();
+        if (c.alpha() == 0xff)
+            return c;
+    }
+    if (m_fg.isValid() && m_fg.alpha() == 0xff)
+        return m_fg;
+    return widget()->palette().color(QPalette::WindowText);
 }
 
 QColor
 KwinClient::bgColor(const bool *active) const
 {
-    if (m_custcol[Bg].isValid())
-        return m_custcol[Bg];
-    return options()->color(ColorTitleBar, active?*active:isActive());
+    if (m_wd)
+    {
+        const QColor &c = m_wd->bg();
+        if (c.alpha() == 0xff)
+            return c;
+    }
+    if (m_bg.isValid() && m_bg.alpha() == 0xff)
+        return m_bg;
+    return widget()->palette().color(QPalette::Window);
 }
 
 bool
@@ -440,8 +545,6 @@ KwinClient::paint(QPainter &p)
 
     if (!m_pix.isNull())
         p.drawTiledPixmap(tr, m_pix);
-    else if (!m_bgPix[isActive()].isNull())
-        p.drawTiledPixmap(tr, m_bgPix[isActive()]);
     else
         p.fillRect(tr, bgColor());
 
@@ -489,14 +592,16 @@ KwinClient::paint(QPainter &p)
         p.drawTiledPixmap(tr.adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(tr.height()-1)), m_bevelCorner[2]);
     }
 
-    if (m_contAware)
+    if (m_wd && m_wd->value<bool>(WindowData::ContAware))
     {
         if (!m_mem)
             m_mem = new QSharedMemory(QString::number(windowId()), this);
         if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
         {
             const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
-            p.drawImage(QPoint(0, 0), QImage(data, widget()->width(), m_headHeight, QImage::Format_ARGB32_Premultiplied), tr);
+            p.drawImage(QPoint(0, 0),
+                               QImage(data, width(), m_wd->value<int>(WindowData::UnoHeight), QImage::Format_ARGB32_Premultiplied),
+                               m_titleLayout->geometry());
             m_mem->unlock();
         }
     }
@@ -542,18 +647,16 @@ KwinClient::paint(QPainter &p)
     if (needPaint)
         p.drawText(textRect, Qt::AlignCenter, text);
 
-    int n;
-    if (dConf.deco.icon)
-        if (unsigned long *iconData = XHandler::getXProperty<unsigned long>(windowId(), XHandler::_NET_WM_ICON, n, 0, 1))
-        {
-            QRect ir(QPoint(), QSize(16, 16));
-            ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
-            ir.moveRight(textRect.left()-4);
-            if (ir.left() > m_leftButtons)
-                icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
-            XHandler::freeData(iconData);
-        }
-    if (m_needSeparator)
+    //icon
+    if ((!m_wd && dConf.deco.icon) || m_wd->value<bool>(WindowData::WindowIcon))
+    {
+        QRect ir(QPoint(), QSize(16, 16));
+        ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
+        ir.moveRight(textRect.left()-4);
+        if (ir.left() > m_leftButtons)
+            icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
+    }
+    if ((!m_wd && m_separator) || m_wd->value<bool>(WindowData::Separator))
     {
         p.setPen(QColor(0, 0, 0, 32));
         p.drawLine(tr.bottomLeft(), tr.bottomRight());
@@ -677,125 +780,56 @@ KwinClient::updateButtons()
 }
 
 void
-KwinClient::updateBgPixmaps()
+KwinClient::updateBgPixmap()
 {
-    if (m_uno)
-    {
-        m_buttonStyle = dConf.deco.buttons;
-        for (int i = 0; i < 2; ++i)
-        {
-            QRect r(0, 0, width(), m_headHeight);
-            QLinearGradient lg(r.topLeft(), r.bottomLeft());
-            if (!m_gradient.isEmpty())
-            {
-                const bool active(i);
-                lg.setStops(Settings::gradientStops(m_gradient, bgColor(&active)));
+    QRect r(0, 0, 1, titleHeight());
+    QLinearGradient lg(r.topLeft(), r.bottomLeft());
+    if (!m_gradient.isEmpty())
+        lg.setStops(Settings::gradientStops(m_gradient, bgColor()));
+    else
+        lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
 
-            }
-            else
-            {
-                lg.setColorAt(0.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::white, 4, 1));
-                lg.setColorAt(1.0f, Color::mid(options()->color(ColorTitleBar, i), Qt::black, 4, 1));
-            }
-            QPixmap p(Render::noise().size().width(), m_headHeight);
-            p.fill(Qt::transparent);
-            QPainter pt(&p);
-            pt.fillRect(p.rect(), lg);
-            if (m_noise)
-            {
-                QPixmap noise(Render::noise().size());
-                noise.fill(Qt::transparent);
-                QPainter ptt(&noise);
-                ptt.drawTiledPixmap(noise.rect(), Render::noise());
-                ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-                ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_noise*2.55f));
-                ptt.end();
-                pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-                pt.drawTiledPixmap(p.rect(), noise);
-            }
-            pt.end();
-            m_bgPix[i] = p;
-        }
+    QPixmap p(Render::noise().size().width(), r.height());
+    p.fill(Qt::transparent);
+    QPainter pt(&p);
+    pt.fillRect(p.rect(), lg);
+    if (m_noise)
+    {
+        QPixmap noise(Render::noise().size());
+        noise.fill(Qt::transparent);
+        QPainter ptt(&noise);
+        ptt.drawTiledPixmap(noise.rect(), Render::noise());
+        ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_noise*2.55f));
+        ptt.end();
+        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+        pt.drawTiledPixmap(p.rect(), noise);
     }
+    pt.end();
+    m_pix = p;
 }
 
 void
-KwinClient::updateDataFromX()
+KwinClient::updateData()
 {
     if (isPreview())
         return;
-    if (SharedBgPixData *bgPixData = XHandler::getXProperty<SharedBgPixData>(windowId(), XHandler::DecoBgPix))
+    if (m_wd)
     {
-        setBgPix(bgPixData->bgPix, QSize(bgPixData->w, bgPixData->h));
-        XHandler::freeData(bgPixData);
-    }
-    if (WindowData *wd = XHandler::getXProperty<WindowData>(windowId(), XHandler::WindowData))
-    {
-        setWindowData(*wd);
-        XHandler::freeData(wd);
+        const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
+        const QList<Button *> buttons = findChildren<Button *>();
+        for (int i = 0; i < buttons.count(); ++i)
+            buttons.at(i)->setButtonStyle(buttonStyle);
     }
     QTimer::singleShot(2000, this, SLOT(readCompositing()));
-}
-
-void
-KwinClient::setBgPix(const unsigned long pix, const QSize &sz)
-{
-    QImage img = XHandler::fromX11Pix(pix, sz);
-    if (img.isNull())
-        return;
-    m_pix = QPixmap(img.size());
-    m_pix.fill(Qt::transparent);
-    QPainter p(&m_pix);
-    p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.drawImage(m_pix.rect(), img);
-    p.end();
-    widget()->update();
-}
-
-void
-KwinClient::setWindowData(WindowData wd)
-{
-    m_contAware = wd.value<bool>(WindowData::ContAware);
-    m_headHeight = wd.value<int>(WindowData::UnoHeight);
-    m_needSeparator = wd.value<bool>(WindowData::Separator);
-    m_hor = wd.value<bool>(WindowData::Horizontal);
-    m_opacity = wd.value<int>(WindowData::Opacity);
-    m_uno = wd.value<bool>(WindowData::Uno);
-    m_buttonStyle = wd.value<int>(WindowData::Buttons);
-    m_frameSize = wd.value<int>(WindowData::Frame);
-
-    m_custcol[Text] = QColor::fromRgba(wd.fg);
-    m_custcol[Bg] = QColor::fromRgba(wd.bg);
-    if (m_opacity != 0xff)
-    {
-        bool needBlur(true);
-        unsigned int *sd = XHandler::getXProperty<unsigned int>(windowId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION);
-        if (sd)
-        {
-            needBlur = false;
-            XHandler::freeData(sd);
-        }
-        if (needBlur)
-        {
-            unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(windowId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
-        }
-    }
-    widget()->update();
 }
 
 void
 KwinClient::checkForDataFromWindowClass()
 {
     KWindowInfo info(windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
-    DecoData d = Factory::decoData(info.windowClassClass());
-    if (d.color[Text].alpha() == 0xff)
-        m_custcol[Text] = d.color[Text];
-    if (d.color[Bg].alpha() == 0xff)
-        m_custcol[Bg] = d.color[Bg];
-    m_gradient = d.gradient;
-    m_noise = d.noiseRatio;
-    m_needSeparator = d.separator;
+    Data::decoData(info.windowClassClass(), this);
+    updateBgPixmap();
 }
 
 /**
@@ -818,11 +852,8 @@ KwinClient::reset(unsigned long changed)
     if (changed & SettingButtons)
         updateButtons();
     if (changed & (SettingDecoration|SettingColors))
-    {
         checkForDataFromWindowClass();
-        updateBgPixmaps();
-    }
     if (changed & SettingCompositing)
-        updateDataFromX();
+        updateData();
     updateMask();
 }

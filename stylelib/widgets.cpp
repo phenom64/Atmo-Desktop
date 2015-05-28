@@ -245,13 +245,13 @@ ButtonBase::paintCloseButton(QPainter &p)
     QRect r(buttonRect());
     const QColor c(color(Mid));
     const quint64 check((r.width()*r.height())
-                        | ((quint64)(dConf.deco.buttons+1)<<24)
+                        | ((quint64)(m_buttonStyle+1)<<24)
                         | ((quint64)isActive()<<28)
                         | ((quint64)isHovered()<<30)
                         | ((quint64)c.rgba()<<32));
     if (!m_bgPix.contains(check))
     {
-        if (dConf.deco.buttons == -1)
+        if (m_buttonStyle == -1)
         {
             QPixmap pix(buttonRect().size());
             const int s(pix.width()/8);
@@ -298,14 +298,14 @@ ButtonBase::paintMaxButton(QPainter &p)
     QRect r(buttonRect());
     const QColor c(color(Mid));
     const quint64 check((r.width()*r.height())
-                        | ((quint64)(dConf.deco.buttons+1)<<24)
+                        | ((quint64)(m_buttonStyle+1)<<24)
                         | ((quint64)isMaximized()<<26)
                         | ((quint64)isActive()<<28)
                         | ((quint64)isHovered()<<30)
                         | ((quint64)c.rgba()<<32));
     if (!m_bgPix.contains(check))
     {
-        if (dConf.deco.buttons == NoStyle)
+        if (m_buttonStyle == NoStyle)
         {
             QPixmap pix(buttonRect().size());
             const int s(pix.width()/8);
@@ -368,13 +368,13 @@ ButtonBase::paintMinButton(QPainter &p)
     QRect r(buttonRect());
     const QColor c(color(Mid));
     const quint64 check((r.width()*r.height())
-                        | ((quint64)(dConf.deco.buttons+1)<<24)
+                        | ((quint64)(m_buttonStyle+1)<<24)
                         | ((quint64)isActive()<<28)
                         | ((quint64)isHovered()<<30)
                         | ((quint64)c.rgba()<<32));
     if (!m_bgPix.contains(check))
     {
-        if (dConf.deco.buttons == NoStyle)
+        if (m_buttonStyle == NoStyle)
         {
             QPixmap pix(buttonRect().size());
             const int s(pix.width()/8);

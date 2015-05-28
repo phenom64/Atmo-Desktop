@@ -14,6 +14,7 @@
 
 KWIN_DECORATION(Factory)
 
+#if 0
 static QMap<QString, DecoData> s_data;
 
 static void addDataForWinClass(const QString &winClass, QSettings &s)
@@ -51,6 +52,7 @@ Factory::decoData(const QString &winClass)
         return s_data.value(winClass);
     return s_data.value("default");
 }
+#endif
 
 KDecoration
 *Factory::createDecoration(KDecorationBridge *bridge)
@@ -77,7 +79,7 @@ KwinClient
     }
     return 0;
 }
-
+#if 0
 bool
 Factory::xEventFilter(void *message)
 {
@@ -130,15 +132,16 @@ Factory::xEventFilter(void *message)
     }
     return s_x11eventFilter&&(*s_x11eventFilter)(message);
 }
+#endif
 
 Factory::Factory()
     : QObject()
     , KDecorationFactory()
 {
-    if (!s_x11eventFilter && !s_instance)
-        s_x11eventFilter = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
-    s_instance = this;
-    readWindowData();
+//    if (!s_x11eventFilter && !s_instance)
+//        s_x11eventFilter = QAbstractEventDispatcher::instance()->setEventFilter(&Factory::xEventFilter);
+//    s_instance = this;
+//    readWindowData();
 
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
@@ -148,12 +151,12 @@ Factory::Factory()
 Factory::~Factory()
 {
     ShadowHandler::removeDelete();
-    if (this == s_instance)
-    {
-        s_instance = 0;
-        QAbstractEventDispatcher::instance()->setEventFilter(s_x11eventFilter);
-        s_x11eventFilter = 0;
-    }
+//    if (this == s_instance)
+//    {
+//        s_instance = 0;
+//        QAbstractEventDispatcher::instance()->setEventFilter(s_x11eventFilter);
+//        s_x11eventFilter = 0;
+//    }
 }
 
 bool

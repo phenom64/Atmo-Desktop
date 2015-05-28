@@ -58,6 +58,7 @@ public:
     static void freeData(void *data);
     static void deleteXProperty(const XWindow w, const Value v);
     static void mwRes(const QPoint &globalPoint, const XWindow &win, bool resize = false);
+    static void xcbMwRes(const QPoint &localPos, const QPoint &globalPoint, uint sourceWin, uint receiverWin);
     static void move(QWidget *w, const QPoint &pt);
     static bool compositingActive();
     static float opacity();

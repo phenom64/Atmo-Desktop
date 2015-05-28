@@ -48,6 +48,25 @@ class KwinClient : public KDecoration
 {
     Q_OBJECT
 public:
+    class Data
+    {
+    public:
+        int noise;
+        Gradient grad;
+        QColor bg, fg;
+        bool separator;
+        void operator =(const Data &d)
+        {
+            noise = d.noise;
+            grad = d.grad;
+            bg = d.bg;
+            fg = d.fg;
+            separator = d.separator;
+        }
+        static void decoData(const QString &winClass, KwinClient *d);
+        static QMap<QString, Data> s_data;
+    };
+
     enum CustomColors { Text = 0, Bg, CustColCount };
     typedef QList<DButton *> Buttons;
     KwinClient(KDecorationBridge *bridge, Factory *factory);
@@ -68,10 +87,8 @@ public:
     void reset(unsigned long changed);
     void update();
     void updateButtons();
-    void updateBgPixmaps();
-    void updateDataFromX();
-    void setBgPix(const unsigned long pix, const QSize &sz);
-    void setWindowData(WindowData wd);
+    void updateBgPixmap();
+    void updateData();
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -79,8 +96,8 @@ protected:
     void populate(const QString &buttons, int &size);
     void updateMask();
     void checkForDataFromWindowClass();
-    QColor bgColor(const bool *active = 0) const;
-    QColor fgColor(const bool *active = 0) const;
+    QColor bgColor() const;
+    QColor fgColor() const;
     const QRect positionRect(const KDecorationDefines::Position pos) const;
     const int titleHeight() const;
 
@@ -90,18 +107,63 @@ protected slots:
 private:
     QHBoxLayout *m_titleLayout;
     QLinearGradient m_unoGradient;
-    QColor m_custcol[CustColCount];
+    QColor m_bg, m_fg;
     Factory *m_factory;
-    QPixmap m_bgPix[2], m_bevelCorner[3], m_pix;
-    int m_headHeight, m_leftButtons, m_rightButtons, m_buttonStyle, m_frameSize, m_prevLum, m_opacity;
+    QPixmap m_bevelCorner[3], m_pix;
+    int m_leftButtons, m_rightButtons, m_frameSize, m_prevLum, m_opacity;
     unsigned int m_noise;
-    bool m_needSeparator, m_contAware, m_uno, m_compositingActive, m_hor;
+    bool m_separator, m_contAware, m_uno, m_compositingActive, m_hor;
     friend class SizeGrip;
     SizeGrip *m_sizeGrip;
     friend class DButton;
     Buttons m_buttons;
     QSharedMemory *m_mem;
     Gradient m_gradient;
+    WindowData *m_wd;
 };
+namespace DSP
+{
+class AdaptorManager : public QObject
+{
+    Q_OBJECT
+public:
+    static AdaptorManager *instance();
+    inline void addDeco(KwinClient *d) { m_decos << d; }
+    inline void removeDeco(KwinClient *d) { m_decos.removeOne(d); }
+    inline const bool hasDecos() const { return !m_decos.isEmpty(); }
+    inline void updateData(uint win)
+    {
+        for (int i = 0; i < m_decos.count(); ++i)
+        {
+            KwinClient *d = m_decos.at(i);
+            if (d->windowId() == win)
+            {
+                d->updateData();
+                return;
+            }
+        }
+    }
+    inline void updateDeco(uint win)
+    {
+        for (int i = 0; i < m_decos.count(); ++i)
+        {
+            KwinClient *d = m_decos.at(i);
+            if (d->client().data()->windowId() == win)
+            {
+                d->update();
+                return;
+            }
+        }
+    }
+
+protected:
+    AdaptorManager();
+    ~AdaptorManager();
+
+private:
+    static AdaptorManager *s_instance;
+    QList<KwinClient *> m_decos;
+};
+} //DSP
 
 #endif //KWINCLIENT_H

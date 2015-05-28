@@ -37,7 +37,7 @@ public:
     void hover();
     const Type type() const { return m_type; }
 
-    inline void setButtonStyle(const ButtonStyle s) { m_buttonStyle = s; }
+    inline void setButtonStyle(const ButtonStyle s) { m_buttonStyle = s; m_bgPix.clear(); }
     const ButtonStyle buttonStyle() const { return m_buttonStyle; }
 
 protected:
@@ -72,7 +72,7 @@ private:
     PaintEvent m_paintMethod[Custom];
     Type m_type;
     bool m_hasPress, m_hasMouse, m_hoverLock;
-    int m_buttonStyle;
+    ButtonStyle m_buttonStyle;
     QMap<quint64, QPixmap> m_bgPix;
 };
 

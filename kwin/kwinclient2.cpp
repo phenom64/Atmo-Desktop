@@ -36,6 +36,7 @@
 #include <QDir>
 
 #include <QDebug>
+#include <QX11Info>
 
 K_PLUGIN_FACTORY_WITH_JSON(
     DecoFactory,
@@ -55,23 +56,22 @@ ConfigModule::ConfigModule(QWidget *parent, const QVariantList &args) : KCModule
 
 ///-------------------------------------------------------------------------------------------------
 
-static QMap<QString, DecoData> s_data;
+QMap<QString, Deco::Data> Deco::Data::s_data;
 
 static void addDataForWinClass(const QString &winClass, QSettings &s)
 {
-    DecoData d;
-    d.fg = s.value("fgcolor", "0x00000000").toString().toUInt(0, 16);
-    d.bg = s.value("bgcolor", "0x00000000").toString().toUInt(0, 16);
-    d.gradient = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
-    d.noiseRatio = s.value("noise", 20).toUInt();
-    d.setValue<bool>(DecoData::Separator, s.value("separator", true).toBool());
-    d.setValue<bool>(DecoData::Uno, true);
-    s_data.insert(winClass, d);
+    Deco::Data d;
+    d.fg = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
+    d.bg = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
+    d.grad = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+    d.noise = s.value("noise", 20).toUInt();
+    d.separator = s.value("separator", true).toBool();
+    Deco::Data::s_data.insert(winClass, d);
 }
 
 static void readWindowData()
 {
-    s_data.clear();
+    Deco::Data::s_data.clear();
     static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
     QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
     bool hasDefault(false);
@@ -86,11 +86,19 @@ static void readWindowData()
         addDataForWinClass("default", s);
 }
 
-DecoData decoData(const QString &winClass)
+void
+Deco::Data::decoData(const QString &winClass, Deco *d)
 {
+    Deco::Data data;
     if (s_data.contains(winClass))
-        return s_data.value(winClass);
-    return s_data.value("default");
+        data = s_data.value(winClass);
+    else
+        data = s_data.value("default");
+    d->m_bg = data.bg;
+    d->m_fg = data.fg;
+    d->m_gradient = data.grad;
+    d->m_noise = data.noise;
+    d->m_separator = data.separator;
 }
 
 ///-------------------------------------------------------------------------------------------------
@@ -132,6 +140,9 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_rightButtons(0)
     , m_prevLum(0)
     , m_mem(0)
+    , m_noise(0)
+    , m_separator(0)
+    , m_wd(0)
 {
 }
 
@@ -147,6 +158,29 @@ Deco::init()
 {
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
 
+    int buttonStyle = 0;
+    if (const uint id = client().data()->windowId())
+    {
+        AdaptorManager::instance()->addDeco(this);
+        buttonStyle = dConf.deco.buttons;
+        if (m_wd = WindowData::memory(id, this))
+        {
+            if (!m_wd->value<bool>(WindowData::IsInited, true))
+            {
+                m_wd->setValue<bool>(WindowData::IsInited, true);
+                m_wd->setValue<bool>(WindowData::Separator, true);
+                m_wd->setValue<bool>(WindowData::Uno, true);
+                m_wd->setValue<int>(WindowData::TitleHeight, TITLEHEIGHT);
+            }
+            buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
+        }
+        else
+            checkForDataFromWindowClass();
+        ShadowHandler::installShadows(id);
+    }
+    else
+        updateBgPixmap();
+
     //for whatever reason if I use these convenience constructs it segfaults.
 //    m_leftButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Left, this, &Button::create);
 //    m_rightButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Right, this, &Button::create);
@@ -156,7 +190,9 @@ Deco::init()
     for (int i = 0; i < lb.count(); ++i)
     {
         const KDecoration2::DecorationButtonType t = lb.at(i);
-        m_leftButtons->addButton(Button::create(t, this, m_leftButtons));
+        Button *b = Button::create(t, this, m_leftButtons);
+        b->setButtonStyle(buttonStyle);
+        m_leftButtons->addButton(b);
     }
 
     m_rightButtons = new KDecoration2::DecorationButtonGroup(this);
@@ -165,26 +201,13 @@ Deco::init()
     for (int i = 0; i < rb.count(); ++i)
     {
         const KDecoration2::DecorationButtonType t = rb.at(i);
-        m_rightButtons->addButton(Button::create(t, this, m_rightButtons));
+        Button *b = Button::create(t, this, m_rightButtons);
+        b->setButtonStyle(buttonStyle);
+        m_rightButtons->addButton(b);
     }
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
-
-    m_decoData.setValue<bool>(WindowData::Separator, true);
-    m_decoData.setValue<bool>(WindowData::Uno, true);
-    m_decoData.setValue<int>(WindowData::UnoHeight, TITLEHEIGHT);
-
-    if (uint id = client().data()->windowId())
-    {
-        AdaptorManager::instance()->addDeco(this);
-        unsigned char height(TITLEHEIGHT);
-        XHandler::setXProperty<unsigned char>(id, XHandler::DecoTitleHeight, XHandler::Byte, &height); //never higher then 255...
-        ShadowHandler::installShadows(id);
-        updateData();
-    }
-    else
-        updateBgPixmap();
 }
 
 void
@@ -205,20 +228,21 @@ Deco::activeChanged(const bool active)
 void
 Deco::paint(QPainter *painter, const QRect &repaintArea)
 {
+    if (!painter->isActive())
+        return;
     painter->save();
     //bg
     bool needPaintBg(true);
-    if (QSharedMemory *m = SharedBgImage::sharedMemory(client().data()->windowId(), this, false))
+    if (m_wd && m_wd->lock())
     {
-        if ((m->isAttached() || m->attach(QSharedMemory::ReadOnly)) && m->lock())
+        painter->setBrushOrigin(titleBar().topLeft());
+        const QImage img = m_wd->image();
+        if (!img.isNull())
         {
-            const uchar *data = SharedBgImage::data(m->data());
-            const QSize size = SharedBgImage::size(m->data());
-            painter->setBrushOrigin(titleBar().topLeft());
-            painter->fillRect(titleBar(), QImage(data, size.width(), size.height(), QImage::Format_ARGB32_Premultiplied));
+            painter->fillRect(titleBar(), img);
             needPaintBg = false;
-            m->unlock();
         }
+        m_wd->unlock();
     }
     if (needPaintBg)
     {
@@ -233,19 +257,23 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
 
     if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal())
         paintBevel(painter, bgLum);
-    if (m_decoData.value<bool>(WindowData::Separator))
+
+    if ((m_wd && m_wd->value<bool>(WindowData::Separator)) || m_separator)
     {
         painter->setPen(QColor(0, 0, 0, 32));
         painter->drawLine(0, TITLEHEIGHT, titleBar().width(), TITLEHEIGHT);
     }
-    if (m_decoData.value<bool>(WindowData::ContAware))
+
+    if (m_wd && m_wd->value<bool>(WindowData::ContAware))
     {
         if (!m_mem)
             m_mem = new QSharedMemory(QString::number(client().data()->windowId()), this);
         if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
         {
             const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
-            painter->drawImage(QPoint(0, 0), QImage(data, titleBar().width(), m_decoData.value<int>(WindowData::UnoHeight), QImage::Format_ARGB32_Premultiplied), titleBar());
+            painter->drawImage(QPoint(0, 0),
+                               QImage(data, titleBar().width(), m_wd->value<int>(WindowData::UnoHeight), QImage::Format_ARGB32_Premultiplied),
+                               titleBar());
             m_mem->unlock();
         }
     }
@@ -302,7 +330,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     }
 
     //icon
-    if (dConf.deco.icon)
+    if ((!m_wd && dConf.deco.icon) || m_wd->value<bool>(WindowData::WindowIcon))
     {
         QRect ir(QPoint(), QSize(16, 16));
         ir.moveTop(titleBar().top()+(titleBar().height()/2-ir.height()/2));
@@ -359,126 +387,129 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
 void
 Deco::updateData()
 {
-    const unsigned int id = client().data()->windowId();
-    if (!id)
-        return;
-
-    bool n(true);
-    if (QSharedMemory *m = WindowData::sharedMemory(id, this, false))
-        if ((m->isAttached() || m->attach(QSharedMemory::ReadOnly)) && m->lock())
-        {
-            if (WindowData *wd = reinterpret_cast<WindowData *>(m->data()))
-            {
-                setWindowData(*wd);
-                if (wd->pix)
-                    setBgPix(wd->pix, QSize(wd->pixw, wd->pixh));
-                n = false;
-            }
-            m->unlock();
-        }
-
-    if (n)
-        checkForDataFromWindowClass();
+    if (m_wd)
+    {
+        const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
+        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+            static_cast<Button *>(m_leftButtons->buttons().at(i).data())->setButtonStyle(buttonStyle);
+        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+            static_cast<Button *>(m_leftButtons->buttons().at(i).data())->setButtonStyle(buttonStyle);
+    }
+    update();
 }
 
 void
 Deco::checkForDataFromWindowClass()
 {
     KWindowInfo info(client().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
-    DecoData d = decoData(info.windowClassClass());
-    if (d.isValid())
-        m_decoData = d;
+    Data::decoData(info.windowClassClass(), this);
     updateBgPixmap();
-}
-
-void
-Deco::setBgPix(const unsigned long pix, const QSize &sz)
-{
-    QImage img = XHandler::fromX11Pix(pix, sz);
-    if (img.isNull())
-        return;
-    m_pix = QPixmap(img.size());
-    m_pix.fill(Qt::transparent);
-    QPainter p(&m_pix);
-    p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.drawImage(m_pix.rect(), img);
-    p.end();
-    update();
-}
-
-void
-Deco::setWindowData(WindowData wd)
-{
-    m_decoData.WindowData::operator = (wd);
-    if (wd.value<int>(WindowData::Opacity) != 0xff)
-    {
-        bool needBlur(true);
-        const uint id = client().data()->windowId();
-        unsigned int *sd = XHandler::getXProperty<unsigned int>(id, XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION);
-        if (sd)
-        {
-            needBlur = false;
-            XHandler::freeData(sd);
-        }
-        if (needBlur)
-        {
-            unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(id, XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
-        }
-    }
-    update();
 }
 
 const QColor
 Deco::bgColor() const
 {
-    if (m_decoData.isValid())
-        return QColor::fromRgba(m_decoData.bg);
+    if (m_wd)
+    {
+        const QColor &c = m_wd->bg();
+        if (c.alpha() == 0xff)
+            return c;
+    }
+    if (m_bg.isValid() && m_bg.alpha() == 0xff)
+        return m_bg;
     return client().data()->palette().color(QPalette::Window);
 }
 
 const QColor
 Deco::fgColor() const
 {
-    if (m_decoData.isValid())
-        return QColor::fromRgba(m_decoData.fg);
+    if (m_wd)
+    {
+        const QColor &c = m_wd->fg();
+        if (c.alpha() == 0xff)
+            return c;
+    }
+    if (m_fg.isValid() && m_fg.alpha() == 0xff)
+        return m_fg;
     return client().data()->palette().color(QPalette::WindowText);
 }
 
 void
 Deco::updateBgPixmap()
 {
-    if (m_decoData.value<bool>(WindowData::Uno))
+    QRect r(0, 0, 1, TITLEHEIGHT);
+    QLinearGradient lg(r.topLeft(), r.bottomLeft());
+    if (!m_gradient.isEmpty())
+        lg.setStops(Settings::gradientStops(m_gradient, bgColor()));
+    else
+        lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
+
+    QPixmap p(Render::noise().size().width(), r.height());
+    p.fill(Qt::transparent);
+    QPainter pt(&p);
+    pt.fillRect(p.rect(), lg);
+    if (m_noise)
     {
-        QRect r(0, 0, 1, TITLEHEIGHT);
-        if (const int h = m_decoData.value<int>(WindowData::UnoHeight))
-            r.setHeight(h);
-
-        QLinearGradient lg(r.topLeft(), r.bottomLeft());
-        if (m_decoData.isValid() && !m_decoData.gradient.isEmpty())
-            lg.setStops(Settings::gradientStops(m_decoData.gradient, bgColor()));
-        else
-            lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
-
-        QPixmap p(Render::noise().size().width(), r.height());
-        p.fill(Qt::transparent);
-        QPainter pt(&p);
-        pt.fillRect(p.rect(), lg);
-        if (m_decoData.isValid() && m_decoData.noiseRatio)
-        {
-            QPixmap noise(Render::noise().size());
-            noise.fill(Qt::transparent);
-            QPainter ptt(&noise);
-            ptt.drawTiledPixmap(noise.rect(), Render::noise());
-            ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_decoData.noiseRatio*2.55f));
-            ptt.end();
-            pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-            pt.drawTiledPixmap(p.rect(), noise);
-        }
-        pt.end();
-        m_pix = p;
+        QPixmap noise(Render::noise().size());
+        noise.fill(Qt::transparent);
+        QPainter ptt(&noise);
+        ptt.drawTiledPixmap(noise.rect(), Render::noise());
+        ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_noise*2.55f));
+        ptt.end();
+        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+        pt.drawTiledPixmap(p.rect(), noise);
     }
+    pt.end();
+    m_pix = p;
+}
+
+#include <xcb/xproto.h>
+Grip::Grip(Deco *d)
+    : QWidget()
+    , m_deco(d)
+{
+    if (!QX11Info::isPlatformX11())
+        return;
+    KDecoration2::DecoratedClient *c = m_deco->client().data();
+    xcb_window_t windowId = c->windowId();
+    if (windowId)
+    {
+        xcb_window_t current = windowId;
+        xcb_query_tree_cookie_t cookie = xcb_query_tree_unchecked(QX11Info::connection(), current);
+        xcb_query_tree_reply_t *tree = xcb_query_tree_reply(QX11Info::connection(), cookie, 0);
+        if (tree && tree->parent)
+            current = tree->parent;
+        // reparent
+        xcb_reparent_window( QX11Info::connection(), winId(), current, 0, 0 );
+    }
+    else
+        hide();
+}
+
+void
+Grip::updatePosition()
+{
+    if (!QX11Info::isPlatformX11())
+        return;
+
+    KDecoration2::DecoratedClient *c = m_deco->client().data();
+    unsigned int values[2] = { c->width() - 16, c->height() - 16 };
+    xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
+}
+
+void
+Grip::paintEvent(QPaintEvent *e)
+{
+    QPainter p(this);
+    p.fillRect(rect(), Qt::red);
+    p.end();
+}
+
+void
+Grip::mousePressEvent(QMouseEvent *e)
+{
+
 }
 
 } //DSP

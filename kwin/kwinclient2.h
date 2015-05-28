@@ -15,6 +15,7 @@ class QPixmap;
 class QSharedMemory;
 namespace DSP
 {
+class Grip;
 class ConfigModule : public KCModule
 {
     Q_OBJECT
@@ -71,24 +72,30 @@ public slots:
     void defaults() {}
 };
 
-class DecoData : public WindowData
-{
-public:
-    Gradient gradient;
-    unsigned int noiseRatio;
-    void operator =(const DecoData &d)
-    {
-        WindowData::operator =(d);
-        gradient = d.gradient;
-        noiseRatio = d.noiseRatio;
-    }
-};
 
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
     Q_OBJECT
 public:
+    class Data
+    {
+    public:
+        int noise;
+        Gradient grad;
+        QColor bg, fg;
+        bool separator;
+        void operator =(const Data &d)
+        {
+            noise = d.noise;
+            grad = d.grad;
+            bg = d.bg;
+            fg = d.fg;
+            separator = d.separator;
+        }
+        static void decoData(const QString &winClass, Deco *d);
+        static QMap<QString, Data> s_data;
+    };
     explicit Deco(QObject *parent = 0, const QVariantList &args = QVariantList());
     ~Deco();
     void paint(QPainter *painter, const QRect &repaintArea);
@@ -111,8 +118,6 @@ protected slots:
     void captionChanged(const QString &caption) { update(); }
 
 protected:
-    void setBgPix(const unsigned long pix, const QSize &sz);
-    void setWindowData(WindowData wd);
     void checkForDataFromWindowClass();
     void updateBgPixmap();
     void paintBevel(QPainter *painter, const int bgLum);
@@ -122,10 +127,12 @@ protected:
 
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
-    DecoData m_decoData;
     QPixmap m_pix, m_bevelCorner[3];
     QSharedMemory *m_mem;
-    int m_prevLum;
+    QColor m_bg, m_fg;
+    Gradient m_gradient;
+    WindowData *m_wd;
+    int m_prevLum, m_noise, m_separator;
 };
 
 class AdaptorManager : public QObject
@@ -168,6 +175,20 @@ protected:
 private:
     static AdaptorManager *s_instance;
     QList<DSP::Deco *> m_decos;
+};
+
+class Grip : public QWidget
+{
+public:
+    Grip(Deco *d);
+    void updatePosition();
+
+protected:
+    void paintEvent(QPaintEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+
+private:
+    Deco *m_deco;
 };
 
 } //DSP

@@ -9,13 +9,6 @@
 #include "kwinclient.h"
 #include "../config/settings.h"
 
-typedef struct _DecoData {
-    QColor color[2];
-    Gradient gradient;
-    unsigned int noiseRatio;
-    bool separator;
-} DecoData;
-
 class KwinClient;
 class Factory : public QObject, public KDecorationFactory
 {
@@ -25,10 +18,10 @@ public:
     ~Factory();
     KDecoration *createDecoration(KDecorationBridge *bridge);
     bool supports(Ability ability) const;
-
+#if 0
     static bool xEventFilter(void *message);
+#endif
     static KwinClient *deco(unsigned long w);
-    static DecoData decoData(const QString &winClass);
 
 private:
 //    static Atom s_wmAtom;

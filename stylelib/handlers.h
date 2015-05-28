@@ -123,7 +123,7 @@ public:
     static void addCompactMenu(QWidget *w);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
     static void updateWindowDataLater(QWidget *win);
-    static void unoBg(QWidget *win, int h, uchar *data, int &w);
+    static void unoBg(QWidget *win, int h, int &w, uchar *data);
     static QImage windowBg(const QSize &sz, const QColor &bgColor);
 
 public slots:
@@ -136,7 +136,7 @@ signals:
 protected:
     Window(QObject *parent = 0);
     bool eventFilter(QObject *, QEvent *);
-    static unsigned int getHeadHeight(QWidget *win, unsigned int &needSeparator);
+    static unsigned int getHeadHeight(QWidget *win, bool &separator);
 
 protected slots:
     void menuShow();

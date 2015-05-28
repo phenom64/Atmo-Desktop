@@ -2,74 +2,112 @@
 #define WINDOWDATA_H
 
 #include "../config/settings.h"
+#include <QSharedMemory>
+#include <QDebug>
 
-class QSharedMemory;
-
-class WindowData
+class WindowData : public QSharedMemory
 {
+    /// Convenience class for functions returning values
+    /// so one doesnt have to store the return val in a var
+    /// and then return that
+    class MemoryLocker
+    {
+    public:
+        MemoryLocker(QSharedMemory *m);
+        ~MemoryLocker();
+        inline const bool lockObtained() const { return m_lock; }
+    private:
+        QSharedMemory *m_mem;
+        bool m_lock;
+    };
+
 public:
-    enum DataType {     //data is a 32 bit integer
+    enum ValueType {     //data is a 32 bit integer
         Separator =     1<<0,       //first 8 bits reserved for booleans...
         ContAware =     1<<1,
         Uno =           1<<2,
         Horizontal =    1<<3,
+        WindowIcon =    1<<4,
+        IsInited =      1<<5,
         Opacity =       0x0000ff00,
         UnoHeight =     0x00ff0000, //the height of the head is never more then 255 right? ..right?
         Buttons =       0x0f000000, //enough long as we dont have more then 15 buttons styles
-        Frame =         0xf0000000  //same here... long as we dont set framesize over 15, unsure if this is enough....
+        Frame =         0xf0000000,  //same here... long as we dont set framesize over 15, unsure if this is enough....
+        TitleHeight
     };
+    enum SharedValue { //when data cast to unsigned int ptr
+        ImageWidth = 4,
+        ImageHeight = 5
+    };
+
     typedef unsigned int Type;
-    unsigned int fg, bg, data, pixw, pixh;
-    unsigned long pix;
-    WindowData() : data(0), fg(0), bg(0), pixw(0), pixh(0), pix(0) {}
-//    explicit WindowData(const WindowData &wd) : data(wd.data), fg(wd.fg), bg(wd.bg) {}
-    template<typename T> void setValue(const Type type, const T value = T())
+    template<typename T> void setValue(const Type type, const T value)
     {
-        switch (type)
+        if (lock())
         {
-        case Separator:
-        case ContAware:
-        case Uno:
-        case Horizontal: data |= (type*value); break; //just boolean vals...
-        case Opacity: data |= ((value << 8) & Opacity); break;
-        case UnoHeight: data |= ((value << 16) & UnoHeight); break;
-        case Buttons: data |= ((value + 1) << 24); break;
-        case Frame: data |= (value << 28); break;
-        default: break;
+            unsigned int *d = reinterpret_cast<unsigned int *>(data());
+            switch (type)
+            {
+            case Separator:
+            case ContAware:
+            case Uno:
+            case Horizontal:
+            case WindowIcon:
+            case IsInited:      d[0] ^= (-value ^ d[0]) & type; break; //just boolean vals...
+            case Opacity:       d[0] = (d[0] & ~Opacity) | ((value << 8) & Opacity); break;
+            case UnoHeight:     d[0] = (d[0] & ~UnoHeight) | ((value << 16) & UnoHeight); break;
+            case Buttons:       d[0] = (d[0] & ~Buttons) | (((value + 1) << 24) & Buttons); break;
+            case Frame:         d[0] = (d[0] & ~Frame) | ((value << 28) & Frame); break;
+            case TitleHeight:   d[1]  = value; break;
+            default: break;
+            }
+            unlock();
         }
     }
-    template<typename T> const T value(const Type type) const
+
+    template<typename T> T value(const Type type, const T defaultVal = T())
     {
-        switch (type)
+        MemoryLocker locker(this);
+        if (locker.lockObtained())
         {
-        case Separator:
-        case ContAware:
-        case Uno:
-        case Horizontal: return T(data & type);
-        case Opacity: return T((data & Opacity) >> 8);
-        case UnoHeight: return T((data & UnoHeight) >> 16);
-        case Buttons: return T(((data & Buttons) >> 24) - 1);
-        case Frame: return T((data & Frame) >> 28);
-        default: return T();
+            unsigned int *d = reinterpret_cast<unsigned int *>(data());
+            switch (type)
+            {
+            case Separator:
+            case ContAware:
+            case Uno:
+            case Horizontal:
+            case WindowIcon:
+            case IsInited:      return T(d[0] & type);
+            case Opacity:       return T((d[0] & Opacity) >> 8);
+            case UnoHeight:     return T((d[0] & UnoHeight) >> 16);
+            case Buttons:       return T(((d[0] & Buttons) >> 24) - 1);
+            case Frame:         return T((d[0] & Frame) >> 28);
+            case TitleHeight:   return T(d[1]);
+            default:            return T();
+            }
         }
+        return defaultVal;
     }
-    inline void operator=(const WindowData &wd) { this->data = wd.data; this->fg = wd.fg; this->bg = wd.bg; }
-    inline bool operator==(const WindowData &wd) const { return (this->data == wd.data && this->fg == wd.fg && this->bg == wd.bg); }
-    inline bool operator!=(const WindowData &wd) const { return !operator==(wd); }
-    inline const bool isValid() const { return fg&&bg; }
+    static WindowData *memory(const unsigned int wid, QObject *parent, const bool create = false);
+    QColor bg();
+    void setBg(const QColor &c);
 
-    static bool hasData(QObject *parent);
-    static QSharedMemory *sharedMemory(const unsigned int wid, QObject *parent, const bool create = true);
-    static void setData(const unsigned int wid, QObject *parent, WindowData *wd, const bool force = false);
-};
+    QColor fg();
+    void setFg(const QColor &c);
 
-class SharedBgImage
-{
-public:
-    static bool hasData(QObject *parent);
-    static QSharedMemory *sharedMemory(const unsigned int wid, QObject *parent, const bool create = true);
-    static uchar *data(void *fromData);
-    static QSize size(void *fromData);
+    QImage image();
+
+    //this should be passed to the QImage constructor...
+    uchar *imageData();
+
+    void setImageSize(const int w, const int h);
+    QSize imageSize();
+
+    bool hasData(const QObject *parent);
+
+protected:
+    WindowData(const QString &key, QObject *parent):QSharedMemory(key, parent){}
 };
 
 #endif //WINDOWDATA_H

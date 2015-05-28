@@ -898,11 +898,11 @@ Render::drawClickable(Shadow s,
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
-    const int o(opacity*255);
     if (s==Raised || s==Yosemite)
     {
         if (s==Yosemite && !shadow)
         {
+            const int o(opacity*255);
             QLinearGradient lg(0, 0, 0, r.height());
             lg.setColorAt(0.0f, QColor(0, 0, 0, o/3));
             lg.setColorAt(0.8f, QColor(0, 0, 0, o/3));

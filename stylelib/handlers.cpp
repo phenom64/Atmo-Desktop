@@ -697,6 +697,8 @@ Window::manage(QWidget *w)
         return;
     w->removeEventFilter(instance());
     w->installEventFilter(instance());
+    if (w->isWindow())
+        instance()->updateWindowData((qulonglong)w);
 }
 
 void
@@ -940,19 +942,16 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     const bool csd(win->property(CSDBUTTONS).toBool());
     if (!csd)
         offset.ry()+= unoHeight(win, TitleBar);
-    if (SharedBgImage::hasData(win))
+    if (WindowData *data = WindowData::memory(win->winId(), win))
     {
-        if (QSharedMemory *m = SharedBgImage::sharedMemory(win->winId(), win, false))
-            if ((m->isAttached() ||  m->attach(QSharedMemory::ReadOnly)) && m->lock())
-            {
-                QPoint bo(p->brushOrigin());
-                p->setBrushOrigin(-offset);
-                QSize size = SharedBgImage::size(m->data());
-                const uchar *data = SharedBgImage::data(m->data());
-                p->fillRect(r, QImage(data, size.width(), size.height(), QImage::Format_ARGB32_Premultiplied));
-                p->setBrushOrigin(bo);
-                m->unlock();
-            }
+        if (data->lock())
+        {
+            QPoint bo(p->brushOrigin());
+            p->setBrushOrigin(-offset);
+            p->fillRect(r, data->image());
+            p->setBrushOrigin(bo);
+            data->unlock();
+        }
         if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
             ScrollWatcher::drawContBg(p, win, r, offset);
 
@@ -982,28 +981,29 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
 }
 
 unsigned int
-Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
+Window::getHeadHeight(QWidget *win, bool &separator)
 {
-    unsigned char *h = XHandler::getXProperty<unsigned char>(win->winId(), XHandler::DecoTitleHeight);
+    WindowData *d = WindowData::memory(win->winId(), win);
+    int h = 0;
+    if (d)
+        h = d->value<int>(WindowData::TitleHeight, 0);
     const bool csd(dConf.removeTitleBars && win->property(CSDBUTTONS).toBool());
     if (!h && !csd)
     {
-        needSeparator = false;
+        separator = false;
         return 0;
     }
     if (!dConf.uno.enabled)
     {
-        needSeparator = 0;
+        separator = false;
         if (csd)
             return 0;
         if (h)
-            return *h;
+            return h;
         return 0;
     }
-//    const int oldHead(unoHeight(win, All));
     int hd[HeightCount];
-    hd[TitleBar] = (h?*h:0);
-    XHandler::freeData(h);
+    hd[TitleBar] = h;
     hd[All] = hd[TitleBar];
     hd[ToolBars] = hd[ToolBarAndTabBar] = 0;
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(win))
@@ -1024,7 +1024,7 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
                     {
                         if (tb->geometry().bottom() > hd[ToolBars])
                             hd[ToolBars] = tb->geometry().bottom()+1;
-                        needSeparator = 0;
+                        separator = false;
                     }
         }
     }
@@ -1037,7 +1037,7 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
         if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
         {
             possible = const_cast<QTabBar *>(tb);
-            needSeparator = 0;
+            separator = false;
             const int y(tb->mapTo(win, tb->rect().bottomLeft()).y());
             if (y > hd[ToolBarAndTabBar])
                 hd[ToolBarAndTabBar] = y;
@@ -1051,12 +1051,12 @@ Window::getHeadHeight(QWidget *win, unsigned int &needSeparator)
 }
 
 void
-Window::unoBg(QWidget *win, int h, uchar *data, int &w)
+Window::unoBg(QWidget *win, int h, int &w, uchar *data)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
     QPalette pal(win->palette());
-    if (!pal.color(win->backgroundRole()).alpha() < 0xff)
+    if (pal.color(win->backgroundRole()).alpha() < 0xff)
         pal = QApplication::palette();
     QColor bc(pal.color(win->backgroundRole()));
     bc = Color::mid(bc, dConf.uno.tint.first, 100-dConf.uno.tint.second, dConf.uno.tint.second);
@@ -1154,53 +1154,47 @@ Window::updateWindowData(qulonglong window)
     if (!win || !win->isWindow() || !win->testAttribute(Qt::WA_WState_Created))
         return;
 
-    unsigned int ns(1);
-    const unsigned int height(getHeadHeight(win, ns));
+    WindowData *data = WindowData::memory(win->winId(), win, true);
+    if (!data)
+        return;
 
-    WindowData wd;
-    wd.setValue<bool>(WindowData::Separator, ns);
-    wd.setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
-    wd.setValue<bool>(WindowData::Uno, dConf.uno.enabled);
-    wd.setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
-    wd.setValue<int>(WindowData::Opacity, XHandler::opacity()*255.0f);
-    wd.setValue<int>(WindowData::UnoHeight, height);
-    wd.setValue<int>(WindowData::Buttons, dConf.deco.buttons);
-    wd.setValue<int>(WindowData::Frame, dConf.deco.frameSize);
+    bool separator(true);
+    const unsigned int height(getHeadHeight(win, separator));
+    if (!height)
+        return;
 
     QPalette pal(win->palette());
-    if (!pal.color(win->backgroundRole()).alpha() < 0xff) //im looking at you spotify you faggot!!!!!!!!!!!111111
+    if (pal.color(win->backgroundRole()).alpha() < 0xff) //im looking at you spotify
         pal = QApplication::palette();
 
-    wd.fg = pal.color(win->foregroundRole()).rgba();
-    wd.bg = pal.color(win->backgroundRole()).rgba();
-
-    const WId id(win->winId());
-    bool needUpdate(true);
-    if (QSharedMemory *m = WindowData::sharedMemory(id, win, false))
-        if (m->isAttached() && m->lock())
-        {
-            WindowData *oldWd = reinterpret_cast<WindowData *>(m->data());
-            needUpdate = (!oldWd || *oldWd != wd);
-            m->unlock();
-        }
-    if ((!height && dConf.uno.enabled) || !needUpdate)
-        return;
     if (dConf.uno.enabled)
     {
-        if (QSharedMemory *m = SharedBgImage::sharedMemory(id, win))
-            if ((m->isAttached() || m->attach()) && m->lock())
-            {
-                int w(0);
-                unoBg(win, height, reinterpret_cast<uchar *>(SharedBgImage::data(m->data())), w);
-                unsigned int *sizeData = reinterpret_cast<unsigned int *>(m->data());
-                sizeData[0] = w;
-                sizeData[1] = height;
-                m->unlock();
-            }
+        int w(0);
+        if (data->lock())
+        {
+            unoBg(win, height, w, data->imageData());
+            data->setImageSize(w, height);
+            data->unlock();
+        }
     }
-    win->repaint();
-    WindowData::setData(id, win, &wd, true);
+    data->setValue<bool>(WindowData::Separator, separator);
+    data->setValue<bool>(WindowData::WindowIcon, dConf.deco.icon);
+    data->setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
+    data->setValue<bool>(WindowData::Uno, dConf.uno.enabled);
+    data->setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
+    data->setValue<int>(WindowData::Opacity, XHandler::opacity()*255.0f);
+    data->setValue<int>(WindowData::UnoHeight, height);
+    data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
+    data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
+    data->setFg(pal.color(win->foregroundRole()));
+    data->setBg(pal.color(win->backgroundRole()));
+    win->update();
     emit instance()->windowDataChanged(win);
+#if !defined(QT_NO_DBUS)
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
+    msg << (uint)win->winId();
+    QDBusConnection::sessionBus().send(msg);
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------

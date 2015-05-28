@@ -10,15 +10,6 @@ if (QT5BUILD)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
 
-    ### XCB
-    find_package(XCB COMPONENTS XCB)
-    set_package_properties(XCB PROPERTIES
-    DESCRIPTION "X protocol C-language Binding"
-    URL "http://xcb.freedesktop.org"
-    TYPE OPTIONAL
-    PURPOSE "Required to pass style properties to native Windows on X11 Platform"
-    )
-
     set(SRCS kwinclient2.cpp decobutton.cpp)
     set(HDRS kwinclient2.h decobutton.h decoadaptor.h)
     
@@ -60,7 +51,7 @@ else (QT5BUILD)
         project(kwin3_styleproject)
         set(KWIN_SRCS factory.cpp kwinclient.cpp sizegrip.cpp)
 	message(STATUS "kwin deco header found: " ${KDECORATION_H})
-        kde4_add_plugin(kwin3_styleproject ${KWIN_SRCS})
+        kde4_add_plugin(kwin3_styleproject ${KWIN_SRCS} decoadaptor.h)
         target_link_libraries(kwin3_styleproject styleproject ${QT_LIBRARIES} ${KDE4_KDEUI_LIBS} kdecorations ${X11_LIBRARIES})
         install(TARGETS kwin3_styleproject DESTINATION ${PLUGIN_INSTALL_DIR})
         install(FILES styleproject.desktop DESTINATION ${DATA_INSTALL_DIR}/kwin)

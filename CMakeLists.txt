@@ -88,6 +88,12 @@ else (QT5BUILD)
 endif (QT5BUILD)
 
 add_library(${PROJECT} SHARED ${SRCS} ${MOC_SRCS} ${HDRS})
+
+find_package(XCB COMPONENTS XCB)
+if (XCB_FOUND)
+    add_definitions(-DDHASXCB)
+    target_link_libraries(${PROJECT} XCB::XCB)
+endif (XCB_FOUND)
 # set_target_properties(${PROJECT} PROPERTIES AUTOMOC ON)
 
 if (QT5BUILD)

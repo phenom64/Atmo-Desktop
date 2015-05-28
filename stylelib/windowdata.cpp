@@ -1,108 +1,152 @@
 #include "windowdata.h"
 #include "xhandler.h"
-#include <QSharedMemory>
 #include <QObject>
 #include <QDebug>
 
-#if !defined(QT_NO_DBUS)
-#include <QDBusMessage>
-#include <QDBusConnection>
-#endif
-
 bool
-WindowData::hasData(QObject *parent)
+WindowData::hasData(const QObject *parent)
 {
     return parent->findChild<QSharedMemory *>("dsp_windowdata_memory");
 }
 
-QSharedMemory
-*WindowData::sharedMemory(const unsigned int wid, QObject *parent, const bool create)
+WindowData
+*WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
 {
     if (!wid)
     {
         qDebug() << "DSP: cant get windowdata w/o window id";
         return 0;
     }
-    QSharedMemory *m = parent->findChild<QSharedMemory *>("dsp_windowdata_memory");
+    WindowData *m = parent->findChild<WindowData *>("dsp_windowdata_memory");
     if (!m)
     {
-        m = new QSharedMemory(QString("dsp_windowdata-%1").arg(QString::number(wid)), parent);
+        m = new WindowData(QString("dsp_windowdata-%1").arg(QString::number(wid)), parent);
         m->setObjectName("dsp_windowdata_memory");
     }
-    if (!m->isAttached() && !m->attach() && create)
+    if (m->isAttached() || m->attach())
+        return m;
+    if (create && m->QSharedMemory::create((sizeof(unsigned int)*6)+(256*256*4)))
     {
-        if (m->create(sizeof(WindowData)))
-            return m;
-        else
+        if (m->lock())
         {
-            qDebug() << "DSP: unable to create shared memory... cannot talk to deco.\n" << "error:\n" << m->errorString();
-            return 0;
+            unsigned char *d = reinterpret_cast<unsigned char *>(m->data());
+            memset(d, 0, m->size());
+            m->unlock();
         }
+        return m;
     }
-    return m;
+    qDebug() << "DSP: unable to create shared memory.\n" << "error:\n" << m->errorString();
+    if (m)
+        m->deleteLater();
+    return 0;
 }
+
+//QSharedMemory
+//*WindowData::constSharedMemory(const unsigned int wid, const QObject *parent)
+//{
+//    if (!wid)
+//    {
+//        qDebug() << "DSP: cant get windowdata w/o window id";
+//        return 0;
+//    }
+//    QSharedMemory *m = parent->findChild<QSharedMemory *>("dsp_windowdata_memory");
+//    if (m && (m->isAttached() || m->attach()))
+//        return m;
+//    return 0;
+//}
 
 void
-WindowData::setData(const unsigned int wid, QObject *parent, WindowData *wd, const bool force)
+WindowData::setImageSize(const int w, const int h)
 {
-    QSharedMemory *m = WindowData::sharedMemory(wid, parent, force);
-    if (m && m->isAttached() && m->lock())
-    {
-        memcpy(m->data(), wd, m->size());
-        m->unlock();
-    }
-
-#if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
-    msg << wid;
-    QDBusConnection::sessionBus().send(msg);
-#endif
-}
-
-//---------------------------------------------------------------------------------------------------
-
-bool
-SharedBgImage::hasData(QObject *parent)
-{
-    return parent->findChild<QSharedMemory *>("dsp_imagedata_memory");
-}
-
-QSharedMemory
-*SharedBgImage::sharedMemory(const unsigned int wid, QObject *parent, const bool create)
-{
-    if (!wid)
-    {
-        qDebug() << "DSP: cant get imageData w/o window id";
-        return 0;
-    }
-    QSharedMemory *m = parent->findChild<QSharedMemory *>("dsp_imagedata_memory");
-    if (!m)
-    {
-        m = new QSharedMemory(QString("dsp_imagedata-%1").arg(QString::number(wid)), parent);
-        m->setObjectName("dsp_imagedata_memory");
-    }
-    if (!m->isAttached() && !m->attach() && create)
-    {
-        if (m->create(256*256*4+(sizeof(unsigned int)*2))) //2 32 bit ints at start for width and height...
-            return m;
-        else
-        {
-            qDebug() << "DSP: unable to create shared image memory... cannot set bg for deco.\n" << "error:\n" << m->errorString();
-            return 0;
-        }
-    }
-    return m;
+    unsigned int *size = reinterpret_cast<unsigned int *>(data());
+    size[ImageWidth] = w;
+    size[ImageHeight] = h;
 }
 
 uchar
-*SharedBgImage::data(void *fromData)
+*WindowData::imageData()
 {
-    return &reinterpret_cast<uchar *>(fromData)[8];
+    uchar *d = reinterpret_cast<uchar *>(data());
+    d = &d[sizeof(unsigned int)*4];
+    unsigned int *size = reinterpret_cast<unsigned int *>(d);
+    d = reinterpret_cast<uchar *>(&size[2]);
+    return d;
 }
 
 QSize
-SharedBgImage::size(void *fromData)
+WindowData::imageSize()
 {
-    unsigned int *data = reinterpret_cast<unsigned int *>(fromData);
-    return QSize(data[0], data[1]);
+    uchar *d = reinterpret_cast<uchar *>(data());
+    d = &d[sizeof(unsigned int)*4];
+    unsigned int *size = reinterpret_cast<unsigned int *>(d);
+    return QSize(size[0], size[1]);
+}
+
+QImage
+WindowData::image()
+{
+    const QSize &sz = imageSize();
+    return QImage(imageData(), sz.width(), sz.height(), QImage::Format_ARGB32_Premultiplied);
+}
+
+QColor
+WindowData::bg()
+{
+    MemoryLocker locker(this);
+    if (locker.lockObtained())
+    {
+        unsigned int *d = reinterpret_cast<unsigned int *>(data());
+        return QColor::fromRgba(d[2]);
+    }
+    return QColor();
+}
+
+void
+WindowData::setBg(const QColor &c)
+{
+    if (lock())
+    {
+        unsigned int *d = reinterpret_cast<unsigned int *>(data());
+        d[2] = c.rgba();
+        unlock();
+    }
+}
+
+QColor
+WindowData::fg()
+{
+    MemoryLocker locker(this);
+    if (locker.lockObtained())
+    {
+        unsigned int *d = reinterpret_cast<unsigned int *>(data());
+        return QColor::fromRgba(d[3]);
+    }
+    return QColor();
+}
+
+void
+WindowData::setFg(const QColor &c)
+{
+    if (lock())
+    {
+        unsigned int *d = reinterpret_cast<unsigned int *>(data());
+        d[3] = c.rgba();
+        unlock();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------
+
+WindowData::MemoryLocker::MemoryLocker(QSharedMemory *m)
+    : m_mem(m)
+    , m_lock(false)
+{
+    if (m_mem)
+        m_lock = m_mem->lock();
+}
+
+WindowData::MemoryLocker::~MemoryLocker()
+{
+    if (m_mem && m_lock)
+        m_mem->unlock();
 }

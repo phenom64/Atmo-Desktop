@@ -15,6 +15,10 @@
 //#include <QAbstractEventDispatcher>
 #include "../config/settings.h"
 
+#if defined(DHASXCB)
+#include <xcb/xproto.h>
+#endif
+
 static Atom atom[XHandler::ValueCount] =
 {
     XInternAtom(QX11Info::display(), "_NET_WORKAREA", False),
@@ -130,6 +134,67 @@ XHandler::mwRes(const QPoint &globalPoint, const XWindow &win, bool resize)
     xev.xclient.data.l[4] = 0;
     XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
     XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+}
+
+void
+XHandler::xcbMwRes(const QPoint &localPos, const QPoint &globalPos, uint sourceWin, uint receiverWin)
+{
+#if defined(DHASXCB)
+    if (!QX11Info::isPlatformX11())
+        return;
+
+    xcb_connection_t *connection = QX11Info::connection();
+
+    static xcb_atom_t atom = 0;
+    if (!atom)
+    {
+        const QString atomName( "_NET_WM_MOVERESIZE" );
+        xcb_intern_atom_cookie_t cookie = xcb_intern_atom(connection, false, atomName.size(), qPrintable(atomName));
+        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(connection, cookie, 0);
+        atom = reply ? reply->atom:0;
+    }
+    if (!atom )
+        return;
+
+    // button release event
+    xcb_button_release_event_t releaseEvent;
+    memset(&releaseEvent, 0, sizeof(releaseEvent));
+    releaseEvent.response_type = XCB_BUTTON_RELEASE;
+    releaseEvent.event =  sourceWin;
+    releaseEvent.child = XCB_WINDOW_NONE;
+    releaseEvent.root = QX11Info::appRootWindow();
+    releaseEvent.event_x = localPos.x();
+    releaseEvent.event_y = localPos.y();
+    releaseEvent.root_x = globalPos.x();
+    releaseEvent.root_y = globalPos.y();
+    releaseEvent.detail = XCB_BUTTON_INDEX_1;
+    releaseEvent.state = XCB_BUTTON_MASK_1;
+    releaseEvent.time = XCB_CURRENT_TIME;
+    releaseEvent.same_screen = true;
+    xcb_send_event(connection, false, sourceWin, XCB_EVENT_MASK_BUTTON_RELEASE, reinterpret_cast<const char*>(&releaseEvent));
+    xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);
+
+    // move resize event
+    xcb_client_message_event_t clientMessageEvent;
+    memset(&clientMessageEvent, 0, sizeof(clientMessageEvent));
+
+    clientMessageEvent.response_type = XCB_CLIENT_MESSAGE;
+    clientMessageEvent.type = atom;
+    clientMessageEvent.format = 32;
+    clientMessageEvent.window = receiverWin;
+    clientMessageEvent.data.data32[0] = globalPos.x();
+    clientMessageEvent.data.data32[1] = globalPos.y();
+    clientMessageEvent.data.data32[2] = 4; // bottom right
+    clientMessageEvent.data.data32[3] = Qt::LeftButton;
+    clientMessageEvent.data.data32[4] = 0;
+
+    xcb_send_event(connection, false, QX11Info::appRootWindow(),
+                   XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |
+                   XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT,
+                   reinterpret_cast<const char*>(&clientMessageEvent));
+
+    xcb_flush(connection);
+#endif
 }
 
 bool

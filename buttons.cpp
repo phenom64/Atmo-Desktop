@@ -287,21 +287,21 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     Ops::toolButtonData(btn, nextSelected, prevSelected, isInTopToolBar, sides);
 
-    if (dConf.toolbtn.shadow == Render::Rect)
-    {
-        const QPalette pal(bar?bar->palette():opt->palette);
-        if (opt->SUNKEN)
-            hover[0] = STEPS;
-        QColor bc = Color::mid(pal.foreground().color(), pal.highlight().color(), STEPS-hover[0], hover[0]);
-        QBrush brush(bc);
-        if (opt->SUNKEN)
-        {
-            Render::renderMask(opt->rect.sShrinked(1), painter, brush, dConf.toolbtn.rnd, sides);
-            brush = pal.foreground();
-        }
-        Render::renderShadow(Render::Rect, opt->rect, painter, dConf.toolbtn.rnd, sides, 1.0f, &brush);
-        return true;
-    }
+//    if (dConf.toolbtn.shadow == Render::Rect)
+//    {
+//        const QPalette pal(bar?bar->palette():opt->palette);
+//        if (opt->SUNKEN)
+//            hover[0] = STEPS;
+//        QColor bc = Color::mid(pal.foreground().color(), pal.highlight().color(), STEPS-hover[0], hover[0]);
+//        QBrush brush(bc);
+//        if (opt->SUNKEN)
+//        {
+//            Render::renderMask(opt->rect.sShrinked(1), painter, brush, dConf.toolbtn.rnd, sides);
+//            brush = pal.foreground();
+//        }
+//        Render::renderShadow(Render::Rect, opt->rect, painter, dConf.toolbtn.rnd, sides, 1.0f, &brush);
+//        return true;
+//    }
 
     painter->save();
     QRect rect(opt->rect);
