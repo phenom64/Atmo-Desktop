@@ -554,12 +554,6 @@ KwinClient::paint(QPainter &p)
         else
             p.fillRect(tr, bgColor());
     }
-
-    if (!m_pix.isNull())
-        p.drawTiledPixmap(tr, m_pix);
-    else
-        p.fillRect(tr, bgColor());
-
     const int bgLum(Color::luminosity(bgColor()));
     const bool isDark(Color::luminosity(fgColor()) > bgLum);
 
@@ -660,7 +654,7 @@ KwinClient::paint(QPainter &p)
         p.drawText(textRect, Qt::AlignCenter, text);
 
     //icon
-    if ((!m_wd && dConf.deco.icon) || m_wd->value<bool>(WindowData::WindowIcon))
+    if ((!m_wd && dConf.deco.icon) || (m_wd && m_wd->value<bool>(WindowData::WindowIcon)))
     {
         QRect ir(QPoint(), QSize(16, 16));
         ir.moveTop(tr.top()+(tr.height()/2-ir.height()/2));
@@ -668,7 +662,7 @@ KwinClient::paint(QPainter &p)
         if (ir.left() > m_leftButtons)
             icon().paint(&p, ir, Qt::AlignCenter, isActive()?QIcon::Active:QIcon::Disabled);
     }
-    if ((!m_wd && m_separator) || m_wd->value<bool>(WindowData::Separator))
+    if ((!m_wd && m_separator) || (m_wd && m_wd->value<bool>(WindowData::Separator)))
     {
         p.setPen(QColor(0, 0, 0, 32));
         p.drawLine(tr.bottomLeft(), tr.bottomRight());
@@ -829,7 +823,7 @@ KwinClient::updateData()
     if (m_wd)
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
-        const QList<Button *> buttons = findChildren<Button *>();
+        const QList<DButton *> buttons = findChildren<DButton *>();
         for (int i = 0; i < buttons.count(); ++i)
             buttons.at(i)->setButtonStyle(buttonStyle);
     }
