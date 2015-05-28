@@ -386,7 +386,7 @@ KwinClient::captionChange()
 }
 
 QColor
-KwinClient::fgColor(const bool *active) const
+KwinClient::fgColor() const
 {
     if (m_wd)
     {
@@ -400,7 +400,7 @@ KwinClient::fgColor(const bool *active) const
 }
 
 QColor
-KwinClient::bgColor(const bool *active) const
+KwinClient::bgColor() const
 {
     if (m_wd)
     {
@@ -543,6 +543,26 @@ KwinClient::paint(QPainter &p)
     QRect tr(m_titleLayout->geometry());
     if (tr.height() < titleHeight())
         tr.setHeight(titleHeight());
+
+    bool needPaintBg(true);
+    if (m_wd && m_wd->lock())
+    {
+        p.setBrushOrigin(tr.topLeft());
+        const QImage img = m_wd->image();
+        if (!img.isNull())
+        {
+            p.fillRect(tr, img);
+            needPaintBg = false;
+        }
+        m_wd->unlock();
+    }
+    if (needPaintBg)
+    {
+        if (!m_pix.isNull())
+            p.drawTiledPixmap(tr, m_pix);
+        else
+            p.fillRect(tr, bgColor());
+    }
 
     if (!m_pix.isNull())
         p.drawTiledPixmap(tr, m_pix);
