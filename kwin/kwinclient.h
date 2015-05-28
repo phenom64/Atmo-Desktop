@@ -148,7 +148,7 @@ public:
         for (int i = 0; i < m_decos.count(); ++i)
         {
             KwinClient *d = m_decos.at(i);
-            if (d->client().data()->windowId() == win)
+            if (d->windowId() == win)
             {
                 d->update();
                 return;

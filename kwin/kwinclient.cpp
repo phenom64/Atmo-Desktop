@@ -259,7 +259,7 @@ KwinClient::init()
     if (!isPreview() && windowId())
     {
         DSP::AdaptorManager::instance()->addDeco(this);
-        if (m_wd = WindowData::memory(id, this))
+        if (m_wd = WindowData::memory(windowId(), this))
         {
             if (!m_wd->value<bool>(WindowData::IsInited, true))
             {
@@ -601,7 +601,7 @@ KwinClient::paint(QPainter &p)
             const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
             p.drawImage(QPoint(0, 0),
                                QImage(data, width(), m_wd->value<int>(WindowData::UnoHeight), QImage::Format_ARGB32_Premultiplied),
-                               m_titleLayout->geometry());
+                               tr);
             m_mem->unlock();
         }
     }
