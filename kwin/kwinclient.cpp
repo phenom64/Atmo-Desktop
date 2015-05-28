@@ -16,6 +16,7 @@
 #include "../stylelib/color.h"
 #include "../config/settings.h"
 #include "../stylelib/xhandler.h"
+#include "../stylelib/windowdata.h"
 
 #if !defined(QT_NO_DBUS)
 #include "decoadaptor.h"
