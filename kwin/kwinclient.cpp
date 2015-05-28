@@ -823,9 +823,8 @@ KwinClient::updateData()
     if (m_wd)
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
-        const QList<DButton *> buttons = findChildren<DButton *>();
-        for (int i = 0; i < buttons.count(); ++i)
-            buttons.at(i)->setButtonStyle(buttonStyle);
+        for (int i = 0; i < m_buttons.count(); ++i)
+            m_buttons.at(i)->setButtonStyle(buttonStyle);
     }
     QTimer::singleShot(2000, this, SLOT(readCompositing()));
 }
