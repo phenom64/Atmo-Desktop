@@ -869,3 +869,5 @@ KwinClient::reset(unsigned long changed)
         updateData();
     updateMask();
 }
+
+#include "decoadaptor.moc"
