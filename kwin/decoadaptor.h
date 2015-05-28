@@ -1,3 +1,6 @@
+#ifndef DECOADAPTOR_H
+#define DECOADAPTOR_H
+
 #include <QDBusAbstractAdaptor>
 #include <QtGlobal>
 #if QT_VERSION < 0x050000
@@ -22,3 +25,5 @@ public slots:
 private:
     DSP::AdaptorManager *m_manager;
 };
+
+#endif //DECOADAPTOR_H
