@@ -1,6 +1,11 @@
 #include <QDBusAbstractAdaptor>
+#include <QtGlobal>
+#if QT_VERSION < 0x050000
+#include "kwinclient.h"
+#else
 #include <KDecoration2/DecoratedClient>
 #include "kwinclient2.h"
+#endif
 
 #include <QDebug>
 
