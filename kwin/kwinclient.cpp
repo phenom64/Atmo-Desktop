@@ -219,6 +219,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
 
 KwinClient::~KwinClient()
 {
+    DSP::AdaptorManager::instance()->removeDeco(this);
     if (m_mem && m_mem->isAttached())
         m_mem->detach();
     if (m_sizeGrip)
