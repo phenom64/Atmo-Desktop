@@ -1191,7 +1191,7 @@ Window::updateWindowData(qulonglong window)
     win->update();
     emit instance()->windowDataChanged(win);
 #if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
     msg << (uint)win->winId();
     QDBusConnection::sessionBus().send(msg);
 #endif
@@ -1338,7 +1338,7 @@ ScrollWatcher::updateWin(QWidget *mainWin)
     if (!dConf.removeTitleBars)
         XHandler::updateDeco(win->winId());
 #if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kdecoration2", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateDeco");
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateDeco");
     msg << (uint)win->winId();
     QDBusConnection::sessionBus().send(msg);
 #endif

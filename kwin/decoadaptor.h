@@ -7,8 +7,6 @@
 #include "kwinclient2.h"
 #endif
 
-#include <QDebug>
-
 class DecoAdaptor : public QDBusAbstractAdaptor
 {
     Q_OBJECT
