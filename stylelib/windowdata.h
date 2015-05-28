@@ -5,7 +5,7 @@
 #include <QSharedMemory>
 #include <QDebug>
 
-class WindowData : public QSharedMemory
+class Q_DECL_EXPORT WindowData : public QSharedMemory
 {
     /// Convenience class for functions returning values
     /// so one doesnt have to store the return val in a var
@@ -103,8 +103,6 @@ public:
 
     void setImageSize(const int w, const int h);
     QSize imageSize();
-
-    bool hasData(const QObject *parent);
 
 protected:
     WindowData(const QString &key, QObject *parent):QSharedMemory(key, parent){}

@@ -2,12 +2,6 @@
 #include <QObject>
 #include <QDebug>
 
-bool
-WindowData::hasData(const QObject *parent)
-{
-    return parent->findChild<QSharedMemory *>("dsp_windowdata_memory");
-}
-
 WindowData
 *WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
 {
