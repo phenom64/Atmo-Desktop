@@ -174,18 +174,20 @@ Deco::init()
     }
     else
         updateBgPixmap();
-
     //for whatever reason if I use these convenience constructs it segfaults.
 //    m_leftButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Left, this, &Button::create);
 //    m_rightButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Right, this, &Button::create);
     m_leftButtons = new KDecoration2::DecorationButtonGroup(this);
     m_leftButtons->setSpacing(4);
     QVector<KDecoration2::DecorationButtonType> lb = settings()->decorationButtonsLeft();
+    int shadowOpacity = m_wd&&!m_wd->isEmpty()?m_wd->value<int>(WindowData::ShadowOpacity):dConf.shadows.opacity;
+    if (!shadowOpacity)
+        shadowOpacity = 127;
     for (int i = 0; i < lb.count(); ++i)
     {
-        const KDecoration2::DecorationButtonType t = lb.at(i);
-        Button *b = Button::create(t, this, m_leftButtons);
+        Button *b = Button::create(lb.at(i), this, m_leftButtons);
         b->setButtonStyle(buttonStyle);
+        b->setShadowOpacity(shadowOpacity);
         m_leftButtons->addButton(b);
     }
 
@@ -194,10 +196,9 @@ Deco::init()
     QVector<KDecoration2::DecorationButtonType> rb = settings()->decorationButtonsRight();
     for (int i = 0; i < rb.count(); ++i)
     {
-        const KDecoration2::DecorationButtonType t = rb.at(i);
-        Button *b = Button::create(t, this, m_rightButtons);
+        Button *b = Button::create(rb.at(i), this, m_rightButtons);
         b->setButtonStyle(buttonStyle);
-        b->setShadowOpacity(m_wd?m_wd->value<int>(WindowData::ShadowOpacity):127);
+        b->setShadowOpacity(shadowOpacity);
         m_rightButtons->addButton(b);
     }
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);

@@ -365,6 +365,7 @@ public:
         {
             bool treelines;
         } views;
+        bool isValid() { return s_isValid; }
     } Conf;
     static Conf conf;
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
@@ -382,6 +383,7 @@ protected:
 
 private:
     static QSettings *s_settings, *s_paletteSettings;
+    static bool s_isValid;
 };
 
 #endif //SETTINGS_H

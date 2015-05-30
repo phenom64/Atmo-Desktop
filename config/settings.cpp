@@ -8,9 +8,10 @@
 #include <QLabel>
 #include <QTimer>
 
-QSettings *Settings::s_settings = 0;
-QSettings *Settings::s_paletteSettings = 0;
+QSettings *Settings::s_settings(0);
+QSettings *Settings::s_paletteSettings(0);
 Settings::Conf Settings::conf;
+bool Settings::s_isValid(false);
 
 Gradient
 Settings::stringToGrad(const QString &string)
@@ -346,4 +347,5 @@ Settings::read()
 #undef READSTRING
 #undef READSTRINGLIST
     readPalette();
+    s_isValid = true;
 }

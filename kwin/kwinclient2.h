@@ -144,7 +144,6 @@ public:
     static AdaptorManager *instance();
     inline void addDeco(DSP::Deco *d) { m_decos << d; }
     inline void removeDeco(DSP::Deco *d) { m_decos.removeOne(d); }
-    inline const bool hasDecos() const { return !m_decos.isEmpty(); }
     inline void updateData(uint win)
     {
         for (int i = 0; i < m_decos.count(); ++i)
