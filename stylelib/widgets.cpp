@@ -12,6 +12,7 @@
 #include <QMainWindow>
 #include "xhandler.h"
 #include "macros.h"
+#include "windowdata.h"
 
 #define ISIZE 4
 
@@ -21,6 +22,7 @@ ButtonBase::ButtonBase(Type type)
     , m_hasMouse(false)
     , m_hoverLock(false)
     , m_buttonStyle(dConf.deco.buttons)
+    , m_shadowOpacity(dConf.shadows.opacity)
 {
     for (int i = 0; i < Custom; ++i)
         m_paintMethod[i] = 0;
@@ -226,7 +228,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         QBrush b(lg);
         const bool hasDark(dConf.shadows.darkRaisedEdges);
         dConf.shadows.darkRaisedEdges = false;
-        Render::drawClickable(dConf.toolbtn.shadow, r, &p, 32, dConf.shadows.opacity, 0, 0, &b);
+        Render::drawClickable(dConf.toolbtn.shadow, r, &p, 32, m_shadowOpacity/255.0f, 0, 0, &b);
         dConf.shadows.darkRaisedEdges = hasDark;
         r.adjust(4, 4, -4, -4);
         break;

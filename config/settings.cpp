@@ -323,11 +323,15 @@ Settings::read()
     conf.sliders.grooveGrad     = stringToGrad(READSTRING(READSLIDERGROOVE));
     conf.sliders.sliderGrad     = stringToGrad(READSTRING(READSLIDERGRAD));
     conf.sliders.fillGroove     = READBOOL(READSLIDERFILLGROOVE);
+    conf.sliders.grooveStyle    = READINT(READSLIDERINVERT);
+
     //scrollers
     conf.scrollers.size         = READINT(READSCROLLERSIZE);
     conf.scrollers.style        = READINT(READSCROLLERSTYLE);
     conf.scrollers.grooveGrad   = stringToGrad(READSTRING(READSCROLLERGROOVE));
     conf.scrollers.sliderGrad   = stringToGrad(READSTRING(READSCROLLERGRAD));
+    conf.scrollers.grooveStyle  = READINT(READSCROLLERINVERTION);
+    conf.scrollers.grooveShadow = READINT(READSCROLLERGSHADOW);
     //views
     conf.views.treelines        = READBOOL(READVIEWTREELINES);
     //progressbars

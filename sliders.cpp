@@ -19,6 +19,7 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
 #include "config/settings.h"
+#include "overlay.h"
 
 bool
 StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -28,6 +29,9 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     if (!opt)
         return true;
 
+    const bool hor(opt->orientation == Qt::Horizontal),
+            ltr(opt->direction == Qt::LeftToRight);
+
     int level(Anim::Basic::level(widget));
     QRect up(subControlRect(CC_ScrollBar, option, SC_ScrollBarSubLine, widget));
     QRect down(subControlRect(CC_ScrollBar, option, SC_ScrollBarAddLine, widget));
@@ -35,6 +39,23 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
     const QScrollBar *bar = qobject_cast<const QScrollBar *>(widget);
     const QAbstractScrollArea *area = Ops::getAncestor<const QAbstractScrollArea *>(widget);
+//    if (Overlay::hasOverlay(area))
+//    {
+//        if (hor)
+//        {
+//            up.setTop(up.top()+1);
+//            down.setTop(down.top()+1);
+//            slider.setTop(slider.top()+1);
+//            groove.setTop(groove.top()+1);
+//        }
+//        else
+//        {
+//            up.setLeft(up.left()+1);
+//            down.setLeft(down.left()+1);
+//            slider.setLeft(slider.left()+1);
+//            groove.setLeft(groove.left()+1);
+//        }
+//    }
     if (dConf.scrollers.style == 0)
     {
         QPalette::ColorRole fg(Ops::fgRole(area, QPalette::WindowText)), bg(Ops::bgRole(area, QPalette::Window));
@@ -87,41 +108,21 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         if (opt->SUNKEN)
             level = STEPS;
         const QPalette pal = QApplication::palette();
-        const QColor bgColor(Color::mid(pal.color(QPalette::Highlight), pal.color(QPalette::Window), level, STEPS-level)),
-                fgColor(Color::mid(pal.color(QPalette::HighlightedText), pal.color(QPalette::WindowText), level, STEPS-level));
-
-        const bool hor(opt->orientation == Qt::Horizontal),
-                ltr(opt->direction == Qt::LeftToRight);
+        QColor bgColor(pal.color(QPalette::Window)), fgColor(pal.color(QPalette::WindowText));
 
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
-        const QGradientStops sliderStops(Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
-        lg.setStops(sliderStops);
+        lg.setStops(Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
+
+        ///the background
         painter->fillRect(opt->rect, lg);
 
         Ops::drawArrow(painter, fgColor, up, hor?Ops::Left:Ops::Up, 7);
         Ops::drawArrow(painter, fgColor, down, hor?Ops::Right:Ops::Down, 7);
 
-        groove.setBottom(groove.bottom()+1);
-        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, pal.color(QPalette::Base)));
-        QBrush bg(lg);
-        Render::drawClickable(Render::Sunken,
-                              groove.adjusted(-!hor, -hor, !hor, hor),
-                              painter,
-                              32,
-                              dConf.shadows.opacity,
-                              widget,
-                              opt,
-                              &bg);
-        lg.setStops(sliderStops);
-
+        const QPen pen(painter->pen());
         const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
                           || qobject_cast<const QTextEdit *>(area)
                           || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
-
-        Render::renderShadow(Render::Raised, slider.adjusted(-1, -1, 1, 1), painter, 32, Render::All, dConf.shadows.opacity);
-        Render::renderMask(slider.adjusted(!(inView && ltr && !hor), 1, -!(inView && ltr && !hor), -(!hor*2)), painter, lg);
-
-        const QPen pen(painter->pen());
         for (int i = 0; i < 2; ++i)
         {
             if (!i)
@@ -147,6 +148,36 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
             }
         }
         painter->setPen(pen);
+
+        ///the groove
+        groove.setBottom(groove.bottom()+1); //why is the groove bottom 1px too high?
+//        groove.adjust(!hor*2, hor*2, -(!hor*2), -(hor*2));
+//        groove.adjust(1, 1, -1, -1);
+        QColor bgc = pal.color(QPalette::Base);
+        switch (dConf.scrollers.grooveStyle)
+        {
+        case 0: break;
+        case 1: bgc = Color::mid(bgc, pal.color(QPalette::Text)); break;
+        case 2: bgc = pal.color(QPalette::Text); break;
+        }
+
+        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
+        QBrush bg(lg);
+        Render::drawClickable(dConf.scrollers.grooveShadow,
+                              groove,
+                              painter,
+                              32,
+                              dConf.shadows.opacity,
+                              widget,
+                              opt,
+                              &bg);
+
+
+        ///the slider
+        lg.setStops(Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
+        Render::renderShadow(Render::Rect, slider, painter, 32, Render::All, dConf.shadows.opacity);
+        slider.adjust(1, 1, -1, -1);
+        Render::renderMask(slider, painter, lg);
     }
     return true;
 }
@@ -200,7 +231,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     const QStyleOptionSlider *opt = qstyleoption_cast<const QStyleOptionSlider *>(option);
     if (!opt)
         return false;
-    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::WindowText)), bg(Ops::bgRole(widget, QPalette::Window));
+    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText)), bg(Ops::bgRole(widget, QPalette::Button));
     QRect slider(subControlRect(CC_Slider, option, SC_SliderHandle, widget));
     const QRect realGroove(subControlRect(CC_Slider, option, SC_SliderGroove, widget));
     QRect groove(realGroove);
@@ -217,10 +248,17 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     d/=2;
     groove.adjust(hor*d, !hor*d, -(hor*d), -(!hor*d)); //set the proper inset for the groove in order to account for the slider shadow
 
-    QColor bgc(opt->palette.color(bg));
-    const QColor grooveBg(Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
+    QColor gbgc = opt->palette.color(bg);
+    switch (dConf.sliders.grooveStyle)
+    {
+    case 0: break;
+    case 1: gbgc = Color::mid(gbgc, opt->palette.color(fg)); break;
+    case 2: gbgc = opt->palette.color(fg); break;
+    default: break;
+    }
+
     QLinearGradient lga(0, 0, !hor*Render::maskWidth(gs, groove.width()), hor*Render::maskHeight(gs, groove.height()));
-    lga.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, grooveBg));
+    lga.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
     QBrush amask(lga);
 
     QRect clip(groove);
@@ -285,6 +323,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 
         }
     }
+    QColor bgc(opt->palette.color(bg));
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
     if (option->ENABLED)
     {
@@ -292,10 +331,15 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
 
-    QLinearGradient lg(0, 0, 0, Render::maskHeight(Render::Raised, dConf.sliders.size));
+    const Render::Shadow sliderShadow(dConf.sliders.grooveShadow==Render::Rect?Render::Rect:Render::Raised);
+    const QRect &sliderMask = Render::maskRect(sliderShadow, slider);
+    QLinearGradient lg(0, 0, 0, sliderMask.height());
     lg.setStops(Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
     QBrush mask(lg);
-    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
+
+    Render::renderShadow(sliderShadow, slider, painter, 32, Render::All, dConf.shadows.opacity);
+    Render::renderMask(sliderMask, painter, mask);
+//    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
 
     if (dConf.sliders.dot)
     {

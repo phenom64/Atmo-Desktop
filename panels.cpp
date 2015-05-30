@@ -45,15 +45,9 @@ StyleProject::drawStatusBar(const QStyleOption *option, QPainter *painter, const
             sides &= ~Render::Right;
 
         if (sides & (Render::Left|Render::Right))
-        {
             painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
-        }
         else if (!(sides & Render::Bottom))
-        {
             Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget);
-            if (!dConf.deco.frameSize)
-                Render::shapeCorners(painter, Render::All & ~Render::Top);
-        }
         const QPen &savedPen = painter->pen();
         painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
         painter->drawLine(r.topLeft(), r.topRight());

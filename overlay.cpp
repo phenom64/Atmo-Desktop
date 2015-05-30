@@ -208,6 +208,7 @@ Overlay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
+//        int (Overlay::*widthHeight)((pos==West||pos==East)?&Overlay::width:Overlay::height);
         const bool isSplitter((qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter") && w->style()->pixelMetric(QStyle::PM_SplitterWidth) == 1);
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
         const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode());
@@ -225,11 +226,13 @@ Overlay::updateOverlay()
     }
     QRect winRect = m_frame->window()->rect();
     winRect.moveTopLeft(m_frame->mapFrom(m_frame->window(), winRect.topLeft()));
-    if(r.left() <= winRect.left())
+    if (r.top() <= winRect.top())
+        sides &= ~Top;
+    if (r.left() <= winRect.left())
         sides &= ~Left;
-    if(r.bottom() >= winRect.bottom())
+    if (r.bottom() >= winRect.bottom())
         sides &= ~Bottom;
-    if(r.right() >= winRect.right())
+    if (r.right() >= winRect.right())
         sides &= ~Right;
 
     if (m_lines != sides)

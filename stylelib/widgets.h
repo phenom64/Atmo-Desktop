@@ -38,7 +38,10 @@ public:
     const Type type() const { return m_type; }
 
     inline void setButtonStyle(const ButtonStyle s) { m_buttonStyle = s; m_bgPix.clear(); }
-    const ButtonStyle buttonStyle() const { return m_buttonStyle; }
+    inline const ButtonStyle buttonStyle() const { return m_buttonStyle; }
+
+    inline void setShadowOpacity(const int o) { m_shadowOpacity = o; m_bgPix.clear(); }
+    inline const int shadowOpacity() const { return m_shadowOpacity; }
 
 protected:
     void drawBase(QColor c, QPainter &p, QRect &r) const;
@@ -74,6 +77,7 @@ private:
     bool m_hasPress, m_hasMouse, m_hoverLock;
     ButtonStyle m_buttonStyle;
     QMap<quint64, QPixmap> m_bgPix;
+    int m_shadowOpacity;
 };
 
 class Q_DECL_EXPORT Button : public ButtonBase, public QWidget

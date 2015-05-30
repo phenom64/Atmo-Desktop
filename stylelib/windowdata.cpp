@@ -10,15 +10,19 @@ WindowData
         qDebug() << "DSP: cant get windowdata w/o window id";
         return 0;
     }
-    WindowData *m = parent->findChild<WindowData *>("dsp_windowdata_memory");
+    const QString &objectName = QString("dsp_windowdata_memory-%1").arg(QString::number(wid));
+    const QString &keyName = QString("dsp_windowdata-%1").arg(QString::number(wid));
+    WindowData *m = parent->findChild<WindowData *>(objectName);
+    if (m && m->parent() != parent)
+        qDebug() << "shared memory parent object possibly changed?" << m->parent() << parent << m << wid;
     if (!m)
     {
-        m = new WindowData(QString("dsp_windowdata-%1").arg(QString::number(wid)), parent);
-        m->setObjectName("dsp_windowdata_memory");
+        m = new WindowData(keyName, parent);
+        m->setObjectName(objectName);
     }
     if (m->isAttached() || m->attach())
         return m;
-    if (create && m->QSharedMemory::create((sizeof(unsigned int)*6)+(256*256*4)))
+    if (create && m->create((sizeof(unsigned int)*6)+(256*256*4)))
     {
         if (m->lock())
         {
@@ -28,25 +32,11 @@ WindowData
         }
         return m;
     }
-    qDebug() << "DSP: unable to create shared memory.\n" << "error:\n" << m->errorString();
+    qDebug() << "DSP: unable to get/create shared memory.\n" << "error:\n" << m->errorString() << "memory key:" << m->key();
     if (m)
         m->deleteLater();
     return 0;
 }
-
-//QSharedMemory
-//*WindowData::constSharedMemory(const unsigned int wid, const QObject *parent)
-//{
-//    if (!wid)
-//    {
-//        qDebug() << "DSP: cant get windowdata w/o window id";
-//        return 0;
-//    }
-//    QSharedMemory *m = parent->findChild<QSharedMemory *>("dsp_windowdata_memory");
-//    if (m && (m->isAttached() || m->attach()))
-//        return m;
-//    return 0;
-//}
 
 void
 WindowData::setImageSize(const int w, const int h)
@@ -126,6 +116,18 @@ WindowData::setFg(const QColor &c)
         d[3] = c.rgba();
         unlock();
     }
+}
+
+bool
+WindowData::isEmpty()
+{
+    MemoryLocker locker(this);
+    if (locker.lockObtained())
+    {
+        unsigned int *d = reinterpret_cast<unsigned int *>(data());
+        return !d[0] && !d[1] && !d[2] && !d[3] && !d[4] && !d[5];
+    }
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------

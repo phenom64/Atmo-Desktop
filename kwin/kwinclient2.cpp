@@ -141,7 +141,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_prevLum(0)
     , m_mem(0)
     , m_noise(0)
-    , m_separator(0)
+    , m_separator(false)
     , m_wd(0)
 {
 }
@@ -165,13 +165,7 @@ Deco::init()
         buttonStyle = dConf.deco.buttons;
         if (m_wd = WindowData::memory(id, this))
         {
-            if (!m_wd->value<bool>(WindowData::IsInited, true))
-            {
-                m_wd->setValue<bool>(WindowData::IsInited, true);
-                m_wd->setValue<bool>(WindowData::Separator, true);
-                m_wd->setValue<bool>(WindowData::Uno, true);
-                m_wd->setValue<int>(WindowData::TitleHeight, TITLEHEIGHT);
-            }
+            initMemory();
             buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
         }
         else
@@ -203,11 +197,57 @@ Deco::init()
         const KDecoration2::DecorationButtonType t = rb.at(i);
         Button *b = Button::create(t, this, m_rightButtons);
         b->setButtonStyle(buttonStyle);
+        b->setShadowOpacity(m_wd?m_wd->value<int>(WindowData::ShadowOpacity):127);
         m_rightButtons->addButton(b);
     }
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
+}
+
+void
+Deco::initMemory()
+{
+    if (m_wd->isEmpty())
+    {
+        m_wd->setValue<bool>(WindowData::Separator, true);
+        m_wd->setValue<bool>(WindowData::Uno, true);
+    }
+    m_wd->setValue<int>(WindowData::TitleHeight, TITLEHEIGHT);
+}
+
+void
+Deco::updateData()
+{
+    if (!m_wd)
+    if (m_wd = WindowData::memory(client().data()->windowId(), this))
+        initMemory();
+    if (m_wd)
+    {
+        const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
+        const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
+        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+        {
+            Button *b = static_cast<Button *>(m_leftButtons->buttons().at(i).data());
+            b->setButtonStyle(buttonStyle);
+            b->setShadowOpacity(shadowOpacity);
+        }
+        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+        {
+            Button *b = static_cast<Button *>(m_rightButtons->buttons().at(i).data());
+            b->setButtonStyle(buttonStyle);
+            b->setShadowOpacity(shadowOpacity);
+        }
+    }
+    update();
+}
+
+void
+Deco::checkForDataFromWindowClass()
+{
+    KWindowInfo info(client().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
+    Data::decoData(info.windowClassClass(), this);
+    updateBgPixmap();
 }
 
 void
@@ -258,10 +298,12 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal())
         paintBevel(painter, bgLum);
 
-    if ((m_wd && m_wd->value<bool>(WindowData::Separator)) || m_separator)
+    if ((m_wd && m_wd->value<bool>(WindowData::Separator)) || (!m_wd && m_separator))
     {
-        painter->setPen(QColor(0, 0, 0, 32));
-        painter->drawLine(0, TITLEHEIGHT, titleBar().width(), TITLEHEIGHT);
+        painter->setPen(QColor(0, 0, 0, m_wd->value<int>(WindowData::ShadowOpacity, 32)));
+        painter->setRenderHint(QPainter::Antialiasing, false);
+        painter->drawLine(0, (TITLEHEIGHT)-1, titleBar().width(), (TITLEHEIGHT)-1);
+        painter->setRenderHint(QPainter::Antialiasing, true);
     }
 
     if (m_wd && m_wd->value<bool>(WindowData::ContAware))
@@ -382,28 +424,6 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
     painter->drawPixmap(QRect(titleBar().topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
     painter->drawPixmap(QRect(titleBar().topRight()-QPoint(m_bevelCorner[1].width()-1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
     painter->drawTiledPixmap(titleBar().adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(titleBar().height()-1)), m_bevelCorner[2]);
-}
-
-void
-Deco::updateData()
-{
-    if (m_wd)
-    {
-        const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
-        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
-            static_cast<Button *>(m_leftButtons->buttons().at(i).data())->setButtonStyle(buttonStyle);
-        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
-            static_cast<Button *>(m_leftButtons->buttons().at(i).data())->setButtonStyle(buttonStyle);
-    }
-    update();
-}
-
-void
-Deco::checkForDataFromWindowClass()
-{
-    KWindowInfo info(client().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
-    Data::decoData(info.windowClassClass(), this);
-    updateBgPixmap();
 }
 
 const QColor

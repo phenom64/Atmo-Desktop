@@ -120,6 +120,7 @@ protected slots:
 protected:
     void checkForDataFromWindowClass();
     void updateBgPixmap();
+    void initMemory();
     void paintBevel(QPainter *painter, const int bgLum);
 
     const QColor bgColor() const;
@@ -132,7 +133,8 @@ private:
     QColor m_bg, m_fg;
     Gradient m_gradient;
     WindowData *m_wd;
-    int m_prevLum, m_noise, m_separator;
+    int m_prevLum, m_noise;
+    bool m_separator;
 };
 
 class AdaptorManager : public QObject

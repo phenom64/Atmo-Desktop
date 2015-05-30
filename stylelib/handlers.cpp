@@ -697,8 +697,7 @@ Window::manage(QWidget *w)
         return;
     w->removeEventFilter(instance());
     w->installEventFilter(instance());
-    if (w->isWindow())
-        instance()->updateWindowData((qulonglong)w);
+//    instance()->updateWindowData((qulonglong)w);
 }
 
 void
@@ -796,21 +795,28 @@ Window::eventFilter(QObject *o, QEvent *e)
             }
             else /// TODO
             {
-//                unsigned char addV(unoHeight(w, TitleBar));
                 p.fillRect(w->rect(), bgColor);
             }
-            if (!w->isModal())
-                Render::shapeCorners(&p, sides);
-            p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
-            if (dConf.uno.enabled)
-                if (int th = Handlers::unoHeight(w, ToolBars))
-                    p.drawLine(0, th, w->width(), th);
+            if (WindowData *data = WindowData::memory(w->winId(), w))
+                if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
+                {
+                    p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+                    p.drawLine(0, Handlers::unoHeight(w, ToolBars)+0.5f, w->width(), Handlers::unoHeight(w, ToolBars)+0.5f);
+                }
+
             p.end();
         }
         return false;
     }
     case QEvent::Show:
     {
+        if (w->isWindow())
+            updateWindowDataLater(w);
+//        if (!dConf.uno.enabled)
+//            QMetaObject::invokeMethod(this,
+//                                      "updateDecoBg",
+//                                      Qt::QueuedConnection,
+//                                      Q_ARG(QWidget*,w));
         if (dConf.hackDialogs
                 && qobject_cast<QDialog *>(w)
                 && w->isModal())
@@ -872,13 +878,6 @@ Window::eventFilter(QObject *o, QEvent *e)
             tb->insertSeparator(before);
             menuBar->hide();
         }
-        if (w->isWindow())
-            updateWindowDataLater(w);
-        if (!dConf.uno.enabled)
-            QMetaObject::invokeMethod(this,
-                                      "updateDecoBg",
-                                      Qt::QueuedConnection,
-                                      Q_ARG(QWidget*,w));
         return false;
     }
     case QEvent::Resize:
@@ -900,6 +899,7 @@ Window::eventFilter(QObject *o, QEvent *e)
         return false;
     }
     case QEvent::PaletteChange:
+    case QEvent::ActivationChange:
     {
         if (w->isWindow())
             updateWindowDataLater(w);
@@ -988,7 +988,7 @@ Window::getHeadHeight(QWidget *win, bool &separator)
     if (d)
         h = d->value<int>(WindowData::TitleHeight, 0);
     const bool csd(dConf.removeTitleBars && win->property(CSDBUTTONS).toBool());
-    if (!h && !csd)
+    if (!h || (!h && !csd))
     {
         separator = false;
         return 0;
@@ -1141,17 +1141,34 @@ Window::windowBg(const QSize &sz, const QColor &bgColor)
     return img;
 }
 
+static QList<qulonglong> s_scheduledWindows;
+
 void
 Window::updateWindowDataLater(QWidget *win)
 {
-    QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)win));
+    const qulonglong window = reinterpret_cast<qulonglong>(win);
+    if (!s_scheduledWindows.contains(window))
+    {
+        s_scheduledWindows << window;
+        QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(qulonglong, window));
+    }
+}
+
+static void updateDeco(const uint win)
+{
+#if !defined(QT_NO_DBUS)
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
+    msg << win;
+    QDBusConnection::sessionBus().send(msg);
+#endif
 }
 
 void
 Window::updateWindowData(qulonglong window)
 {
+    s_scheduledWindows.removeOne(window);
     QWidget *win = getChild<QWidget *>(window);
-    if (!win || !win->isWindow() || !win->testAttribute(Qt::WA_WState_Created))
+    if (!win || !win->isWindow())
         return;
 
     WindowData *data = WindowData::memory(win->winId(), win, true);
@@ -1160,14 +1177,11 @@ Window::updateWindowData(qulonglong window)
 
     bool separator(true);
     const unsigned int height(getHeadHeight(win, separator));
-    if (!height)
-        return;
-
     QPalette pal(win->palette());
     if (pal.color(win->backgroundRole()).alpha() < 0xff) //im looking at you spotify
         pal = QApplication::palette();
 
-    if (dConf.uno.enabled)
+    if (dConf.uno.enabled && height)
     {
         int w(0);
         if (data->lock())
@@ -1186,15 +1200,12 @@ Window::updateWindowData(qulonglong window)
     data->setValue<int>(WindowData::UnoHeight, height);
     data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
+    data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity*255.0f);
     data->setFg(pal.color(win->foregroundRole()));
     data->setBg(pal.color(win->backgroundRole()));
     win->update();
     emit instance()->windowDataChanged(win);
-#if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
-    msg << (uint)win->winId();
-    QDBusConnection::sessionBus().send(msg);
-#endif
+    updateDeco(win->winId());
 }
 
 //-------------------------------------------------------------------------------------------------

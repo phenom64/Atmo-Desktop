@@ -65,11 +65,14 @@
 #define SLIDERGROOVE        "sliders.groovegradient"
 #define SLIDERGROOVESHADOW  "sliders.grooveshadow"
 #define SLIDERFILLGROOVE    "sliders.fillgroove"
+#define SLIDERINVERT        "sliders.groovestyle"
 
 #define SCROLLERSIZE        "scrollers.size"
 #define SCROLLERSTYLE       "scrollers.style"
 #define SCROLLERGRAD        "scrollers.slidergradient"
 #define SCROLLERGROOVE      "scrollers.groovegradient"
+#define SCROLLERINVERT      "scrollers.groovestyle"
+#define SCROLLERGSHADOW     "scrollers.grooveshadow"
 
 #define VIEWTREELINES       "views.treelines"
 
@@ -162,11 +165,14 @@
 #define DEFSLIDERGROOVE         "0.0:-5, 1.0:5"
 #define DEFSLIDERGROOVESHAD     0
 #define DEFSLIDERFILLGROOVE     false
+#define DEFSLIDERINVERT         0
 
 #define DEFSCROLLERSIZE         12
 #define DEFSCROLLERSTYLE        0
 #define DEFSCROLLERGRAD         "0.0:5, 1.0:-5"
 #define DEFSCROLLERGROOVE       "0.0:5, 0.5:-5, 1.0:5"
+#define DEFSCROLLERINVERTION    0
+#define DEFSCROLLERGSHADOW      0
 
 #define DEFVIEWTREELINES        true
 
@@ -240,11 +246,14 @@
 #define READSLIDERGROOVE        SLIDERGROOVE, DEFSLIDERGROOVE
 #define READSLIDERGROOVESHAD    SLIDERGROOVESHADOW, DEFSLIDERGROOVESHAD
 #define READSLIDERFILLGROOVE    SLIDERFILLGROOVE, DEFSLIDERGROOVE
+#define READSLIDERINVERT        SLIDERINVERT, DEFSLIDERINVERT
 
 #define READSCROLLERSIZE        SCROLLERSIZE, DEFSCROLLERSIZE
 #define READSCROLLERSTYLE       SCROLLERSTYLE, DEFSCROLLERSTYLE
 #define READSCROLLERGRAD        SCROLLERGRAD, DEFSCROLLERGRAD
 #define READSCROLLERGROOVE      SCROLLERGROOVE, DEFSCROLLERGROOVE
+#define READSCROLLERINVERTION   SCROLLERINVERT, DEFSCROLLERINVERTION
+#define READSCROLLERGSHADOW     SCROLLERGSHADOW, DEFSCROLLERGSHADOW
 
 #define READVIEWTREELINES       VIEWTREELINES, DEFVIEWTREELINES
 
@@ -311,12 +320,12 @@ public:
         struct sliders
         {
             bool dot, fillGroove;
-            int size, grooveShadow;
+            int size, grooveShadow, grooveStyle;
             Gradient grooveGrad, sliderGrad;
         } sliders;
         struct scrollers
         {
-            int size, style;
+            int size, style, grooveStyle, grooveShadow;
             Gradient grooveGrad, sliderGrad;
         } scrollers;
         struct progressbars

@@ -830,7 +830,7 @@ Render::drawClickable(Shadow s,
     const bool sunken(opt && opt->state & (QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange));
     if (opt
             && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
-            && s != Carved && s != Yosemite && !isToolBox && !isLineEdit)
+            && s != Carved && s != Yosemite && s != Rect && !isToolBox && !isLineEdit)
     {
         if (s == Raised)
             r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);
@@ -1048,7 +1048,9 @@ Render::maskHeight(const Shadow s, const int height)
         return height-1;
     case Render::Carved:
         return height-6;
-    default: return 0;
+    case Render::Rect:
+        return height;
+    default: return height;
     }
 }
 
@@ -1077,9 +1079,10 @@ Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
     {
     case Yosemite:
     case Sunken:
-    case Etched: return r.sAdjusted(0, 0, 0, -1); break;
-    case Raised: return r.sAdjusted(2, 2, -2, -(2+(r.height()!=r.width()))); break;
-    case Carved: return r.sAdjusted(3, 3, -3, -3); break;
+    case Etched: return r.sAdjusted(0, 0, 0, -1);
+    case Raised: return r.sAdjusted(2, 2, -2, -(2+(r.height()!=r.width())));
+    case Carved: return r.sAdjusted(3, 3, -3, -3);
+    case Rect: return r.sAdjusted(1, 1, -1, -1);
     default: return r;
     }
 }
