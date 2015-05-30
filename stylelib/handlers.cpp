@@ -1146,7 +1146,7 @@ static QList<qulonglong> s_scheduledWindows;
 void
 Window::updateWindowDataLater(QWidget *win)
 {
-    const qulonglong window = reinterpret_cast<qulonglong>(win);
+    const qulonglong window = (qulonglong)win;
     if (!s_scheduledWindows.contains(window))
     {
         s_scheduledWindows << window;

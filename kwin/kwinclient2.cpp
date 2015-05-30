@@ -157,7 +157,6 @@ void
 Deco::init()
 {
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
-
     int buttonStyle = 0;
     if (const uint id = client().data()->windowId())
     {
@@ -263,7 +262,7 @@ void
 Deco::activeChanged(const bool active)
 {
     update();
-    ShadowHandler::installShadows(client().data()->windowId(), active);
+//    ShadowHandler::installShadows(client().data()->windowId(), active);
 }
 
 void
