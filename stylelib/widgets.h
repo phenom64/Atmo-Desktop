@@ -8,7 +8,7 @@
 class Q_DECL_EXPORT ButtonBase
 {
 public:
-    enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, FollowToolBtn, StyleCount };
+    enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, FollowToolBtn, MagPie, StyleCount };
     typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid, Highlight };
     enum Type

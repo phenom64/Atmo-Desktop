@@ -233,6 +233,25 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         r.adjust(4, 4, -4, -4);
         break;
     }
+    case MagPie:
+    {
+        r.adjust(2, 2, -2, -2);
+        const int bgLum = Color::luminosity(color(Bg));
+//        const int fgLum = Color::luminosity(color(Fg));
+        p.setBrush(QColor(255, 255, 255, bgLum));
+        p.drawEllipse(r.translated(0, 1));
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.drawEllipse(r);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        p.setBrush(QColor(0, 0, 0, 91));
+        p.drawEllipse(r);
+        p.setBrush(QColor(0, 0, 0, 185));
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        for (int i = 1; i < 3; ++i)
+            p.drawEllipse(r.adjusted(i, i, -i, -i));
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        break;
+    }
     default: break;
     }
 }
@@ -278,7 +297,15 @@ ButtonBase::paintCloseButton(QPainter &p)
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
             drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
-            if (isHovered())
+            if (m_buttonStyle == MagPie)
+            {
+                QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
+                rt.moveCenter(rect.center()+QPoint(1, 1));
+                pt.setPen(QPen(color(Fg), 2.0f));
+                pt.drawLine(rt.topLeft(), rt.bottomRight());
+                pt.drawLine(rt.topRight(), rt.bottomLeft());
+            }
+            else if (isHovered())
             {
                 pt.setBrush(color(Fg));
                 QRect r(QPoint(), QSize(ISIZE, ISIZE));
@@ -334,7 +361,16 @@ ButtonBase::paintMaxButton(QPainter &p)
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
             drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
-            if (isHovered())
+            if (m_buttonStyle == MagPie)
+            {
+                QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
+                rt.moveCenter(rect.center()+QPoint(1, 1));
+                pt.setPen(QPen(color(Fg), 2.0f));
+                rt.adjust(0, 1, 0, -1);
+                pt.drawLine(rt.bottomLeft(), QPoint(rt.center().x(), rt.top()));
+                pt.drawLine(rt.bottomRight(), QPoint(rt.center().x(), rt.top()));
+            }
+            else if (isHovered())
             {
                 pt.setBrush(color(Fg));
                 QRect r(QPoint(), QSize(ISIZE, ISIZE));
@@ -402,7 +438,16 @@ ButtonBase::paintMinButton(QPainter &p)
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
             drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
-            if (isHovered())
+            if (m_buttonStyle == MagPie)
+            {
+                QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
+                rt.moveCenter(rect.center()+QPoint(1, 1));
+                pt.setPen(QPen(color(Fg), 2.0f));
+                rt.adjust(0, 1, 0, -1);
+                pt.drawLine(rt.topLeft(), QPoint(rt.center().x(), rt.bottom()));
+                pt.drawLine(rt.topRight(), QPoint(rt.center().x(), rt.bottom()));
+            }
+            else if (isHovered())
             {
                 QRect r(QPoint(), QSize(ISIZE, ISIZE));
                 r.moveCenter(rect.center());
