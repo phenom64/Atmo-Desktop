@@ -262,7 +262,7 @@ void
 Deco::activeChanged(const bool active)
 {
     update();
-//    ShadowHandler::installShadows(client().data()->windowId(), active);
+    ShadowHandler::installShadows(client().data()->windowId(), active);
 }
 
 void
@@ -372,7 +372,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     }
 
     //icon
-    if ((!m_wd && dConf.deco.icon) || m_wd->value<bool>(WindowData::WindowIcon))
+    if ((!m_wd && dConf.deco.icon) || (m_wd && m_wd->value<bool>(WindowData::WindowIcon)))
     {
         QRect ir(QPoint(), QSize(16, 16));
         ir.moveTop(titleBar().top()+(titleBar().height()/2-ir.height()/2));
