@@ -230,27 +230,27 @@ Deco::updateData()
             for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
             {
                 QPointer<KDecoration2::DecorationButton> button = m_leftButtons->buttons().at(i);
-//                if (button)
-//                {
-//                    if (Button *b = qobject_cast<Button *>(button.data()))
-//                    {
-//                        b->setButtonStyle(buttonStyle);
-//                        b->setShadowOpacity(shadowOpacity);
-//                    }
-//                }
+                if (button)
+                {
+                    if (Button *b = qobject_cast<Button *>(button.data()))
+                    {
+                        b->setButtonStyle(buttonStyle);
+                        b->setShadowOpacity(shadowOpacity);
+                    }
+                }
             }
         if (m_rightButtons)
-            for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+            for (int i = 0; i < m_rightButtons->buttons().count(); ++i)
             {
                 QPointer<KDecoration2::DecorationButton> button = m_rightButtons->buttons().at(i);
-//                if (button)
-//                {
-//                    if (Button *b = qobject_cast<Button *>(button.data()))
-//                    {
-//                        b->setButtonStyle(buttonStyle);
-//                        b->setShadowOpacity(shadowOpacity);
-//                    }
-//                }
+                if (button)
+                {
+                    if (Button *b = qobject_cast<Button *>(button.data()))
+                    {
+                        b->setButtonStyle(buttonStyle);
+                        b->setShadowOpacity(shadowOpacity);
+                    }
+                }
             }
     }
     update();
