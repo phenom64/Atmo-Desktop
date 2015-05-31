@@ -116,9 +116,9 @@ AdaptorManager
 
 AdaptorManager::AdaptorManager()
 {
-    Settings::read();
-    Render::makeNoise();
-    readWindowData();
+//    Settings::read();
+//    Render::makeNoise();
+//    readWindowData();
     new DecoAdaptor(this);
     QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
     QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
@@ -159,7 +159,7 @@ Deco::init()
     int buttonStyle = 0;
     if (const uint id = client().data()->windowId())
     {
-//        AdaptorManager::instance()->addDeco(this);
+        AdaptorManager::instance()->addDeco(this);
         buttonStyle = dConf.deco.buttons;
         if (m_wd = WindowData::memory(id, this))
         {
