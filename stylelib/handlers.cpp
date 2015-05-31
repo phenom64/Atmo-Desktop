@@ -1051,13 +1051,10 @@ Window::getHeadHeight(QWidget *win, bool &separator)
 }
 
 void
-Window::unoBg(QWidget *win, int h, int &w, uchar *data)
+Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
 {
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
-    QPalette pal(win->palette());
-    if (pal.color(win->backgroundRole()).alpha() < 0xff)
-        pal = QApplication::palette();
     QColor bc(pal.color(win->backgroundRole()));
     bc = Color::mid(bc, dConf.uno.tint.first, 100-dConf.uno.tint.second, dConf.uno.tint.second);
     lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
@@ -1178,7 +1175,7 @@ Window::updateWindowData(qulonglong window)
     bool separator(true);
     const unsigned int height(getHeadHeight(win, separator));
     QPalette pal(win->palette());
-    if (pal.color(win->backgroundRole()).alpha() < 0xff) //im looking at you spotify
+    if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify
         pal = QApplication::palette();
 
     if (dConf.uno.enabled && height)
@@ -1186,7 +1183,7 @@ Window::updateWindowData(qulonglong window)
         int width(0);
         if (data->lock())
         {
-            unoBg(win, height, width, data->imageData());
+            unoBg(win, width, height, pal, data->imageData());
             data->setImageSize(width, height);
             data->unlock();
         }

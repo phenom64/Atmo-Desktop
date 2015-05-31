@@ -253,13 +253,12 @@ KwinClient::init()
         DSP::AdaptorManager::instance()->addDeco(this);
         if (m_wd = WindowData::memory(windowId(), this))
         {
-            if (!m_wd->value<bool>(WindowData::IsInited, true))
+            if (m_wd->isEmpty())
             {
-                m_wd->setValue<bool>(WindowData::IsInited, true);
                 m_wd->setValue<bool>(WindowData::Separator, true);
                 m_wd->setValue<bool>(WindowData::Uno, true);
-                m_wd->setValue<int>(WindowData::TitleHeight, titleHeight());
             }
+            m_wd->setValue<int>(WindowData::TitleHeight, titleHeight());
         }
         else
             checkForDataFromWindowClass();

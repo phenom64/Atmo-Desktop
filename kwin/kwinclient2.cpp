@@ -219,9 +219,9 @@ Deco::initMemory()
 void
 Deco::updateData()
 {
-//    if (!m_wd)
-//    if (m_wd = WindowData::memory(client().data()->windowId(), this))
-//        initMemory();
+    if (!m_wd)
+    if (m_wd = WindowData::memory(client().data()->windowId(), this))
+        initMemory();
     if (m_wd)
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
