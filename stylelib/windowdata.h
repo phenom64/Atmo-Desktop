@@ -108,7 +108,7 @@ public:
     QSize imageSize();
 
 protected:
-    WindowData(const QString &key, QObject *parent):QSharedMemory(key, parent){}
+    WindowData(const QString &key, QObject *parent):QSharedMemory(key, parent){setObjectName(key);}
 };
 
 #endif //WINDOWDATA_H

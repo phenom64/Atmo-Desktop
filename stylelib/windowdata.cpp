@@ -10,16 +10,10 @@ WindowData
         qDebug() << "DSP: cant get windowdata w/o window id";
         return 0;
     }
-    const QString &objectName = QString("dsp_windowdata_memory-%1").arg(QString::number(wid));
     const QString &keyName = QString("dsp_windowdata-%1").arg(QString::number(wid));
-    WindowData *m = parent->findChild<WindowData *>(objectName);
-    if (m && m->parent() != parent)
-        qDebug() << "shared memory parent object possibly changed?" << m->parent() << parent << m << wid;
+    WindowData *m = parent->findChild<WindowData *>(keyName);
     if (!m)
-    {
         m = new WindowData(keyName, parent);
-        m->setObjectName(objectName);
-    }
     if (m->isAttached() || m->attach())
         return m;
     if (create && m->create((sizeof(unsigned int)*6)+(256*256*4)))
