@@ -226,20 +226,32 @@ Deco::updateData()
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
-//        if (m_leftButtons)
-//        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
-//        {
-//            Button *b = static_cast<Button *>(m_leftButtons->buttons().at(i).data());
-//            b->setButtonStyle(buttonStyle);
-//            b->setShadowOpacity(shadowOpacity);
-//        }
-//        if (m_rightButtons)
-//        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
-//        {
-//            Button *b = static_cast<Button *>(m_rightButtons->buttons().at(i).data());
-//            b->setButtonStyle(buttonStyle);
-//            b->setShadowOpacity(shadowOpacity);
-//        }
+        if (m_leftButtons)
+            for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+            {
+                QPointer<KDecoration2::DecorationButton> button = m_leftButtons->buttons().at(i);
+                if (button)
+                {
+                    if (Button *b = qobject_cast<Button *>(button.data()))
+                    {
+                        b->setButtonStyle(buttonStyle);
+                        b->setShadowOpacity(shadowOpacity);
+                    }
+                }
+            }
+        if (m_rightButtons)
+        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
+        {
+            QPointer<KDecoration2::DecorationButton> button = m_rightButtons->buttons().at(i);
+            if (button)
+            {
+                if (Button *b = qobject_cast<Button *>(button.data()))
+                {
+                    b->setButtonStyle(buttonStyle);
+                    b->setShadowOpacity(shadowOpacity);
+                }
+            }
+        }
     }
     update();
 }
