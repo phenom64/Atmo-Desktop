@@ -1183,11 +1183,11 @@ Window::updateWindowData(qulonglong window)
 
     if (dConf.uno.enabled && height)
     {
-        int w(0);
+        int width(0);
         if (data->lock())
         {
-            unoBg(win, height, w, data->imageData());
-            data->setImageSize(w, height);
+            unoBg(win, height, width, data->imageData());
+            data->setImageSize(width, height);
             data->unlock();
         }
     }

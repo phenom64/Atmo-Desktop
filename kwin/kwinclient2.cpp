@@ -37,6 +37,7 @@
 
 #include <QDebug>
 #include <QX11Info>
+#include <xcb/xproto.h>
 
 K_PLUGIN_FACTORY_WITH_JSON(
     DecoFactory,
@@ -149,8 +150,6 @@ Deco::Deco(QObject *parent, const QVariantList &args)
 Deco::~Deco()
 {
     AdaptorManager::instance()->removeDeco(this);
-    if (m_mem && m_mem->isAttached())
-        m_mem->detach();
 }
 
 void
@@ -208,6 +207,7 @@ Deco::init()
 void
 Deco::initMemory()
 {
+    connect(m_wd, &QObject::destroyed, this, &Deco::dataDestroyed);
     if (m_wd->isEmpty())
     {
         m_wd->setValue<bool>(WindowData::Separator, true);
@@ -484,7 +484,6 @@ Deco::updateBgPixmap()
     m_pix = p;
 }
 
-#include <xcb/xproto.h>
 Grip::Grip(Deco *d)
     : QWidget()
     , m_deco(d)

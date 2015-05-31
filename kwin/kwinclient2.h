@@ -116,6 +116,7 @@ protected slots:
     void widthChanged(const int width);
     void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
+    void dataDestroyed() { if (sender() == m_wd) m_wd = 0; }
 
 protected:
     void checkForDataFromWindowClass();
