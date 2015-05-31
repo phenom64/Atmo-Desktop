@@ -119,15 +119,15 @@ AdaptorManager::AdaptorManager()
     Settings::read();
     Render::makeNoise();
     readWindowData();
-//    new DecoAdaptor(this);
-//    QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
-//    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
+    new DecoAdaptor(this);
+    QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
+    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
 }
 
 AdaptorManager::~AdaptorManager()
 {
-//    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
-//    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
+    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
+    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
     s_instance = 0;
 }
 
@@ -219,6 +219,7 @@ Deco::initMemory()
 void
 Deco::updateData()
 {
+    return;
     if (!m_wd)
     if (m_wd = WindowData::memory(client().data()->windowId(), this))
         initMemory();
