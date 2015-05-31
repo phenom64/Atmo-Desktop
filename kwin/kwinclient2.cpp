@@ -157,20 +157,20 @@ Deco::init()
 {
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
     int buttonStyle = 0;
-//    if (const uint id = client().data()->windowId())
-//    {
+    if (const uint id = client().data()->windowId())
+    {
 //        AdaptorManager::instance()->addDeco(this);
-//        buttonStyle = dConf.deco.buttons;
-//        if (m_wd = WindowData::memory(id, this))
-//        {
-//            initMemory();
-//            buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
-//        }
-//        else
-//            checkForDataFromWindowClass();
-//        ShadowHandler::installShadows(id);
-//    }
-//    else
+        buttonStyle = dConf.deco.buttons;
+        if (m_wd = WindowData::memory(id, this))
+        {
+            initMemory();
+            buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
+        }
+        else
+            checkForDataFromWindowClass();
+        ShadowHandler::installShadows(id);
+    }
+    else
         updateBgPixmap();
     //for whatever reason if I use these convenience constructs it segfaults.
 //    m_leftButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Left, this, &Button::create);
