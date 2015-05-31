@@ -116,18 +116,18 @@ AdaptorManager
 
 AdaptorManager::AdaptorManager()
 {
-//    Settings::read();
-//    Render::makeNoise();
-//    readWindowData();
-    new DecoAdaptor(this);
-    QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
-    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
+    Settings::read();
+    Render::makeNoise();
+    readWindowData();
+//    new DecoAdaptor(this);
+//    QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
+//    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
 }
 
 AdaptorManager::~AdaptorManager()
 {
-    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
-    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
+//    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
+//    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
     s_instance = 0;
 }
 
