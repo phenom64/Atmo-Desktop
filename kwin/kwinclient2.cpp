@@ -157,20 +157,20 @@ Deco::init()
 {
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
     int buttonStyle = 0;
-    if (const uint id = client().data()->windowId())
-    {
-        AdaptorManager::instance()->addDeco(this);
-        buttonStyle = dConf.deco.buttons;
-        if (m_wd = WindowData::memory(id, this))
-        {
-            initMemory();
-            buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
-        }
-        else
-            checkForDataFromWindowClass();
-        ShadowHandler::installShadows(id);
-    }
-    else
+//    if (const uint id = client().data()->windowId())
+//    {
+//        AdaptorManager::instance()->addDeco(this);
+//        buttonStyle = dConf.deco.buttons;
+//        if (m_wd = WindowData::memory(id, this))
+//        {
+//            initMemory();
+//            buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
+//        }
+//        else
+//            checkForDataFromWindowClass();
+//        ShadowHandler::installShadows(id);
+//    }
+//    else
         updateBgPixmap();
     //for whatever reason if I use these convenience constructs it segfaults.
 //    m_leftButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Left, this, &Button::create);
@@ -226,12 +226,14 @@ Deco::updateData()
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
+        if (m_leftButtons)
         for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
         {
             Button *b = static_cast<Button *>(m_leftButtons->buttons().at(i).data());
             b->setButtonStyle(buttonStyle);
             b->setShadowOpacity(shadowOpacity);
         }
+        if (m_rightButtons)
         for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
         {
             Button *b = static_cast<Button *>(m_rightButtons->buttons().at(i).data());
@@ -253,8 +255,10 @@ Deco::checkForDataFromWindowClass()
 void
 Deco::widthChanged(const int width)
 {
-    m_leftButtons->setPos(QPoint(6, client().data()->isModal()?2:4));
-    m_rightButtons->setPos(QPointF((width-m_rightButtons->geometry().width())-6, client().data()->isModal()?2:4));
+    if (m_leftButtons)
+        m_leftButtons->setPos(QPoint(6, client().data()->isModal()?2:4));
+    if (m_rightButtons)
+        m_rightButtons->setPos(QPointF((width-m_rightButtons->geometry().width())-6, client().data()->isModal()?2:4));
     setTitleBar(QRect(0, 0, width, TITLEHEIGHT));
 }
 
@@ -333,7 +337,9 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
 
     QString text(client().data()->caption());
     QRect textRect(painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text));
-    const int maxW(titleBar().width()-(qMax(m_leftButtons->geometry().width(), m_rightButtons->geometry().width())*2));
+    int maxW(titleBar().width());
+    if (m_leftButtons && m_rightButtons)
+        maxW = titleBar().width()-(qMax(m_leftButtons->geometry().width(), m_rightButtons->geometry().width())*2);
     if (painter->fontMetrics().width(text) > maxW)
     {
         text = painter->fontMetrics().elidedText(text, Qt::ElideRight, maxW);
@@ -382,8 +388,10 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     }
 
     //buttons
-    m_leftButtons->paint(painter, repaintArea);
-    m_rightButtons->paint(painter, repaintArea);
+    if (m_leftButtons)
+        m_leftButtons->paint(painter, repaintArea);
+    if (m_rightButtons)
+        m_rightButtons->paint(painter, repaintArea);
 
     painter->restore();
 }
