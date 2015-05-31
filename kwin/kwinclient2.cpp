@@ -182,23 +182,23 @@ Deco::init()
     if (!shadowOpacity)
         shadowOpacity = 127;
     for (int i = 0; i < lb.count(); ++i)
-    {
-        Button *b = Button::create(lb.at(i), this, m_leftButtons);
-        b->setButtonStyle(buttonStyle);
-        b->setShadowOpacity(shadowOpacity);
-        m_leftButtons->addButton(b);
-    }
+        if (Button *b = Button::create(lb.at(i), this, m_leftButtons))
+        {
+            b->setButtonStyle(buttonStyle);
+            b->setShadowOpacity(shadowOpacity);
+            m_leftButtons->addButton(b);
+        }
 
     m_rightButtons = new KDecoration2::DecorationButtonGroup(this);
     m_rightButtons->setSpacing(4);
     QVector<KDecoration2::DecorationButtonType> rb = settings()->decorationButtonsRight();
     for (int i = 0; i < rb.count(); ++i)
-    {
-        Button *b = Button::create(rb.at(i), this, m_rightButtons);
-        b->setButtonStyle(buttonStyle);
-        b->setShadowOpacity(shadowOpacity);
-        m_rightButtons->addButton(b);
-    }
+        if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
+        {
+            b->setButtonStyle(buttonStyle);
+            b->setShadowOpacity(shadowOpacity);
+            m_rightButtons->addButton(b);
+        }
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
@@ -500,7 +500,7 @@ Grip::Grip(Deco *d)
         if (tree && tree->parent)
             current = tree->parent;
         // reparent
-        xcb_reparent_window( QX11Info::connection(), winId(), current, 0, 0 );
+        xcb_reparent_window(QX11Info::connection(), winId(), current, 0, 0);
     }
     else
         hide();

@@ -2,7 +2,6 @@
 #include "kwinclient2.h"
 #include "../stylelib/color.h"
 
-
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
 #include <QPainter>
