@@ -16,6 +16,7 @@
 #define ARROWSIZE           "maxarrowsize"
 #define BALLOONTIPS         "balloontips"
 #define PALETTE             "palette"
+#define ANIMATESTACK        "animatestack"
 
 #define DECOBUTTONS         "deco.buttons"
 #define DECOICON            "deco.icon"
@@ -116,11 +117,12 @@
 #define DEFARROWSIZE            9
 #define DEFBALLOONTIPS          false
 #define DEFPALETTE              QString()
+#define DEFANIMATESTACK         false
 
 #define DEFDECOBUTTONS          0
 #define DEFDECOICON             true
 #define DEFDECOSHADOWSIZE       32
-#define DEFDECOFRAME               0
+#define DEFDECOFRAME            0
 
 #define DEFPUSHBTNRND           8
 #define DEFPUSHBTNSHADOW        3
@@ -197,6 +199,7 @@
 #define READARROWSIZE           ARROWSIZE, DEFARROWSIZE
 #define READBALLOONTIPS         BALLOONTIPS, DEFBALLOONTIPS
 #define READPALETTE             PALETTE, DEFPALETTE
+#define READANIMATESTACK        ANIMATESTACK, DEFANIMATESTACK
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
 #define READDECOICON            DECOICON, DEFDECOICON
@@ -290,7 +293,7 @@ public:
         float opacity;
         QStringList blackList;
         bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips;
-        int titlePos, arrowSize;
+        int titlePos, arrowSize, animateStack;
         QPalette *palette;
         struct deco
         {

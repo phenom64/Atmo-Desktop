@@ -259,10 +259,10 @@ Settings::read()
 #define READSTRING(_VAR_) s_settings->value(_VAR_).toString()
 #define READSTRINGLIST(_VAR_) s_settings->value(_VAR_).toStringList()
     //globals
-    conf.opacity                = READFLOAT(READOPACITY)/100.0f;
+    conf.opacity                = 1.0f/*READFLOAT(READOPACITY)/100.0f*/;
     conf.blackList              = READSTRINGLIST(READBLACKLIST);
-    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
-        conf.opacity = 1.0f;
+//    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
+//        conf.opacity = 1.0f;
     conf.removeTitleBars        = READBOOL(READREMOVETITLE);
     conf.titlePos               = conf.removeTitleBars?READINT(READTITLEPOS):-1;
     conf.hackDialogs            = READBOOL(READHACKDIALOGS);
@@ -270,6 +270,7 @@ Settings::read()
     conf.splitterExt            = READBOOL(READSPLITTEREXT);
     conf.balloonTips            = READBOOL(READBALLOONTIPS);
     conf.arrowSize              = READINT(READARROWSIZE);
+    conf.animateStack           = READBOOL(READANIMATESTACK);
     //deco
     conf.deco.buttons           = READINT(READDECOBUTTONS);
     conf.deco.icon              = READBOOL(READDECOICON);

@@ -8,7 +8,9 @@
 #include "stylelib/xhandler.h"
 #include "config/settings.h"
 #include "stylelib/color.h"
+#include "stylelib/stackanimator.h"
 
+#include <QStackedLayout>
 #include <QWidget>
 #include <QToolBar>
 #include <QFrame>
@@ -131,6 +133,12 @@ StyleProject::polish(QWidget *widget)
 
     if (widget->isWindow())
     {
+        if (dConf.animateStack)
+        {
+            const QList<QStackedLayout *> stacks = widget->findChildren<QStackedLayout *>();
+            for (int i = 0; i < stacks.count(); ++i)
+                StackAnimator::manage(stacks.at(i));
+        }
         if (qobject_cast<QMainWindow *>(widget))
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())

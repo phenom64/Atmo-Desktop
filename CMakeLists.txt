@@ -67,7 +67,7 @@ file(GLOB_RECURSE libSRCS stylelib/*.cpp)
 set(SRCS ${SRCS} ${libSRCS})
 file(GLOB_RECURSE libHDRS stylelib/*.h)
 set(HDRS ${HDRS} ${libHDRS})
-set(MOC_HDRS ${MOC_HDRS} stylelib/animhandler.h stylelib/handlers.h stylelib/ops.h stylelib/progresshandler.h stylelib/widgets.h)
+set(MOC_HDRS ${MOC_HDRS} stylelib/animhandler.h stylelib/handlers.h stylelib/ops.h stylelib/progresshandler.h stylelib/widgets.h stylelib/stackanimator.h)
 
 #config source...
 set(SRCS ${SRCS} config/settings.cpp)

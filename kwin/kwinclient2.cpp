@@ -142,7 +142,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_prevLum(0)
     , m_mem(0)
     , m_noise(0)
-    , m_separator(false)
+    , m_separator(true)
     , m_wd(0)
 {
 }

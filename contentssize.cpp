@@ -227,8 +227,11 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_SpinBox:
     {
+        const QStyleOptionSpinBox *box = qstyleoption_cast<const QStyleOptionSpinBox *>(opt);
         QSize sz(contentsSize);
         sz.rwidth()+=(Render::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
+//        if (box)
+//            sz.rwidth()+=box->fontMetrics.width(box->)
         sz.setHeight(qMax(23, sz.height()));
         return sz;
     }
