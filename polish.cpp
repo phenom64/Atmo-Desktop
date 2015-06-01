@@ -131,14 +131,14 @@ StyleProject::polish(QWidget *widget)
     if (Handlers::Drag::canDrag(widget))
         Handlers::Drag::manage(widget);
 
+    if (dConf.animateStack)
+    {
+        const QList<QStackedLayout *> layouts = widget->findChildren<QStackedLayout *>();
+        for (int i = 0; i < layouts.count(); ++i)
+            StackAnimator::manage(layouts.at(i));
+    }
     if (widget->isWindow())
     {
-        if (dConf.animateStack)
-        {
-            const QList<QStackedLayout *> stacks = widget->findChildren<QStackedLayout *>();
-            for (int i = 0; i < stacks.count(); ++i)
-                StackAnimator::manage(stacks.at(i));
-        }
         if (qobject_cast<QMainWindow *>(widget))
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())

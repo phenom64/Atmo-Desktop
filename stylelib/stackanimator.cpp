@@ -8,9 +8,6 @@
 #include <QTimer>
 #include <QPaintEvent>
 
-
-static QMap<QStackedLayout *, QPixmap> s_pix;
-
 StackAnimator::StackAnimator(QObject *parent)
     : QObject(parent)
     , m_timer(new QTimer(this))
@@ -18,9 +15,8 @@ StackAnimator::StackAnimator(QObject *parent)
     , m_step(0)
     , m_widget(0)
     , m_prevIndex(-1)
+    , m_isActivated(false)
 {
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
-    connect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
     if (m_stack->parentWidget())
     {
         m_widget = new QWidget(m_stack->parentWidget());
@@ -28,10 +24,20 @@ StackAnimator::StackAnimator(QObject *parent)
         m_widget->setAttribute(Qt::WA_TransparentForMouseEvents);
         m_widget->hide();
         m_stack->parentWidget()->installEventFilter(this);
+        QTimer::singleShot(250, this, SLOT(activate()));
     }
     else
         deleteLater();
+}
+
+void
+StackAnimator::activate()
+{
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
+    connect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
     m_prevIndex = m_stack->currentIndex();
+    m_isActivated = true;
+    m_widget->hide();
 }
 
 void
@@ -46,7 +52,8 @@ StackAnimator::manage(QStackedLayout *l)
 void
 StackAnimator::currentChanged(int i)
 { 
-
+    if (m_stack->parentWidget()->isHidden())
+        return;
     m_pix = QPixmap(m_widget->size());
     m_widget->setAttribute(Qt::WA_UpdatesDisabled, true);
     m_widget->show();
@@ -57,16 +64,16 @@ StackAnimator::currentChanged(int i)
     {
         m_prevPix = QPixmap(m_widget->size());
         m_prevPix.fill(Qt::transparent);
-        w->render(&m_prevPix);
+        w->render(&m_prevPix, w->mapTo(m_stack->parentWidget(), QPoint()));
         m_pix = m_prevPix;
         m_widget->repaint();
-        m_prevIndex = m_stack->currentIndex();
+        m_prevIndex = i;
     }
-    if (QWidget *w = m_stack->currentWidget())
+    if (QWidget *w = m_stack->widget(i))
     {
         m_activePix = QPixmap(m_widget->size());
         m_activePix.fill(Qt::transparent);
-        w->render(&m_activePix);
+        w->render(&m_activePix, w->mapTo(m_stack->parentWidget(), QPoint()));
         w->setAttribute(Qt::WA_UpdatesDisabled, true);
         m_widget->setAttribute(Qt::WA_UpdatesDisabled, false);
         animate();

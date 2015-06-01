@@ -11,7 +11,7 @@ class StackAnimator : public QObject
 {
     Q_OBJECT
 public:
-    enum Info { Steps = 20 };
+    enum Info { Steps = 10 };
     StackAnimator(QObject *parent = 0);
     static void manage(QStackedLayout *l);
 
@@ -21,6 +21,7 @@ protected:
 protected slots:
     void currentChanged(int i);
     void animate();
+    void activate();
 
 private:
     QTimer *m_timer;
@@ -28,6 +29,7 @@ private:
     QPixmap m_prevPix, m_activePix, m_pix;
     QWidget *m_widget, *m_prevWidget;
     int m_step, m_prevIndex;
+    bool m_isActivated;
 };
 
 #endif //STACKANIMATOR_H
