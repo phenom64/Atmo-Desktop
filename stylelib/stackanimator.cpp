@@ -45,23 +45,31 @@ StackAnimator::manage(QStackedLayout *l)
 
 void
 StackAnimator::currentChanged(int i)
-{
-    m_widget->setUpdatesEnabled(false);
+{ 
+
+    m_pix = QPixmap(m_widget->size());
+    m_widget->setAttribute(Qt::WA_UpdatesDisabled, true);
     m_widget->show();
     m_widget->raise();
+    m_widget->setAttribute(Qt::WA_UpdatesDisabled, false);
+
     if (QWidget *w = m_stack->widget(m_prevIndex))
     {
-        m_pix = QPixmap(m_widget->size());
-        m_pix.fill(Qt::transparent);
-        w->render(&m_pix);
+        m_prevPix = QPixmap(m_widget->size());
+        m_prevPix.fill(Qt::transparent);
+        w->render(&m_prevPix);
+        m_pix = m_prevPix;
+        m_widget->repaint();
+        m_prevIndex = m_stack->currentIndex();
     }
-    m_prevIndex = m_stack->currentIndex();
     if (QWidget *w = m_stack->currentWidget())
     {
         m_activePix = QPixmap(m_widget->size());
         m_activePix.fill(Qt::transparent);
         w->render(&m_activePix);
-        w->setUpdatesEnabled(false);
+        w->setAttribute(Qt::WA_UpdatesDisabled, true);
+        m_widget->setAttribute(Qt::WA_UpdatesDisabled, false);
+        animate();
         m_step = 0;
         m_timer->start(20);
     }
@@ -73,7 +81,19 @@ StackAnimator::animate()
     if (m_step < Steps)
     {
         ++m_step;
-        m_widget->setUpdatesEnabled(true);
+        m_pix = QPixmap(m_widget->size());
+        m_pix.fill(Qt::transparent);
+        QPixmap tmp(m_prevPix);
+        QPainter tmpP(&tmp);
+        tmpP.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        tmpP.fillRect(m_widget->rect(), QColor(0, 0, 0, m_step*(255.0f/Steps)));
+        tmpP.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        tmpP.end();
+
+        QPainter p(&m_pix);
+        p.drawPixmap(m_pix.rect(), m_activePix);
+        p.drawPixmap(m_pix.rect(), tmp);
+        p.end();
         m_widget->repaint();
     }
     else
@@ -82,22 +102,19 @@ StackAnimator::animate()
         m_timer->stop();
         m_widget->hide();
         if (QWidget *w = m_stack->currentWidget())
-            w->setUpdatesEnabled(true);
+        {
+            w->setAttribute(Qt::WA_UpdatesDisabled, false);
+            w->update();
+        }
     }
-
 }
 
 bool
 StackAnimator::eventFilter(QObject *o, QEvent *e)
 {
-    if (e->type() == QEvent::Paint && o == m_widget && m_step)
+    if (e->type() == QEvent::Paint && o == m_widget && !m_pix.isNull())
     {
-        QPainter pixP(&m_pix);
-        pixP.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pixP.fillRect(m_widget->rect(), QColor(0, 0, 0, m_step*(255.0f/Steps)));
-        pixP.end();
         QPainter p(m_widget);
-        p.drawPixmap(m_widget->rect(), m_activePix);
         p.drawPixmap(m_widget->rect(), m_pix);
         p.end();
         return true;

@@ -25,7 +25,7 @@ protected slots:
 private:
     QTimer *m_timer;
     QStackedLayout *m_stack;
-    QPixmap m_pix, m_activePix;
+    QPixmap m_prevPix, m_activePix, m_pix;
     QWidget *m_widget, *m_prevWidget;
     int m_step, m_prevIndex;
 };
