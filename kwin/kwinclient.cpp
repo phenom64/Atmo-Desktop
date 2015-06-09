@@ -378,6 +378,8 @@ KwinClient::captionChange()
 QColor
 KwinClient::fgColor() const
 {
+    if (isPreview())
+        return widget()->palette().color(QPalette::WindowText);
     if (m_wd)
     {
         const QColor &c = m_wd->fg();
@@ -392,6 +394,8 @@ KwinClient::fgColor() const
 QColor
 KwinClient::bgColor() const
 {
+    if (isPreview())
+        return widget()->palette().color(QPalette::Window);
     if (m_wd)
     {
         const QColor &c = m_wd->bg();
