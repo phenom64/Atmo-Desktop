@@ -103,6 +103,7 @@ protected:
 
 protected slots:
     void readCompositing();
+    void memoryDestroyed();
 
 private:
     QHBoxLayout *m_titleLayout;
