@@ -835,6 +835,7 @@ KwinClient::updateData()
         for (int i = 0; i < m_buttons.count(); ++i)
             m_buttons.at(i)->setButtonStyle(buttonStyle);
     }
+    update();
     QTimer::singleShot(2000, this, SLOT(readCompositing()));
 }
 
