@@ -2,6 +2,9 @@
 #include <QObject>
 #include <QDebug>
 
+
+static int s_memSize = (sizeof(unsigned int)*6)+(256*256*4);
+
 WindowData
 *WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
 {
@@ -15,8 +18,19 @@ WindowData
     if (!m)
         m = new WindowData(keyName, parent);
     if (m->isAttached() || m->attach())
-        return m;
-    if (create && m->create((sizeof(unsigned int)*6)+(256*256*4)))
+    {
+        if (m->size() == s_memSize)
+            return m;
+        else
+        {
+            m->detach();
+            m->deleteLater();
+            m = new WindowData(keyName, parent);
+            if (m->isAttached() || m->attach())
+                return m;
+        }
+    }
+    if (create && m->create(s_memSize))
     {
         if (m->lock())
         {

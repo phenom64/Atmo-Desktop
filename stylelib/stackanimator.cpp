@@ -7,6 +7,7 @@
 #include <QPixmap>
 #include <QTimer>
 #include <QPaintEvent>
+#include <QApplication>
 
 StackAnimator::StackAnimator(QObject *parent)
     : QObject(parent)
@@ -35,6 +36,7 @@ StackAnimator::activate()
 {
     connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
     connect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
+    connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(deleteLater()));
     m_prevIndex = m_stack->currentIndex();
     m_isActivated = true;
     m_widget->hide();

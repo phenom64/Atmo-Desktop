@@ -27,7 +27,7 @@ private:
     QTimer *m_timer;
     QStackedLayout *m_stack;
     QPixmap m_prevPix, m_activePix, m_pix;
-    QWidget *m_widget, *m_prevWidget;
+    QWidget *m_widget;
     int m_step, m_prevIndex;
     bool m_isActivated;
 };
