@@ -253,7 +253,7 @@ KwinClient::init()
         DSP::AdaptorManager::instance()->addDeco(this);
         if (m_wd = WindowData::memory(windowId(), this))
         {
-            QObject::connect(m_wd, SIGNAL(destroyed(QObject*)), this, SLOT(memoryDestroyed()));
+            QObject::connect(m_wd, SIGNAL(destroyed(QObject*)), this, SLOT(memoryDestroyed(QObject*)));
             if (m_wd->isEmpty())
             {
                 m_wd->setValue<bool>(WindowData::Separator, true);
@@ -274,7 +274,7 @@ KwinClient::init()
 }
 
 void
-KwinClient::memoryDestroyed()
+KwinClient::memoryDestroyed(QObject *)
 {
     m_wd = 0;
 }
@@ -833,7 +833,7 @@ KwinClient::updateData()
     if (!m_wd)
         if (m_wd = WindowData::memory(windowId(), this))
         {
-            QObject::connect(m_wd, SIGNAL(destroyed(QObject*)), this, SLOT(memoryDestroyed()));
+            QObject::connect(m_wd, SIGNAL(destroyed(QObject*)), this, SLOT(memoryDestroyed(QObject*)));
             if (m_wd->isEmpty())
             {
                 m_wd->setValue<bool>(WindowData::Separator, true);
