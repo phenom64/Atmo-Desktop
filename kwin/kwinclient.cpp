@@ -213,6 +213,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
     , m_compositingActive(true)
     , m_hor(false)
     , m_noise(0)
+    , m_wd(0)
 {
     setParent(factory);
 }
