@@ -819,6 +819,16 @@ KwinClient::updateData()
 {
     if (isPreview())
         return;
+    if (!m_wd)
+        if (m_wd = WindowData::memory(windowId(), this))
+        {
+            if (m_wd->isEmpty())
+            {
+                m_wd->setValue<bool>(WindowData::Separator, true);
+                m_wd->setValue<bool>(WindowData::Uno, true);
+            }
+            m_wd->setValue<int>(WindowData::TitleHeight, titleHeight());
+        }
     if (m_wd)
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
