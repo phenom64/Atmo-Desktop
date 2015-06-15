@@ -17,13 +17,10 @@ public:
                  _KDE_NET_WM_SHADOW,
                  _KDE_NET_WM_BLUR_BEHIND_REGION,
                  _NET_FRAME_EXTENTS,
-                 WindowData,
                  StoreActiveShadow,
                  StoreInActiveShadow,
-                 DecoTitleHeight,
-                 ContPix,
-                 Repaint,
-                 ValueCount };
+                 ValueCount
+               };
     enum Size { Byte = 8, Short = 16, Long = 32 };
     enum Operation {
         _NET_WM_MOVERESIZE_SIZE_TOPLEFT      =0,
@@ -40,10 +37,9 @@ public:
         _NET_WM_MOVERESIZE_CANCEL            =11   /* cancel operation */
     };
     typedef unsigned int TypeSize;
-    typedef unsigned long XWindow, XPixmap;
+    typedef quint32 XWindow, XPixmap;
     template<typename T> static void setXProperty(const XWindow w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
-        //reminder to self, the realByteSize is dependent on the type submitten to this method, no magic involved
         const TypeSize byteSize(size/8), realByteSize(sizeof(T));
         if (realByteSize > byteSize)
             n *= realByteSize/byteSize;
@@ -54,19 +50,15 @@ public:
     {
         return reinterpret_cast<T *>(fetchProperty(w, v, n, offset, length));
     }
-    static unsigned long xAtom(Value v);
     static void freeData(void *data);
     static void deleteXProperty(const XWindow w, const Value v);
-    static void mwRes(const QPoint &globalPoint, const XWindow &win, bool resize = false);
-    static void xcbMwRes(const QPoint &localPos, const QPoint &globalPoint, uint sourceWin, uint receiverWin);
-    static void move(QWidget *w, const QPoint &pt);
+    static void mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow win, bool resize = false, XWindow dest = 0);
     static bool compositingActive();
     static float opacity();
-    static QImage fromX11Pix(unsigned long x11Pix, const QSize &sz);
     static XPixmap x11Pixmap(const QImage &qtImg);
     static void freePix(const XPixmap pixmap);
-    static void updateDeco(const XWindow w);
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
+    static void init();
 
 protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);

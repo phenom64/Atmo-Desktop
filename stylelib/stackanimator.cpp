@@ -109,6 +109,7 @@ StackAnimator::animate()
     {
         m_step = 0;
         m_timer->stop();
+        m_widget->setAttribute(Qt::WA_UpdatesDisabled);
         m_widget->hide();
         if (QWidget *w = m_stack->currentWidget())
         {

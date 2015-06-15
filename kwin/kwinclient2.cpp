@@ -117,6 +117,8 @@ AdaptorManager
 AdaptorManager::AdaptorManager()
 {
     Settings::read();
+    XHandler::init();
+    ShadowHandler::removeDelete();
     Render::makeNoise();
     readWindowData();
     new DecoAdaptor(this);

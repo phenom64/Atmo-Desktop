@@ -1009,6 +1009,9 @@ Window::getHeadHeight(QWidget *win, bool &separator)
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(win))
     {
         if (QMenuBar *menuBar = mw->findChild<QMenuBar *>())
+#if !defined(QT_NO_DBUS)
+            if (!BE::MacMenu::isActive() && !BE::MacMenu::manages(menuBar))
+#endif
         {
             if (menuBar->isVisible())
                 hd[All] += menuBar->height();
@@ -1044,8 +1047,6 @@ Window::getHeadHeight(QWidget *win, bool &separator)
         }
     }
     hd[All] += hd[ToolBarAndTabBar];
-//    if (oldHead != hd[All] && qobject_cast<QMainWindow *>(win))
-//        ScrollWatcher::detachMem(static_cast<QMainWindow *>(win));
     s_unoData.insert(win, Data(hd, possible));
     return hd[All];
 }
@@ -1260,7 +1261,7 @@ Drag::eventFilter(QObject *o, QEvent *e)
     if (!cd)
         return false;
 
-    XHandler::move(w, me->pos());
+    XHandler::mwRes(w->mapTo(w->window(), me->pos()), me->globalPos(), w->window()->winId());
     return false;
 }
 
@@ -1343,14 +1344,7 @@ ScrollWatcher::updateWin(QWidget *mainWin)
                 else
                     tb->update();
             }
-    if (!dConf.removeTitleBars)
-        XHandler::updateDeco(win->winId());
-#if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateDeco");
-    msg << (uint)win->winId();
-    QDBusConnection::sessionBus().send(msg);
-#endif
-
+    updateDeco(win->winId());
 }
 
 QSharedMemory

@@ -2,43 +2,61 @@
 #include <QDataStream>
 #include <QDebug>
 #include <QWidget>
+#include <QX11Info>
+#include <QPainter>
 #include "xhandler.h"
+#include "../config/settings.h"
+
+#if defined(HASXCB) //we only have xcb when compiled against qt5.
+#include <xcb/xproto.h>
+#include <xcb/xcb_image.h>
+#include <xcb/xcb.h>
+#elif defined(HASX11)
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include "fixx11h.h"
-
-#include <QX11Info>
-
-#include <QPainter>
-#include <stdio.h>
-//#include <QAbstractEventDispatcher>
-#include "../config/settings.h"
-
-#if defined(DHASXCB)
-#include <xcb/xproto.h>
 #endif
 
-static Atom atom[XHandler::ValueCount] =
+static char *atoms[XHandler::ValueCount] =
 {
-    XInternAtom(QX11Info::display(), "_NET_WORKAREA", False),
-    XInternAtom(QX11Info::display(), "_NET_CURRENT_DESKTOP", False),
-    XInternAtom(QX11Info::display(), "_NET_WM_ICON", False),
-    XInternAtom(QX11Info::display(), "_KDE_NET_WM_SHADOW", False),
-    XInternAtom(QX11Info::display(), "_KDE_NET_WM_BLUR_BEHIND_REGION", False),
-    XInternAtom(QX11Info::display(), "_NET_FRAME_EXTENTS", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_MAINWINDOWDATA", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREACTIVESHADOW", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_STOREINACTIVESHADOW", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_DECODATA", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_CONTPIX", False),
-    XInternAtom(QX11Info::display(), "_STYLEPROJECT_REPAINT", False)
+    "_NET_WORKAREA",
+    "_NET_CURRENT_DESKTOP",
+    "_NET_WM_ICON",
+    "_KDE_NET_WM_SHADOW",
+    "_KDE_NET_WM_BLUR_BEHIND_REGION",
+    "_NET_FRAME_EXTENTS",
+    "_STYLEPROJECT_STOREACTIVESHADOW",
+    "_STYLEPROJECT_STOREINACTIVESHADOW"
 };
 
-unsigned long
-XHandler::xAtom(Value v)
+#if defined(HASXCB)
+static xcb_atom_t xcb_atom[XHandler::ValueCount];
+#elif defined(HASX11)
+static Atom atom[XHandler::ValueCount];
+#endif
+
+
+
+void
+XHandler::init()
 {
-    return atom[v];
+    static bool isInited(false);
+    if (isInited)
+        return;
+
+    for (int i = 0; i < XHandler::ValueCount; ++i)
+    {
+#if defined(HASXCB)
+        xcb_intern_atom_cookie_t cookie = xcb_intern_atom(QX11Info::connection(), false, strlen(atoms[i]), atoms[i]);
+        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(QX11Info::connection(), cookie, 0);
+        xcb_atom[i] = reply ? reply->atom : 0;
+#elif defined(HASX11)
+        atom[i] = XInternAtom(QX11Info::display(), atoms[i], False);
+#endif
+    }
+    isInited = true;
+    qDebug() << compositingActive();
 }
 
 void
@@ -46,14 +64,40 @@ XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, co
 {
     if (!data)
         return;
-//    Atom a = ((v == KwinShadows||v == StoreShadow) ? XA_CARDINAL : XA_ATOM);
+
+#if defined(HASXCB)
+    if (xcb_atom[v])
+    {
+        xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, w, xcb_atom[v], XCB_ATOM_CARDINAL, size, nitems, data);
+        xcb_flush(QX11Info::connection());
+    }
+#elif defined(HASX11)
     XChangeProperty(QX11Info::display(), w, atom[v], XA_CARDINAL, size, PropModeReplace, data, nitems);
     XSync(QX11Info::display(), False);
+#endif
 }
 
 unsigned char
 *XHandler::fetchProperty(const XWindow w, const Value v, int &n, unsigned long offset, unsigned long length)
 {
+#if defined(HASXCB)
+    if (xcb_atom[v])
+    {
+        xcb_get_property_cookie_t cookie = xcb_get_property(QX11Info::connection(), false, w, xcb_atom[v], XCB_ATOM_CARDINAL, offset, length);
+        xcb_get_property_reply_t *reply =  xcb_get_property_reply(QX11Info::connection(), cookie, NULL);
+        if (reply)
+        {
+            n = xcb_get_property_value_length(reply);
+            if (!n)
+            {
+                freeData(reply);
+                return 0;
+            }
+            if (unsigned char *data = reinterpret_cast<unsigned char *>(xcb_get_property_value(reply)))
+                return data;
+        }
+    }
+#elif defined(HASX11)
     Atom type;
     int format;
     unsigned long nitems, after;
@@ -61,106 +105,62 @@ unsigned char
     XGetWindowProperty(QX11Info::display(), w, atom[v], offset, length, False, XA_CARDINAL, &type, &format, &nitems, &after, &d);
     n = nitems;
     return d;
+#endif
+    return 0;
 }
 
 void
 XHandler::deleteXProperty(const XWindow w, const Value v)
 {
+#if defined(HASXCB)
+    if (xcb_atom[v])
+    {
+        xcb_delete_property(QX11Info::connection(), w, xcb_atom[v]);
+        xcb_flush(QX11Info::connection());
+    }
+#elif defined(HASX11)
     XDeleteProperty(QX11Info::display(), w, atom[v]);
     XSync(QX11Info::display(), False);
+#endif
 }
 
 void
 XHandler::freeData(void *data)
 {
+#if defined(HASXCB)
+    free(data);
+#elif defined(HASX11)
     XFree(data);
+#endif
 }
 
 void
-XHandler::move(QWidget *w, const QPoint &pt)
+XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow win, bool resize, XWindow dest)
 {
-    QWidget *win = w->window();
-    QPoint ppt(w->mapTo(win, pt));
-    const QPoint &gp = win->mapToGlobal(ppt);
-    XEvent xrev;
-    xrev.xbutton.serial = 0; //?????
-    xrev.xbutton.button = Button1;
-    xrev.xbutton.display = QX11Info::display();
-    xrev.xbutton.root = QX11Info::appRootWindow();
-    xrev.xbutton.same_screen = True;
-    xrev.xbutton.send_event = False;
-    xrev.xbutton.state = Button1Mask;
-    xrev.xbutton.window = win->winId();
-    xrev.xbutton.time = QX11Info::appTime();
-    xrev.xbutton.type = ButtonRelease;
-    xrev.xbutton.x_root = gp.x();
-    xrev.xbutton.y_root = gp.y();
-    xrev.xbutton.x = ppt.x();
-    xrev.xbutton.y = ppt.y();
-    XSendEvent(QX11Info::display(), win->winId(), False, Button1Mask|ButtonReleaseMask, &xrev);
-
-    static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
-    XEvent xev;
-    xev.xclient.type = ClientMessage;
-    xev.xclient.message_type = netWmMoveResize;
-    xev.xclient.display = QX11Info::display();
-    xev.xclient.window = win->winId();
-    xev.xclient.format = 32;
-    xev.xclient.data.l[0] = gp.x();
-    xev.xclient.data.l[1] = gp.y();
-    xev.xclient.data.l[2] = _NET_WM_MOVERESIZE_MOVE;
-    xev.xclient.data.l[3] = Button1;
-    xev.xclient.data.l[4] = 0;
-    XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-    XSync(QX11Info::display(), False);
-}
-
-void
-XHandler::mwRes(const QPoint &globalPoint, const XWindow &win, bool resize)
-{
-    static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
-    //this is stole.... errrhmm copied from qsizegrip.cpp
-    XEvent xev;
-    xev.xclient.type = ClientMessage;
-    xev.xclient.message_type = netWmMoveResize;
-    xev.xclient.display = QX11Info::display();
-    xev.xclient.window = win;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[0] = globalPoint.x();
-    xev.xclient.data.l[1] = globalPoint.y();
-    xev.xclient.data.l[2] = resize?_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT:_NET_WM_MOVERESIZE_MOVE;
-    xev.xclient.data.l[3] = Button1;
-    xev.xclient.data.l[4] = 0;
-    XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-}
-
-void
-XHandler::xcbMwRes(const QPoint &localPos, const QPoint &globalPos, uint sourceWin, uint receiverWin)
-{
-#if defined(DHASXCB)
+#if defined(HASXCB)
     if (!QX11Info::isPlatformX11())
         return;
 
+    if (!dest)
+        dest = win;
     xcb_connection_t *connection = QX11Info::connection();
 
     static xcb_atom_t atom = 0;
     if (!atom)
     {
-        const QString atomName( "_NET_WM_MOVERESIZE" );
+        const QString atomName("_NET_WM_MOVERESIZE");
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(connection, false, atomName.size(), qPrintable(atomName));
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(connection, cookie, 0);
-        atom = reply ? reply->atom:0;
+        atom = reply ? reply->atom : 0;
     }
-    if (!atom )
+    if (!atom)
         return;
 
     // button release event
     xcb_button_release_event_t releaseEvent;
     memset(&releaseEvent, 0, sizeof(releaseEvent));
     releaseEvent.response_type = XCB_BUTTON_RELEASE;
-    releaseEvent.event =  sourceWin;
+    releaseEvent.event =  win;
     releaseEvent.child = XCB_WINDOW_NONE;
     releaseEvent.root = QX11Info::appRootWindow();
     releaseEvent.event_x = localPos.x();
@@ -171,7 +171,7 @@ XHandler::xcbMwRes(const QPoint &localPos, const QPoint &globalPos, uint sourceW
     releaseEvent.state = XCB_BUTTON_MASK_1;
     releaseEvent.time = XCB_CURRENT_TIME;
     releaseEvent.same_screen = true;
-    xcb_send_event(connection, false, sourceWin, XCB_EVENT_MASK_BUTTON_RELEASE, reinterpret_cast<const char*>(&releaseEvent));
+    xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_RELEASE, reinterpret_cast<const char*>(&releaseEvent));
     xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);
 
     // move resize event
@@ -181,10 +181,10 @@ XHandler::xcbMwRes(const QPoint &localPos, const QPoint &globalPos, uint sourceW
     clientMessageEvent.response_type = XCB_CLIENT_MESSAGE;
     clientMessageEvent.type = atom;
     clientMessageEvent.format = 32;
-    clientMessageEvent.window = receiverWin;
+    clientMessageEvent.window = dest;
     clientMessageEvent.data.data32[0] = globalPos.x();
     clientMessageEvent.data.data32[1] = globalPos.y();
-    clientMessageEvent.data.data32[2] = 4; // bottom right
+    clientMessageEvent.data.data32[2] = resize?_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT:_NET_WM_MOVERESIZE_MOVE;
     clientMessageEvent.data.data32[3] = Qt::LeftButton;
     clientMessageEvent.data.data32[4] = 0;
 
@@ -194,6 +194,39 @@ XHandler::xcbMwRes(const QPoint &localPos, const QPoint &globalPos, uint sourceW
                    reinterpret_cast<const char*>(&clientMessageEvent));
 
     xcb_flush(connection);
+#elif defined(HASX11)
+    XEvent xrev;
+    xrev.xbutton.serial = 0; //?????
+    xrev.xbutton.button = Button1;
+    xrev.xbutton.display = QX11Info::display();
+    xrev.xbutton.root = QX11Info::appRootWindow();
+    xrev.xbutton.same_screen = True;
+    xrev.xbutton.send_event = False;
+    xrev.xbutton.state = Button1Mask;
+    xrev.xbutton.window = win;
+    xrev.xbutton.time = QX11Info::appTime();
+    xrev.xbutton.type = ButtonRelease;
+    xrev.xbutton.x_root = globalPos.x();
+    xrev.xbutton.y_root = globalPos.y();
+    xrev.xbutton.x = localPos.x();
+    xrev.xbutton.y = localPos.y();
+    XSendEvent(QX11Info::display(), win, False, Button1Mask|ButtonReleaseMask, &xrev);
+
+    static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
+    XEvent xev;
+    xev.xclient.type = ClientMessage;
+    xev.xclient.message_type = netWmMoveResize;
+    xev.xclient.display = QX11Info::display();
+    xev.xclient.window = win;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = globalPos.x();
+    xev.xclient.data.l[1] = globalPos.y();
+    xev.xclient.data.l[2] = resize?_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT:_NET_WM_MOVERESIZE_MOVE;
+    xev.xclient.data.l[3] = Button1;
+    xev.xclient.data.l[4] = 0;
+    XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
+    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    XSync(QX11Info::display(), False);
 #endif
 }
 
@@ -202,7 +235,22 @@ XHandler::compositingActive()
 {
 #if QT_VERSION < 0x050000
     return QX11Info::isCompositingManagerRunning();
-#else
+#elif defined(HASXCB)
+    static xcb_atom_t atom = 0;
+    xcb_connection_t *c = QX11Info::connection();
+    if (!atom)
+    {
+        const QString &net_wm_cm_name = QString("_NET_WM_CM_S%1").arg(QString::number(QX11Info::appScreen()));
+        xcb_intern_atom_cookie_t cookie = xcb_intern_atom(c, false, net_wm_cm_name.size(), qPrintable(net_wm_cm_name));
+        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(c, cookie, 0);
+        atom = reply ? reply->atom : 0;
+    }
+    if (!atom)
+        return false;
+    xcb_get_selection_owner_cookie_t cookie = xcb_get_selection_owner(c, atom);
+    xcb_get_selection_owner_reply_t *reply = xcb_get_selection_owner_reply(c, cookie, NULL);
+    return reply && reply->owner;
+#elif defined(HASX11)
     static Atom *net_wm_cm = 0;
     if (!net_wm_cm)
     {
@@ -224,11 +272,25 @@ XHandler::opacity()
 //        return 1.0f;
 }
 
-unsigned long
+XHandler::XPixmap
 XHandler::x11Pixmap(const QImage &qtImg)
 {
-// Stolen from virtuality
+    if (qtImg.isNull())
+        return 0;
+#if defined(HASXCB)
+    xcb_connection_t *c = QX11Info::connection();
+    //    xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
+    xcb_pixmap_t pixmapId = xcb_generate_id(c);
+    xcb_create_pixmap(c, qtImg.depth(), pixmapId, QX11Info::appRootWindow(), qtImg.width(), qtImg.height());
+    xcb_gcontext_t gcId = xcb_generate_id(c);
+    xcb_create_gc(c, gcId, pixmapId, 0, 0);
+    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, pixmapId, gcId, qtImg.width(), qtImg.height(), 0, 0, 0, qtImg.depth(), qtImg.byteCount(), qtImg.bits());
+    xcb_free_gc(c, gcId);
+    return pixmapId;
+#elif defined(HASX11)
+    //Stolen from virtuality
     XImage ximage;
+    memset(&ximage, 0, sizeof(XImage));
     ximage.width            = qtImg.width();
     ximage.height           = qtImg.height();
     ximage.xoffset          = 0;
@@ -255,53 +317,19 @@ XHandler::x11Pixmap(const QImage &qtImg)
     GC gc = XCreateGC(QX11Info::display(), pix, 0, 0);
     XPutImage(QX11Info::display(), pix, gc, &ximage, 0, 0, 0, 0, qtImg.width(), qtImg.height());
     XFreeGC(QX11Info::display(), gc);
-    XFlush(QX11Info::display());
     return pix;
-}
-
-#if QT_VERSION >= 0x050000
-void imageCleanup(void *cleanupInfo)
-{
-    if (XImage *xi = static_cast<XImage *>(cleanupInfo))
-        XDestroyImage(xi);
-}
 #endif
-
-QImage
-XHandler::fromX11Pix(unsigned long x11Pix, const QSize &sz)
-{
-    if (XImage *xi = XGetImage(QX11Info::display(), x11Pix, 0, 0, sz.width(), sz.height(), AllPlanes, ZPixmap))
-    {
-#if QT_VERSION < 0x050000
-        QImage img(sz.width(), sz.height(), QImage::Format_ARGB32);
-        memcpy(img.bits(), xi->data, xi->width*xi->height*4);
-        XDestroyImage(xi);
-        return img;
-#else
-        return QImage(reinterpret_cast<unsigned char *>(xi->data), xi->width, xi->height, QImage::Format_ARGB32, imageCleanup, xi);
-#endif
-    }
-    return QImage();
+    return 0;
 }
 
 void
 XHandler::freePix(const XPixmap pixmap)
 {
+#if defined(HASXCB)
+    xcb_free_pixmap(QX11Info::connection(), pixmap);
+#elif defined(HASX11)
     XFreePixmap(QX11Info::display(), pixmap);
-}
-
-void
-XHandler::updateDeco(const XWindow w)
-{
-    XEvent xce;
-    xce.xclient.type = ClientMessage;
-    xce.xclient.message_type = xAtom(Repaint);
-    xce.xclient.display = QX11Info::display();
-    xce.xclient.window = w;
-    xce.xclient.format = 32;
-    xce.xclient.data.l[0] = 0;
-    XUngrabPointer(QX11Info::display(), QX11Info::appTime());
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureNotifyMask, &xce);
+#endif
 }
 
 void

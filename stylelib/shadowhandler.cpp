@@ -1,3 +1,5 @@
+#include <qtextstream.h>
+#include <QDebug>
 #include <QPixmap>
 #include <QX11Info>
 #include <QPainter>
@@ -16,12 +18,14 @@
 #include "../config/settings.h"
 #include "macros.h"
 
-Q_DECL_EXPORT ShadowHandler ShadowHandler::m_instance;
+Q_DECL_EXPORT ShadowHandler *ShadowHandler::m_instance(0);
 
 ShadowHandler
 *ShadowHandler::instance()
 {
-    return &m_instance;
+    if (!m_instance)
+        m_instance = new ShadowHandler();
+    return m_instance;
 }
 
 bool
@@ -66,18 +70,19 @@ static QRect part(int part, int size, int d = 1)
     }
 }
 
-unsigned long
+
+quint32
 *ShadowHandler::shadows(bool active)
 {
     static XHandler::Value atom[2] = { XHandler::StoreInActiveShadow, XHandler::StoreActiveShadow };
-    unsigned long *shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), atom[active]);
+    quint32 *shadows = XHandler::getXProperty<quint32>(QX11Info::appRootWindow(), atom[active]);
     if (!shadows)
     {
         int size(dConf.deco.shadowSize);
         if (!active)
             size/=2;
 
-        unsigned long data[12];
+        quint32 data[12];
 
         int s(size*2+1);
         QImage img(s, s, QImage::Format_ARGB32);
@@ -110,10 +115,9 @@ unsigned long
             else
                 data[i] = sd[i-8];
         }
-        XHandler::setXProperty<unsigned long>(QX11Info::appRootWindow(), atom[active], XHandler::Long, data, 24);
+        XHandler::setXProperty<quint32>(QX11Info::appRootWindow(), atom[active], XHandler::Long, data, 12);
     }
-    shadows = XHandler::getXProperty<unsigned long>(QX11Info::appRootWindow(), atom[active]);
-    return shadows;
+    return XHandler::getXProperty<quint32>(QX11Info::appRootWindow(), atom[active]);
 }
 
 static QRect menupart(int part, int size, int hor = 128, int ver = 1, int d = 4)
@@ -132,10 +136,10 @@ static QRect menupart(int part, int size, int hor = 128, int ver = 1, int d = 4)
     }
 }
 
-unsigned long
+quint32
 *ShadowHandler::menuShadow(bool up, QMenu *menu, QToolButton *tb)
 {
-    static unsigned long data[12];
+    static quint32 data[12];
     int size(32);
     QPixmap mask(menu->size()+QSize(size*2, size*2));
     mask.fill(Qt::transparent);
@@ -184,7 +188,7 @@ unsigned long
         {
             if (menupix[i])
             {
-                XFreePixmap(QX11Info::display(), menupix[i]);
+                XHandler::freePix(menupix[i]);
                 menupix[i] = 0;
             }
             QRect r(menupart(i, 32, menu->width(), menu->height()));
@@ -200,7 +204,7 @@ void
 ShadowHandler::installShadows(WId w, bool active)
 {
     if (w != QX11Info::appRootWindow())
-        XHandler::setXProperty<unsigned long>(w, XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows(active), 12);
+        XHandler::setXProperty<quint32>(w, XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows(active), 12);
 }
 
 void
@@ -226,8 +230,8 @@ ShadowHandler::installShadows(QMenu *m)
     const bool up(tbPoint.y()<muPoint.y());
     if (m->winId() != QX11Info::appRootWindow() && tbPoint.x() == muPoint.x())
     {
-        unsigned long *shadows = menuShadow(up, m, tb);
-        XHandler::setXProperty<unsigned long>(m->winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows, 12);
+        quint32 *shadows = menuShadow(up, m, tb);
+        XHandler::setXProperty<quint32>(m->winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows, 12);
     }
     else
         installShadows(m->winId());
@@ -261,7 +265,7 @@ ShadowHandler::removeDelete()
     for (int i = 0; i < 8; ++i)
     if (pix[a][i])
     {
-        XFreePixmap(QX11Info::display(), pix[a][i]);
+        XHandler::freePix(pix[a][i]);
         pix[a][i] = 0;
     }
     XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreActiveShadow);

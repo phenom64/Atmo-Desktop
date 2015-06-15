@@ -8,9 +8,6 @@ else (QT5BUILD)
 endif (QT5BUILD)
 
 project(${PROJECT})
-
-find_package(X11 REQUIRED)
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -89,15 +86,34 @@ endif (QT5BUILD)
 
 add_library(${PROJECT} SHARED ${SRCS} ${MOC_SRCS} ${HDRS})
 
-find_package(XCB COMPONENTS XCB)
-if (XCB_FOUND)
-    add_definitions(-DDHASXCB)
-    target_link_libraries(${PROJECT} XCB::XCB)
-endif (XCB_FOUND)
+#xcb and x11....
+#if we are qt5 then we want xcb... 
+#but we can also work w/ x11, so we
+#first check for xcb and if not, then
+#for x11
+if (QT5BUILD)
+    find_package(XCB COMPONENTS XCB)
+    if (XCB_FOUND)
+        add_definitions(-DHASXCB)
+        target_link_libraries(${PROJECT} XCB::XCB)
+    else (XCB_FOUND)
+        find_package(X11)
+        if (X11_FOUND)
+            add_definitions(-DHASX11)
+            target_link_libraries(${PROJECT} ${X11_X11_LIB} ${X11_LIBRARIES})
+        endif (X11_FOUND)
+    endif (XCB_FOUND)
+else (QT5BUILD)
+    find_package(X11)
+    if (X11_FOUND)
+        add_definitions(-DHASX11)
+        target_link_libraries(${PROJECT} ${X11_X11_LIB} ${X11_LIBRARIES})
+    endif (X11_FOUND)
+endif (QT5BUILD)
 # set_target_properties(${PROJECT} PROPERTIES AUTOMOC ON)
 
 if (QT5BUILD)
-    target_link_libraries(${PROJECT} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus Qt5X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
+    target_link_libraries(${PROJECT} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus Qt5X11Extras)
     get_target_property(QMAKE Qt5::qmake IMPORTED_LOCATION)
     execute_process(COMMAND ${QMAKE} -query QT_INSTALL_PLUGINS OUTPUT_VARIABLE PLUGINPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
     install(TARGETS ${PROJECT} LIBRARY DESTINATION ${PLUGINPATH}/styles)
@@ -105,9 +121,8 @@ if (QT5BUILD)
     if (KDecoration2_FOUND)
         add_subdirectory(kwin)
     endif (KDecoration2_FOUND)
-    
 else (QT5BUILD)
-    target_link_libraries(${PROJECT} ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY} ${X11_LIBRARIES})
+    target_link_libraries(${PROJECT} ${QT_LIBRARIES} ${QT_QTDBUS_LIBRARY})
     install(TARGETS ${PROJECT} LIBRARY DESTINATION ${QT_PLUGINS_DIR}/styles)
     if (KDE4_FOUND)
         install(FILES styleproject.themerc DESTINATION ${DATA_INSTALL_DIR}/kstyle/themes)

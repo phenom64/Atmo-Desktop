@@ -76,6 +76,7 @@ static TranslucencyWatcher t;
 StyleProject::StyleProject() : QCommonStyle()
 {
     init();
+    XHandler::init();
     assignMethods();
     Settings::read();
 #if QT_VERSION >= 0x050000
