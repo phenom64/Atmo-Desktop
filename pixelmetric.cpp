@@ -90,7 +90,7 @@ StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const 
     case PM_SpinBoxFrameWidth:
         return 0;
     case PM_SpinBoxSliderHeight:
-        return option->rect.height()/2;
+        return widget?widget->height()/2:option->rect.height()/2;
     case PM_TabCloseIndicatorHeight:
     case PM_TabCloseIndicatorWidth:
         return 16;

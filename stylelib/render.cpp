@@ -1096,7 +1096,7 @@ Render::shadowMargin(const Shadow s)
     case Etched:
     case Raised: return 3; break;
     case Yosemite: return 0; break;
-    case Carved: return 3; break;
+    case Carved: return 4; break;
     default: return 0;
     }
 }

@@ -487,7 +487,7 @@ StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, cons
 QRect
 StyleProject::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
-    castOpt(SpinBox, sb, opt);
+    const QStyleOptionSpinBox *sb = qstyleoption_cast<const QStyleOptionSpinBox *>(opt);
     if (!sb)
         return QRect();
 
@@ -496,7 +496,8 @@ StyleProject::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const Q
     QRect arrowUp(0, 0, spinSize, spinSize);
     QRect arrowDown(arrowUp);
     int sm(Render::shadowMargin(dConf.input.shadow));
-    int m((qMin(dConf.input.rnd, ret.height()/2)/2) + sm);
+//    int m((qMin(dConf.input.rnd, ret.height()/2)/2) + sm);
+    int m(0);
     arrowUp.moveTopRight(ret.topRight()-QPoint(m, 0));
     arrowDown.moveBottomRight(ret.bottomRight()-QPoint(m, 0));
     switch (sc)

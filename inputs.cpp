@@ -152,7 +152,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
 bool
 StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ComboBox, opt, option);
+    const QStyleOptionComboBox *opt = qstyleoption_cast<const QStyleOptionComboBox *>(option);
     if (!opt || opt->editable)
         return true;
     QPalette::ColorRole /*bg(Ops::bgRole(widget, QPalette::Button)),*/ fg(Ops::fgRole(widget, QPalette::ButtonText));
@@ -174,7 +174,7 @@ StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, c
 bool
 StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(SpinBox, opt, option);
+    const QStyleOptionSpinBox *opt = qstyleoption_cast<const QStyleOptionSpinBox *>(option);
     if (!opt)
         return true;
 
@@ -183,9 +183,13 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
 //    up.setBottom(up.bottom()-1);
     QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget).shrinked(2));
 //    down.setTop(down.top()+1);
-//    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
+    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
 
     QBrush mask(option->palette.brush(QPalette::Base));
+//    QRect r = opt->rect;
+//    r.setLeft(edit.right());
+//    Render::drawClickable(dConf.input.shadow, r, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask, 0, Render::All&~Render::Left);
+//    mask = option->palette.brush(QPalette::Base);
     if (mask.style() < 2)
     {
         QColor c(mask.color());
@@ -195,9 +199,9 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
         lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
-    Render::drawClickable(dConf.input.shadow, opt->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
+    Render::drawClickable(dConf.input.shadow, edit, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
 
-    Ops::drawArrow(painter, opt->palette.color(QPalette::Text), up, Ops::Up, dConf.arrowSize);
-    Ops::drawArrow(painter, opt->palette.color(QPalette::Text), down, Ops::Down, dConf.arrowSize);
+    Ops::drawArrow(painter, opt->palette.color(QPalette::WindowText), up, Ops::Up, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
+    Ops::drawArrow(painter, opt->palette.color(QPalette::WindowText), down, Ops::Down, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
     return true;
 }

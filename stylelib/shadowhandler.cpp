@@ -7,8 +7,6 @@
 #include <QImage>
 #include <QMenu>
 #include <QToolButton>
-#include <X11/Xlib.h>
-#include <fixx11h.h>
 #include <QApplication>
 
 #include "shadowhandler.h"
@@ -49,8 +47,8 @@ ShadowHandler::eventFilter(QObject *o, QEvent *e)
     return false;
 }
 
-static Pixmap pix[2][8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
-static Pixmap menupix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+static XHandler::XPixmap pix[2][8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
+static XHandler::XPixmap menupix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 enum Pos { Top = 0, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft };
 

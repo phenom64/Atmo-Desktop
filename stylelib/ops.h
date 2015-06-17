@@ -41,7 +41,7 @@ public:
     static bool isSafariTabBar(const QTabBar *tabBar);
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);
     static void drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter);
-    static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter);
+    static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);

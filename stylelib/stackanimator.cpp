@@ -53,7 +53,7 @@ StackAnimator::manage(QStackedLayout *l)
 
 void
 StackAnimator::currentChanged(int i)
-{ 
+{
     if (m_stack->parentWidget()->isHidden())
         return;
     m_pix = QPixmap(m_widget->size());
@@ -116,6 +116,7 @@ StackAnimator::animate()
             w->setAttribute(Qt::WA_UpdatesDisabled, false);
             w->update();
         }
+        m_stack->parentWidget()->update();
     }
 }
 
@@ -131,6 +132,8 @@ StackAnimator::eventFilter(QObject *o, QEvent *e)
     }
     if (e->type() == QEvent::Resize && o == m_stack->parentWidget())
         m_widget->resize(m_stack->parentWidget()->size());
+    if (e->type() == QEvent::Close && o == m_stack->parentWidget())
+        disconnect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
     return false;
 }
 

@@ -56,7 +56,6 @@ XHandler::init()
 #endif
     }
     isInited = true;
-    qDebug() << compositingActive();
 }
 
 void

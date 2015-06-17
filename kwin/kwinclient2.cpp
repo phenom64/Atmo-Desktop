@@ -37,7 +37,9 @@
 
 #include <QDebug>
 #include <QX11Info>
+#if defined(HASXCB)
 #include <xcb/xproto.h>
+#endif
 
 K_PLUGIN_FACTORY_WITH_JSON(
     DecoFactory,
@@ -146,6 +148,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_noise(0)
     , m_separator(true)
     , m_wd(0)
+    , m_grip(0)
 {
 }
 
@@ -204,6 +207,9 @@ Deco::init()
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
+
+    if (client().data()->isResizeable())
+        m_grip = new Grip(this);
 }
 
 void
@@ -523,6 +529,8 @@ Grip::Grip(Deco *d)
             current = tree->parent;
         // reparent
         xcb_reparent_window(QX11Info::connection(), winId(), current, 0, 0);
+        connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
+        connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
     }
     else
         hide();
@@ -535,6 +543,7 @@ Grip::updatePosition()
         return;
 
     KDecoration2::DecoratedClient *c = m_deco->client().data();
+
     unsigned int values[2] = { c->width() - 16, c->height() - 16 };
     xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
 }
@@ -550,7 +559,7 @@ Grip::paintEvent(QPaintEvent *e)
 void
 Grip::mousePressEvent(QMouseEvent *e)
 {
-
+    qDebug() << e->pos() << e->globalPos();
 }
 
 } //DSP

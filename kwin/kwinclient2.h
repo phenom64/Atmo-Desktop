@@ -72,7 +72,7 @@ public slots:
     void defaults() {}
 };
 
-
+class Grip;
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
@@ -134,6 +134,7 @@ private:
     QColor m_bg, m_fg;
     Gradient m_gradient;
     WindowData *m_wd;
+    Grip *m_grip;
     int m_prevLum, m_noise;
     bool m_separator;
 };
@@ -181,13 +182,16 @@ private:
 
 class Grip : public QWidget
 {
+    Q_OBJECT
 public:
     Grip(Deco *d);
-    void updatePosition();
 
 protected:
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);
+
+protected slots:
+    void updatePosition();
 
 private:
     Deco *m_deco;

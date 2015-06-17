@@ -9,6 +9,7 @@
 #include <QMenuBar>
 #include <QLineEdit>
 #include <QApplication>
+#include <QSpinBox>
 
 #include "styleproject.h"
 #include "stylelib/ops.h"
@@ -220,7 +221,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_LineEdit:
     {
         QSize sz(contentsSize);
-        sz+=QSize(8, pixelMetric(PM_DefaultFrameWidth, opt, widget));
+        sz+=QSize(Render::shadowMargin(dConf.input.shadow)*2, pixelMetric(PM_DefaultFrameWidth, opt, widget));
         if (sz.height() < 23)
             sz.setHeight(23);
         return sz;
@@ -228,11 +229,12 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     case CT_SpinBox:
     {
         const QStyleOptionSpinBox *box = qstyleoption_cast<const QStyleOptionSpinBox *>(opt);
+//        const QSpinBox *spinBox = qobject_cast<const QSpinBox *>(widget);
         QSize sz(contentsSize);
         sz.rwidth()+=(Render::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
-//        if (box)
-//            sz.rwidth()+=box->fontMetrics.width(box->)
         sz.setHeight(qMax(23, sz.height()));
+        if (box && box->frame)
+            sz.rwidth()+=pixelMetric(PM_SpinBoxFrameWidth)*2;
         return sz;
     }
     case CT_MenuBarItem:

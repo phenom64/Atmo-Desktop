@@ -114,12 +114,17 @@ Ops::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal,
 }
 
 void
-Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align)
+Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align, const bool bevel)
 {
+    if (bevel)
+    {
+        const int v = Color::luminosity(c);
+        const int rgb = v < 128 ? 255 : 0;
+        drawArrow(p, QColor(rgb, rgb, rgb, v), r.translated(0,1), d, size);
+    }
     p->save();
     p->setPen(Qt::NoPen);
     p->setRenderHint(QPainter::Antialiasing);
-    p->setBrush(c);
 
     if (!size || size > qMax(r.width(), r.height()))
         size = qMin(r.width(), r.height());
@@ -153,6 +158,7 @@ Ops::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, 
         }
         p->translate(-half, -half);
     }
+    p->setBrush(c);
     p->drawPolygon(QPolygon(3, points));
     p->restore();
 }
