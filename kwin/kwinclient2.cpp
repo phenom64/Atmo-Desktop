@@ -513,11 +513,34 @@ Deco::updateBgPixmap()
 }
 
 Grip::Grip(Deco *d)
-    : QWidget()
+    : QWidget(0)
     , m_deco(d)
 {
     if (!QX11Info::isPlatformX11())
+    {
+        hide();
         return;
+    }
+    setFixedSize(Size, Size);
+    setCursor(Qt::SizeFDiagCursor);
+    restack();
+    QPolygon p;
+    p << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size);
+    setMask(p);
+    updatePosition();
+}
+
+void
+Grip::updatePosition()
+{
+    KDecoration2::DecoratedClient *c = m_deco->client().data();
+    unsigned int values[2] = { c->width() - Size, c->height() - Size };
+    xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
+}
+
+void
+Grip::restack()
+{
     KDecoration2::DecoratedClient *c = m_deco->client().data();
     xcb_window_t windowId = c->windowId();
     if (windowId)
@@ -531,35 +554,29 @@ Grip::Grip(Deco *d)
         xcb_reparent_window(QX11Info::connection(), winId(), current, 0, 0);
         connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
         connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
+        updatePosition();
+        show();
+
+        static const quint32 value[] = {XCB_STACK_MODE_ABOVE};
+        xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_STACK_MODE, value);
+        xcb_map_window(QX11Info::connection(), winId());
     }
     else
         hide();
 }
 
 void
-Grip::updatePosition()
-{
-    if (!QX11Info::isPlatformX11())
-        return;
-
-    KDecoration2::DecoratedClient *c = m_deco->client().data();
-
-    unsigned int values[2] = { c->width() - 16, c->height() - 16 };
-    xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
-}
-
-void
 Grip::paintEvent(QPaintEvent *e)
 {
     QPainter p(this);
-    p.fillRect(rect(), Qt::red);
+    p.fillRect(rect(), Color::mid(m_deco->fgColor(), m_deco->bgColor()));
     p.end();
 }
 
 void
 Grip::mousePressEvent(QMouseEvent *e)
 {
-    qDebug() << e->pos() << e->globalPos();
+    XHandler::mwRes(e->pos(), e->globalPos(), winId(), true, m_deco->client().data()->windowId());
 }
 
 } //DSP

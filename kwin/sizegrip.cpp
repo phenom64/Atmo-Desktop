@@ -126,7 +126,7 @@ SizeGrip::eventFilter(QObject *o, QEvent *e)
 void
 SizeGrip::mousePressEvent(QMouseEvent *e)
 {
-    XHandler::mwRes(e->globalPos(), m_client->windowId(), true);
+    XHandler::mwRes(e->pos(), e->globalPos(), m_client->windowId(), true);
 }
 
 void

@@ -134,6 +134,7 @@ private:
     QColor m_bg, m_fg;
     Gradient m_gradient;
     WindowData *m_wd;
+    friend class Grip;
     Grip *m_grip;
     int m_prevLum, m_noise;
     bool m_separator;
@@ -185,10 +186,12 @@ class Grip : public QWidget
     Q_OBJECT
 public:
     Grip(Deco *d);
+    enum Data { Size = 16 };
 
 protected:
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);
+    void restack();
 
 protected slots:
     void updatePosition();
