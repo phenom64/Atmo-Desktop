@@ -92,6 +92,7 @@ public:
     static WindowData *memory(const unsigned int wid, QObject *parent, const bool create = false);
 
     bool isEmpty();
+    bool sync();
 
     QColor bg();
     void setBg(const QColor &c);
@@ -108,7 +109,10 @@ public:
     QSize imageSize();
 
 protected:
-    WindowData(const QString &key, QObject *parent):QSharedMemory(key, parent){setObjectName(key);}
+    WindowData(const QString &key, QObject *parent, uint id = 0):QSharedMemory(key, parent),m_winId(id){setObjectName(key);}
+
+private:
+    unsigned int m_winId;
 };
 
 #endif //WINDOWDATA_H

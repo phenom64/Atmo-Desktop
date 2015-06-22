@@ -2,6 +2,10 @@
 #include <QObject>
 #include <QDebug>
 
+#if !defined(QT_NO_DBUS)
+#include <QDBusMessage>
+#include <QDBusConnection>
+#endif
 
 static int s_memSize = (sizeof(unsigned int)*6)+(256*256*4);
 
@@ -16,7 +20,7 @@ WindowData
     const QString &keyName = QString("dsp_windowdata-%1").arg(QString::number(wid));
     WindowData *m = parent->findChild<WindowData *>(keyName);
     if (!m)
-        m = new WindowData(keyName, parent);
+        m = new WindowData(keyName, parent, wid);
     if (m->isAttached() || m->attach())
     {
         if (m->size() == s_memSize)
@@ -25,7 +29,7 @@ WindowData
         {
             m->detach();
             m->deleteLater();
-            m = new WindowData(keyName, parent);
+            m = new WindowData(keyName, parent, wid);
             if (m->isAttached() || m->attach())
                 return m;
         }
@@ -136,6 +140,16 @@ WindowData::isEmpty()
         return !d[0] && !d[1] && !d[2] && !d[3] && !d[4] && !d[5];
     }
     return true;
+}
+
+bool
+WindowData::sync()
+{
+#if !defined(QT_NO_DBUS)
+    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
+    msg << m_winId;
+    QDBusConnection::sessionBus().send(msg);
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------------

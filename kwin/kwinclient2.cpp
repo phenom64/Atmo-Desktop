@@ -21,6 +21,7 @@
 #include <KCModule>
 
 #include <KWindowInfo>
+#include <KWindowSystem>
 
 #include <QEvent>
 #include <QMouseEvent>
@@ -154,6 +155,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
 
 Deco::~Deco()
 {
+    m_grip->deleteLater();
     AdaptorManager::instance()->removeDeco(this);
 }
 
@@ -208,7 +210,7 @@ Deco::init()
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
 
-    if (client().data()->isResizeable())
+    if (client().data()->isResizeable() && !m_grip)
         m_grip = new Grip(this);
 }
 
@@ -516,26 +518,31 @@ Grip::Grip(Deco *d)
     : QWidget(0)
     , m_deco(d)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!QX11Info::isPlatformX11() || !m_deco)
     {
         hide();
         return;
     }
     setFixedSize(Size, Size);
     setCursor(Qt::SizeFDiagCursor);
+    KDecoration2::DecoratedClient *c = m_deco->client().data();
+    connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
+    connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
     restack();
-    QPolygon p;
-    p << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size);
+    static const QPolygon &p = QPolygon() << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size); //topright, bottomright, bottomleft
     setMask(p);
     updatePosition();
+    show();
 }
 
 void
 Grip::updatePosition()
 {
+#if defined(HASXCB)
     KDecoration2::DecoratedClient *c = m_deco->client().data();
     unsigned int values[2] = { c->width() - Size, c->height() - Size };
     xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
+#endif
 }
 
 void
@@ -544,23 +551,7 @@ Grip::restack()
     KDecoration2::DecoratedClient *c = m_deco->client().data();
     xcb_window_t windowId = c->windowId();
     if (windowId)
-    {
-        xcb_window_t current = windowId;
-        xcb_query_tree_cookie_t cookie = xcb_query_tree_unchecked(QX11Info::connection(), current);
-        xcb_query_tree_reply_t *tree = xcb_query_tree_reply(QX11Info::connection(), cookie, 0);
-        if (tree && tree->parent)
-            current = tree->parent;
-        // reparent
-        xcb_reparent_window(QX11Info::connection(), winId(), current, 0, 0);
-        connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
-        connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
-        updatePosition();
-        show();
-
-        static const quint32 value[] = {XCB_STACK_MODE_ABOVE};
-        xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_STACK_MODE, value);
-        xcb_map_window(QX11Info::connection(), winId());
-    }
+        XHandler::restack(winId(), windowId);
     else
         hide();
 }

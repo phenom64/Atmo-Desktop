@@ -284,6 +284,78 @@ class QSettings;
 class Q_DECL_EXPORT Settings
 {
 public:
+    enum Key {
+        Opacity = 0,
+        Blacklist,
+        Removetitle,
+        Titlepos,
+        Hackdialogs,
+        Compactmenu,
+        Splitterext,
+        Arrowsize,
+        Balloontips,
+        Palette,
+        Animatestack,
+        Decobuttons,
+        Decoicon,
+        Decoshadowsize,
+        Decoframe,
+        Pushbtnrnd,
+        Pushbtnshadow,
+        Pushbtngrad,
+        Pushbtntint,
+        Toolbtnrnd,
+        Toolbtnshadow,
+        Toolbtngrad,
+        Toolbtntint,
+        Toolbtnfolcol,
+        Toolbtninvact,
+        Toolbtnflat,
+        Inputrnd,
+        Inputshadow,
+        Inputgrad,
+        Inputtint,
+        Tabsaf,
+        Tabrnd,
+        Tabshadow,
+        Tabgrad,
+        Saftabrnd,       //safaritabs Roundness Capped At 8 Atm, Might Change In The Future If Needed
+        Tabcloser,
+        Unoenabled,
+        Unograd,
+        Unotint,
+        Unonoise,
+        Unonoisestyle,
+        Unohor,
+        Unocont,
+        Unoopacity,
+        Unocontblur,
+        Menuicons,
+        Slidersize,
+        Sliderdot,
+        Slidergrad,
+        Slidergroove,
+        Slidergrooveshadow,
+        Sliderfillgroove,
+        Sliderinvert,
+        Scrollersize,
+        Scrollerstyle,
+        Scrollergrad,
+        Scrollergroove,
+        Scrollerinvert,
+        Scrollergshadow,
+        Viewtreelines,
+        Progshadow,
+        Progrnd,
+        Wingrad,
+        Winnoise,
+        Winnoisestyle,
+        Winhor,
+        Shadowopacity,
+        Shadowdarkraised,
+        Keycount
+    };
+
     enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, Unspecific }; //app specific hacks should be avoided when possible.
     typedef uint App;
     typedef struct _Conf
@@ -374,11 +446,13 @@ public:
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
     static Settings *instance();
+    static void init();
     static void read();
     static void readPalette();
     static QSettings *paletteSettings();
     static Gradient stringToGrad(const QString &string);
     static void writePalette();
+    static void writeDefaults();
 
 protected:
     static void writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c);

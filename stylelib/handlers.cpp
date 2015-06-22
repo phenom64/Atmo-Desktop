@@ -37,7 +37,6 @@
 #include <QGroupBox>
 #include <QDockWidget>
 
-
 #if !defined(QT_NO_DBUS)
 #include <QDBusMessage>
 #include <QDBusConnection>
@@ -1152,15 +1151,6 @@ Window::updateWindowDataLater(QWidget *win)
     }
 }
 
-static void updateDeco(const uint win)
-{
-#if !defined(QT_NO_DBUS)
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
-    msg << win;
-    QDBusConnection::sessionBus().send(msg);
-#endif
-}
-
 void
 Window::updateWindowData(qulonglong window)
 {
@@ -1203,7 +1193,7 @@ Window::updateWindowData(qulonglong window)
     data->setBg(pal.color(win->backgroundRole()));
     win->update();
     emit instance()->windowDataChanged(win);
-    updateDeco(win->winId());
+    data->sync();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1344,7 +1334,8 @@ ScrollWatcher::updateWin(QWidget *mainWin)
                 else
                     tb->update();
             }
-    updateDeco(win->winId());
+    if (WindowData *wd = WindowData::memory(win->winId(), win))
+        wd->sync();
 }
 
 QSharedMemory

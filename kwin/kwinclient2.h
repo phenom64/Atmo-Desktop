@@ -7,6 +7,7 @@
 #include <KDecoration2/DecoratedClient>
 #include <QVariant>
 #include <QDebug>
+#include <netwm_def.h>
 #include "../config/settings.h"
 #include "../stylelib/windowdata.h"
 namespace KDecoration2 { class DecorationButtonGroup; }
@@ -76,6 +77,7 @@ class Grip;
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
+    friend class Grip;
     Q_OBJECT
 public:
     class Data
@@ -133,8 +135,7 @@ private:
     QSharedMemory *m_mem;
     QColor m_bg, m_fg;
     Gradient m_gradient;
-    WindowData *m_wd;
-    friend class Grip;
+    WindowData *m_wd; 
     Grip *m_grip;
     int m_prevLum, m_noise;
     bool m_separator;
@@ -183,6 +184,7 @@ private:
 
 class Grip : public QWidget
 {
+    friend class Deco;
     Q_OBJECT
 public:
     Grip(Deco *d);

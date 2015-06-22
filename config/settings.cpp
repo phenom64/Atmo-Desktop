@@ -13,6 +13,174 @@ QSettings *Settings::s_paletteSettings(0);
 Settings::Conf Settings::conf;
 bool Settings::s_isValid(false);
 
+static const char *s_key[] = {
+    "opacity",
+    "blacklist",
+    "removetitlebars",
+    "titlepos",
+    "hackdialogs",
+    "compactmenu",
+    "splitterext",
+    "maxarrowsize",
+    "balloontips",
+    "palette",
+    "animatestack",
+
+    "deco.buttons",
+    "deco.icon",
+    "deco.shadowsize",
+    "deco.framesize",
+
+    "pushbtn.rnd",
+    "pushbtn.shadow",
+    "pushbtn.gradient",
+    "pushbtn.tinthue",
+
+    "toolbtn.rnd",
+    "toolbtn.shadow",
+    "toolbtn.gradient",
+    "toolbtn.tinthue",
+    "toolbtn.followcolors",
+    "toolbtn.invertactive",
+    "toolbtn.flat",
+
+    "input.rnd",
+    "input.shadow",
+    "input.gradient",
+    "input.tinthue",
+
+    "tabs.safari",
+    "tabs.rnd",
+    "tabs.shadow",
+    "tabs.gradient",
+    "tabs.safrnd",          //safaritabs roundness capped at 8 atm, might change in the future if needed
+    "tabs.closebuttonside",
+
+    "uno",
+    "uno.gradient",
+    "uno.tinthue",
+    "uno.noisefactor",
+    "uno.noisestyle",
+    "uno.horizontal",
+    "uno.contentaware",
+    "uno.contentopacity",
+    "uno.contentblurradius",
+
+    "menues.icons",
+
+    "sliders.size",
+    "sliders.dot",
+    "sliders.slidergradient",
+    "sliders.groovegradient",
+    "sliders.grooveshadow",
+    "sliders.fillgroove",
+    "sliders.groovestyle",
+
+    "scrollers.size",
+    "scrollers.style",
+    "scrollers.slidergradient",
+    "scrollers.groovegradient",
+    "scrollers.groovestyle",
+    "scrollers.grooveshadow",
+
+    "views.treelines",
+
+    "progressbars.shadow",
+    "progressbars.rnd",
+
+    "windows.gradient",
+    "windows.noisefactor",
+    "windows.noisestyle",
+    "windows.horizontal",
+
+    "shadows.opacity",
+    "shadows.darkraisededges"
+};
+
+static const QVariant s_default[] = {
+    100,
+    "smplayer",
+    false,
+    1,
+    false,
+    false,
+    false,
+    9,
+    false,
+    QString(),
+    false,
+
+    0,
+    true,
+    32,
+    0,
+
+    8,
+    3,
+    "0.0:5, 1.0:-5",
+    "-1:0",
+
+    8,
+    3,
+    "0.0:5, 1.0:-5",
+    "-1:0",
+    false,
+    false,
+    false,
+
+    8,
+    3,
+    "0.0:-5, 1.0:5",
+    "-1:0",
+
+    true,
+    4,
+    3,
+    "0.0:5, 1.0:-5",
+    4,
+    0,
+
+    true,
+    "0.0:5, 1.0:-5",
+    "-1:0",
+    5,
+    0,
+    false,
+    QStringList(),
+    10,
+    2,
+
+    false,
+
+    16,
+    true,
+    "0.0:5, 1.0:-5",
+    "0.0:-5, 1.0:5",
+    0,
+    false,
+    0,
+
+    12,
+    0,
+    "0.0:5, 1.0:-5",
+    "0.0:5, 0.5:-5, 1.0:5",
+    0,
+    0,
+
+    true,
+
+    3,
+    4,
+
+    "0.0:-10, 0.5:10, 1.0:-10",
+    0,
+    0,
+    true,
+
+    33,
+    false
+};
+
 Gradient
 Settings::stringToGrad(const QString &string)
 {
@@ -204,7 +372,7 @@ static const QString getPreset(QSettings *s, const QString &appName)
 }
 
 void
-Settings::read()
+Settings::init()
 {
     if (s_settings)
     {
@@ -252,7 +420,12 @@ Settings::read()
 
     if (!s_settings)
         s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+}
 
+void
+Settings::read()
+{
+    init();
 #define READINT(_VAR_) s_settings->value(_VAR_).toInt()
 #define READBOOL(_VAR_) s_settings->value(_VAR_).toBool()
 #define READFLOAT(_VAR_) s_settings->value(_VAR_).toFloat()
@@ -349,4 +522,15 @@ Settings::read()
 #undef READSTRINGLIST
     readPalette();
     s_isValid = true;
+}
+
+void
+Settings::writeDefaults()
+{
+    if (!s_settings)
+        return;
+
+    for (int i = 0; i < Keycount; ++i)
+        s_settings->setValue(s_key[i], s_default[i]);
+    s_settings->sync();
 }

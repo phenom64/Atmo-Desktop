@@ -332,6 +332,24 @@ XHandler::freePix(const XPixmap pixmap)
 }
 
 void
+XHandler::restack(const XWindow win, const XWindow parent)
+{
+#if defined(HASXCB)
+    xcb_connection_t *c = QX11Info::connection();
+    xcb_window_t current = parent;
+    xcb_query_tree_cookie_t cookie = xcb_query_tree_unchecked(c, current);
+    xcb_query_tree_reply_t *tree = xcb_query_tree_reply(c, cookie, 0);
+    if (tree && tree->parent)
+        current = tree->parent;
+    // reparent
+    xcb_reparent_window(c, win, current, 0, 0);
+    static const quint32 value[] = {XCB_STACK_MODE_ABOVE};
+    xcb_configure_window(c, win, XCB_CONFIG_WINDOW_STACK_MODE, value);
+    xcb_map_window(c, win);
+#endif
+}
+
+void
 XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id)
 {
     int n;

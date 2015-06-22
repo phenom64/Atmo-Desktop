@@ -117,6 +117,9 @@ StackAnimator::animate()
             w->update();
         }
         m_stack->parentWidget()->update();
+        const QList<QWidget *> kids = m_stack->parentWidget()->findChildren<QWidget *>();
+        for (int i = 0; i < kids.count(); ++i)
+            kids.at(i)->update();
     }
 }
 

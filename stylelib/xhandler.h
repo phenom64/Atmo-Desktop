@@ -59,6 +59,7 @@ public:
     static void freePix(const XPixmap pixmap);
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
     static void init();
+    static void restack(const XWindow win, const XWindow parent);
 
 protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
