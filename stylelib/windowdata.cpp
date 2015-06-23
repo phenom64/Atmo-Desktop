@@ -149,7 +149,9 @@ WindowData::sync()
     QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
     msg << m_winId;
     QDBusConnection::sessionBus().send(msg);
+    return true;
 #endif
+    return false;
 }
 
 //----------------------------------------------------------------------------------------------------------

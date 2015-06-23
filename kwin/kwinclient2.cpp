@@ -70,6 +70,7 @@ static void addDataForWinClass(const QString &winClass, QSettings &s)
     d.grad = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noise = s.value("noise", 20).toUInt();
     d.separator = s.value("separator", true).toBool();
+    d.btnStyle = s.value("btnstyle", -2).toInt();
     Deco::Data::s_data.insert(winClass, d);
 }
 
@@ -103,6 +104,8 @@ Deco::Data::decoData(const QString &winClass, Deco *d)
     d->m_gradient = data.grad;
     d->m_noise = data.noise;
     d->m_separator = data.separator;
+    if (data.btnStyle != -2)
+        d->m_buttonStyle = data.btnStyle;
 }
 
 ///-------------------------------------------------------------------------------------------------
@@ -150,6 +153,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_separator(true)
     , m_wd(0)
     , m_grip(0)
+    , m_buttonStyle(0)
 {
 }
 
@@ -163,15 +167,14 @@ void
 Deco::init()
 {
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
-    int buttonStyle = 0;
     if (const uint id = client().data()->windowId())
     {
         AdaptorManager::instance()->addDeco(this);
-        buttonStyle = dConf.deco.buttons;
+        m_buttonStyle = dConf.deco.buttons;
         if (m_wd = WindowData::memory(id, this))
         {
             initMemory();
-            buttonStyle = m_wd->value<int>(WindowData::Buttons, buttonStyle);
+            m_buttonStyle = m_wd->value<int>(WindowData::Buttons, m_buttonStyle);
         }
         else
             checkForDataFromWindowClass();
@@ -191,7 +194,7 @@ Deco::init()
     for (int i = 0; i < lb.count(); ++i)
         if (Button *b = Button::create(lb.at(i), this, m_leftButtons))
         {
-            b->setButtonStyle(buttonStyle);
+            b->setButtonStyle(m_buttonStyle);
             b->setShadowOpacity(shadowOpacity);
             m_leftButtons->addButton(b);
         }
@@ -202,7 +205,7 @@ Deco::init()
     for (int i = 0; i < rb.count(); ++i)
         if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
         {
-            b->setButtonStyle(buttonStyle);
+            b->setButtonStyle(m_buttonStyle);
             b->setShadowOpacity(shadowOpacity);
             m_rightButtons->addButton(b);
         }

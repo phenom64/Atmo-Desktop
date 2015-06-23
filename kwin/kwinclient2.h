@@ -83,7 +83,7 @@ public:
     class Data
     {
     public:
-        int noise;
+        int noise, btnStyle;
         Gradient grad;
         QColor bg, fg;
         bool separator;
@@ -94,6 +94,7 @@ public:
             bg = d.bg;
             fg = d.fg;
             separator = d.separator;
+            btnStyle = d.btnStyle;
         }
         static void decoData(const QString &winClass, Deco *d);
         static QMap<QString, Data> s_data;
@@ -137,7 +138,7 @@ private:
     Gradient m_gradient;
     WindowData *m_wd; 
     Grip *m_grip;
-    int m_prevLum, m_noise;
+    int m_prevLum, m_noise, m_buttonStyle;
     bool m_separator;
 };
 
