@@ -192,9 +192,9 @@ public:
     enum Data { Size = 16 };
 
 protected:
-    void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void restack();
+    void setColor(const QColor &c);
 
 protected slots:
     void updatePosition();

@@ -350,6 +350,15 @@ XHandler::restack(const XWindow win, const XWindow parent)
 }
 
 void
+XHandler::move(const XWindow win, const QPoint &p)
+{
+#if defined(HASXCB)
+    unsigned int values[2] = {p.x(), p.y()};
+    xcb_configure_window(QX11Info::connection(), win, XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
+#endif
+}
+
+void
 XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id)
 {
     int n;

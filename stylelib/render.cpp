@@ -820,11 +820,6 @@ Render::drawClickable(Shadow s,
     if (s >= ShadowCount)
         return;
 
-    QPaintDevice *d(p->device());
-    QPixmap pix(d->width(), d->height());
-    pix.fill(Qt::transparent);
-    QPainter pt(&pix);
-
     const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     const bool sunken(opt && opt->state & (QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange));
@@ -908,10 +903,10 @@ Render::drawClickable(Shadow s,
             lg.setColorAt(0.8f, QColor(0, 0, 0, o/3));
             lg.setColorAt(1.0f, QColor(0, 0, 0, o));
             QBrush sh(lg);
-            renderShadow(s, r, &pt, rnd, sides, opacity, &sh);
+            renderShadow(s, r, p, rnd, sides, opacity, &sh);
         }
         else
-            renderShadow(s, r, &pt, rnd, sides, opacity, shadow);
+            renderShadow(s, r, p, rnd, sides, opacity, shadow);
         const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
         const int m(2);
         if (s==Yosemite)
@@ -929,7 +924,7 @@ Render::drawClickable(Shadow s,
         int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
-        renderMask(r, &pt, lg, rnd, sides, offSet);
+        renderMask(r, p, lg, rnd, sides, offSet);
         const int m(qMin(r.height(), r.width())<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
@@ -943,16 +938,8 @@ Render::drawClickable(Shadow s,
     if (mask)
     {
         const bool n(s == Sunken && bgLum > pbgLum);
-        renderMask(r.sAdjusted(n, n, -n, -n), &pt, *mask, rnd, sides, offSet);
+        renderMask(r.sAdjusted(n, n, -n, -n), p, *mask, rnd, sides, offSet);
         rnd = qMin(rnd, qFloor(qMin(r.height(), r.width())/2.0f));
-    }
-    else if (s==Carved)
-    {
-        QBrush newMask(Qt::black);
-        const QPainter::CompositionMode mode(pt.compositionMode());
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        renderMask(r, &pt, newMask, rnd, sides, offSet);
-        pt.setCompositionMode(mode);
     }
 
     /// END PLATE
@@ -960,7 +947,7 @@ Render::drawClickable(Shadow s,
     if (s==Carved)
     {
         const float o(parentContrast?qMax(pbgLum, bgLum)/255.0f:opacity);
-        renderShadow(Rect, r, &pt, rnd, sides, o);
+        renderShadow(Rect, r, p, rnd, sides, o);
     }
     else if (s==Sunken||s==Etched)
     {
@@ -968,19 +955,18 @@ Render::drawClickable(Shadow s,
 //            renderShadow(Rect, r, p, rnd, sides, opacity);
         r.sAdjust(0, 0, 0, 1);
 //        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        renderShadow(s, r, &pt, rnd, sides, qMin(1.0f, (((255-qMin(pbgLum, bgLum))/255.0f)*opacity)+opacity));
+        renderShadow(s, r, p, rnd, sides, qMin(1.0f, (((255-qMin(pbgLum, bgLum))/255.0f)*opacity)+opacity));
 //        pt.setCompositionMode(QPainter::CompositionMode_Multiply);
-//        renderShadow(s, r, &pt, rnd, sides, opacity);
+//        renderShadow(s, r, p, rnd, sides, opacity);
     }
     else if (s==Raised && !isToolBox)
     {
-        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
         QLinearGradient lg(0, 0, 0, r.height());
         const float lumop(qMin<float>(255.0f, opacity*1.5f*bgLum));
         lg.setColorAt(0.0f, QColor(255, 255, 255, lumop));
         lg.setColorAt(0.5f, QColor(255, 255, 255, opacity*0.75f*bgLum));
         QBrush b(lg);
-        renderShadow(Rect, r, &pt, rnd, sides, 1.0f, &b);
+        renderShadow(Rect, r, p, rnd, sides, 1.0f, &b);
 
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
@@ -997,14 +983,11 @@ Render::drawClickable(Shadow s,
                 edges.setColorAt(1.0f-position, Qt::transparent);
                 edges.setColorAt(1.0f, edge);
             }
-            renderMask(r, &pt, edges, rnd, sides);
+            renderMask(r, p, edges, rnd, sides);
         }
     }
     else if (s==Rect)
-        renderShadow(s, r, &pt, rnd, sides, opacity);
-
-    pt.end();
-    p->drawPixmap(0, 0, d->width(), d->height(), pix);
+        renderShadow(s, r, p, rnd, sides, opacity);
 }
 
 Render::Pos

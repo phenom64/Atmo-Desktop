@@ -10,6 +10,7 @@ endif (QT5BUILD)
 project(${PROJECT})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if (QT5BUILD)
     find_package(Qt5Core REQUIRED)

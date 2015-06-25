@@ -54,7 +54,7 @@ StackAnimator::manage(QStackedLayout *l)
 void
 StackAnimator::currentChanged(int i)
 {
-    if (m_stack->parentWidget()->isHidden())
+    if (m_stack->parentWidget()->isHidden() || QCoreApplication::closingDown())
         return;
     m_pix = QPixmap(m_widget->size());
     m_widget->setAttribute(Qt::WA_UpdatesDisabled, true);

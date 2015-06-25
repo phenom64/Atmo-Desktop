@@ -3,10 +3,12 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QApplication>
+#include <QDesktopServices>
 #include <QPalette>
 #include <QDebug>
 #include <QLabel>
 #include <QTimer>
+#include <QUrl>
 
 QSettings *Settings::s_settings(0);
 QSettings *Settings::s_paletteSettings(0);
@@ -372,16 +374,16 @@ static const QString getPreset(QSettings *s, const QString &appName)
 }
 
 void
-Settings::init()
+Settings::initiate()
 {
     if (s_settings)
     {
-        delete s_settings;
+        s_settings->deleteLater();
         s_settings = 0;
     }
     if (s_paletteSettings)
     {
-        delete s_paletteSettings;
+        s_paletteSettings->deleteLater();
         s_paletteSettings = 0;
     }
 
@@ -413,11 +415,10 @@ Settings::init()
         settingsFileName = preset;
         if (s_settings)
         {
-            delete s_settings;
+            s_settings->deleteLater();
             s_settings = 0;
         }
     }
-
     if (!s_settings)
         s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
 }
@@ -425,7 +426,7 @@ Settings::init()
 void
 Settings::read()
 {
-    init();
+    Settings::initiate();
 #define READINT(_VAR_) s_settings->value(_VAR_).toInt()
 #define READBOOL(_VAR_) s_settings->value(_VAR_).toBool()
 #define READFLOAT(_VAR_) s_settings->value(_VAR_).toFloat()
@@ -530,7 +531,18 @@ Settings::writeDefaults()
     if (!s_settings)
         return;
 
+    qDebug() << "attempting to write default values...";
     for (int i = 0; i < Keycount; ++i)
         s_settings->setValue(s_key[i], s_default[i]);
     s_settings->sync();
+}
+
+void
+Settings::edit()
+{
+    if (s_settings)
+    {
+        qDebug() << "trying to open file" << s_settings->fileName() << "in your default text editor.";
+        QDesktopServices::openUrl(QUrl::fromLocalFile(s_settings->fileName()));
+    }
 }

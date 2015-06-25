@@ -446,7 +446,8 @@ public:
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
     static Settings *instance();
-    static void init();
+    static void edit();
+    static void initiate();
     static void read();
     static void readPalette();
     static QSettings *paletteSettings();

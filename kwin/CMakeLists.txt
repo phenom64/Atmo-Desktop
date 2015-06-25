@@ -10,8 +10,34 @@ if (QT5BUILD)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
 
-    set(SRCS kwinclient2.cpp decobutton.cpp)
-    set(HDRS kwinclient2.h decobutton.h decoadaptor.h)
+    set(SRCS
+        kwinclient2.cpp
+        decobutton.cpp
+        ../macmenu.cpp
+        ../stylelib/color.cpp
+        ../stylelib/xhandler.cpp
+        ../stylelib/shadowhandler.cpp
+        ../stylelib/render.cpp
+        ../stylelib/widgets.cpp
+        ../stylelib/windowdata.cpp
+        ../stylelib/ops.cpp
+        ../stylelib/handlers.cpp
+        ../config/settings.cpp)
+    set(HDRS
+        kwinclient2.h
+        decobutton.h
+        decoadaptor.h
+        ../macmenu.h
+        ../macmenu-dbus.h
+        ../stylelib/color.h
+        ../stylelib/xhandler.h
+        ../stylelib/shadowhandler.h
+        ../stylelib/render.h
+        ../stylelib/widgets.h
+        ../stylelib/windowdata.h
+        ../stylelib/ops.h
+        ../stylelib/handlers.h
+        ../config/settings.h)
     
 #     qt5_wrap_cpp(MOC_ADAPTOR decoadaptor.h)
     ### build library
@@ -22,7 +48,6 @@ if (QT5BUILD)
             Qt5::Core
             Qt5::Gui
             Qt5::DBus
-            styleproject_qt5
         PRIVATE
             KDecoration2::KDecoration
             KF5::ConfigCore

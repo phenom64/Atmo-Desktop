@@ -38,9 +38,6 @@
 
 #include <QDebug>
 #include <QX11Info>
-#if defined(HASXCB)
-#include <xcb/xproto.h>
-#endif
 
 K_PLUGIN_FACTORY_WITH_JSON(
     DecoFactory,
@@ -126,6 +123,7 @@ AdaptorManager::AdaptorManager()
     XHandler::init();
     ShadowHandler::removeDelete();
     Render::makeNoise();
+    Render::generateData(QPalette());
     readWindowData();
     new DecoAdaptor(this);
     QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
@@ -159,7 +157,8 @@ Deco::Deco(QObject *parent, const QVariantList &args)
 
 Deco::~Deco()
 {
-    m_grip->deleteLater();
+    if (m_grip)
+        m_grip->deleteLater();
     AdaptorManager::instance()->removeDeco(this);
 }
 
@@ -526,6 +525,7 @@ Grip::Grip(Deco *d)
         hide();
         return;
     }
+    setColor(Color::mid(m_deco->fgColor(), m_deco->bgColor()));
     setFixedSize(Size, Size);
     setCursor(Qt::SizeFDiagCursor);
     KDecoration2::DecoratedClient *c = m_deco->client().data();
@@ -539,32 +539,28 @@ Grip::Grip(Deco *d)
 }
 
 void
+Grip::setColor(const QColor &c)
+{
+    QPalette p = m_deco->client().data()->palette();
+    p.setColor(backgroundRole(), c);
+    setPalette(p);
+    setAutoFillBackground(true);
+}
+
+void
 Grip::updatePosition()
 {
-#if defined(HASXCB)
     KDecoration2::DecoratedClient *c = m_deco->client().data();
-    unsigned int values[2] = { c->width() - Size, c->height() - Size };
-    xcb_configure_window(QX11Info::connection(), winId(), XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
-#endif
+    XHandler::move(winId(), QPoint(c->width()-Size, c->height()-Size));
 }
 
 void
 Grip::restack()
 {
-    KDecoration2::DecoratedClient *c = m_deco->client().data();
-    xcb_window_t windowId = c->windowId();
-    if (windowId)
+    if (XHandler::XWindow windowId = m_deco->client().data()->windowId())
         XHandler::restack(winId(), windowId);
     else
         hide();
-}
-
-void
-Grip::paintEvent(QPaintEvent *e)
-{
-    QPainter p(this);
-    p.fillRect(rect(), Color::mid(m_deco->fgColor(), m_deco->bgColor()));
-    p.end();
 }
 
 void
