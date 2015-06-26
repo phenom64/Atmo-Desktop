@@ -271,8 +271,6 @@
 #define READSHADOWOPACITY       SHADOWOPACITY, DEFSHADOWOPACITY
 #define READSHADOWDARKRAISED    SHADOWDARKRAISED, DEFSHADOWDARKRAISED
 
-#define CONFIGPATH              QString("%1/.config/dsp").arg(QDir::homePath())
-
 typedef QList<QPair<float, int> > Gradient;
 typedef QPair<float, int> GradientStop;
 typedef QPair<QColor, int> Tint;

@@ -58,14 +58,11 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
 bool
 StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ComboBox, opt, option);
+    const QStyleOptionComboBox *opt = qstyleoption_cast<const QStyleOptionComboBox *>(option);
     if (!opt)
         return true;
 
-    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button))
-            , fg(Ops::fgRole(widget, QPalette::ButtonText))
-            , ar(QPalette::HighlightedText);
-
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button));
     const bool ltr(opt->direction == Qt::LeftToRight);
 
     QRect arrowRect(subControlRect(CC_ComboBox, opt, SC_ComboBoxArrow, widget));
@@ -73,24 +70,27 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect iconRect; //there is no SC_ rect function for this?
     QRect textRect(frameRect);
 
+    int m(2);
     if (!opt->currentIcon.isNull())
     {
         const int h(frameRect.height());
         iconRect = QRect(0, 0, h, h);
+        static const int iconMargin(Render::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow));
+        if (opt->direction == Qt::LeftToRight)
+        {
+            iconRect.moveLeft(frameRect.left()+iconMargin);
+            textRect.setLeft(iconRect.right());
+            textRect.setRight(arrowRect.left());
+        }
+        else if (opt->direction == Qt::RightToLeft)
+        {
+            iconRect.moveRight(frameRect.right()+iconMargin);
+            textRect.setRight(iconRect.left());
+            textRect.setLeft(arrowRect.right());
+        }
     }
-    if (opt->direction == Qt::LeftToRight)
-    {
-        iconRect.moveLeft(frameRect.left());
-        textRect.setLeft(iconRect.right());
-        textRect.setRight(arrowRect.left());
-    }
-    else if (opt->direction == Qt::RightToLeft)
-    {
-        iconRect.moveRight(frameRect.right());
-        textRect.setRight(iconRect.left());
-        textRect.setLeft(arrowRect.right());
-    }
-    int m(2);
+
+
 
     if (!opt->editable)
     {
@@ -108,8 +108,6 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
         QBrush mask(lg);
         Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask);
-
-        const int o(dConf.shadows.opacity*255.0f);
 
         const QColor hc(opt->palette.color(QPalette::Highlight));
         QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
@@ -163,9 +161,9 @@ StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, c
     if (!opt->currentIcon.isNull())
     {
         if (ltr)
-            rect.setLeft(rect.left()+opt->iconSize.width());
+            rect.setLeft(rect.left()+(opt->iconSize.width()+Render::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow)));
         else
-            rect.setRight(rect.right()-opt->iconSize.width());
+            rect.setRight(rect.right()-(opt->iconSize.width()+Render::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow)));
     }
     drawItemText(painter, rect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->currentText, fg);
     return true;

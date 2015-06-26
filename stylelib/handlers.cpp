@@ -1053,6 +1053,8 @@ Window::getHeadHeight(QWidget *win, bool &separator)
 void
 Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
 {
+    if (!data || !win || !h)
+        return;
     const bool hor(dConf.uno.hor);
     QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
     QColor bc(pal.color(win->backgroundRole()));

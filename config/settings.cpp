@@ -15,6 +15,8 @@ QSettings *Settings::s_paletteSettings(0);
 Settings::Conf Settings::conf;
 bool Settings::s_isValid(false);
 
+static const QString confPath = QString("%1/.config/dsp").arg(QDir::homePath());
+
 static const char *s_key[] = {
     "opacity",
     "blacklist",
@@ -330,7 +332,7 @@ QSettings
     if (paletteFileName.isEmpty())
         return 0;
 
-    QString settingsPath(CONFIGPATH);
+    QString settingsPath(confPath);
     settingsPath.append(QString("/%1.conf").arg(paletteFileName));
 
     s_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
@@ -405,7 +407,7 @@ Settings::initiate()
     else
         conf.app = Unspecific;
 
-    const QDir settingsDir(CONFIGPATH);
+    const QDir settingsDir(confPath);
     QString settingsFileName("dsp");
     s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
     const QString preset(getPreset(s_settings, conf.m_appName));
