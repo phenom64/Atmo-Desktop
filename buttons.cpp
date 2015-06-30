@@ -393,14 +393,14 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     if (widget)
         bar = qobject_cast<const QToolBar *>(widget->parentWidget());
     const bool hor(!bar||bar->orientation() == Qt::Horizontal);
-
+    const bool multiTab(widget && widget->inherits("KMultiTabBarTab"));
     Render::Sides sides = Render::All;
     bool nextSelected(false), prevSelected(false), isInTopToolBar(false);
     Ops::toolButtonData(btn, nextSelected, prevSelected, isInTopToolBar, sides);
 
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
-    QRect mr(Render::maskRect(dConf.toolbtn.shadow, rect, sides));
+    QRect mr(multiTab?rect:Render::maskRect(dConf.toolbtn.shadow, rect, sides));
     const bool hasMenu(Ops::hasMenu(btn, opt));
     const bool isFlat(dConf.toolbtn.flat);
     QPalette::ColorRole bg(Ops::bgRole(isFlat?bar:widget, isFlat?QPalette::Window:QPalette::Button)),
@@ -425,7 +425,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     }
     QRect ir(mr);
     const Render::Pos rp(Render::pos(sides, bar?bar->orientation():Qt::Horizontal));
-    if (!(widget && widget->inherits("KMultiTabBarTab")))
+    if (!multiTab)
     switch (opt->toolButtonStyle)
     {
     case Qt::ToolButtonTextBesideIcon:
@@ -466,7 +466,12 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     }
     const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
     QPalette::ColorRole textRole(bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
-    if (isFlat || !bar)
+    if (multiTab)
+    {
+        textRole = QPalette::ButtonText;
+        bg = QPalette::Button;
+    }
+    else if (isFlat || !bar)
     {
         textRole = QPalette::WindowText;
         bg = Ops::opposingRole(textRole);

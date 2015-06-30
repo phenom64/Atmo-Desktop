@@ -35,6 +35,7 @@
 
 #include <QSettings>
 #include <QDir>
+#include <QWindow>
 
 #include <QDebug>
 #include <QX11Info>
@@ -167,7 +168,7 @@ Deco::init()
 {
     setBorders(QMargins(0, TITLEHEIGHT, 0, 0));
     if (const uint id = client().data()->windowId())
-    {
+    {;
         AdaptorManager::instance()->addDeco(this);
         m_buttonStyle = dConf.deco.buttons;
         if (m_wd = WindowData::memory(id, this))
@@ -209,6 +210,10 @@ Deco::init()
             m_rightButtons->addButton(b);
         }
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
+#if 0
+    connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::updateMask);
+    connect(client().data(), &KDecoration2::DecoratedClient::heightChanged, this, &Deco::updateMask);
+#endif
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
 
@@ -274,6 +279,33 @@ Deco::checkForDataFromWindowClass()
     KWindowInfo info(client().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
     Data::decoData(info.windowClassClass(), this);
     updateBgPixmap();
+}
+
+void
+Deco::updateMask()
+{
+#if 0
+    QScopedPointer<QWindow> win(QWindow::fromWinId(client().data()->decorationId()));
+    if (!win || win.data()->isModal())
+        return;
+
+    const int x(0), y(0);
+    const int w(client().data()->width()), h(client().data()->height()+TITLEHEIGHT);
+//    if (XHandler::compositingActive())
+    {
+        QRegion r(x+2, y, (x+w)-4, y+h);
+        r += QRegion(x+1, y, (x+w)-2, (y+h)-1);
+        r += QRegion(x, y, x+w, (y+h)-2);
+        win.data()->setMask(r);
+    }
+//    else
+//    {
+//        QRegion r(0, 2, w, h-4);
+//        r += QRegion(1, 1, w-2, h-2);
+//        r += QRegion(2, 0, w-4, h);
+//        win->setMask(r);
+//    }
+#endif
 }
 
 void

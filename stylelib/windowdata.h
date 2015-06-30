@@ -36,8 +36,11 @@ public:
         ShadowOpacity = 0xffff0000
     };
     enum SharedValue { //when data cast to unsigned int ptr
+        BgColor = 2,
+        FgColor = 3,
         ImageWidth = 4,
-        ImageHeight = 5
+        ImageHeight = 5,
+        ImageData = 6
     };
 
     typedef unsigned int Type;
@@ -94,19 +97,20 @@ public:
     bool isEmpty();
     bool sync();
 
-    QColor bg();
+    const QColor bg();
     void setBg(const QColor &c);
 
-    QColor fg();
+    const QColor fg();
     void setFg(const QColor &c);
 
-    QImage image();
+    const QImage image() const;
 
     //this should be passed to the QImage constructor...
     uchar *imageData();
+    const uchar *constImageData() const;
 
     void setImageSize(const int w, const int h);
-    QSize imageSize();
+    const QSize imageSize() const;
 
 protected:
     WindowData(const QString &key, QObject *parent, uint id = 0):QSharedMemory(key, parent),m_winId(id){setObjectName(key);}

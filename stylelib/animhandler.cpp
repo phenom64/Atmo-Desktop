@@ -10,6 +10,8 @@
 #include <QToolButton>
 #include <QToolBar>
 #include <QHoverEvent>
+#include <QAbstractScrollArea>
+#include <QAbstractItemView>
 
 using namespace Anim;
 
@@ -481,3 +483,85 @@ ToolBtns::eventFilter(QObject *o, QEvent *e)
     }
     return false;
 }
+
+//-------------------------------------------------------------------------------------------
+
+ScrollAnimator::ScrollAnimator(QObject *parent)
+    : QObject(parent)
+    , m_timer(new QTimer(this))
+    , m_up(false)
+    , m_delta(0)
+    , m_step(0)
+{
+    if (!parent)
+    {
+        deleteLater();
+        return;
+    }
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(updateScrollValue()));
+    static_cast<QAbstractScrollArea *>(parent)->viewport()->installEventFilter(this);
+}
+
+void
+ScrollAnimator::manage(QAbstractScrollArea *area)
+{
+    if (!area)
+        return;
+    ScrollAnimator *sa = area->findChild<ScrollAnimator *>();
+    if (sa && sa->parent() == area)
+        return;
+
+    if (QAbstractItemView *v = qobject_cast<QAbstractItemView *>(area))
+        if (v->verticalScrollMode() == QAbstractItemView::ScrollPerItem)
+            v->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    new ScrollAnimator(area);
+}
+
+void
+ScrollAnimator::updateScrollValue()
+{
+    if (m_delta > 0)
+    {
+        QScrollBar *bar = static_cast<QAbstractScrollArea *>(parent())->verticalScrollBar();
+        if ((m_up && bar->value() == bar->minimum())
+               || (!m_up && bar->value() == bar->maximum()))
+        {
+            m_delta = 0;
+            m_timer->stop();
+            return;
+        }
+        bar->setValue(bar->value() + (m_up?-m_delta:m_delta));
+        m_delta -= m_step;
+    }
+    else
+    {
+        m_delta = 0;
+        m_timer->stop();
+    }
+}
+
+bool
+ScrollAnimator::processWheelEvent(QWheelEvent *e)
+{
+    if (e->orientation() == Qt::Horizontal || e->modifiers())
+        return false;
+    const bool wasUp(m_up);
+    m_up = e->delta() > 0;
+    if (m_up != wasUp)
+        m_delta = 0;
+
+    m_delta+=qBound(2, static_cast<QAbstractScrollArea *>(parent())->verticalScrollBar()->singleStep(), 10);
+    m_step=qMax(1, m_delta/10);
+    if (!m_timer->isActive())
+        m_timer->start(20);
+    return true;
+}
+
+bool
+ScrollAnimator::eventFilter(QObject *o, QEvent *e)
+{
+    if (e->type() == QEvent::Wheel)
+        return processWheelEvent(static_cast<QWheelEvent *>(e));
+    return false;
+}
+

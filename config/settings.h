@@ -17,6 +17,7 @@
 #define BALLOONTIPS         "balloontips"
 #define PALETTE             "palette"
 #define ANIMATESTACK        "animatestack"
+#define ANIMATESCROLL       "animatescroll"
 
 #define DECOBUTTONS         "deco.buttons"
 #define DECOICON            "deco.icon"
@@ -118,6 +119,7 @@
 #define DEFBALLOONTIPS          false
 #define DEFPALETTE              QString()
 #define DEFANIMATESTACK         false
+#define DEFANIMATESCROLL        false
 
 #define DEFDECOBUTTONS          0
 #define DEFDECOICON             true
@@ -200,6 +202,7 @@
 #define READBALLOONTIPS         BALLOONTIPS, DEFBALLOONTIPS
 #define READPALETTE             PALETTE, DEFPALETTE
 #define READANIMATESTACK        ANIMATESTACK, DEFANIMATESTACK
+#define READANIMATESCROLL       ANIMATESCROLL, DEFANIMATESCROLL
 
 #define READDECOBUTTONS         DECOBUTTONS, DEFDECOBUTTONS
 #define READDECOICON            DECOICON, DEFDECOICON
@@ -294,6 +297,7 @@ public:
         Balloontips,
         Palette,
         Animatestack,
+        Animatescroll,
         Decobuttons,
         Decoicon,
         Decoshadowsize,
@@ -363,7 +367,7 @@ public:
         float opacity;
         QStringList blackList;
         bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips;
-        int titlePos, arrowSize, animateStack;
+        int titlePos, arrowSize, animateStack, animateScroll;
         QPalette *palette;
         struct deco
         {
@@ -452,6 +456,11 @@ public:
     static Gradient stringToGrad(const QString &string);
     static void writePalette();
     static void writeDefaults();
+    template<typename T> static inline T readValue(const Key k)
+    {
+//        s_settings
+        return T();
+    }
 
 protected:
     static void writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c);

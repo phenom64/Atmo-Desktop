@@ -208,20 +208,18 @@ Overlay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-//        int (Overlay::*widthHeight)((pos==West||pos==East)?&Overlay::width:Overlay::height);
+        int (QWidget::*widthOrHeight)() const = (pos[i]==West||pos[i]==East)?&Overlay::width:&Overlay::height;
         const bool isSplitter((qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter") && w->style()->pixelMetric(QStyle::PM_SplitterWidth) == 1);
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
         const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode());
         if ( isStatusBar || isSplitter || isTabBar )
             sides &= ~l[i];
-        else if (QFrame *f = getFrameForWidget(w, pos[i]))
+        else if (Overlay *ol = hasOverlay(getFrameForWidget(w, pos[i])))
         {
-            if (Overlay *lay = f->findChild<Overlay *>())
-                if (lay->parentWidget() == f)
-                    if (lay->lines() & wl[i])
-                        sides &= ~l[i];
-                    else
-                        sides |= l[i];
+            if (ol->lines() & wl[i] && (ol->*widthOrHeight)() < (this->*widthOrHeight)())
+                sides &= ~l[i];
+            else
+                sides |= l[i];
         }
     }
     QRect winRect = m_frame->window()->rect();
@@ -323,13 +321,13 @@ Overlay::parentChanged()
 //        m_frame->window() = 0;
 }
 
-bool
-Overlay::hasOverlay(const QWidget *frame)
+Overlay
+*Overlay::hasOverlay(const QWidget *frame)
 {
     if (!frame)
-        return false;
+        return 0;
     if (Overlay *o = frame->findChild<Overlay *>())
         if (o->parentWidget() == frame)
-            return true;
-    return false;
+            return o;
+    return 0;
 }

@@ -29,6 +29,7 @@ static const char *s_key[] = {
     "balloontips",
     "palette",
     "animatestack",
+    "animatescroll",
 
     "deco.buttons",
     "deco.icon",
@@ -112,6 +113,7 @@ static const QVariant s_default[] = {
     9,
     false,
     QString(),
+    false,
     false,
 
     0,
@@ -447,6 +449,7 @@ Settings::read()
     conf.balloonTips            = READBOOL(READBALLOONTIPS);
     conf.arrowSize              = READINT(READARROWSIZE);
     conf.animateStack           = READBOOL(READANIMATESTACK);
+    conf.animateScroll          = READBOOL(READANIMATESCROLL);
     //deco
     conf.deco.buttons           = READINT(READDECOBUTTONS);
     conf.deco.icon              = READBOOL(READDECOICON);

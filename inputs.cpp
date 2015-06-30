@@ -70,7 +70,6 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     QRect iconRect; //there is no SC_ rect function for this?
     QRect textRect(frameRect);
 
-    int m(2);
     if (!opt->currentIcon.isNull())
     {
         const int h(frameRect.height());
@@ -109,7 +108,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         QBrush mask(lg);
         Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask);
 
-        const QColor hc(opt->palette.color(QPalette::Highlight));
+        const QColor hc(Color::mid(bgc, opt->palette.color(QPalette::Highlight), 1, 3));
         QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
         lga.setStops(Settings::gradientStops(dConf.pushbtn.gradient, hc));
         mask = QBrush(lga);
@@ -138,10 +137,12 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
-    m*=2;
     const QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText));
     QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2));
     QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0));
+    int m(qMax(2, Render::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
+    a1.moveLeft(a1.left()+(ltr?-m:m));
+    a2.moveLeft(a2.left()+(ltr?-m:m));
     Ops::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Up, 7);
     Ops::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Down, 7);
     return true;

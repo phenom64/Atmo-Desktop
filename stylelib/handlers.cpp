@@ -1056,17 +1056,22 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
     if (!data || !win || !h)
         return;
     const bool hor(dConf.uno.hor);
-    QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
     QColor bc(pal.color(win->backgroundRole()));
-    bc = Color::mid(bc, dConf.uno.tint.first, 100-dConf.uno.tint.second, dConf.uno.tint.second);
-    lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
-
+    if (dConf.uno.tint.first.isValid())
+        bc = Color::mid(bc, dConf.uno.tint.first, 100-dConf.uno.tint.second, dConf.uno.tint.second);
+    QBrush b(bc);
+    if (!dConf.uno.gradient.isEmpty())
+    {
+        QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
+        lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
+        b = QBrush(lg);
+    }
     const unsigned int n(dConf.uno.noise);
     w = (hor?win->width():(n?Render::noise().width():1));
     QImage img(data, w, h, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     QPainter pt(&img);
-    pt.fillRect(img.rect(), lg);
+    pt.fillRect(img.rect(), b);
     if (n)
     {
 //        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);

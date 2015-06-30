@@ -7,7 +7,7 @@
 #include <QDBusConnection>
 #endif
 
-static int s_memSize = (sizeof(unsigned int)*6)+(256*256*4);
+static const int s_memSize = (sizeof(unsigned int)*6)+(256*256*4);
 
 WindowData
 *WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
@@ -53,7 +53,7 @@ WindowData
 void
 WindowData::setImageSize(const int w, const int h)
 {
-    unsigned int *size = reinterpret_cast<unsigned int *>(data());
+    uint *size = reinterpret_cast<uint *>(data());
     size[ImageWidth] = w;
     size[ImageHeight] = h;
 }
@@ -61,37 +61,39 @@ WindowData::setImageSize(const int w, const int h)
 uchar
 *WindowData::imageData()
 {
-    uchar *d = reinterpret_cast<uchar *>(data());
-    d = &d[sizeof(unsigned int)*4];
-    unsigned int *size = reinterpret_cast<unsigned int *>(d);
-    d = reinterpret_cast<uchar *>(&size[2]);
-    return d;
+    uint *d = reinterpret_cast<uint *>(data());
+    return reinterpret_cast<uchar *>(&d[ImageData]);
 }
 
-QSize
-WindowData::imageSize()
+const uchar
+*WindowData::constImageData() const
 {
-    uchar *d = reinterpret_cast<uchar *>(data());
-    d = &d[sizeof(unsigned int)*4];
-    unsigned int *size = reinterpret_cast<unsigned int *>(d);
-    return QSize(size[0], size[1]);
+    const uint *d = reinterpret_cast<const uint *>(constData());
+    return reinterpret_cast<const uchar *>(&d[ImageData]);
 }
 
-QImage
-WindowData::image()
+const QSize
+WindowData::imageSize() const
+{
+    const uint *d = reinterpret_cast<const uint *>(constData());
+    return QSize(d[ImageWidth], d[ImageHeight]);
+}
+
+const QImage
+WindowData::image() const
 {
     const QSize &sz = imageSize();
-    return QImage(imageData(), sz.width(), sz.height(), QImage::Format_ARGB32_Premultiplied);
+    return QImage(constImageData(), sz.width(), sz.height(), QImage::Format_ARGB32_Premultiplied);
 }
 
-QColor
+const QColor
 WindowData::bg()
 {
     MemoryLocker locker(this);
     if (locker.lockObtained())
     {
-        unsigned int *d = reinterpret_cast<unsigned int *>(data());
-        return QColor::fromRgba(d[2]);
+        const uint *d = reinterpret_cast<const uint *>(constData());
+        return QColor::fromRgba(d[BgColor]);
     }
     return QColor();
 }
@@ -101,20 +103,20 @@ WindowData::setBg(const QColor &c)
 {
     if (lock())
     {
-        unsigned int *d = reinterpret_cast<unsigned int *>(data());
-        d[2] = c.rgba();
+        uint *d = reinterpret_cast<uint *>(data());
+        d[BgColor] = c.rgba();
         unlock();
     }
 }
 
-QColor
+const QColor
 WindowData::fg()
 {
     MemoryLocker locker(this);
     if (locker.lockObtained())
     {
-        unsigned int *d = reinterpret_cast<unsigned int *>(data());
-        return QColor::fromRgba(d[3]);
+        const uint *d = reinterpret_cast<const uint *>(constData());
+        return QColor::fromRgba(d[FgColor]);
     }
     return QColor();
 }
@@ -124,8 +126,8 @@ WindowData::setFg(const QColor &c)
 {
     if (lock())
     {
-        unsigned int *d = reinterpret_cast<unsigned int *>(data());
-        d[3] = c.rgba();
+        uint *d = reinterpret_cast<uint *>(data());
+        d[FgColor] = c.rgba();
         unlock();
     }
 }
@@ -136,7 +138,7 @@ WindowData::isEmpty()
     MemoryLocker locker(this);
     if (locker.lockObtained())
     {
-        unsigned int *d = reinterpret_cast<unsigned int *>(data());
+        const uint *d = reinterpret_cast<const uint *>(data());
         return !d[0] && !d[1] && !d[2] && !d[3] && !d[4] && !d[5];
     }
     return true;

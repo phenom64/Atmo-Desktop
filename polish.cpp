@@ -121,6 +121,10 @@ StyleProject::polish(QWidget *widget)
                 || widget->inherits("BE::Clock")))
         Handlers::BalloonHelper::manage(widget);
 
+    if (dConf.animateScroll
+            && qobject_cast<QAbstractScrollArea *>(widget))
+        Anim::ScrollAnimator::manage(static_cast<QAbstractScrollArea *>(widget));
+
     if (qobject_cast<QPushButton *>(widget)
             || qobject_cast<QCheckBox *>(widget)
             || qobject_cast<QRadioButton *>(widget)

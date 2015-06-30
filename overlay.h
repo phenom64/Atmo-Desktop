@@ -34,7 +34,7 @@ public:
     ~Overlay();
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
-    static bool hasOverlay(const QWidget *frame);
+    static Overlay *hasOverlay(const QWidget *frame);
     inline Sides lines() { return m_lines; }
 
 protected:

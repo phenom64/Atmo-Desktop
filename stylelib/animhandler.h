@@ -8,6 +8,8 @@
 #include <QStyle>
 #include <QToolButton>
 
+class QAbstractScrollArea;
+
 namespace Anim
 {
 
@@ -89,6 +91,27 @@ private:
     QToolButton *m_hovered;
     QMap<QToolButton *, QPair<Level, ArrowLevel> > m_vals;
     QTimer *m_timer;
+};
+
+class Q_DECL_EXPORT ScrollAnimator : public QObject
+{
+    Q_OBJECT
+public:
+    static void manage(QAbstractScrollArea *area);
+    static ScrollAnimator *instance();
+
+protected:
+    ScrollAnimator(QObject *parent = 0);
+    bool eventFilter(QObject *o, QEvent *e);
+    bool processWheelEvent(QWheelEvent *e);
+
+protected slots:
+    void updateScrollValue();
+
+private:
+    QTimer *m_timer;
+    bool m_up;
+    int m_delta, m_step;
 };
 
 }
