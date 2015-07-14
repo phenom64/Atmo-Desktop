@@ -9,7 +9,7 @@
 
 #if defined(HASXCB) //we only have xcb when compiled against qt5.
 #include <xcb/xproto.h>
-#include <xcb/xcb_image.h>
+//#include <xcb/xcb_image.h>
 #include <xcb/xcb.h>
 #elif defined(HASX11)
 #include <X11/Xlib.h>
