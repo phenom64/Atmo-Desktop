@@ -210,7 +210,8 @@ Deco::init()
             m_rightButtons->addButton(b);
         }
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
-#if 0
+#define MASK 0
+#if MASK
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::updateMask);
     connect(client().data(), &KDecoration2::DecoratedClient::heightChanged, this, &Deco::updateMask);
 #endif
@@ -284,27 +285,16 @@ Deco::checkForDataFromWindowClass()
 void
 Deco::updateMask()
 {
-#if 0
+#if MASK
     QScopedPointer<QWindow> win(QWindow::fromWinId(client().data()->decorationId()));
-    if (!win || win.data()->isModal())
+    if (!win || client().data()->isModal())
         return;
 
-    const int x(0), y(0);
-    const int w(client().data()->width()), h(client().data()->height()+TITLEHEIGHT);
-//    if (XHandler::compositingActive())
-    {
-        QRegion r(x+2, y, (x+w)-4, y+h);
-        r += QRegion(x+1, y, (x+w)-2, (y+h)-1);
-        r += QRegion(x, y, x+w, (y+h)-2);
-        win.data()->setMask(r);
-    }
-//    else
-//    {
-//        QRegion r(0, 2, w, h-4);
-//        r += QRegion(1, 1, w-2, h-2);
-//        r += QRegion(2, 0, w-4, h);
-//        win->setMask(r);
-//    }
+    const int x(0), y(0), w(client().data()->width()), h(client().data()->height()+(TITLEHEIGHT));
+    QRegion r(x+2, y, (x+w)-4, y+h);
+    r += QRegion(x+1, y, (x+w)-2, (y+h)-1);
+    r += QRegion(x, y, x+w, (y+h)-2);
+    win.data()->setMask(r);
 #endif
 }
 

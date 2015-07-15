@@ -6,8 +6,6 @@
 #include <QDesktopServices>
 #include <QPalette>
 #include <QDebug>
-#include <QLabel>
-#include <QTimer>
 #include <QUrl>
 
 QSettings *Settings::s_settings(0);
@@ -377,6 +375,14 @@ static const QString getPreset(QSettings *s, const QString &appName)
     return preset;
 }
 
+void
+Settings::writeVal(const Key k, const QVariant v)
+{
+    if (!s_settings)
+        return;
+    s_settings->setValue(s_key[k], v);
+}
+
 QVariant
 Settings::readVal(const Key k)
 {
@@ -440,7 +446,7 @@ Settings::read()
 {
     Settings::initiate();
     //globals
-    conf.opacity                = 1.0f/*readFloat(READOPACITY)/100.0f*/;
+    conf.opacity                = 1.0f/*readFloat(Opacity)/100.0f*/;
     conf.blackList              = readStringList(Blacklist);
 //    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
 //        conf.opacity = 1.0f;

@@ -9,6 +9,8 @@ if (QT5BUILD)
     include(KDECMakeSettings)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
+    
+    #add_subdirectory(effects)
 
     set(SRCS
         kwinclient2.cpp

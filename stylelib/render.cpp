@@ -18,7 +18,7 @@
 #include "ops.h"
 
 Q_DECL_EXPORT Render Render::m_instance;
-QPixmap Render::m_mask[MAXRND+1][Render::PartCount];
+//QPixmap Render::m_mask[MAXRND+1][Render::PartCount];
 
 /* blurring function below from:
  * http://stackoverflow.com/questions/3903223/qt4-how-to-blur-qpixmap-image
@@ -551,7 +551,7 @@ Render::shapeCorners(QPainter *p, Sides s, int roundNess, const QSize &forceSize
     {
         if (i != CenterPart && !roundNess)
             continue;
-        p->drawPixmap(partRect(QRect(QPoint(), forceSize.isValid()?forceSize:QSize(p->device()->width(), p->device()->height())), i, roundNess, s), m_mask[roundNess][i]);
+        p->drawPixmap(partRect(QRect(QPoint(), forceSize.isValid()?forceSize:QSize(p->device()->width(), p->device()->height())), i, roundNess, s), instance()->m_mask[roundNess][i]);
     }
     p->setCompositionMode(mode);
 }

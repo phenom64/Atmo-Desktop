@@ -246,6 +246,7 @@ XHandler::compositingActive()
     }
     if (!atom)
         return false;
+
     xcb_get_selection_owner_cookie_t cookie = xcb_get_selection_owner(c, atom);
     xcb_get_selection_owner_reply_t *reply = xcb_get_selection_owner_reply(c, cookie, NULL);
     return reply && reply->owner;

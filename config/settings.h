@@ -204,6 +204,7 @@ public:
     static Gradient stringToGrad(const QString &string);
     static void writePalette();
     static void writeDefaults();
+    static void writeVal(const Key k, const QVariant v);
     static QVariant readVal(const Key k);
     template<typename T> static inline T readValue(const Key k) { return readVal(k).value<T>(); }
 #define READ(_TYPE_, _METHOD_) static const _TYPE_ read##_METHOD_(const Key k) { return readValue<_TYPE_>(k); }

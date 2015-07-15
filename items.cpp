@@ -178,19 +178,19 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
         brush = lg;
     }
 
+    const int rnd(qMin(6, dConf.input.rnd)); //too much roundness just looks silly
     if (listView && listView->viewMode() == QListView::IconMode)
     {
         painter->setPen(Qt::NoPen);
         painter->setBrush(brush);
-        const int rnd(qMin(6, dConf.input.rnd)); //too much roundness just looks silly
         painter->drawRoundedRect(opt->rect, rnd, rnd);
     }
     else
     {
-        if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning)
-            Render::renderMask(opt->rect, painter, brush, dConf.input.rnd, Render::All & ~Render::Right);
-        else if (opt->viewItemPosition == QStyleOptionViewItemV4::End)
-            Render::renderMask(opt->rect, painter, brush, dConf.input.rnd, Render::All & ~Render::Left);
+        if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && !(opt->SUNKEN))
+            Render::renderMask(opt->rect, painter, brush, rnd, Render::All & ~Render::Right);
+        else if (opt->viewItemPosition == QStyleOptionViewItemV4::End && !(opt->SUNKEN))
+            Render::renderMask(opt->rect, painter, brush, rnd, Render::All & ~Render::Left);
         else
         {
             painter->fillRect(opt->rect, brush);

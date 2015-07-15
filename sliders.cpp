@@ -39,23 +39,6 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     QRect groove(subControlRect(CC_ScrollBar, option, SC_ScrollBarGroove, widget));
     const QScrollBar *bar = qobject_cast<const QScrollBar *>(widget);
     const QAbstractScrollArea *area = Ops::getAncestor<const QAbstractScrollArea *>(widget);
-//    if (Overlay::hasOverlay(area))
-//    {
-//        if (hor)
-//        {
-//            up.setTop(up.top()+1);
-//            down.setTop(down.top()+1);
-//            slider.setTop(slider.top()+1);
-//            groove.setTop(groove.top()+1);
-//        }
-//        else
-//        {
-//            up.setLeft(up.left()+1);
-//            down.setLeft(down.left()+1);
-//            slider.setLeft(slider.left()+1);
-//            groove.setLeft(groove.left()+1);
-//        }
-//    }
     if (dConf.scrollers.style == 0)
     {
         QPalette::ColorRole fg(Ops::fgRole(area, QPalette::WindowText)), bg(Ops::bgRole(area, QPalette::Window));
@@ -103,7 +86,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
             fgc.setAlpha(85.0f+((170.0f/(float)STEPS)*level));
         Render::renderMask(slider, painter, fgc);
     }
-    else if (dConf.scrollers.style == 1)
+    else if (dConf.scrollers.style >= 1)
     {
         if (opt->SUNKEN)
             level = STEPS;
@@ -159,6 +142,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         case 0: break;
         case 1: bgc = Color::mid(bgc, pal.color(QPalette::Text)); break;
         case 2: bgc = pal.color(QPalette::Text); break;
+        default: break;
         }
 
         lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
@@ -174,6 +158,8 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 
 
         ///the slider
+        if (dConf.scrollers.style == 2)
+            bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
         lg.setStops(Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
         Render::renderShadow(Render::Rect, slider, painter, 32, Render::All, dConf.shadows.opacity);
         slider.adjust(1, 1, -1, -1);

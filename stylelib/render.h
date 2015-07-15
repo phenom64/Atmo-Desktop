@@ -85,7 +85,7 @@ protected:
 
 private:
     static Render m_instance;
-    static QPixmap m_mask[MAXRND+1][PartCount];
+    QPixmap m_mask[MAXRND+1][PartCount];
     QPixmap m_shadow[ShadowCount][MAXRND+1][PartCount];
     QPixmap m_tab[PartCount];
     QPixmap m_noise;
