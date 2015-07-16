@@ -44,7 +44,7 @@
  * his macmenu! yeah! so now we get
  * macmenues in styleproject!
  */
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
 #include "macmenu.h"
 #endif
 
@@ -108,7 +108,7 @@ StyleProject::polish(QWidget *widget)
         SplitterExt::manage(widget);
 
     if (dConf.uno.enabled
-            && dConf.app == Settings::Konversation
+            && dConf.app == DSP::Settings::Konversation
             && qobject_cast<QMainWindow *>(widget->window())
             && (qobject_cast<QHBoxLayout *>(widget->layout())
                 || qobject_cast<QVBoxLayout *>(widget->layout())))
@@ -272,7 +272,7 @@ StyleProject::polish(QWidget *widget)
     }
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
     {
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
         BE::MacMenu::manage(menuBar);
 #endif
         widget->setMouseTracking(true);
@@ -312,7 +312,7 @@ StyleProject::polish(QWidget *widget)
         if (tabBar->expanding() && !dConf.uno.enabled)
             tabBar->setExpanding(false);
 
-        if (dConf.app == Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
+        if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
         {
             tabBar->parentWidget()->setObjectName("konsole_tabbar_parent");
             installFilter(tabBar->parentWidget());
@@ -396,7 +396,7 @@ StyleProject::unpolish(QWidget *widget)
         Anim::ToolBtns::release(tb);
     else if (QFrame *f = qobject_cast<QFrame *>(widget))
         Overlay::release(f);
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         BE::MacMenu::release(menuBar);
 #endif

@@ -6,6 +6,14 @@
 #include <QPalette>
 #include <QVariant>
 
+class QSettings;
+namespace DSP
+{
+
+typedef QList<QPair<float, int> > Gradient;
+typedef QPair<float, int> GradientStop;
+typedef QPair<QColor, int> Tint;
+
 /**
   * About the gradients....
   * The basic theory is that they are stops in pairs,
@@ -21,14 +29,7 @@
   * of a soft gradient would be "0.1:10, 1.0:-10".
   */
 
-
-typedef QList<QPair<float, int> > Gradient;
-typedef QPair<float, int> GradientStop;
-typedef QPair<QColor, int> Tint;
-
-class QSettings;
-
-#define dConf Settings::conf
+#define dConf DSP::Settings::conf
 
 class Q_DECL_EXPORT Settings
 {
@@ -190,18 +191,19 @@ public:
         {
             bool treelines;
         } views;
-        bool isValid() { return s_isValid; }
     } Conf;
     static Conf conf;
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
-    static Settings *instance();
     static void edit();
-    static void initiate();
+
     static void read();
     static void readPalette();
-    static QSettings *paletteSettings();
     static Gradient stringToGrad(const QString &string);
+
+    static QSettings *settings();
+    static QSettings *paletteSettings();
+
     static void writePalette();
     static void writeDefaults();
     static void writeVal(const Key k, const QVariant v);
@@ -210,14 +212,19 @@ public:
 #define READ(_TYPE_, _METHOD_) static const _TYPE_ read##_METHOD_(const Key k) { return readValue<_TYPE_>(k); }
     READ(bool, Bool) READ(int, Int) READ(float, Float) READ(QString, String) READ(QStringList, StringList)
 #undef READ
+    ~Settings();
 
 protected:
+    Settings();
     static void writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c);
     static QColor readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r);
+    static Settings *instance();
 
 private:
-    static QSettings *s_settings, *s_paletteSettings;
-    static bool s_isValid;
+    QSettings *m_settings, *m_paletteSettings;
+    static Settings *s_instance;
 };
+
+}
 
 #endif //SETTINGS_H

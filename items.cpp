@@ -152,7 +152,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!opt)
         return true;
 
-    if (dConf.app == Settings::Konversation && widget && widget->inherits("ViewTree"))
+    if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
         return true;
     if (opt->backgroundBrush != Qt::NoBrush)
         painter->fillRect(opt->rect, opt->backgroundBrush);
@@ -174,7 +174,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     if (!multiSelection)
     {
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, h));
+        lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, h));
         brush = lg;
     }
 
@@ -331,7 +331,7 @@ StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, c
 
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(bg));
-    lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, b));
+    lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, b));
     painter->fillRect(opt->rect, lg);
 
     const QPen pen(painter->pen());

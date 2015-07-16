@@ -78,7 +78,7 @@ StyleProject::StyleProject() : QCommonStyle()
     init();
     XHandler::init();
     assignMethods();
-    Settings::read();
+    DSP::Settings::read();
 #if QT_VERSION >= 0x050000
     if (XHandler::opacity() < 1.0f)
         qApp->installEventFilter(&t);
@@ -87,7 +87,7 @@ StyleProject::StyleProject() : QCommonStyle()
 
 StyleProject::~StyleProject()
 {
-    Settings::writePalette();
+    DSP::Settings::writePalette();
 //    ShadowHandler::deleteInstance();
 //    ProgressHandler::deleteInstance();
 //    Anim::Basic::deleteInstance();

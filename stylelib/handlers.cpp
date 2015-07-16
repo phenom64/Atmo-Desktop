@@ -37,7 +37,7 @@
 #include <QGroupBox>
 #include <QDockWidget>
 
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
 #include <QDBusMessage>
 #include <QDBusConnection>
 #include "macmenu.h"
@@ -1008,7 +1008,7 @@ Window::getHeadHeight(QWidget *win, bool &separator)
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(win))
     {
         if (QMenuBar *menuBar = mw->findChild<QMenuBar *>())
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
             if (!BE::MacMenu::isActive() && !BE::MacMenu::manages(menuBar))
 #endif
         {
@@ -1063,7 +1063,7 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
     if (!dConf.uno.gradient.isEmpty())
     {
         QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
-        lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
+        lg.setStops(DSP::Settings::gradientStops(dConf.uno.gradient, bc));
         b = QBrush(lg);
     }
     const unsigned int n(dConf.uno.noise);
@@ -1112,7 +1112,7 @@ Window::windowBg(const QSize &sz, const QColor &bgColor)
     if (!dConf.windows.gradient.isEmpty())
     {
         QLinearGradient lg(0, 0, dConf.windows.hor*img.width(), !dConf.windows.hor*img.height());
-        lg.setStops(Settings::gradientStops(dConf.windows.gradient, bgColor));
+        lg.setStops(DSP::Settings::gradientStops(dConf.windows.gradient, bgColor));
         pt.fillRect(img.rect(), lg);
     }
     else

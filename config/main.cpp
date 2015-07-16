@@ -28,12 +28,10 @@ int main(int argc, char *argv[])
     switch (t)
     {
     case WriteDefaults:
-        Settings::initiate();
-        Settings::writeDefaults();
+        DSP::Settings::writeDefaults();
         break;
     case Edit:
-        Settings::initiate();
-        Settings::edit();
+        DSP::Settings::edit();
         break;
     default: break;
     }

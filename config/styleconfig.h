@@ -2,6 +2,7 @@
 #define STYLECONFIG_H
 
 #include "ui_config.h"
+#include <QWidget>
 
 class StyleConfig : public QWidget
 {

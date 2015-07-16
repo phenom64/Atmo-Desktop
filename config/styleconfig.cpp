@@ -33,3 +33,5 @@ void
 StyleConfig::readSettings()
 {
 }
+
+//#include "styleconfig.moc"

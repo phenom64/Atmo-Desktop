@@ -94,7 +94,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         QColor bgColor(pal.color(QPalette::Window)), fgColor(pal.color(QPalette::WindowText));
 
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
-        lg.setStops(Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
+        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
 
         ///the background
         painter->fillRect(opt->rect, lg);
@@ -145,7 +145,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         default: break;
         }
 
-        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
+        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
         QBrush bg(lg);
         Render::drawClickable(dConf.scrollers.grooveShadow,
                               groove,
@@ -160,7 +160,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         ///the slider
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
-        lg.setStops(Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
+        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
         Render::renderShadow(Render::Rect, slider, painter, 32, Render::All, dConf.shadows.opacity);
         slider.adjust(1, 1, -1, -1);
         Render::renderMask(slider, painter, lg);
@@ -244,7 +244,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     }
 
     QLinearGradient lga(0, 0, !hor*Render::maskWidth(gs, groove.width()), hor*Render::maskHeight(gs, groove.height()));
-    lga.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
+    lga.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
     QBrush amask(lga);
 
     QRect clip(groove);
@@ -272,7 +272,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     {
         painter->setClipRect(clip);
         QLinearGradient lgh(0, 0, !hor*Render::maskWidth(gs, groove.width()), hor*Render::maskHeight(gs, groove.height()));
-        lgh.setStops(Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
+        lgh.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
         QBrush hmask(lgh);
         Render::drawClickable(gs, groove, painter, d, dConf.shadows.opacity, widget, option, &hmask);
     }
@@ -320,7 +320,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     const Render::Shadow sliderShadow(dConf.sliders.grooveShadow==Render::Rect?Render::Rect:Render::Raised);
     const QRect &sliderMask = Render::maskRect(sliderShadow, slider);
     QLinearGradient lg(0, 0, 0, sliderMask.height());
-    lg.setStops(Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+    lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
     QBrush mask(lg);
 
     Render::renderShadow(sliderShadow, slider, painter, 32, Render::All, dConf.shadows.opacity);
@@ -419,7 +419,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
         pix.fill(Qt::transparent);
         QPainter p(&pix);
         QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
-        lg.setStops(Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Highlight)));
+        lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Highlight)));
 //        lg.setColorAt(0.0f, Color::mid(opt->palette.color(QPalette::Highlight), Qt::white, 5, 1));
 //        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
         p.fillRect(pix.rect(), lg);
@@ -479,7 +479,7 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
     const bool hor(opt->orientation == Qt::Horizontal);
     QLinearGradient lg(0, 0, !hor*groove.width(), hor*cont.height());
-    lg.setStops(Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
+    lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
     QBrush b(lg);
     Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, option, &b);
     painter->setClipping(false);

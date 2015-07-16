@@ -27,7 +27,7 @@
 #include "stylelib/animhandler.h"
 #include "stylelib/shadowhandler.h"
 
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
 #include "macmenu.h"
 #endif
 
@@ -70,7 +70,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
         {
             if (dConf.uno.enabled)
                 Handlers::Window::updateWindowDataLater(w->window());
-//#if !defined(QT_NO_DBUS)
+//#if defined(HASDBUS)
 //            if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
 //            {
 //                /* Sometimes the menubar shows itself as a glitghy
@@ -149,7 +149,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
         QRect r(w->rect());
         const bool hor(w->width()>w->height());
         QLinearGradient lg(r.topLeft(), !hor?r.topRight():r.bottomLeft());
-        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
+        lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
         p.fillRect(r, lg);
         p.end();
         return false;
@@ -217,7 +217,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
         if (dConf.uno.enabled)
             Handlers::Window::updateWindowDataLater(w->window());
-//#if !defined(QT_NO_DBUS)
+//#if defined(HASDBUS)
 //        if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
 //        {
 //            /* Sometimes the menubar shows itself as a glitghy

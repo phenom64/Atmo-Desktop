@@ -2,7 +2,7 @@
 #include <QObject>
 #include <QDebug>
 
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
 #include <QDBusMessage>
 #include <QDBusConnection>
 #endif
@@ -147,7 +147,7 @@ WindowData::isEmpty()
 bool
 WindowData::sync()
 {
-#if !defined(QT_NO_DBUS)
+#if defined(HASDBUS)
     QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
     msg << m_winId;
     QDBusConnection::sessionBus().send(msg);

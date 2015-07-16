@@ -47,7 +47,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
         if (dConf.input.tint.second > -1)
             c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
         QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, option->rect.height()));
-        lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
+        lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
 
@@ -104,13 +104,13 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
         painter->setClipRegion(QRegion(frameRect)-QRegion(arrowRect));
         QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, frameRect.height()));
-        lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
+        lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
         QBrush mask(lg);
         Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask);
 
         const QColor hc(Color::mid(bgc, opt->palette.color(QPalette::Highlight), 1, 3));
         QLinearGradient lga(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
-        lga.setStops(Settings::gradientStops(dConf.pushbtn.gradient, hc));
+        lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
         mask = QBrush(lga);
 
         painter->setClipRect(arrowRect);
@@ -129,7 +129,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
             if (dConf.input.tint.second > -1)
                 c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
             QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, option->rect.height()));
-            lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
+            lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
             brush = QBrush(lg);
         }
 //        drawSafariLineEdit(opt->rect, painter, brush);
@@ -195,7 +195,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
         if (dConf.input.tint.second > -1)
             c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
         QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, opt->rect.height()));
-        lg.setStops(Settings::gradientStops(dConf.input.gradient, c));
+        lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
     Render::drawClickable(dConf.input.shadow, edit, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);

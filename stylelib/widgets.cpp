@@ -224,7 +224,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     {
         r.adjust(2, 2, -2, -2);
         QLinearGradient lg(0, 0, 0, r.height()-Render::shadowMargin(dConf.toolbtn.shadow));
-        lg.setStops(Settings::gradientStops(dConf.toolbtn.gradient, c));
+        lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, c));
         QBrush b(lg);
         const bool hasDark(dConf.shadows.darkRaisedEdges);
         dConf.shadows.darkRaisedEdges = false;

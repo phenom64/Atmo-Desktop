@@ -8,12 +8,10 @@
 #include <QDebug>
 #include <QUrl>
 
-QSettings *Settings::s_settings(0);
-QSettings *Settings::s_paletteSettings(0);
-Settings::Conf Settings::conf;
-bool Settings::s_isValid(false);
+using namespace DSP;
 
-static const QString confPath = QString("%1/.config/dsp").arg(QDir::homePath());
+Settings::Conf Settings::conf;
+Settings *Settings::s_instance(0);
 
 static const char *s_key[] = {
     "opacity",
@@ -110,7 +108,7 @@ static const QVariant s_default[] = {
     false,
     9,
     false,
-    QString(),
+    /*QString()*/0,
     false,
     false,
 
@@ -150,7 +148,7 @@ static const QVariant s_default[] = {
     5,
     0,
     false,
-    QStringList(),
+    /*QStringList()*/0,
     10,
     2,
 
@@ -184,6 +182,113 @@ static const QVariant s_default[] = {
     33,
     false
 };
+
+static const QString confPath()
+{
+    static const QString cp = QString("%1/.config/dsp").arg(QDir::homePath());
+    return cp;
+}
+
+static const QString getPreset(QSettings *s, const QString &appName)
+{
+    QString preset;
+    s->beginGroup("Presets");
+    const QStringList presets(s->childKeys());
+    const int count(presets.count());
+    for (int i = 0; i < count; ++i)
+    {
+        const QStringList &apps(s->value(presets.at(i), QStringList()).toStringList());
+        if (apps.contains(appName, Qt::CaseInsensitive))
+        {
+            preset = presets.at(i);
+            break;
+        }
+    }
+    s->endGroup();
+    return preset;
+}
+
+static const QString appName()
+{
+    QString app;
+    if (qApp)
+    {
+        if (!qApp->arguments().isEmpty())
+            app = qApp->arguments().first();
+        else if (!qApp->applicationName().isEmpty())
+            app = qApp->applicationName();
+        else
+            app = QFileInfo(qApp->applicationFilePath()).fileName();
+    }
+    if (app.contains("/"))
+        app = QFileInfo(app).fileName();
+    return app;
+}
+
+
+Settings::Settings() : m_settings(0), m_paletteSettings(0)
+{
+    conf.m_appName = appName();
+    if (conf.m_appName == "eiskaltdcpp-qt")
+        conf.app = Eiskalt;
+    else if (conf.m_appName == "konversation")
+        conf.app = Konversation;
+    else if (conf.m_appName == "konsole")
+        conf.app = Konsole;
+    else if (conf.m_appName == "kwin" || conf.m_appName == "kwin_x11" || conf.m_appName == "kwin_wayland")
+        conf.app = KWin;
+    else if (conf.m_appName == "be.shell")
+        conf.app = BEShell;
+    else if (conf.m_appName == "yakuake")
+        conf.app = Yakuake;
+    else if (conf.m_appName == "plasma-desktop")
+        conf.app = Plasma;
+    else
+        conf.app = Unspecific;
+
+    const QDir settingsDir(confPath());
+    QString settingsFileName("dsp");
+    m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+    const QString preset(getPreset(m_settings, conf.m_appName));
+    const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
+    if (!preset.isEmpty() && presetFile.exists())
+    {
+        settingsFileName = preset;
+        if (m_settings)
+        {
+            m_settings->deleteLater();
+            m_settings = 0;
+        }
+    }
+    if (!m_settings)
+        m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+//    QObject::connect(qApp, SIGNAL(aboutToQuit()), m_settings, SLOT(deleteLater()));
+
+//    const QString paletteFileName(readString(Palette));
+    const QString paletteFileName = m_settings->value(s_key[Palette], s_default[Palette]).toString();
+    if (!paletteFileName.isEmpty())
+    {
+        QString settingsPath(confPath());
+        settingsPath.append(QString("/%1.conf").arg(paletteFileName));
+        m_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
+//        QObject::connect(qApp, SIGNAL(aboutToQuit()), m_paletteSettings, SLOT(deleteLater()));
+    }
+}
+
+Settings::~Settings()
+{
+    s_instance = 0;
+    m_settings = 0;
+    m_paletteSettings = 0;
+}
+
+Settings
+*Settings::instance()
+{
+    if (!s_instance)
+        s_instance = new Settings();
+    return s_instance;
+}
 
 Gradient
 Settings::stringToGrad(const QString &string)
@@ -263,20 +368,20 @@ void
 Settings::writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c)
 {
     const QString &color = QString::number(c.rgba(), 16);
-    s_paletteSettings->beginGroup(groups[g]);
-    s_paletteSettings->setValue(roles[r], color);
-    s_paletteSettings->endGroup();
+    paletteSettings()->beginGroup(groups[g]);
+    paletteSettings()->setValue(roles[r], color);
+    paletteSettings()->endGroup();
 }
 
 QColor
 Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
 {
-    s_paletteSettings->beginGroup(groups[g]);
-    const QString color = s_paletteSettings->value(roles[r], QString()).toString();
+    paletteSettings()->beginGroup(groups[g]);
+    const QString color = paletteSettings()->value(roles[r], QString()).toString();
     QColor c;
     if (color.size() == 8)
         c = QColor::fromRgba(color.toUInt(0, 16));
-    s_paletteSettings->endGroup();
+    paletteSettings()->endGroup();
     return c;
 }
 
@@ -324,127 +429,34 @@ Settings::readPalette()
 QSettings
 *Settings::paletteSettings()
 {
-    if (s_paletteSettings)
-        return s_paletteSettings;
-    if (!s_settings)
-        return 0;
-    const QString paletteFileName(readString(Palette));
-    if (paletteFileName.isEmpty())
-        return 0;
-
-    QString settingsPath(confPath);
-    settingsPath.append(QString("/%1.conf").arg(paletteFileName));
-
-    s_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
-    return s_paletteSettings;
-}
-
-static const QString appName()
-{
-    QString app;
-    if (qApp)
-    {
-        if (!qApp->arguments().isEmpty())
-            app = qApp->arguments().first();
-        else if (!qApp->applicationName().isEmpty())
-            app = qApp->applicationName();
-        else
-            app = QFileInfo(qApp->applicationFilePath()).fileName();
-    }
-    if (app.contains("/"))
-        app = QFileInfo(app).fileName();
-    return app;
-}
-
-static const QString getPreset(QSettings *s, const QString &appName)
-{
-    QString preset;
-    s->beginGroup("Presets");
-    const QStringList presets(s->childKeys());
-    const int count(presets.count());
-    for (int i = 0; i < count; ++i)
-    {
-        const QStringList &apps(s->value(presets.at(i), QStringList()).toStringList());
-        if (apps.contains(appName, Qt::CaseInsensitive))
-        {
-            preset = presets.at(i);
-            break;
-        }
-    }
-    s->endGroup();
-    return preset;
+    return instance()->m_paletteSettings;
 }
 
 void
 Settings::writeVal(const Key k, const QVariant v)
 {
-    if (!s_settings)
+    if (!settings())
         return;
-    s_settings->setValue(s_key[k], v);
+    settings()->setValue(s_key[k], v);
 }
 
 QVariant
 Settings::readVal(const Key k)
 {
-    if (!s_settings)
+    if (!settings())
         return QVariant();
-    return s_settings->value(s_key[k], s_default[k]);
+    return settings()->value(s_key[k], s_default[k]);
 }
 
-void
-Settings::initiate()
+QSettings
+*Settings::settings()
 {
-    if (s_settings)
-    {
-        s_settings->deleteLater();
-        s_settings = 0;
-    }
-    if (s_paletteSettings)
-    {
-        s_paletteSettings->deleteLater();
-        s_paletteSettings = 0;
-    }
-
-    conf.m_appName = appName();
-    if (conf.m_appName == "eiskaltdcpp-qt")
-        conf.app = Eiskalt;
-    else if (conf.m_appName == "konversation")
-        conf.app = Konversation;
-    else if (conf.m_appName == "konsole")
-        conf.app = Konsole;
-    else if (conf.m_appName == "kwin" || conf.m_appName == "kwin_x11" || conf.m_appName == "kwin_wayland")
-        conf.app = KWin;
-    else if (conf.m_appName == "be.shell")
-        conf.app = BEShell;
-    else if (conf.m_appName == "yakuake")
-        conf.app = Yakuake;
-    else if (conf.m_appName == "plasma-desktop")
-        conf.app = Plasma;
-    else
-        conf.app = Unspecific;
-
-    const QDir settingsDir(confPath);
-    QString settingsFileName("dsp");
-    s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
-    const QString preset(getPreset(s_settings, conf.m_appName));
-    const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
-    if (!preset.isEmpty() && presetFile.exists())
-    {
-        settingsFileName = preset;
-        if (s_settings)
-        {
-            s_settings->deleteLater();
-            s_settings = 0;
-        }
-    }
-    if (!s_settings)
-        s_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+    return instance()->m_settings;
 }
 
 void
 Settings::read()
 {
-    Settings::initiate();
     //globals
     conf.opacity                = 1.0f/*readFloat(Opacity)/100.0f*/;
     conf.blackList              = readStringList(Blacklist);
@@ -531,27 +543,26 @@ Settings::read()
     conf.shadows.opacity        = readFloat(Shadowopacity)/100.0f;
     conf.shadows.darkRaisedEdges = readBool(Shadowdarkraised);
     readPalette();
-    s_isValid = true;
 }
 
 void
 Settings::writeDefaults()
 {
-    if (!s_settings)
+    if (!settings())
         return;
 
     qDebug() << "attempting to write default values...";
     for (int i = 0; i < Keycount; ++i)
-        s_settings->setValue(s_key[i], s_default[i]);
-    s_settings->sync();
+        settings()->setValue(s_key[i], s_default[i]);
+    settings()->sync();
 }
 
 void
 Settings::edit()
 {
-    if (s_settings)
+    if (settings())
     {
-        qDebug() << "trying to open file" << s_settings->fileName() << "in your default text editor.";
-        QDesktopServices::openUrl(QUrl::fromLocalFile(s_settings->fileName()));
+        qDebug() << "trying to open file" << settings()->fileName() << "in your default text editor.";
+        QDesktopServices::openUrl(QUrl::fromLocalFile(settings()->fileName()));
     }
 }

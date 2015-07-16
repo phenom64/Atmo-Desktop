@@ -145,7 +145,7 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
         break;
     default: break;
     }
-    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, bgc));
+    lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, bgc));
     QBrush b(lg);
     Render::drawClickable(dConf.tabs.shadow, r, painter, dConf.tabs.rnd, dConf.shadows.opacity, bar, opt, &b, 0, sides);
     const QRect mask(Render::maskRect(dConf.tabs.shadow, r, sides));
@@ -575,7 +575,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         QBrush b(c);
         if (hasGradient)
         {
-            lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+            lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, c));
             b = QBrush(lg);
         }
         p->fillRect(orgRect, b);
@@ -832,7 +832,7 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
         sides &= ~Render::Bottom;
 
     QLinearGradient lg(0, 0, 0, Render::maskRect(dConf.tabs.shadow, theRect).height());
-    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
+    lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
     QBrush b(lg);
 
     Render::drawClickable(dConf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), dConf.shadows.opacity, w, option, &b, 0, sides, -geo.topLeft());
