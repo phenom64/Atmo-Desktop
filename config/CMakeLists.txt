@@ -17,7 +17,6 @@ endif (QT5BUILD)
 install(TARGETS ${PNAME} LIBRARY DESTINATION lib)
 install(FILES ${sharedHDRS} DESTINATION include/dsp)
 
-
 if (QT5BUILD)
     set(PRO_NAME styleproject_config_qt5)
 else (QT5BUILD)

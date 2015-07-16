@@ -23,8 +23,7 @@ if (QT5BUILD)
         ../stylelib/widgets.cpp
         ../stylelib/windowdata.cpp
         ../stylelib/ops.cpp
-        ../stylelib/handlers.cpp
-        ../config/settings.cpp)
+        ../stylelib/handlers.cpp)
     set(HDRS
         kwinclient2.h
         decobutton.h
@@ -38,8 +37,7 @@ if (QT5BUILD)
         ../stylelib/widgets.h
         ../stylelib/windowdata.h
         ../stylelib/ops.h
-        ../stylelib/handlers.h
-        ../config/settings.h)
+        ../stylelib/handlers.h)
     
 #     qt5_wrap_cpp(MOC_ADAPTOR decoadaptor.h)
     ### build library
@@ -50,6 +48,7 @@ if (QT5BUILD)
             Qt5::Core
             Qt5::Gui
             Qt5::DBus
+            dspsettings_qt5
         PRIVATE
             KDecoration2::KDecoration
             KF5::ConfigCore
