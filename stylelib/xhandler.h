@@ -38,7 +38,7 @@ public:
     };
     typedef unsigned int TypeSize;
     typedef quint32 XWindow, XPixmap;
-    template<typename T> static void setXProperty(const XWindow w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
+    template<typename T> static inline void setXProperty(const XWindow w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
         const TypeSize byteSize(size/8), realByteSize(sizeof(T));
         if (realByteSize > byteSize)
@@ -46,7 +46,7 @@ public:
 
         changeProperty(w, v, size, reinterpret_cast<unsigned char *>(d), n);
     }
-    template<typename T> static T *getXProperty(const XWindow w, const Value v, int &n = _n, unsigned long offset = 0L, unsigned long length = 0xffffffff)
+    template<typename T> static inline T *getXProperty(const XWindow w, const Value v, int &n = _n, quint32 offset = 0, quint32 length = 0xffffffff)
     {
         return reinterpret_cast<T *>(fetchProperty(w, v, n, offset, length));
     }
@@ -64,7 +64,7 @@ public:
 
 protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
-    static unsigned char *fetchProperty(const XWindow w, const Value v, int &n, unsigned long offset, unsigned long length);
+    static unsigned char *fetchProperty(const XWindow w, const Value v, int &n, quint32 offset, quint32 length);
 };
 
 #endif //XHANDLER_H

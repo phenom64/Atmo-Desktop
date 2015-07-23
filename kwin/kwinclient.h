@@ -52,7 +52,7 @@ public:
     {
     public:
         int noise;
-        Gradient grad;
+        DSP::Gradient grad;
         QColor bg, fg;
         bool separator;
         void operator =(const Data &d)
@@ -119,7 +119,7 @@ private:
     friend class DButton;
     Buttons m_buttons;
     QSharedMemory *m_mem;
-    Gradient m_gradient;
+    DSP::Gradient m_gradient;
     WindowData *m_wd;
 };
 namespace DSP

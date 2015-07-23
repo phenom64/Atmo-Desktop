@@ -77,7 +77,7 @@ XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, co
 }
 
 unsigned char
-*XHandler::fetchProperty(const XWindow w, const Value v, int &n, unsigned long offset, unsigned long length)
+*XHandler::fetchProperty(const XWindow w, const Value v, int &n, quint32 offset, quint32 length)
 {
 #if defined(HASXCB)
     if (xcb_atom[v])
