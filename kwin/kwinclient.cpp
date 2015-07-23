@@ -130,7 +130,7 @@ static void addDataForWinClass(const QString &winClass, QSettings &s)
     KwinClient::Data d;
     d.fg = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
     d.bg = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
-    d.grad = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+    d.grad = DSP::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noise = s.value("noise", 20).toUInt();
     d.separator = s.value("separator", true).toBool();
     KwinClient::Data::s_data.insert(winClass, d);
@@ -182,7 +182,7 @@ DSP::AdaptorManager
 
 DSP::AdaptorManager::AdaptorManager()
 {
-    Settings::read();
+    DSP::Settings::read();
     Render::makeNoise();
     readWindowData();
     new DecoAdaptor(this);
@@ -802,7 +802,7 @@ KwinClient::updateBgPixmap()
     QRect r(0, 0, 1, titleHeight());
     QLinearGradient lg(r.topLeft(), r.bottomLeft());
     if (!m_gradient.isEmpty())
-        lg.setStops(Settings::gradientStops(m_gradient, bgColor()));
+        lg.setStops(DSP::Settings::gradientStops(m_gradient, bgColor()));
     else
         lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
 
