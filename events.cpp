@@ -27,7 +27,8 @@
 #include "stylelib/animhandler.h"
 #include "stylelib/shadowhandler.h"
 
-#if defined(HASDBUS)
+#include "defines.h"
+#if HASDBUS
 #include "macmenu.h"
 #endif
 
@@ -70,7 +71,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
         {
             if (dConf.uno.enabled)
                 Handlers::Window::updateWindowDataLater(w->window());
-//#if defined(HASDBUS)
+//#if HASDBUS
 //            if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
 //            {
 //                /* Sometimes the menubar shows itself as a glitghy
@@ -217,7 +218,7 @@ StyleProject::showEvent(QObject *o, QEvent *e)
     {
         if (dConf.uno.enabled)
             Handlers::Window::updateWindowDataLater(w->window());
-//#if defined(HASDBUS)
+//#if HASDBUS
 //        if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
 //        {
 //            /* Sometimes the menubar shows itself as a glitghy

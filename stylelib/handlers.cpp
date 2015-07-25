@@ -37,7 +37,8 @@
 #include <QGroupBox>
 #include <QDockWidget>
 
-#if defined(HASDBUS)
+#include "defines.h"
+#if HASDBUS
 #include <QDBusMessage>
 #include <QDBusConnection>
 #include "macmenu.h"
@@ -1008,7 +1009,7 @@ Window::getHeadHeight(QWidget *win, bool &separator)
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(win))
     {
         if (QMenuBar *menuBar = mw->findChild<QMenuBar *>())
-#if defined(HASDBUS)
+#if HASDBUS
             if (!BE::MacMenu::isActive() && !BE::MacMenu::manages(menuBar))
 #endif
         {

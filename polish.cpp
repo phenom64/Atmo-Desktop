@@ -44,7 +44,8 @@
  * his macmenu! yeah! so now we get
  * macmenues in styleproject!
  */
-#if defined(HASDBUS)
+#include "defines.h"
+#if HASDBUS
 #include "macmenu.h"
 #endif
 
@@ -151,7 +152,8 @@ StyleProject::polish(QWidget *widget)
             if (XHandler::opacity() < 1.0f && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
 #endif
-            Handlers::Dock::manage(widget);
+            if (dConf.lockDocks)
+                Handlers::Dock::manage(widget);
             Handlers::Window::manage(widget);
             if (dConf.removeTitleBars)
                 ShadowHandler::manage(widget);
@@ -272,7 +274,7 @@ StyleProject::polish(QWidget *widget)
     }
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
     {
-#if defined(HASDBUS)
+#if HASDBUS
         BE::MacMenu::manage(menuBar);
 #endif
         widget->setMouseTracking(true);
@@ -396,7 +398,7 @@ StyleProject::unpolish(QWidget *widget)
         Anim::ToolBtns::release(tb);
     else if (QFrame *f = qobject_cast<QFrame *>(widget))
         Overlay::release(f);
-#if defined(HASDBUS)
+#if HASDBUS
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))
         BE::MacMenu::release(menuBar);
 #endif

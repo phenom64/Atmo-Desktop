@@ -7,11 +7,12 @@
 #include "xhandler.h"
 #include "../config/settings.h"
 
-#if defined(HASXCB) //we only have xcb when compiled against qt5.
+#include "defines.h"
+#if HASXCB //we only have xcb when compiled against qt5.
 #include <xcb/xproto.h>
 //#include <xcb/xcb_image.h>
 #include <xcb/xcb.h>
-#elif defined(HASX11)
+#elif HASX11
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -30,9 +31,9 @@ static char *atoms[XHandler::ValueCount] =
     "_STYLEPROJECT_STOREINACTIVESHADOW"
 };
 
-#if defined(HASXCB)
+#if HASXCB
 static xcb_atom_t xcb_atom[XHandler::ValueCount];
-#elif defined(HASX11)
+#elif HASX11
 static Atom atom[XHandler::ValueCount];
 #endif
 
@@ -47,11 +48,11 @@ XHandler::init()
 
     for (int i = 0; i < XHandler::ValueCount; ++i)
     {
-#if defined(HASXCB)
+#if HASXCB
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(QX11Info::connection(), false, strlen(atoms[i]), atoms[i]);
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(QX11Info::connection(), cookie, 0);
         xcb_atom[i] = reply ? reply->atom : 0;
-#elif defined(HASX11)
+#elif HASX11
         atom[i] = XInternAtom(QX11Info::display(), atoms[i], False);
 #endif
     }
@@ -64,13 +65,13 @@ XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, co
     if (!data)
         return;
 
-#if defined(HASXCB)
+#if HASXCB
     if (xcb_atom[v])
     {
         xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, w, xcb_atom[v], XCB_ATOM_CARDINAL, size, nitems, data);
         xcb_flush(QX11Info::connection());
     }
-#elif defined(HASX11)
+#elif HASX11
     XChangeProperty(QX11Info::display(), w, atom[v], XA_CARDINAL, size, PropModeReplace, data, nitems);
     XSync(QX11Info::display(), False);
 #endif
@@ -79,7 +80,7 @@ XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, co
 unsigned char
 *XHandler::fetchProperty(const XWindow w, const Value v, int &n, quint32 offset, quint32 length)
 {
-#if defined(HASXCB)
+#if HASXCB
     if (xcb_atom[v])
     {
         xcb_get_property_cookie_t cookie = xcb_get_property(QX11Info::connection(), false, w, xcb_atom[v], XCB_ATOM_CARDINAL, offset, length);
@@ -96,7 +97,7 @@ unsigned char
                 return data;
         }
     }
-#elif defined(HASX11)
+#elif HASX11
     Atom type;
     int format;
     unsigned long nitems, after;
@@ -111,13 +112,13 @@ unsigned char
 void
 XHandler::deleteXProperty(const XWindow w, const Value v)
 {
-#if defined(HASXCB)
+#if HASXCB
     if (xcb_atom[v])
     {
         xcb_delete_property(QX11Info::connection(), w, xcb_atom[v]);
         xcb_flush(QX11Info::connection());
     }
-#elif defined(HASX11)
+#elif HASX11
     XDeleteProperty(QX11Info::display(), w, atom[v]);
     XSync(QX11Info::display(), False);
 #endif
@@ -126,9 +127,9 @@ XHandler::deleteXProperty(const XWindow w, const Value v)
 void
 XHandler::freeData(void *data)
 {
-#if defined(HASXCB)
+#if HASXCB
     free(data);
-#elif defined(HASX11)
+#elif HASX11
     XFree(data);
 #endif
 }
@@ -136,7 +137,7 @@ XHandler::freeData(void *data)
 void
 XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow win, bool resize, XWindow dest)
 {
-#if defined(HASXCB)
+#if HASXCB
     if (!QX11Info::isPlatformX11())
         return;
 
@@ -193,7 +194,7 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
                    reinterpret_cast<const char*>(&clientMessageEvent));
 
     xcb_flush(connection);
-#elif defined(HASX11)
+#elif HASX11
     XEvent xrev;
     xrev.xbutton.serial = 0; //?????
     xrev.xbutton.button = Button1;
@@ -250,7 +251,7 @@ XHandler::compositingActive()
     xcb_get_selection_owner_cookie_t cookie = xcb_get_selection_owner(c, atom);
     xcb_get_selection_owner_reply_t *reply = xcb_get_selection_owner_reply(c, cookie, NULL);
     return reply && reply->owner;
-#elif defined(HASX11)
+#elif HASX11
     static Atom *net_wm_cm = 0;
     if (!net_wm_cm)
     {
@@ -277,7 +278,7 @@ XHandler::x11Pixmap(const QImage &qtImg)
 {
     if (qtImg.isNull())
         return 0;
-#if defined(HASXCB)
+#if HASXCB
     xcb_connection_t *c = QX11Info::connection();
     //    xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
     xcb_pixmap_t pixmapId = xcb_generate_id(c);
@@ -287,7 +288,7 @@ XHandler::x11Pixmap(const QImage &qtImg)
     xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, pixmapId, gcId, qtImg.width(), qtImg.height(), 0, 0, 0, qtImg.depth(), qtImg.byteCount(), qtImg.bits());
     xcb_free_gc(c, gcId);
     return pixmapId;
-#elif defined(HASX11)
+#elif HASX11
     //Stolen from virtuality
     XImage ximage;
     memset(&ximage, 0, sizeof(XImage));
@@ -325,9 +326,9 @@ XHandler::x11Pixmap(const QImage &qtImg)
 void
 XHandler::freePix(const XPixmap pixmap)
 {
-#if defined(HASXCB)
+#if HASXCB
     xcb_free_pixmap(QX11Info::connection(), pixmap);
-#elif defined(HASX11)
+#elif HASX11
     XFreePixmap(QX11Info::display(), pixmap);
 #endif
 }
@@ -335,7 +336,7 @@ XHandler::freePix(const XPixmap pixmap)
 void
 XHandler::restack(const XWindow win, const XWindow parent)
 {
-#if defined(HASXCB)
+#if HASXCB
     xcb_connection_t *c = QX11Info::connection();
     xcb_window_t current = parent;
     xcb_query_tree_cookie_t cookie = xcb_query_tree_unchecked(c, current);
@@ -353,7 +354,7 @@ XHandler::restack(const XWindow win, const XWindow parent)
 void
 XHandler::move(const XWindow win, const QPoint &p)
 {
-#if defined(HASXCB)
+#if HASXCB
     unsigned int values[2] = {p.x(), p.y()};
     xcb_configure_window(QX11Info::connection(), win, XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
 #endif
