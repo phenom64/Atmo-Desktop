@@ -2,6 +2,8 @@
 #define XHANDLER_H
 
 #include <qglobal.h>
+#include <qwindowdefs.h>
+#include "../defines.h"
 
 static int _n = 0;
 class QPixmap;
@@ -37,7 +39,16 @@ public:
         _NET_WM_MOVERESIZE_CANCEL            =11   /* cancel operation */
     };
     typedef unsigned int TypeSize;
-    typedef quint32 XWindow, XPixmap;
+
+#if HASXCB
+    typedef quint32 XPixmap;
+#elif HASX11
+    typedef unsigned long XPixmap;
+#else
+    typedef void XPixmap;
+#endif
+    typedef WId XWindow;
+
     template<typename T> static inline void setXProperty(const XWindow w, const Value v, const TypeSize size, T *d, unsigned int n = 1)
     {
         const TypeSize byteSize(size/8), realByteSize(sizeof(T));

@@ -7,7 +7,6 @@
 #include "xhandler.h"
 #include "../config/settings.h"
 
-#include "defines.h"
 #if HASXCB //we only have xcb when compiled against qt5.
 #include <xcb/xproto.h>
 //#include <xcb/xcb_image.h>

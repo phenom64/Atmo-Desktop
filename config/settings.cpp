@@ -109,7 +109,7 @@ static const QVariant s_default[] = {
     false,
     9,
     false,
-    /*QString()*/0,
+    QString(),
     false,
     false,
     false,
@@ -150,7 +150,7 @@ static const QVariant s_default[] = {
     5,
     0,
     false,
-    /*QStringList()*/0,
+    QStringList(),
     10,
     2,
 
@@ -250,7 +250,7 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0)
 
     const QDir settingsDir(confPath());
     QString settingsFileName("dsp");
-    m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+    m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
     const QString preset(getPreset(m_settings, conf.m_appName));
     const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
     if (!preset.isEmpty() && presetFile.exists())
@@ -263,16 +263,15 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0)
         }
     }
     if (!m_settings)
-        m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::NativeFormat);
+        m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
 //    QObject::connect(qApp, SIGNAL(aboutToQuit()), m_settings, SLOT(deleteLater()));
 
-//    const QString paletteFileName(readString(Palette));
     const QString paletteFileName = m_settings->value(s_key[Palette], s_default[Palette]).toString();
     if (!paletteFileName.isEmpty())
     {
         QString settingsPath(confPath());
         settingsPath.append(QString("/%1.conf").arg(paletteFileName));
-        m_paletteSettings = new QSettings(settingsPath, QSettings::NativeFormat);
+        m_paletteSettings = new QSettings(settingsPath, QSettings::IniFormat);
 //        QObject::connect(qApp, SIGNAL(aboutToQuit()), m_paletteSettings, SLOT(deleteLater()));
     }
 }
