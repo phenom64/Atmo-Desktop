@@ -245,7 +245,7 @@ Ops::hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb)
 }
 
 void
-Ops::toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, unsigned int &sides)
+Ops::toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, quint8 &sides)
 {
     if (!tbtn)
         return;

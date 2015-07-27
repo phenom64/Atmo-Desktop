@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.12)
 option(QT5BUILD "build for qt5" OFF)
 
+if (NOT LIBDIR)
+    set(LIBDIR lib)
+endif (NOT LIBDIR)
+
 if (QT5BUILD)
     set(PROJECT styleproject_qt5)
 else (QT5BUILD)

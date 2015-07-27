@@ -36,6 +36,7 @@
 #include <QDesktopWidget>
 #include <QGroupBox>
 #include <QDockWidget>
+#include <QX11Info>
 
 #include "defines.h"
 #if HASDBUS
@@ -899,10 +900,24 @@ Window::eventFilter(QObject *o, QEvent *e)
         return false;
     }
     case QEvent::PaletteChange:
-    case QEvent::ActivationChange:
+    case QEvent::WindowActivate:
+    case QEvent::WindowDeactivate:
     {
         if (w->isWindow())
+        {
             updateWindowDataLater(w);
+//            if (dConf.differentInactive)
+//            {
+//                QList<QToolBar *> bars = w->findChildren<QToolBar *>();
+//                for (int i = 0; i < bars.count(); ++i)
+//                {
+//                    bars.at(i)->update();
+//                    QList<QWidget *> kids = bars.at(i)->findChildren<QWidget *>();
+//                    for (int c = 0; c < kids.count(); ++c)
+//                        kids.at(c)->update();
+//                }
+//            }
+        }
         return false;
     }
     default: break;
@@ -1176,6 +1191,19 @@ Window::updateWindowData(qulonglong window)
     QPalette pal(win->palette());
     if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify
         pal = QApplication::palette();
+
+    if (dConf.differentInactive)
+    {
+        if (!win->isActiveWindow())
+        {
+            pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white));
+            pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white));
+            pal.setCurrentColorGroup(QPalette::Inactive);
+        }
+        else
+            pal.setCurrentColorGroup(QPalette::Active);
+        win->setPalette(pal);
+    }
 
     if (dConf.uno.enabled && height)
     {

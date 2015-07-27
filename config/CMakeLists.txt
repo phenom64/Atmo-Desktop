@@ -14,7 +14,7 @@ if (QT5BUILD)
 else (QT5BUILD)
     target_link_libraries(${PNAME} ${QT_LIBRARIES})
 endif (QT5BUILD)
-install(TARGETS ${PNAME} LIBRARY DESTINATION lib)
+install(TARGETS ${PNAME} LIBRARY DESTINATION ${LIBDIR})
 install(FILES ${sharedHDRS} DESTINATION include/dsp)
 
 if (QT5BUILD)

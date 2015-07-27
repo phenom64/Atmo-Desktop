@@ -124,7 +124,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         p.save();
         p.setPen(Qt::NoPen);
         r.adjust(2, 2, -2, -2);
-        QColor dark(Color::mid(c, Qt::black, 5, 3+isDark()*10));
+        QColor dark(Color::mid(c, Qt::black, 5, 2+isDark()*10));
 //        dark.setAlpha(63);
 
         p.setBrush(dark);
@@ -255,8 +255,9 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     default: break;
     }
 }
-
-static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFF8C96C, 0xFF8AC96B, 0xFFFE8D88 };
+//0 0 0 min max close
+//static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFF8C96C, 0xFF8AC96B, 0xFFFE8D88 };
+static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFBE46, 0xFF05C850, 0xFFFB615F };
 
 void
 ButtonBase::paintCloseButton(QPainter &p)

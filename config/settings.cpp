@@ -27,6 +27,7 @@ static const char *s_key[] = {
     "animatestack",
     "animatescroll",
     "lockdocks",
+    "differentinactive",
 
     "deco.buttons",
     "deco.icon",
@@ -110,6 +111,7 @@ static const QVariant s_default[] = {
     9,
     false,
     QString(),
+    false,
     false,
     false,
     false,
@@ -473,6 +475,7 @@ Settings::read()
     conf.animateStack           = readBool(Animatestack);
     conf.animateScroll          = readBool(Animatescroll);
     conf.lockDocks              = readBool(Lockdocks);
+    conf.differentInactive      = readBool(Differentinactive);
     //deco
     conf.deco.buttons           = readInt(Decobuttons);
     conf.deco.icon              = readBool(Decoicon);

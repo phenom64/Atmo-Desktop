@@ -328,9 +328,16 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         if (Color::luminosity(bc) < Color::luminosity(bar->palette().color(bar->backgroundRole()))*0.8f)
             ns = true;
 
+
         QLinearGradient lg(0, 0, !hor*Render::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
+        if (dConf.differentInactive && shadow == Render::Yosemite && !bar->window()->isActiveWindow())
+        {
+            shadow = Render::Rect;
+            bc.setAlpha(127);
+        }
         lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bc));
         QBrush mask(lg);
+        bc.setAlpha(255);
         Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, &mask, 0, sides);
 
         if (hasMenu)

@@ -42,7 +42,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
     if (dConf.scrollers.style == 0)
     {
         QPalette::ColorRole fg(Ops::fgRole(area, QPalette::WindowText)), bg(Ops::bgRole(area, QPalette::Window));
-        const int m(2);
+        const int m(3);
         slider.adjust(m, m, -m, -m);
 
         QColor bgc(opt->palette.color(bg));

@@ -48,6 +48,7 @@ public:
         Animatestack,
         Animatescroll,
         Lockdocks,
+        Differentinactive,
         Decobuttons,
         Decoicon,
         Decoshadowsize,
@@ -116,7 +117,7 @@ public:
         App app;
         float opacity;
         QStringList blackList;
-        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks;
+        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive;
         int titlePos, arrowSize, animateStack, animateScroll;
         QPalette *palette;
         struct deco

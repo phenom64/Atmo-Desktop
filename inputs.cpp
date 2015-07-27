@@ -41,17 +41,26 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     QBrush mask(option->palette.base());
+
+    Render::Shadow shadow = dConf.input.shadow;
+    const bool isInactive = dConf.differentInactive && shadow == Render::Yosemite && widget && qobject_cast<QToolBar *>(widget->parent()) && !widget->window()->isActiveWindow();
+
+    if (isInactive)
+        shadow = Render::Rect;
+
     if (mask.style() == Qt::SolidPattern || mask.style() == Qt::NoBrush)
     {
         QColor c(mask.color());
         if (dConf.input.tint.second > -1)
             c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
+        if (isInactive)
+            c.setAlpha(127);
         QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.input.shadow, option->rect.height()));
         lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
 
-    Render::drawClickable(dConf.input.shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
+    Render::drawClickable(shadow, option->rect, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
     return true;
 }
 

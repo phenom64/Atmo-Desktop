@@ -25,7 +25,7 @@ public:
     enum Effect { Noeffect =0, Inset, Outset };
     Render();
     ~Render(){}
-    typedef uint Sides, Shadow, Part;
+    typedef quint8 Sides, Shadow, Part;
     static Render *instance();
     static void deleteInstance();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
