@@ -106,7 +106,8 @@ public:
         Winhor,
         Shadowopacity,
         Shadowdarkraised,
-        Keycount
+        Keycount,
+        Invalid
     };
 
     enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, Unspecific }; //app specific hacks should be avoided when possible.
@@ -210,6 +211,10 @@ public:
     static void writeDefaults();
     static void writeVal(const Key k, const QVariant v);
     static QVariant readVal(const Key k);
+    static const QString description(const Key k);
+    static Key key(const QString k);
+    static const char *key(const Key k);
+    static const QVariant defaultValue(const Key k);
     template<typename T> static inline T readValue(const Key k) { return readVal(k).value<T>(); }
 #define READ(_TYPE_, _METHOD_) static const _TYPE_ read##_METHOD_(const Key k) { return readValue<_TYPE_>(k); }
     READ(bool, Bool) READ(int, Int) READ(float, Float) READ(QString, String) READ(QStringList, StringList)

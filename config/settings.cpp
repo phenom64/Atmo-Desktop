@@ -187,6 +187,114 @@ static const QVariant s_default[] = {
     false
 };
 
+static const QString s_description[] = {
+    /*"opacity"*/                   "Opacity for UNO parts, *NOT* enabled atm due to problems w/ Qt5",
+    /*"blacklist"*/                 "Blacklist of apps that should not get opacity if set, mostly media players should be here",
+    /*"removetitlebars"*/           "Hack for removing titlebars from windows in order to get the look of Mac Os Yosemite",
+    /*"titlepos"*/                  "Position of the title in the toolbar (if room for it at all), 0 = Left, 1 = Center, 2 = Right",
+    /*"hackdialogs"*/               "Hack for making the dialogs act more like they do in Mac Os, appearing under the titlebar or toolbar of the parent window, also shapes away the titlebar of the dialog",
+    /*"compactmenu"*/               "Hides the menubar and adds a button in the toolbar to popup the menu, if there is a toolbar to add it to",
+    /*"splitterext"*/               "Splitters are small in this style (1px height/width), this adds an invisible area outside the splitter temporarily when you hover a splitter",
+    /*"maxarrowsize"*/              "Maximum allowed size in pixels for any arrows thats drawn",
+    /*"balloontips"*/               "Draw tooltips as comic a like balloons",
+    /*"palette"*/                   "Palette to be used (filename, no suffix), this should only be used in presets, not directly in dsp.conf",
+    /*"animatestack"*/              "Animate when the topmost widget in a stack changes, ie: when the active tab changes",
+    /*"animatescroll"*/             "Smooth scrolling globally, known to cause trouble in certain cases, mainly dolphin",
+    /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles w/ Ctrl+Alt+D",
+    /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
+
+    /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
+    /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
+    /*"deco.shadowsize"*/           "Size of the windowshadow for active window, inactive windows will have a smaller",
+    /*"deco.framesize"*/            "Size of borders for the decoration, not yet implemented in the kde5 deco",
+
+    /*"pushbtn.rnd"*/               "Roundness of normal pushbuttons",
+    /*"pushbtn.shadow"*/            "Shadow of normal pushbuttons",
+    /*"pushbtn.gradient"*/          "Gradient of normal pushbuttons",
+    /*"pushbtn.tinthue"*/           "Hue to tint normal pushbuttons w/",
+
+    /*"toolbtn.rnd"*/               "Roundness of toolbuttons",
+    /*"toolbtn.shadow"*/            "Shadow of toolbuttons",
+    /*"toolbtn.gradient"*/          "Gradient of toolbuttons",
+    /*"toolbtn.tinthue"*/           "Hue to tint toolbuttons w/",
+    /*"toolbtn.followcolors"*/      "If the icons on toolbuttons should be manipulated to be monochromatic and follow the palette (highly experimental and does not always produce nice results)",
+    /*"toolbtn.invertactive"*/      "Whether the active/checked toolbuttons should have inverted foreground/background colors a'la Mac Os",
+    /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
+
+    /*"input.rnd"*/                 "Roundness of input boxes, lineedits and spinboxes and such",
+    /*"input.shadow"*/              "Shadow of input boxes, lineedits and spinboxes and such",
+    /*"input.gradient"*/            "Gradient of input boxes, lineedits and spinboxes and such",
+    /*"input.tinthue"*/             "Hue to tint input boxes, lineedits and spinboxes and such w/",
+
+    /*"tabs.safari"*/               "Integrate the tabbars under toolbars like the Safari web browser from Mac Os does",
+    /*"tabs.rnd"*/                  "Roundness of tabs",
+    /*"tabs.shadow"*/               "Shadow of tabs",
+    /*"tabs.gradient"*/             "Gradient of tabs",
+    /*"tabs.safrnd"*/               "Roundness of tabs in a safari-like tabbar. Max roundness allowed 8",          //safaritabs roundness capped at 8 atm, might change in the future if needed
+    /*"tabs.closebuttonside"*/      "Side of the tab the close button should be on, 0 = Left, 1 = Right",
+
+    /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os. Always enabled atm",
+    /*"uno.gradient"*/              "Gradient of the UNO area",
+    /*"uno.tinthue"*/               "Hue to tint the UNO area w/",
+    /*"uno.noisefactor"*/           "How much noise the UNO area should have",
+    /*"uno.noisestyle"*/            "Style of the noise on the UNO area, 0 = Generic, 1 = Brushed Metal",
+    /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical, Always disabled atm",
+    /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
+    /*"uno.contentopacity"*/        "Opacity of the content painted in the toolbar",
+    /*"uno.contentblurradius"*/     "Amount of blur applied to the content in the toolbar",
+
+    /*"menues.icons"*/              "Show icons in menues",
+
+    /*"sliders.size"*/              "Size of sliders",
+    /*"sliders.dot"*/               "Paint a dot in the middle of the slider handles, like Mac Os pre Yosemite",
+    /*"sliders.slidergradient"*/    "Gradient of sliderhandles",
+    /*"sliders.groovegradient"*/    "Gradient of slidergrooves",
+    /*"sliders.grooveshadow"*/      "Shadow of slidergrooves",
+    /*"sliders.fillgroove"*/        "Fill up the groove like a progressbar to where the slider is w/ the highight color",
+    /*"sliders.groovestyle"*/       "How to fill groove section of a slider, 0 = Window colored, 1 = Blend of WindowText and Window color, 2 = WindowText color",
+
+    /*"scrollers.size"*/            "Size of scrollbars",
+    /*"scrollers.style"*/           "Style of scrollbars, 0 = Yosemite alike, 1 = Pre Yosemite alike",
+    /*"scrollers.slidergradient"*/  "Gradient of the slider in scrollbars",
+    /*"scrollers.groovegradient"*/  "Gradient of the groove part of scrollbars, only read if style of scrollbars set to 1 (Pre Yosemite alike)",
+    /*"scrollers.groovestyle"*/     "How to fill groove section of a scrollbar, 0 = Window colored, 1 = Blend of WindowText and Window color, 2 = WindowText color",
+    /*"scrollers.grooveshadow"*/    "Shadow for the groove in scrollbars to be used, only read if style of scrollbars set to 1 (Pre Yosemite alike)",
+
+    /*"views.treelines"*/           "Draw the branches in the treeviews",
+
+    /*"progressbars.shadow"*/       "Shadows for progressbars",
+    /*"progressbars.rnd"*/          "Roundness for progressbars",
+
+    /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
+    /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
+    /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal, not used atm",
+    /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical, not used atm",
+
+    /*"shadows.opacity"*/           "Opacity of the shadows painted on widgets",
+    /*"shadows.darkraisededges"*/   "Whether widgets w/ a raised shadow should be darker around the left/right edges"
+};
+
+Settings::Key
+Settings::key(const QString k)
+{
+    for (int i = 0; i < Keycount; ++i)
+        if (s_key[i] == k.toLower())
+            return (Key)i;
+    return Invalid;
+}
+
+const char
+*Settings::key(const Key k)
+{
+    return s_key[k];
+}
+
+const QVariant
+Settings::defaultValue(const Key k)
+{
+    return s_default[k];
+}
+
 static const QString confPath()
 {
     static const QString cp = QString("%1/.config/dsp").arg(QDir::homePath());
@@ -449,6 +557,12 @@ Settings::readVal(const Key k)
     if (!settings())
         return QVariant();
     return settings()->value(s_key[k], s_default[k]);
+}
+
+const QString
+Settings::description(const Key k)
+{
+    return s_description[k];
 }
 
 QSettings

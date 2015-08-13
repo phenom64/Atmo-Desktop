@@ -117,7 +117,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
     const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 
-    for (int i = 0; i < 2 && i < text.count(); ++i)
+    for (int i = 0; i < text.count(); ++i)
     {
         if (isMenuBar)
         {
