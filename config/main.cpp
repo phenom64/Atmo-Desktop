@@ -2,10 +2,11 @@
 #include <QApplication>
 #include <QDebug>
 #include <typeinfo>
+#include <QImageReader>
 #include "styleconfig.h"
 #include "settings.h"
 
-enum Task { WriteDefaults = 0, Edit, PrintInfo, ListVars, Invalid };
+enum Task { WriteDefaults = 0, Edit, PrintInfo, ListVars, GenHighlight, Invalid };
 
 Task getTask(int argc, char *argv[])
 {
@@ -19,6 +20,8 @@ Task getTask(int argc, char *argv[])
             return PrintInfo;
         if (!qstrcmp(argv[1], "--listvars"))
             return ListVars;
+        if (!qstrcmp(argv[1], "--genhighlight") && argc > 2)
+            return GenHighlight;
     }
     return Invalid;
 }
@@ -42,10 +45,10 @@ static const char *stylishedTypeName(const char *typeName)
 template<typename T>
 static void printInfo(DSP::Settings::Key k, const char *typeName)
 {
-    qDebug() << "Description: " << DSP::Settings::description(k)
-             << "\nValue:       " << DSP::Settings::readVal(k).value<T>()
-             << "\nDefault:     " << DSP::Settings::defaultValue(k).value<T>()
-             << "\nType:        " << stylishedTypeName(typeName);
+    qDebug() << "Description: "     << DSP::Settings::description(k)
+             << "\nValue:       "   << DSP::Settings::readVal(k).value<T>()
+             << "\nDefault:     "   << DSP::Settings::defaultValue(k).value<T>()
+             << "\nType:        "   << stylishedTypeName(typeName);
 }
 
 static void printHelp()
@@ -63,18 +66,78 @@ static void printVars()
         qDebug() << DSP::Settings::key((DSP::Settings::Key)i);
 }
 
+static void genHighlight(const QString &file)
+{
+    QImageReader ir(file);
+    if (!ir.canRead())
+    {
+        qDebug() << "image" << file << "is null or doesnt exist, exiting...";
+        return;
+    }
+//    static const int sz(256);
+//    QSize scaledSize(ir.size());
+//    if (scaledSize.isValid() && qMax(scaledSize.width(), scaledSize.height()) > sz)
+//        scaledSize.scale(sz, sz, Qt::KeepAspectRatio);
+//    ir.setScaledSize(scaledSize);
+    const QImage img(ir.read());
+    const QRgb *pixel = reinterpret_cast<const QRgb *>(img.bits());
+    const unsigned int size(img.width()*img.height());
+
+    //rgb average
+//    enum { Red = 0, Green, Blue };
+//    double rgb[3] = { 0, 0, 0 };
+//    for (unsigned int i = 0; i < size; ++i)
+//    {
+//        const QColor c = QColor::fromRgba(pixel[i]);
+//        rgb[Red]    += c.red();
+//        rgb[Green]  += c.green();
+//        rgb[Blue]   += c.blue();
+//    }
+//    QColor c(rgb[Red]/size, rgb[Green]/size, rgb[Blue]/size);
+
+    quint8 sat(0), val(0);
+    QList<quint16> hues;
+    QList<quint8> sats;
+
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        const QColor c = QColor::fromRgba(pixel[i]);
+        if (!c.saturation() || !c.value())
+            continue;
+        if (c.saturation() > sat)
+            sat = c.saturation();
+        if (c.value() > val)
+            val = c.value();
+//        if (c.value()+c.saturation() > satVal)
+//            satVal = c.value()+c.saturation();
+//        hue += c.hue()*(c.value()/255.0f)*(c.saturation()/255.0f);
+        if (c.saturation()+c.value() > 256)
+        {
+            hues << c.hue();
+            sats << c.saturation();
+        }
+    }
+    int activeHue(-1), currentHueCount(0);
+    for (int i = 0; i < 360; ++i)
+        if (hues.count(i) > currentHueCount)
+        {
+            currentHueCount = hues.count(i);
+            activeHue = i;
+
+        }
+
+    QColor c = QColor::fromHsv(activeHue, sat, val);
+    qDebug() << QString("#%1").arg(QString::number(c.rgba(), 16).mid(2));
+}
+
 int main(int argc, char *argv[])
 {
     const Task t = getTask(argc, argv);
     QApplication app(argc, argv);
     switch (t)
     {
-    case WriteDefaults:
-        DSP::Settings::writeDefaults();
-        break;
-    case Edit:
-        DSP::Settings::edit();
-        break;
+    case WriteDefaults: DSP::Settings::writeDefaults(); break;
+    case Edit: DSP::Settings::edit(); break;
     case PrintInfo:
     {
         DSP::Settings::Key k = DSP::Settings::key(argv[2]);
@@ -96,9 +159,8 @@ int main(int argc, char *argv[])
         }
         break;
     }
-    case ListVars:
-        printVars();
-        break;
+    case GenHighlight: genHighlight(argv[2]); break;
+    case ListVars: printVars(); break;
     default: printHelp(); break;
     }
     app.quit();

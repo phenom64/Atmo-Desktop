@@ -37,7 +37,6 @@
 #include <QGroupBox>
 #include <QDockWidget>
 #include <QX11Info>
-
 #include "defines.h"
 #if HASDBUS
 #include <QDBusMessage>
@@ -343,18 +342,7 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
                     QAction *right(actions.at(i+1));
                     if (qobject_cast<QToolButton *>(bar->widgetForAction(right)))
                         sides &= ~(bar->orientation() == Qt::Horizontal?Render::Right:Render::Bottom);
-                    //                    else if (!right->isSeparator() && bar->widgetForAction(right) && bar->isVisible())
-                    //                    {
-                    //                        qDebug() << "inserting separator before" << right << bar->widgetForAction(right);
-                    //                        bar->insertSeparator(right);
-                    //                    }
                 }
-//                else if (i == actions.count()-1 && bar->isVisible() && !actions.at(i)->isSeparator())
-//                {
-//                    qDebug() << "adding separator";
-//                    bar->addSeparator();
-//                }
-
                 s_sides.insert(btn, sides);
             }
         }
@@ -904,20 +892,7 @@ Window::eventFilter(QObject *o, QEvent *e)
     case QEvent::WindowDeactivate:
     {
         if (w->isWindow())
-        {
             updateWindowDataLater(w);
-//            if (dConf.differentInactive)
-//            {
-//                QList<QToolBar *> bars = w->findChildren<QToolBar *>();
-//                for (int i = 0; i < bars.count(); ++i)
-//                {
-//                    bars.at(i)->update();
-//                    QList<QWidget *> kids = bars.at(i)->findChildren<QWidget *>();
-//                    for (int c = 0; c < kids.count(); ++c)
-//                        kids.at(c)->update();
-//                }
-//            }
-        }
         return false;
     }
     default: break;
@@ -1202,7 +1177,7 @@ Window::updateWindowData(qulonglong window)
         }
         else
             pal.setCurrentColorGroup(QPalette::Active);
-        win->setPalette(pal);
+//        win->setPalette(pal);
     }
 
     if (dConf.uno.enabled && height)

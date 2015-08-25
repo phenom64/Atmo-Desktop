@@ -99,7 +99,7 @@ XHandler::XPixmap
         const quint32 sd[4] = { size*0.5f, size*0.7f, size*0.9f, size*0.7f };
         QRect r(0, 0, s, s);
         r.adjust(sd[3], sd[0], -sd[1], -sd[2]);
-        p.setBrush(QColor(0, 0, 0, 85));
+        p.setBrush(QColor(0, 0, 0, 63));
         p.drawRoundedRect(r.adjusted(-1, -1, 1, 1), 5, 5);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.setBrush(Qt::black);

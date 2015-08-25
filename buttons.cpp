@@ -289,6 +289,14 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
 
     painter->save();
     QRect rect(opt->rect);
+
+    if (dConf.dfmHacks && dConf.app == DSP::Settings::DFM && btn && (btn->toolTip() == "Go Back" || btn->toolTip() == "Go Forward"))
+    {
+        if (sides & Render::Right)
+            rect.translate(-1, 0);
+        sides = Render::All;
+    }
+
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(Render::maskRect(dConf.toolbtn.shadow, rect, sides));
     const bool hasMenu(Ops::hasMenu(btn, opt));
@@ -338,7 +346,8 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bc));
         QBrush mask(lg);
         bc.setAlpha(255);
-        Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, &mask, 0, sides);
+//        const bool noMask(dConf.differentInactive&&bar->toolButtonStyle()==Qt::ToolButtonIconOnly&&shadow==Render::ElCapitan&&!bar->window()->isActiveWindow()&&!(option->SUNKEN));
+        Render::drawClickable(shadow, rect, painter, dConf.toolbtn.rnd, dConf.shadows.opacity, widget, opt, /*noMask?0:*/&mask, 0, sides);
 
         if (hasMenu)
         {
@@ -406,6 +415,14 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     Ops::toolButtonData(btn, nextSelected, prevSelected, isInTopToolBar, sides);
 
     QRect rect(opt->rect);
+
+    if (dConf.dfmHacks && dConf.app == DSP::Settings::DFM && btn && (btn->toolTip() == "Go Back" || btn->toolTip() == "Go Forward"))
+    {
+        if (sides & Render::Left)
+            rect.translate(-1, 0);
+        sides = Render::All;
+    }
+
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     QRect mr(multiTab?rect:Render::maskRect(dConf.toolbtn.shadow, rect, sides));
     const bool hasMenu(Ops::hasMenu(btn, opt));

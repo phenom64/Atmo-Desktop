@@ -462,7 +462,7 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
         pt.setRenderHint(QPainter::Antialiasing);
         const QRectF bevel(0.5f, 0.5f, tmp.width()-0.5f, tmp.height());
         QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
-        lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, bgLum*1.1f)));
+        lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255/*.0f*/, bgLum/**1.1f*/)));
         lg.setColorAt(0.5f, Qt::transparent);
         pt.setBrush(lg);
         pt.setPen(Qt::NoPen);

@@ -28,6 +28,7 @@ static const char *s_key[] = {
     "animatescroll",
     "lockdocks",
     "differentinactive",
+    "dfmhacks",
 
     "deco.buttons",
     "deco.icon",
@@ -111,6 +112,7 @@ static const QVariant s_default[] = {
     9,
     false,
     QString(),
+    false,
     false,
     false,
     false,
@@ -338,7 +340,7 @@ static const QString appName()
 }
 
 
-Settings::Settings() : m_settings(0), m_paletteSettings(0)
+Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0)
 {
     conf.m_appName = appName();
     if (conf.m_appName == "eiskaltdcpp-qt")
@@ -355,6 +357,8 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0)
         conf.app = Yakuake;
     else if (conf.m_appName == "plasma-desktop")
         conf.app = Plasma;
+    else if (conf.m_appName == "dfm")
+        conf.app = DFM;
     else
         conf.app = Unspecific;
 
@@ -391,6 +395,7 @@ Settings::~Settings()
     s_instance = 0;
     m_settings = 0;
     m_paletteSettings = 0;
+    restoreFileName();
 }
 
 Settings
@@ -544,6 +549,24 @@ QSettings
 }
 
 void
+Settings::setFileName(const QString &file)
+{
+    if (m_overrideSettings)
+        restoreFileName();
+    m_overrideSettings = new QSettings(QString("%1/%2.conf").arg(confPath(), file), QSettings::IniFormat);
+}
+
+void
+Settings::restoreFileName()
+{
+    if (m_overrideSettings)
+    {
+        m_overrideSettings->deleteLater();
+        m_overrideSettings = 0;
+    }
+}
+
+void
 Settings::writeVal(const Key k, const QVariant v)
 {
     if (!settings())
@@ -568,7 +591,7 @@ Settings::description(const Key k)
 QSettings
 *Settings::settings()
 {
-    return instance()->m_settings;
+    return instance()->m_overrideSettings?instance()->m_overrideSettings:instance()->m_settings;
 }
 
 void
@@ -590,6 +613,7 @@ Settings::read()
     conf.animateScroll          = readBool(Animatescroll);
     conf.lockDocks              = readBool(Lockdocks);
     conf.differentInactive      = readBool(Differentinactive);
+    conf.dfmHacks               = readBool(Dfmhacks);
     //deco
     conf.deco.buttons           = readInt(Decobuttons);
     conf.deco.icon              = readBool(Decoicon);
@@ -621,7 +645,7 @@ Settings::read()
     conf.tabs.safrnd            = qMin(readInt(Saftabrnd), 8);
     conf.tabs.closeButtonSide   = readInt(Tabcloser);
     //uno
-    conf.uno.enabled            = readBool(Unoenabled);
+    conf.uno.enabled            = /*readBool(Unoenabled)*/true;
     conf.uno.gradient           = stringToGrad(readString(Unograd));
     conf.uno.tint               = tintColor(readString(Unotint));
     conf.uno.noise              = readInt(Unonoise);

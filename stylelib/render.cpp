@@ -367,6 +367,17 @@ Render::initShadowParts(const QPalette &pal)
             p.drawRoundedRect(rt.adjusted(w, w, -w, -w), r-w, r-w);
             break;
         }
+        case ElCapitan:
+        {
+            p.setPen(Qt::NoPen);
+            p.setBrush(Qt::black);
+            p.drawRoundedRect(pix.rect(), r, r);
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
+            p.setBrush(QColor(0, 0, 0, 63));
+            p.drawRoundedRect(pix.rect().translated(0, -1), r, r);
+            break;
+        }
         default: break;
         }
         p.end();
@@ -825,7 +836,7 @@ Render::drawClickable(Shadow s,
     const bool sunken(opt && opt->state & (QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange));
     if (opt
             && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
-            && s != Carved && s != Yosemite && s != Rect && !isToolBox && !isLineEdit)
+            && s != Carved && s != Yosemite && s != Rect && s != ElCapitan && !isToolBox && !isLineEdit)
     {
         if (s == Raised)
             r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);
@@ -930,7 +941,7 @@ Render::drawClickable(Shadow s,
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
         rnd = qMax(rnd-m, 0);
     }
-    else if (r.height() != r.width() || qobject_cast<const QToolButton *>(w))
+    else if ((r.height() != r.width() || qobject_cast<const QToolButton *>(w)) && s != ElCapitan)
         r.sAdjust(0, 0, 0, -1);
 
     /// BEGIN ACTUAL PLATE PAINTING
@@ -986,7 +997,7 @@ Render::drawClickable(Shadow s,
             renderMask(r, p, edges, rnd, sides);
         }
     }
-    else if (s==Rect)
+    else if (s==Rect || s==ElCapitan)
         renderShadow(s, r, p, rnd, sides, opacity);
 }
 

@@ -106,11 +106,12 @@ public:
         Winhor,
         Shadowopacity,
         Shadowdarkraised,
+        Dfmhacks,
         Keycount,
         Invalid
     };
 
-    enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, Unspecific }; //app specific hacks should be avoided when possible.
+    enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, DFM, Unspecific }; //app specific hacks should be avoided when possible.
     typedef uint App;
     typedef struct _Conf
     {
@@ -118,7 +119,7 @@ public:
         App app;
         float opacity;
         QStringList blackList;
-        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive;
+        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks;
         int titlePos, arrowSize, animateStack, animateScroll;
         QPalette *palette;
         struct deco
@@ -207,6 +208,9 @@ public:
     static QSettings *settings();
     static QSettings *paletteSettings();
 
+    static void setFileName(const QString &file);
+    static void restoreFileName();
+
     static void writePalette();
     static void writeDefaults();
     static void writeVal(const Key k, const QVariant v);
@@ -228,7 +232,7 @@ protected:
     static Settings *instance();
 
 private:
-    QSettings *m_settings, *m_paletteSettings;
+    QSettings *m_settings, *m_paletteSettings, *m_overrideSettings;
     static Settings *s_instance;
 };
 

@@ -20,6 +20,7 @@ public:
                       Yosemite, //yosemite simple shadow that reacts differently if widget inside toolbar...
                       Carved,   //rhino like
                       Rect,     //simple rounded rectangle, no honky-ponky
+                      ElCapitan,
                       ShadowCount };
     enum Tab { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
     enum Effect { Noeffect =0, Inset, Outset };
