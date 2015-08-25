@@ -551,18 +551,18 @@ QSettings
 void
 Settings::setFileName(const QString &file)
 {
-    if (m_overrideSettings)
+    if (instance()->m_overrideSettings)
         restoreFileName();
-    m_overrideSettings = new QSettings(QString("%1/%2.conf").arg(confPath(), file), QSettings::IniFormat);
+    instance()->m_overrideSettings = new QSettings(QString("%1/%2.conf").arg(confPath(), file), QSettings::IniFormat);
 }
 
 void
 Settings::restoreFileName()
 {
-    if (m_overrideSettings)
+    if (instance()->m_overrideSettings)
     {
-        m_overrideSettings->deleteLater();
-        m_overrideSettings = 0;
+        instance()->m_overrideSettings->deleteLater();
+        instance()->m_overrideSettings = 0;
     }
 }
 
