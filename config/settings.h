@@ -49,6 +49,7 @@ public:
         Animatescroll,
         Lockdocks,
         Differentinactive,
+        Dfmhacks,
         Decobuttons,
         Decoicon,
         Decoshadowsize,
@@ -106,7 +107,6 @@ public:
         Winhor,
         Shadowopacity,
         Shadowdarkraised,
-        Dfmhacks,
         Keycount,
         Invalid
     };
