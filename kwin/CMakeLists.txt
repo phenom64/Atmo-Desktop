@@ -2,44 +2,25 @@ message(STATUS "preparing kwin deco")
 
 if (QT5BUILD)
     #NOTE: most of this copied from the default breeze deco and partly rewritten for dsp
-    find_package(KF5 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons I18n)
-    find_package(Qt5 CONFIG REQUIRED COMPONENTS DBus)
+    find_package(KF5 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons)
     
     include(KDEInstallDirs)
     include(KDECMakeSettings)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
     
+#     find_package(KWin)
+#     message(STATUS ${KWin_FOUND})
     #add_subdirectory(effects)
 
     set(SRCS
         kwinclient2.cpp
-        decobutton.cpp
-        ../macmenu.cpp
-        ../stylelib/color.cpp
-        ../stylelib/xhandler.cpp
-        ../stylelib/shadowhandler.cpp
-        ../stylelib/render.cpp
-        ../stylelib/widgets.cpp
-        ../stylelib/windowdata.cpp
-        ../stylelib/ops.cpp
-        ../stylelib/handlers.cpp)
+        decobutton.cpp)
     set(HDRS
         kwinclient2.h
         decobutton.h
-        decoadaptor.h
-        ../macmenu.h
-        ../macmenu-dbus.h
-        ../stylelib/color.h
-        ../stylelib/xhandler.h
-        ../stylelib/shadowhandler.h
-        ../stylelib/render.h
-        ../stylelib/widgets.h
-        ../stylelib/windowdata.h
-        ../stylelib/ops.h
-        ../stylelib/handlers.h)
+        decoadaptor.h)
     
-#     qt5_wrap_cpp(MOC_ADAPTOR decoadaptor.h)
     ### build library
     add_library(dspdecoration MODULE ${SRCS} ${HDRS})
 
@@ -47,22 +28,23 @@ if (QT5BUILD)
         PUBLIC
             Qt5::Core
             Qt5::Gui
-            Qt5::DBus
             dspsettings_qt5
+            dspstylelib_qt5
         PRIVATE
             KDecoration2::KDecoration
             KF5::ConfigCore
             KF5::CoreAddons
             KF5::ConfigWidgets
             KF5::GuiAddons
-            KF5::I18n
             KF5::WindowSystem)
-
+    if (QTDBUS_FOUND)
+        target_link_libraries(dspdecoration PUBLIC Qt5::DBus)
+    endif (QTDBUS_FOUND)
     if (XCB_FOUND)
         target_link_libraries(dspdecoration PUBLIC Qt5::X11Extras XCB::XCB)
     else (XCB_FOUND)
         if (X11_FOUND)
-            target_link_libraries(dspdecoration PUBLIC ${X11_X11_LIB} ${X11_LIBRARIES})
+            target_link_libraries(dspdecoration PUBLIC Qt5::X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
         endif (X11_FOUND)
     endif (XCB_FOUND)
 

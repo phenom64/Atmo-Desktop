@@ -38,10 +38,12 @@
 #include <QWindow>
 
 #include <QDebug>
+#if HASXCB
 #include <QX11Info>
+#endif
 
 K_PLUGIN_FACTORY_WITH_JSON(
-    DecoFactory,
+    DSPDecoFactory,
     "dsp.json",
     registerPlugin<DSP::Deco>();
     registerPlugin<DSP::Button>(QStringLiteral("button"));
@@ -171,11 +173,9 @@ Deco::init()
     {;
         AdaptorManager::instance()->addDeco(this);
         m_buttonStyle = dConf.deco.buttons;
-        if (m_wd = WindowData::memory(id, this))
-        {
-            initMemory();
+        initMemory(WindowData::memory(id, this));
+        if (m_wd)
             m_buttonStyle = m_wd->value<int>(WindowData::Buttons, m_buttonStyle);
-        }
         else
             checkForDataFromWindowClass();
         ShadowHandler::installShadows(id);
@@ -223,8 +223,11 @@ Deco::init()
 }
 
 void
-Deco::initMemory()
+Deco::initMemory(WindowData *data)
 {
+    if (!data)
+        return;
+    m_wd = data;
     connect(m_wd, &QObject::destroyed, this, &Deco::dataDestroyed);
     if (m_wd->isEmpty())
     {
@@ -238,8 +241,7 @@ void
 Deco::updateData()
 {
     if (!m_wd)
-    if (m_wd = WindowData::memory(client().data()->windowId(), this))
-        initMemory();
+        initMemory(WindowData::memory(client().data()->windowId(), this));
     if (m_wd)
     {
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
@@ -544,11 +546,16 @@ Grip::Grip(Deco *d)
     : QWidget(0)
     , m_deco(d)
 {
+#if HASXCB
     if (!QX11Info::isPlatformX11() || !m_deco)
     {
         hide();
         return;
     }
+#else
+    hide();
+    return;
+#endif
     setColor(Color::mid(m_deco->fgColor(), m_deco->bgColor()));
     setFixedSize(Size, Size);
     setCursor(Qt::SizeFDiagCursor);

@@ -40,7 +40,7 @@ protected:
     bool eventFilter(QObject *o, QEvent *ev);
 };
 
-class MacMenu : public QObject
+class Q_DECL_EXPORT MacMenu : public QObject
 {
    Q_OBJECT
 public:

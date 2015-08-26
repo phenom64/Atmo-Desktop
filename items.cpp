@@ -40,11 +40,11 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
     const QPalette pal(opt->palette);
 
-    int leftMargin(isMenu?(opt->menuHasCheckableItems?24:6):0), rightMargin(isMenu?(hasMenu||isSeparator?24:6):0), h(opt->rect.height()), w(opt->rect.width());
+    int leftMargin(isMenu?(opt->menuHasCheckableItems||hasCheckBox||hasRadioButton?24:6):0), rightMargin(isMenu?(hasMenu||isSeparator?24:6):0), h(opt->rect.height()), w(opt->rect.width());
 
     QRect button(0, opt->rect.top(), h, h);
-    button.moveLeft(button.left()+(leftMargin/2 - h/2));
-    QRect textRect(opt->rect.adjusted(leftMargin, 0, -rightMargin, 0));
+    button.moveLeft(button.left()+qMax(0, (leftMargin/2 - h/2)));
+    QRect textRect(opt->rect.adjusted(qMax(button.right()+1, leftMargin), 0, -rightMargin, 0));
     QRect arrow(textRect.right()+((rightMargin/2)-(h/2)), opt->rect.top(), h, h);
 
     if (isSeparator)

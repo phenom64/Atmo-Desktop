@@ -41,7 +41,7 @@
 #if HASDBUS
 #include <QDBusMessage>
 #include <QDBusConnection>
-#include "macmenu.h"
+#include "stylelib/macmenu.h"
 #endif
 
 static QRegion paintRegion(QMainWindow *win)

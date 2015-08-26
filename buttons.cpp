@@ -47,7 +47,7 @@ StyleProject::drawPushButtonBevel(const QStyleOption *option, QPainter *painter,
     const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
     if (!opt)
         return true;
-    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::ButtonText)), fg(Ops::fgRole(widget, QPalette::ButtonText));
+    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
     if (!(opt->features & QStyleOptionButton::Flat))
     {
         QColor bc(option->palette.color(bg));
@@ -268,7 +268,7 @@ StyleProject::drawToolButtonBevel(const QStyleOption *option, QPainter *painter,
         return true;
     }
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
-    const QToolBar *bar = qobject_cast<const QToolBar *>(widget->parentWidget());
+    const QToolBar *bar = widget?qobject_cast<const QToolBar *>(widget->parentWidget()):0;
     int hover[2];
     for (int i = 0; i < 2; ++i)
         hover[i] = Anim::ToolBtns::level(btn, i);
@@ -405,9 +405,8 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
     painter->save();
 
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
-    const QToolBar *bar(0);
-    if (widget)
-        bar = qobject_cast<const QToolBar *>(widget->parentWidget());
+    const QToolBar *bar(widget?qobject_cast<const QToolBar *>(widget->parentWidget()):0);
+
     const bool hor(!bar||bar->orientation() == Qt::Horizontal);
     const bool multiTab(widget && widget->inherits("KMultiTabBarTab"));
     Render::Sides sides = Render::All;
@@ -489,7 +488,11 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
             ir.translate(-2, 0);
     }
     const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
-    QPalette::ColorRole textRole(bar?QPalette::ButtonText:widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
+    QPalette::ColorRole textRole(QPalette::WindowText);
+    if (bar)
+        textRole = QPalette::ButtonText;
+    else if (widget && widget->parentWidget())
+        textRole = widget->parentWidget()->foregroundRole();
     if (multiTab)
     {
         textRole = QPalette::ButtonText;
@@ -510,7 +513,7 @@ StyleProject::drawToolButtonLabel(const QStyleOption *option, QPainter *painter,
         fg = textRole = opt->SUNKEN?QPalette::HighlightedText:QPalette::WindowText;
         bg = opt->SUNKEN?QPalette::Highlight:QPalette::Window;
     }
-    if (!bar && widget->parentWidget())
+    if (!bar && widget && widget->parentWidget())
     {
         fg = textRole = widget->parentWidget()->foregroundRole();
         bg = widget->parentWidget()->backgroundRole();

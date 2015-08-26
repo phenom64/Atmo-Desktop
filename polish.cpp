@@ -46,7 +46,7 @@
  */
 #include "defines.h"
 #if HASDBUS
-#include "macmenu.h"
+#include "stylelib/macmenu.h"
 #endif
 
 static void applyBlur(QWidget *widget)

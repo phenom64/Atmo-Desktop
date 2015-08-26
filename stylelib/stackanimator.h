@@ -7,7 +7,7 @@
 class QStackedLayout;
 class QTimer;
 class QWidget;
-class StackAnimator : public QObject
+class Q_DECL_EXPORT StackAnimator : public QObject
 {
     Q_OBJECT
 public:

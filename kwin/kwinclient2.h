@@ -16,12 +16,12 @@ class QPixmap;
 class QSharedMemory;
 namespace DSP
 {
-class Grip;
 class ConfigModule : public KCModule
 {
     Q_OBJECT
 public:
     ConfigModule(QWidget *parent = 0, const QVariantList &args = QVariantList());
+    ~ConfigModule() {}
 public slots:
     /**
      * Load the configuration data into the module.
@@ -72,7 +72,6 @@ public slots:
      */
     void defaults() {}
 };
-
 class Grip;
 class Deco : public KDecoration2::Decoration
 {
@@ -125,7 +124,7 @@ protected slots:
 protected:
     void checkForDataFromWindowClass();
     void updateBgPixmap();
-    void initMemory();
+    void initMemory(WindowData *data);
     void paintBevel(QPainter *painter, const int bgLum);
 
     const QColor bgColor() const;

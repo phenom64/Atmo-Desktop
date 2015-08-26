@@ -161,7 +161,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     }
     case CT_ToolButton:
     {
-        if (widget && !widget->parentWidget())
+        if (!widget || (widget && !widget->parentWidget()))
             return contentsSize;
 
         const QStyleOptionToolButton *optbtn = qstyleoption_cast<const QStyleOptionToolButton *>(opt);

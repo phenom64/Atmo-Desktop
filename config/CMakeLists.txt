@@ -2,18 +2,24 @@ message(STATUS "preparing config")
 
 #shared settings lib...
 set(PNAME dspsettings)
+
 if (QT5BUILD)
     set(PNAME dspsettings_qt5)
 endif (QT5BUILD)
+
 project(${PNAME})
+
 set(sharedSRCS settings.cpp)
 set(sharedHDRS settings.h)
+
 add_library(${PNAME} SHARED ${sharedSRCS} ${sharedHDRS})
+
 if (QT5BUILD)
     target_link_libraries(${PNAME} Qt5::Core)
 else (QT5BUILD)
     target_link_libraries(${PNAME} ${QT_LIBRARIES})
 endif (QT5BUILD)
+
 install(TARGETS ${PNAME} LIBRARY DESTINATION ${LIBDIR})
 install(FILES ${sharedHDRS} DESTINATION include/dsp)
 
