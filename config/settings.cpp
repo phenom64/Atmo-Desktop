@@ -305,6 +305,11 @@ static const QString confPath()
 
 static const QString getPreset(QSettings *s, const QString &appName)
 {
+    if (qApp->arguments().contains("--dsppreset"))
+        if (int i = qApp->arguments().indexOf("--dsppreset")+1)
+            if (i < qApp->arguments().count())
+                return qApp->arguments().at(i);
+
     QString preset;
     s->beginGroup("Presets");
     const QStringList presets(s->childKeys());
@@ -328,14 +333,7 @@ static const QString appName()
     if (qApp)
     {
         if (!qApp->arguments().isEmpty())
-        {
-            if (qApp->arguments().contains("--dsppreset"))
-                if (int i = qApp->arguments().indexOf("--dsppreset")+1)
-                    if (i < qApp->arguments().count())
-                        app = qApp->arguments().at(i);
-            if (app.isEmpty())
-                app = qApp->arguments().first();
-        }
+            app = qApp->arguments().first();
         else if (!qApp->applicationName().isEmpty())
             app = qApp->applicationName();
         else
@@ -383,6 +381,8 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0
             m_settings = 0;
         }
     }
+    else
+        qDebug() << "unable to preset or preset doesnt exist:" << preset;
     if (!m_settings)
         m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
 //    QObject::connect(qApp, SIGNAL(aboutToQuit()), m_settings, SLOT(deleteLater()));
