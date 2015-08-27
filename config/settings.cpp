@@ -328,7 +328,14 @@ static const QString appName()
     if (qApp)
     {
         if (!qApp->arguments().isEmpty())
-            app = qApp->arguments().first();
+        {
+            if (qApp->arguments().contains("--dsppreset"))
+                if (int i = qApp->arguments().indexOf("--dsppreset")+1)
+                    if (i < qApp->arguments().count())
+                        app = qApp->arguments().at(i);
+            if (app.isEmpty())
+                app = qApp->arguments().first();
+        }
         else if (!qApp->applicationName().isEmpty())
             app = qApp->applicationName();
         else
