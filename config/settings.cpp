@@ -561,6 +561,7 @@ Settings::restoreFileName()
 {
     if (instance()->m_overrideSettings)
     {
+        instance()->m_overrideSettings->sync();
         instance()->m_overrideSettings->deleteLater();
         instance()->m_overrideSettings = 0;
     }

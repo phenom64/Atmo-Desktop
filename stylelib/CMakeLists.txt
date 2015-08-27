@@ -1,6 +1,5 @@
-message(STATUS "preparing config")
+message(STATUS "preparing stylelib")
 
-#shared settings lib...
 set(PNAME dspstylelib)
 if (QT5BUILD)
     set(PNAME dspstylelib_qt5)
