@@ -204,6 +204,7 @@ static const QString s_description[] = {
     /*"animatescroll"*/             "Smooth scrolling globally, known to cause trouble in certain cases, mainly dolphin",
     /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles w/ Ctrl+Alt+D",
     /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
+    /*dfmhacks*/                    "Internal, silly hacks regarding dfm, might be removed anytime",
 
     /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
     /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
@@ -347,22 +348,22 @@ static const QString appName()
 
 Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0)
 {
-    conf.m_appName = appName();
-    if (conf.m_appName == "eiskaltdcpp-qt")
+    conf.appName = appName();
+    if (conf.appName == "eiskaltdcpp-qt")
         conf.app = Eiskalt;
-    else if (conf.m_appName == "konversation")
+    else if (conf.appName == "konversation")
         conf.app = Konversation;
-    else if (conf.m_appName == "konsole")
+    else if (conf.appName == "konsole")
         conf.app = Konsole;
-    else if (conf.m_appName == "kwin" || conf.m_appName == "kwin_x11" || conf.m_appName == "kwin_wayland")
+    else if (conf.appName == "kwin" || conf.appName == "kwin_x11" || conf.appName == "kwin_wayland")
         conf.app = KWin;
-    else if (conf.m_appName == "be.shell")
+    else if (conf.appName == "be.shell")
         conf.app = BEShell;
-    else if (conf.m_appName == "yakuake")
+    else if (conf.appName == "yakuake")
         conf.app = Yakuake;
-    else if (conf.m_appName == "plasma-desktop")
+    else if (conf.appName == "plasma-desktop")
         conf.app = Plasma;
-    else if (conf.m_appName == "dfm")
+    else if (conf.appName == "dfm")
         conf.app = DFM;
     else
         conf.app = Unspecific;
@@ -370,19 +371,22 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0
     const QDir settingsDir(confPath());
     QString settingsFileName("dsp");
     m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
-    const QString preset(getPreset(m_settings, conf.m_appName));
+    const QString preset(getPreset(m_settings, conf.appName));
     const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
-    if (!preset.isEmpty() && presetFile.exists())
+    if (!preset.isEmpty())
     {
-        settingsFileName = preset;
-        if (m_settings)
+        if (presetFile.exists())
         {
-            m_settings->deleteLater();
-            m_settings = 0;
+            settingsFileName = preset;
+            if (m_settings)
+            {
+                m_settings->deleteLater();
+                m_settings = 0;
+            }
         }
+        else
+            qDebug() << "DSP: unable to load preset or preset doesnt exist:" << preset;
     }
-    else
-        qDebug() << "unable to preset or preset doesnt exist:" << preset;
     if (!m_settings)
         m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
 //    QObject::connect(qApp, SIGNAL(aboutToQuit()), m_settings, SLOT(deleteLater()));
@@ -610,7 +614,7 @@ Settings::read()
     conf.blackList              = readStringList(Blacklist);
 //    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
 //        conf.opacity = 1.0f;
-    conf.removeTitleBars        = readBool(Removetitle);
+    conf.removeTitleBars        = false/*readBool(Removetitle)*/;
     conf.titlePos               = conf.removeTitleBars?readInt(Titlepos):-1;
     conf.hackDialogs            = readBool(Hackdialogs);
     conf.compactMenu            = readBool(Compactmenu);
