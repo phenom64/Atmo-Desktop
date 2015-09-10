@@ -115,7 +115,7 @@ public:
     typedef uint App;
     typedef struct _Conf
     {
-        QString m_appName;
+        QString appName;
         App app;
         float opacity;
         QStringList blackList;
