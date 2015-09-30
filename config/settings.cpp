@@ -34,6 +34,7 @@ static const char *s_key[] = {
     "deco.icon",
     "deco.shadowsize",
     "deco.framesize",
+    "deco.embedded",
 
     "pushbtn.rnd",
     "pushbtn.shadow",
@@ -122,6 +123,7 @@ static const QVariant s_default[] = {
     true,
     32,
     0,
+    false,
 
     8,
     3,
@@ -210,6 +212,7 @@ static const QString s_description[] = {
     /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
     /*"deco.shadowsize"*/           "Size of the windowshadow for active window, inactive windows will have a smaller",
     /*"deco.framesize"*/            "Size of borders for the decoration, not yet implemented in the kde5 deco",
+    /*"deco.embedded"*/             "CSD-a-like bullshit that embeds crap in the title area, will cause trouble, do not use",
 
     /*"pushbtn.rnd"*/               "Roundness of normal pushbuttons",
     /*"pushbtn.shadow"*/            "Shadow of normal pushbuttons",
@@ -615,7 +618,7 @@ Settings::read()
 //    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
 //        conf.opacity = 1.0f;
     conf.removeTitleBars        = false/*readBool(Removetitle)*/;
-    conf.titlePos               = conf.removeTitleBars?readInt(Titlepos):-1;
+    conf.titlePos               = readInt(Titlepos);
     conf.hackDialogs            = readBool(Hackdialogs);
     conf.compactMenu            = readBool(Compactmenu);
     conf.splitterExt            = readBool(Splitterext);
@@ -631,6 +634,7 @@ Settings::read()
     conf.deco.icon              = readBool(Decoicon);
     conf.deco.shadowSize        = readInt(Decoshadowsize);
     conf.deco.frameSize         = readInt(Decoframe);
+    conf.deco.embed             = readBool(Decoembedded);
     //pushbuttons
     conf.pushbtn.rnd            = readInt(Pushbtnrnd);
     conf.pushbtn.shadow         = readInt(Pushbtnshadow);

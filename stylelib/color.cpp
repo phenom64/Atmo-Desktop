@@ -2,6 +2,8 @@
 #include <QPalette>
 #include <QApplication>
 
+using namespace DSP;
+
 QColor
 Color::mid(const QColor &c1, const QColor c2, int i1, int i2)
 {

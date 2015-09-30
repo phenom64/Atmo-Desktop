@@ -10,6 +10,8 @@ class QPixmap;
 class QImage;
 class QPoint;
 class QWidget;
+namespace DSP
+{
 class Q_DECL_EXPORT XHandler
 {
 public:
@@ -77,5 +79,6 @@ protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);
     static unsigned char *fetchProperty(const XWindow w, const Value v, int &n, quint32 offset, quint32 length);
 };
+} //namespace
 
 #endif //XHANDLER_H

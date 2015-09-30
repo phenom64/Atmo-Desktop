@@ -15,15 +15,17 @@
 #include <QSplitter>
 #include <QStyleOption>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
 #include "stylelib/render.h"
 #include "stylelib/macros.h"
 
+using namespace DSP;
+
 int
-StyleProject::layoutSpacingAndMargins(const QWidget *w)
+Style::layoutSpacingAndMargins(const QWidget *w)
 {
     if (dConf.uno.enabled && w)
     if (QMainWindow *mw = qobject_cast<QMainWindow *>(w->window()))
@@ -65,7 +67,7 @@ StyleProject::layoutSpacingAndMargins(const QWidget *w)
 }
 
 int
-StyleProject::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
+Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
     switch (metric)
     {

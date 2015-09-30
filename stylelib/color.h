@@ -2,6 +2,8 @@
 #define COLOR_H
 
 #include <QColor>
+namespace DSP
+{
 class Q_DECL_EXPORT Color
 {
 public:
@@ -15,5 +17,6 @@ public:
     static QColor (&titleBarColors())[2];
 //    static QColor *titleBarColors();
 };
+}
 
 #endif // COLOR_H

@@ -3,12 +3,14 @@
 #include <QApplication>
 #include <QMainWindow>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
 
+using namespace DSP;
+
 int
-StyleProject::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const
+Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const
 {
     switch (sh)
     {

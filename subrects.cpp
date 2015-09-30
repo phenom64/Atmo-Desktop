@@ -18,14 +18,16 @@
 #include <QStyleOptionToolButton>
 #include <QStyleOptionViewItemV4>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
 #include "stylelib/render.h"
 
+using namespace DSP;
+
 QRect
-StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     if (cc < CCSize && m_sc[cc])
         return (this->*m_sc[cc])(opt, sc, w);
@@ -37,7 +39,7 @@ StyleProject::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, 
 }
 
 QRect
-StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget) const
+Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget) const
 {
     if (!opt)
         return QRect();
@@ -287,7 +289,7 @@ StyleProject::subElementRect(SubElement r, const QStyleOption *opt, const QWidge
 }
 
 QRect
-StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
     const QStyleOptionComboBox *cb = qstyleoption_cast<const QStyleOptionComboBox *>(opt);
@@ -307,7 +309,7 @@ StyleProject::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
 }
 
 QRect
-StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
 //    castOpt(Slider, slider, opt);
@@ -380,7 +382,7 @@ StyleProject::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const
 }
 
 QRect
-StyleProject::sliderRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::sliderRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
     castOpt(Slider, slider, opt);
@@ -426,7 +428,7 @@ StyleProject::sliderRect(const QStyleOptionComplex *opt, SubControl sc, const QW
 }
 
 QRect
-StyleProject::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
     castOpt(GroupBox, box, opt);
@@ -454,7 +456,7 @@ StyleProject::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const 
 }
 
 QRect
-StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
     const QStyleOptionToolButton *tb = qstyleoption_cast<const QStyleOptionToolButton *>(opt);
@@ -485,12 +487,11 @@ StyleProject::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, cons
 }
 
 QRect
-StyleProject::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
+Style::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     const QStyleOptionSpinBox *sb = qstyleoption_cast<const QStyleOptionSpinBox *>(opt);
     if (!sb)
         return QRect();
-
     QRect ret(sb->rect);
     int spinSize(pixelMetric(PM_SpinBoxSliderHeight, opt, w));
     QRect arrowUp(0, 0, spinSize, spinSize);

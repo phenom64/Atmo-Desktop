@@ -9,7 +9,8 @@
 #include <QToolButton>
 
 class QAbstractScrollArea;
-
+namespace DSP
+{
 namespace Anim
 {
 
@@ -114,6 +115,7 @@ private:
     int m_delta, m_step;
 };
 
-}
+} //namespace Anim
+} //namespace DSP
 
 #endif //ANIMHANDLER_H

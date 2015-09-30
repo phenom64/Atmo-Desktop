@@ -9,6 +9,8 @@
 #include "kwinclient2.h"
 #endif
 
+namespace DSP
+{
 class DecoAdaptor : public QDBusAbstractAdaptor
 {
     Q_OBJECT
@@ -21,8 +23,12 @@ public slots:
     Q_NOREPLY void updateData(uint win) { m_manager->updateData(win); }
     Q_NOREPLY void updateDeco(uint win) { m_manager->updateDeco(win); }
 
+signals:
+     void windowActiveChanged(uint win, bool active);
+
 private:
-    DSP::AdaptorManager *m_manager;
+    AdaptorManager *m_manager;
 };
+} //namespace
 
 #endif //DECOADAPTOR_H

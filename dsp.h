@@ -1,5 +1,5 @@
-#ifndef STYLEPROJECT_H
-#define STYLEPROJECT_H
+#ifndef DSP_H
+#define DSP_H
 
 #include <QCommonStyle>
 #include <QStylePlugin>
@@ -14,13 +14,17 @@
 class QToolBar;
 class QTabBar;
 class QProgressBar;
-class Q_GUI_EXPORT StyleProject : public QCommonStyle
+
+namespace DSP
+{
+
+class Q_GUI_EXPORT Style : public QCommonStyle
 {
     Q_OBJECT
     Q_CLASSINFO ("X-KDE-CustomElements", "true")
 public:
-    StyleProject();
-    ~StyleProject();
+    Style();
+    ~Style();
     void init();
     void assignMethods();
 
@@ -122,14 +126,14 @@ public:
     bool drawArrow##_VAR_(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const \
     { \
         const bool selected(option->state & State_Selected); \
-        Ops::drawArrow(painter, option->palette.color(selected?QPalette::HighlightedText:Ops::fgRole(widget)), option->rect, Ops::_VAR_, dConf.arrowSize); \
+        Render::drawArrow(painter, option->palette.color(selected?QPalette::HighlightedText:Ops::fgRole(widget)), option->rect, _VAR_, dConf.arrowSize); \
         return true; \
     }
     /* Yes Thomas, macro-concept stolen from bespin */
-    DRAWARROW(Left)
-    DRAWARROW(Up)
-    DRAWARROW(Right)
-    DRAWARROW(Down)
+    DRAWARROW(West)
+    DRAWARROW(North)
+    DRAWARROW(East)
+    DRAWARROW(South)
 #undef DRAWARROW
 
     /* events */
@@ -148,11 +152,11 @@ public:
     QRect progressContents(const QStyleOption *opt, const QWidget *widget = 0) const;
 
     /* pointers to these functions */
-    typedef bool (StyleProject::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
-    typedef bool (StyleProject::*StyleControl)(const QStyleOption *, QPainter *, const QWidget *) const;
-    typedef bool (StyleProject::*StylePrimitive)(const QStyleOption *, QPainter *, const QWidget *) const;
-    typedef bool (StyleProject::*EventFilter)(QObject *o, QEvent *e);
-    typedef QRect (StyleProject::*SubControlRect)(const QStyleOptionComplex *, SubControl, const QWidget *) const;
+    typedef bool (Style::*StyleComplexControl)(const QStyleOptionComplex *, QPainter *, const QWidget *) const;
+    typedef bool (Style::*StyleControl)(const QStyleOption *, QPainter *, const QWidget *) const;
+    typedef bool (Style::*StylePrimitive)(const QStyleOption *, QPainter *, const QWidget *) const;
+    typedef bool (Style::*EventFilter)(QObject *o, QEvent *e);
+    typedef QRect (Style::*SubControlRect)(const QStyleOptionComplex *, SubControl, const QWidget *) const;
 
 protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
@@ -177,4 +181,6 @@ public:
     QStyle *create(const QString &key);
 };
 
-#endif // STYLEPROJECT_H
+} //namespace
+
+#endif // DSP_H

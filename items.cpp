@@ -14,14 +14,16 @@
 #include <QTableView>
 #include <QApplication>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "config/settings.h"
 #include "stylelib/render.h"
 
+using namespace DSP;
+
 bool
-StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionMenuItem *opt = qstyleoption_cast<const QStyleOptionMenuItem *>(option);
     if (!opt)
@@ -106,12 +108,12 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
     }
 
     if (opt->checked)
-        Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
+        Render::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
     else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
-        Ops::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
+        Render::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
 
     if (isMenu && hasMenu)
-        Ops::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), Ops::Right, dConf.arrowSize);
+        Render::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
@@ -146,7 +148,7 @@ StyleProject::drawMenuItem(const QStyleOption *option, QPainter *painter, const 
 }
 
 bool
-StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
     if (!opt)
@@ -188,9 +190,9 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
     else
     {
         if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && !(opt->SUNKEN))
-            Render::renderMask(opt->rect, painter, brush, rnd, Render::All & ~Render::Right);
+            Render::renderMask(opt->rect, painter, brush, rnd, All & ~Right);
         else if (opt->viewItemPosition == QStyleOptionViewItemV4::End && !(opt->SUNKEN))
-            Render::renderMask(opt->rect, painter, brush, rnd, Render::All & ~Render::Left);
+            Render::renderMask(opt->rect, painter, brush, rnd, All & ~Left);
         else
         {
             painter->fillRect(opt->rect, brush);
@@ -210,7 +212,7 @@ StyleProject::drawViewItemBg(const QStyleOption *option, QPainter *painter, cons
 }
 
 bool
-StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
     if (!opt)
@@ -252,7 +254,7 @@ StyleProject::drawViewItem(const QStyleOption *option, QPainter *painter, const 
 }
 
 bool
-StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (!option)
         return true;
@@ -304,7 +306,7 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
                 fgc = Color::mid(fgc, option->palette.color(bg));
         }
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
-        Ops::drawArrow(painter, fgc, option->rect, option->state & State_Open ? Ops::Down : Ops::Right, dConf.views.treelines?7:dConf.arrowSize);
+        Render::drawArrow(painter, fgc, option->rect, option->state & State_Open ? South : East, dConf.views.treelines?7:dConf.arrowSize);
     }
 
     painter->restore();
@@ -312,7 +314,7 @@ StyleProject::drawTree(const QStyleOption *option, QPainter *painter, const QWid
 }
 
 bool
-StyleProject::drawHeader(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawHeader(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     drawHeaderSection(option, painter, widget);
     drawHeaderLabel(option, painter, widget);
@@ -320,7 +322,7 @@ StyleProject::drawHeader(const QStyleOption *option, QPainter *painter, const QW
 }
 
 bool
-StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(Header, opt, option);
     if (!opt)
@@ -350,7 +352,7 @@ StyleProject::drawHeaderSection(const QStyleOption *option, QPainter *painter, c
 }
 
 bool
-StyleProject::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(Header, opt, option);
     if (!opt)
@@ -365,8 +367,8 @@ StyleProject::drawHeaderLabel(const QStyleOption *option, QPainter *painter, con
         BOLD;
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
-//        Ops::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, 7);
-        Ops::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, pixelMetric(PM_HeaderMarkSize));
+//        Render::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, 7);
+        Render::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, pixelMetric(PM_HeaderMarkSize));
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));

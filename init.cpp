@@ -3,14 +3,16 @@
 #include <QSettings>
 #include <QFileInfo>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
 #include "stylelib/handlers.h"
 #include "config/settings.h"
 
+using namespace DSP;
+
 void
-StyleProject::init()
+Style::init()
 {
     for (int i = 0; i < CCSize; ++i)
     {
@@ -31,10 +33,10 @@ StyleProject::init()
  * we will add more as we go
  */
 
-#define method(_method_) &StyleProject::_method_
+#define method(_method_) &Style::_method_
 
 void
-StyleProject::assignMethods()
+Style::assignMethods()
 {
     /* control elements */
     m_ce[CE_PushButton] = method(drawPushButton);
@@ -100,10 +102,10 @@ StyleProject::assignMethods()
     m_pe[PE_PanelTipLabel] = method(drawToolTip);
     m_pe[PE_IndicatorBranch] = method(drawTree);
     m_pe[PE_FrameFocusRect] = method(primitiveSkipper);
-    m_pe[PE_IndicatorArrowDown] = method(drawArrowDown);
-    m_pe[PE_IndicatorArrowLeft] = method(drawArrowLeft);
-    m_pe[PE_IndicatorArrowRight] = method(drawArrowRight);
-    m_pe[PE_IndicatorArrowUp] = method(drawArrowUp);
+    m_pe[PE_IndicatorArrowDown] = method(drawArrowSouth);
+    m_pe[PE_IndicatorArrowLeft] = method(drawArrowWest);
+    m_pe[PE_IndicatorArrowRight] = method(drawArrowEast);
+    m_pe[PE_IndicatorArrowUp] = method(drawArrowNorth);
     m_pe[PE_FrameButtonTool] = method(drawToolButtonBevel);
     m_pe[PE_PanelButtonTool] = method(drawToolButtonBevel);
 

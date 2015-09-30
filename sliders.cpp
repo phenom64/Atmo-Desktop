@@ -12,7 +12,7 @@
 #include <QTextBrowser>
 #include <QApplication>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
@@ -21,8 +21,10 @@
 #include "config/settings.h"
 #include "overlay.h"
 
+using namespace DSP;
+
 bool
-StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
 //    castOpt(Slider, opt, option);
     const QStyleOptionSlider *opt = qstyleoption_cast<const QStyleOptionSlider *>(option);
@@ -99,8 +101,8 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         ///the background
         painter->fillRect(opt->rect, lg);
 
-        Ops::drawArrow(painter, fgColor, up, hor?Ops::Left:Ops::Up, 7);
-        Ops::drawArrow(painter, fgColor, down, hor?Ops::Right:Ops::Down, 7);
+        Render::drawArrow(painter, fgColor, up, hor?West:North, 7);
+        Render::drawArrow(painter, fgColor, down, hor?East:South, 7);
 
         const QPen pen(painter->pen());
         const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
@@ -161,7 +163,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
-        Render::renderShadow(Render::Rect, slider, painter, 32, Render::All, dConf.shadows.opacity);
+        Render::renderShadow(Rect, slider, painter, 32, All, dConf.shadows.opacity);
         slider.adjust(1, 1, -1, -1);
         Render::renderMask(slider, painter, lg);
     }
@@ -169,7 +171,7 @@ StyleProject::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter
 }
 
 bool
-StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (dConf.scrollers.style == 0)
     {
@@ -212,7 +214,7 @@ StyleProject::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter
 }
 
 bool
-StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionSlider *opt = qstyleoption_cast<const QStyleOptionSlider *>(option);
     if (!opt)
@@ -223,8 +225,8 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
     QRect groove(realGroove);
 
     const bool hor(opt->orientation==Qt::Horizontal);
-    const Render::Shadow gs(dConf.sliders.grooveShadow);
-    int d(/*gs==Render::Carved?12:*/dConf.sliders.size/2); //shadow size for slider and groove 'extent'
+    const Shadow gs(dConf.sliders.grooveShadow);
+    int d(/*gs==Carved?12:*/dConf.sliders.size/2); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
         groove.setHeight(d);
@@ -317,13 +319,13 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
         bgc = Color::mid(bgc, sc, STEPS-hl, hl);
     }
 
-    const Render::Shadow sliderShadow(dConf.sliders.grooveShadow==Render::Rect?Render::Rect:Render::Raised);
+    const Shadow sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
     const QRect &sliderMask = Render::maskRect(sliderShadow, slider);
     QLinearGradient lg(0, 0, 0, sliderMask.height());
     lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
     QBrush mask(lg);
 
-    Render::renderShadow(sliderShadow, slider, painter, 32, Render::All, dConf.shadows.opacity);
+    Render::renderShadow(sliderShadow, slider, painter, 32, All, dConf.shadows.opacity);
     Render::renderMask(sliderMask, painter, mask);
 //    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
 
@@ -345,7 +347,7 @@ StyleProject::drawSlider(const QStyleOptionComplex *option, QPainter *painter, c
 }
 
 QRect
-StyleProject::progressContents(const QStyleOption *opt, const QWidget *widget) const
+Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
 {
     castOpt(ProgressBar, bar, opt);
     castOpt(ProgressBarV2, barv2, opt);
@@ -380,7 +382,7 @@ StyleProject::progressContents(const QStyleOption *opt, const QWidget *widget) c
 }
 
 bool
-StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawProgressBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ProgressBar, opt, option);
     if (!opt)
@@ -392,7 +394,7 @@ StyleProject::drawProgressBar(const QStyleOption *option, QPainter *painter, con
 }
 
 bool
-StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ProgressBar, opt, option);
     if (!opt)
@@ -406,7 +408,7 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
     const QColor h(opt->palette.color(QPalette::Highlight));
     castOpt(ProgressBarV2, optv2, option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
-//    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, Render::All));
+//    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, All));
     const quint64 s((hor?groove.height():groove.width())+2);
     const QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
 
@@ -462,13 +464,13 @@ StyleProject::drawProgressBarContents(const QStyleOption *option, QPainter *pain
 //    offSet += Render::maskRect(dConf.progressbars.shadow, groove).topLeft();
     painter->setClipRect(cont);
     QBrush b(pixmap);
-    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, option, &b, 0, Render::All, offSet);
+    Render::drawClickable(dConf.progressbars.shadow, groove, painter, dConf.progressbars.rnd, dConf.shadows.opacity, widget, option, &b, 0, All, offSet);
     painter->restore();
     return true;
 }
 
 bool
-StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ProgressBarV2, opt, option);
     if (!opt)
@@ -487,7 +489,7 @@ StyleProject::drawProgressBarGroove(const QStyleOption *option, QPainter *painte
 }
 
 bool
-StyleProject::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     castOpt(ProgressBar, opt, option);
     castOpt(ProgressBarV2, optv2, option);

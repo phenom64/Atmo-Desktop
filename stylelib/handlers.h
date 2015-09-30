@@ -9,6 +9,10 @@
 #include "render.h"
 #include "widgets.h"
 
+#if HASDBUS
+#include <QDBusMessage>
+#endif
+
 class QToolBar;
 class QMainWindow;
 class QAbstractScrollArea;
@@ -17,11 +21,13 @@ class QToolButton;
 class QDockWidget;
 
 #define HASSTRETCH  "DSP_hasstretch"
-#define CSDBUTTONS  "DSP_hasbuttons"
 #define TOOLPADDING "DSP_toolpadder"
 #define TOOLTIMER   "DSP_toolbartimer"
 #define TIMERNAME   "DSP_windowupdater"
 #define MENUPRESS   "DSP_menupress"
+
+namespace DSP
+{
 
 class Q_DECL_EXPORT Buttons : public QWidget
 {
@@ -37,7 +43,8 @@ class Q_DECL_EXPORT TitleWidget : public QWidget
     Q_OBJECT
 public:
     enum TitlePos { Left = 0, Center, Right };
-    explicit TitleWidget(QWidget *parent = 0):QWidget(parent){}
+    explicit TitleWidget(QWidget *parent = 0);
+    static bool supported(QToolBar *toolBar);
 protected:
     void paintEvent(QPaintEvent *);
 };
@@ -69,7 +76,7 @@ public:
     static bool isArrowPressed(const QToolButton *tb);
     static void setupNoTitleBarWindowLater(QToolBar *toolBar);
     static void adjustMargins(QToolBar *toolBar);
-    static Render::Sides sides(const QToolButton *btn);
+    static Sides sides(const QToolButton *btn);
     static void processToolBar(QToolBar *bar, bool forceSizeUpdate = false);
     static bool isDirty(QToolBar *bar);
 
@@ -85,16 +92,15 @@ protected slots:
     void setupNoTitleBarWindow(qulonglong bar);
     void fixSpacer(qulonglong toolbar);
     void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
-    void separateToolButtons(QWidget *toolbar, int *actions, int n);
 
 private:
     static ToolBar s_instance;
-    static QMap<QToolButton *, Render::Sides> s_sides;
+    static QMap<QToolButton *, Sides> s_sides;
     static QMap<QToolBar *, bool> s_dirty;
     static QMap<QToolBar *, QAction *> s_spacers;
 };
 
-enum UnoData { ToolBars = 0, ToolBarAndTabBar, TitleBar, All, HeightCount };
+enum UnoData { ToolBars = 0, ToolBarAndTabBar, TitleBar, Head, HeightCount };
 
 class Q_DECL_EXPORT Data
 {
@@ -127,6 +133,9 @@ public:
     static QImage windowBg(const QSize &sz, const QColor &bgColor);
 
 public slots:
+#if HASDBUS
+    void decoActiveChanged(QDBusMessage msg);
+#endif
     void updateWindowData(qulonglong window);
     void updateDecoBg(QWidget *w);
 
@@ -256,6 +265,7 @@ private:
     static Dock *s_instance;
 };
 
-}
+} //namespace Handlers
+} //namespace DSP
 
 #endif //HANDLERS_H

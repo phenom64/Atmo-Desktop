@@ -6,6 +6,8 @@
 
 class QMenu;
 class QToolButton;
+namespace DSP
+{
 class Q_DECL_EXPORT ShadowHandler : public QObject
 {
 public:
@@ -23,5 +25,6 @@ protected:
 private:
     static ShadowHandler *m_instance;
 };
+} //namespace
 
 #endif //SHADOWHANDLER_H

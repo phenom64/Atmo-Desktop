@@ -1,4 +1,4 @@
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/render.h"
 #include "stylelib/ops.h"
 #include "stylelib/xhandler.h"
@@ -26,7 +26,9 @@
 #include <QProgressBar>
 #include <QRect>
 #include <QDialog>
+#include <QPainter>
 
+using namespace DSP;
 
 QStringList
 ProjectStylePlugin::keys() const
@@ -38,7 +40,7 @@ QStyle
 *ProjectStylePlugin::create(const QString &key)
 {
     if (key.toLower() == "styleproject")
-        return new StyleProject();
+        return new Style();
     return 0;
 }
 
@@ -66,14 +68,14 @@ protected:
                 && !w->testAttribute(Qt::WA_WState_Created)
                 && !w->internalWinId()
                 && (qobject_cast<QMainWindow *>(w) || qobject_cast<QDialog *>(w)))
-            StyleProject::applyTranslucency(w);
+            Style::applyTranslucency(w);
         return false;
     }
 };
 static TranslucencyWatcher t;
 #endif
 
-StyleProject::StyleProject() : QCommonStyle()
+Style::Style() : QCommonStyle()
 {
     init();
     XHandler::init();
@@ -85,7 +87,7 @@ StyleProject::StyleProject() : QCommonStyle()
 #endif
 }
 
-StyleProject::~StyleProject()
+Style::~Style()
 {
     DSP::Settings::writePalette();
 //    ShadowHandler::deleteInstance();
@@ -97,28 +99,28 @@ StyleProject::~StyleProject()
 }
 
 void
-StyleProject::drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (!(m_ce[element] && (this->*m_ce[element])(option, painter, widget)))
         QCommonStyle::drawControl(element, option, painter, widget);
 }
 
 void
-StyleProject::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+Style::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     if (!(m_cc[control] && (this->*m_cc[control])(option, painter, widget)))
         QCommonStyle::drawComplexControl(control, option, painter, widget);
 }
 
 void
-StyleProject::drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (!(m_pe[element] && (this->*m_pe[element])(option, painter, widget)))
         QCommonStyle::drawPrimitive(element, option, painter, widget);
 }
 
 void
-StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
+Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
 {
 //    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
 //    return;
@@ -186,7 +188,7 @@ StyleProject::drawItemText(QPainter *painter, const QRect &rect, int flags, cons
 }
 
 void
-StyleProject::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const QPixmap &pixmap) const
+Style::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const QPixmap &pixmap) const
 {
 //    QRect r(itemPixmapRect(rect, alignment, pixmap));
 //    painter->drawTiledPixmap(r, pixmap);
@@ -194,13 +196,13 @@ StyleProject::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment
 }
 
 QPixmap
-StyleProject::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const
+Style::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const
 {
     return QCommonStyle::generatedIconPixmap(iconMode, pixmap, opt);
 }
 
 QPixmap
-StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const
+Style::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const
 {
     const int size(16);
     QPixmap pix(size, size);
@@ -260,7 +262,7 @@ StyleProject::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const Q
 }
 
 QRect
-StyleProject::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
+Style::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
 {
     QRect ret(pixmap.rect());
     if (flags & (Qt::AlignHCenter|Qt::AlignVCenter))

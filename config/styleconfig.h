@@ -4,6 +4,8 @@
 #include "ui_config.h"
 #include <QWidget>
 
+namespace DSP
+{
 class StyleConfig : public QWidget
 {
     Q_OBJECT
@@ -25,5 +27,6 @@ protected:
 private:
     Ui::Config ui;
 };
+} //namespace
 
 #endif //STYLECONFIG_H

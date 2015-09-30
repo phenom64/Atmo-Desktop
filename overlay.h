@@ -5,8 +5,10 @@
 
 class QFrame;
 class QScrollBar;
-class Overlay;
 
+namespace DSP
+{
+class Overlay;
 class OverlayHandler : public QObject
 {
     Q_OBJECT
@@ -35,14 +37,13 @@ public:
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
     static Overlay *hasOverlay(const QWidget *frame);
-    inline Sides lines() { return m_lines; }
+    inline Sides &lines() { return m_lines; }
 
 protected:
     Overlay(QWidget *parent = 0, int opacity = 0);
     void paintEvent(QPaintEvent *);
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);
-    void parentChanged();
     static QRect mappedRect(const QWidget *widget);
     bool frameIsInteresting(const QFrame *frame, const Position pos) const;
     QFrame *getFrameForWidget(QWidget *w, const Position pos) const;
@@ -58,5 +59,7 @@ private:
     QWidget *m_window;
     QPoint m_position[PosCount];
 };
+
+}
 
 #endif //OVERLAY_H

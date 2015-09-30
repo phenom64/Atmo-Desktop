@@ -7,6 +7,8 @@
 class QStackedLayout;
 class QTimer;
 class QWidget;
+namespace DSP
+{
 class Q_DECL_EXPORT StackAnimator : public QObject
 {
     Q_OBJECT
@@ -31,5 +33,6 @@ private:
     int m_step, m_prevIndex;
     bool m_isActivated;
 };
+} //namespace
 
 #endif //STACKANIMATOR_H

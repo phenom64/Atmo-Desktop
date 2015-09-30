@@ -19,6 +19,8 @@
 #include <QStackedWidget>
 #include <QMainWindow>
 
+using namespace DSP;
+
 OverlayHandler OverlayHandler::s_instance;
 static QList<Overlay *> s_overLays;
 
@@ -48,9 +50,9 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
     if (o->isWidgetType())
     {
         if (e->type() == QEvent::LayoutRequest
-                || e->type() == QEvent::ZOrderChange
+/*                || e->type() == QEvent::ZOrderChange
                 || e->type() == QEvent::HideToParent
-                || e->type() == QEvent::ShowToParent)
+                || e->type() == QEvent::ShowToParent*/)
             for (int i = 0; i < s_overLays.count(); ++i)
                 QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
         return false;
@@ -73,9 +75,9 @@ Overlay::Overlay(QWidget *parent, int opacity)
     OverlayHandler::manage(this);
     setAttribute(Qt::WA_TransparentForMouseEvents);
     m_frame->installEventFilter(this);  //m_frame guaranteed by manage()
-    const QList<QStackedWidget *> stacks(m_frame->window()->findChildren<QStackedWidget *>());
-    for (int i = 0; i < stacks.count(); ++i)
-        stacks.at(i)->installEventFilter(this);
+//    const QList<QStackedWidget *> stacks(m_frame->window()->findChildren<QStackedWidget *>());
+//    for (int i = 0; i < stacks.count(); ++i)
+//        stacks.at(i)->installEventFilter(this);
 }
 
 Overlay::~Overlay()
@@ -116,22 +118,22 @@ Overlay::paintEvent(QPaintEvent *)
     p.setPen(QPen(QColor(0, 0, 0, m_alpha), 1));
     p.setBrush(Qt::NoBrush);
     QRect r(rect());
-    if (m_lines & Top)
+    if (lines() & Top)
     {
         p.drawLine(r.topLeft(), r.topRight());
         r.setTop(r.top()+1);
     }
-    if (m_lines & Right)
+    if (lines() & Right)
     {
         p.drawLine(r.topRight(), r.bottomRight());
         r.setRight(r.right()-1);
     }
-    if (m_lines & Bottom)
+    if (lines() & Bottom)
     {
         p.drawLine(r.bottomLeft(), r.bottomRight());
         r.setBottom(r.bottom()-1);
     }
-    if (m_lines & Left)
+    if (lines() & Left)
         p.drawLine(r.topLeft(), r.bottomLeft());
     p.end();
 }
@@ -145,11 +147,12 @@ Overlay::eventFilter(QObject *o, QEvent *e)
     {
         switch (e->type())
         {
-        case QEvent::ZOrderChange:
-        case QEvent::LayoutRequest:
+//        case QEvent::ZOrderChange:
+//        case QEvent::LayoutRequest:
         case QEvent::Show:
             setMask(mask());
-            QMetaObject::invokeMethod(this, "updateOverlay", Qt::QueuedConnection);
+//            QMetaObject::invokeMethod(this, "updateOverlay", Qt::QueuedConnection);
+            QTimer::singleShot(250, this, SLOT(updateOverlay()));
             return false;
         case QEvent::Resize:
             resize(m_frame->size());
@@ -184,7 +187,7 @@ Overlay::updateOverlay()
     }
 
     const QRect &r(m_frame->rect());
-    const int d(1);
+    static const int d(1);
 
 #define GP(_X_, _Y_) m_frame->mapTo(m_frame->window(), QPoint(_X_, _Y_))
     m_position[West] = GP(r.x()-d, r.center().y());
@@ -193,14 +196,12 @@ Overlay::updateOverlay()
     m_position[South] = GP(r.center().x(), r.bottom()+1+d);
 #undef GP
 
-    static Position pos[4] = { West, North, East, South };
-    static Side l[4] = { Left, Top, Right, Bottom };
-    static Side wl[4] = { Right, Bottom, Left, Top }; //reversed
+    static const Position pos[4] = { West, North, East, South };
+    static const Side l[4] = { Left, Top, Right, Bottom };
+    static const Side wl[4] = { Right, Bottom, Left, Top }; //reversed/adjacent
     //debugging purposes
-//    static QString s[4] = { "Left", "Top", "Right", "Bottom" };
+//    static QString s[4] = { "Left", "Top", "Right", "Bottom" };250
 //    static QString ws[4] = { "Right", "Bottom", "Left", "Top" };
-
-    Sides sides(All);
 
     for (int i = 0; i < PosCount; ++i)
     {
@@ -208,36 +209,34 @@ Overlay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        int (QWidget::*widthOrHeight)() const = (pos[i]==West||pos[i]==East)?&Overlay::width:&Overlay::height;
-        const bool isSplitter((qobject_cast<QSplitterHandle *>(w) || w->objectName() == "qt_qmainwindow_extended_splitter") && w->style()->pixelMetric(QStyle::PM_SplitterWidth) == 1);
+        const bool isSplitter(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter" && w->style()->pixelMetric(QStyle::PM_SplitterWidth, 0, w) == 1));
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
         const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode());
         if ( isStatusBar || isSplitter || isTabBar )
-            sides &= ~l[i];
+            lines() &= ~l[i];
         else if (Overlay *ol = hasOverlay(getFrameForWidget(w, pos[i])))
         {
-            if (ol->lines() & wl[i] && (ol->*widthOrHeight)() < (this->*widthOrHeight)())
-                sides &= ~l[i];
+            int (QWidget::*widthOrHeight)() const = (pos[i]==West||pos[i]==East) ? &Overlay::width : &Overlay::height;
+            if ((ol->lines() & wl[i]) && ((ol->*widthOrHeight)() >= (this->*widthOrHeight)()))
+                lines() &= ~l[i];
             else
-                sides |= l[i];
+                lines() |= l[i];
         }
+        else
+            lines() |= l[i];
     }
     QRect winRect = m_frame->window()->rect();
     winRect.moveTopLeft(m_frame->mapFrom(m_frame->window(), winRect.topLeft()));
     if (r.top() <= winRect.top())
-        sides &= ~Top;
+        lines() &= ~Top;
     if (r.left() <= winRect.left())
-        sides &= ~Left;
+        lines() &= ~Left;
     if (r.bottom() >= winRect.bottom())
-        sides &= ~Bottom;
+        lines() &= ~Bottom;
     if (r.right() >= winRect.right())
-        sides &= ~Right;
+        lines() &= ~Right;
 
-    if (m_lines != sides)
-    {
-        m_lines = sides;
-        update();
-    }
+    update();
     raise();
 }
 
@@ -285,7 +284,7 @@ Overlay::mappedRect(const QWidget *widget)
 bool
 Overlay::frameIsInteresting(const QFrame *frame, const Position pos) const
 {
-    if (frame && frame->frameShadow() == QFrame::Sunken && frame->frameShape() == QFrame::StyledPanel)
+    if (frame && frame->frameStyle() == (QFrame::Sunken|QFrame::StyledPanel))
         if (mappedRect(frame).contains(m_position[pos]))
             return true;
     return false;
@@ -310,15 +309,6 @@ QFrame
         w = w->parentWidget();
     }
     return 0;
-}
-
-void
-Overlay::parentChanged()
-{
-//    if (m_frame->parentWidget())
-//        m_frame->window() = m_frame->window();
-//    else
-//        m_frame->window() = 0;
 }
 
 Overlay

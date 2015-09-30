@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QQueue>
 #include <QTimer>
+#include "render.h"
 
 /**
  * This class is a mess atm, I just add stuff here
@@ -12,6 +13,16 @@
  * need to be properly categorised in some classes
  * that actually makes sense, for now, deal w/ it.
  */
+
+class QToolBar;
+class QTabBar;
+class QToolButton;
+class QStyle;
+class QStyleOption;
+class QStyleOptionToolButton;
+
+namespace DSP
+{
 
 typedef void (QWidget::*Function)();
 class QueueItem
@@ -21,31 +32,18 @@ public:
     Function func;
 };
 
-
-class QToolBar;
-class QTabBar;
-class QToolButton;
-class QStyle;
-class QStyleOption;
-class QStyleOptionToolButton;
 class Q_DECL_EXPORT Ops : public QObject
 {
     Q_OBJECT
 public:
-    enum Dir { Left, Up, Right, Down };
-    typedef unsigned int Direction;
-
     static Ops *instance();
     static void deleteInstance();
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
-    static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);
-    static void drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter);
-    static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
-    static void toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, quint8 &sides);
+    static void toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, Sides &sides);
     static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
     static void swap(int &t1, int &t2);
     template<typename T>static void swap(T &t1, T &t2)
@@ -92,5 +90,6 @@ private:
     static Ops *s_instance;
     static QQueue<QueueItem> m_laterQueue;
 };
+} //namespace
 
 #endif // OPS_H

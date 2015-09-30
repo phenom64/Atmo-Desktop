@@ -6,6 +6,8 @@
 
 #include "progresshandler.h"
 
+using namespace DSP;
+
 Q_DECL_EXPORT ProgressHandler ProgressHandler::m_instance;
 
 ProgressHandler::ProgressHandler(QObject *parent) :

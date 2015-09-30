@@ -1,4 +1,4 @@
-#include "styleproject.h"
+#include "dsp.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/shadowhandler.h"
@@ -49,6 +49,8 @@
 #include "stylelib/macmenu.h"
 #endif
 
+using namespace DSP;
+
 static void applyBlur(QWidget *widget)
 {
     unsigned int d(0);
@@ -56,7 +58,7 @@ static void applyBlur(QWidget *widget)
 }
 
 void
-StyleProject::applyTranslucency(QWidget *widget)
+Style::applyTranslucency(QWidget *widget)
 {
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
@@ -78,7 +80,7 @@ StyleProject::applyTranslucency(QWidget *widget)
 #define installFilter(_VAR_) { _VAR_->removeEventFilter(this); _VAR_->installEventFilter(this); }
 
 void
-StyleProject::polish(QWidget *widget)
+Style::polish(QWidget *widget)
 {
     if (!widget)
         return;
@@ -381,7 +383,7 @@ StyleProject::polish(QWidget *widget)
 }
 
 void
-StyleProject::unpolish(QWidget *widget)
+Style::unpolish(QWidget *widget)
 {
     if (!widget)
         return;
@@ -406,7 +408,7 @@ StyleProject::unpolish(QWidget *widget)
 }
 
 void
-StyleProject::polish(QPalette &p)
+Style::polish(QPalette &p)
 {
     QCommonStyle::polish(p);
     if (dConf.palette)
@@ -415,7 +417,7 @@ StyleProject::polish(QPalette &p)
 }
 
 void
-StyleProject::polish(QApplication *app)
+Style::polish(QApplication *app)
 {
     QCommonStyle::polish(app);
 //    if (app && dConf.palette)

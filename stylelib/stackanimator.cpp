@@ -9,6 +9,8 @@
 #include <QPaintEvent>
 #include <QApplication>
 
+using namespace DSP;
+
 StackAnimator::StackAnimator(QObject *parent)
     : QObject(parent)
     , m_timer(new QTimer(this))

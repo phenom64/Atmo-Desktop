@@ -7,10 +7,12 @@ extern "C"
 {
     Q_DECL_EXPORT QWidget* allocate_kstyle_config(QWidget* parent)
     {
-        return new StyleConfig(parent);
+        return new DSP::StyleConfig(parent);
     }
 }
 #endif
+
+using namespace DSP;
 
 StyleConfig::StyleConfig(QWidget *parent) : QWidget(parent)
 {

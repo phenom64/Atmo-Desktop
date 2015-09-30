@@ -16,6 +16,8 @@
 
 #define ISIZE 4
 
+using namespace DSP;
+
 ButtonBase::ButtonBase(Type type)
     : m_type(type)
     , m_hasPress(false)
@@ -103,7 +105,7 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
 }
 
 /**
- * @brief Button::drawBase
+ * @brief WidgetButton::drawBase
  * @param c
  * @param p
  * @param r
@@ -148,7 +150,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         r.adjust(1, 1, -1, -1);
 
         QRadialGradient rg(r.center()+QPoint(1, r.height()/2), r.height());
-        rg.setColorAt(0.0f, Color::mid(c, Qt::white, 1, 3));
+        rg.setColorAt(0.0f, Color::mid(c, Qt::white, 1, 4));
         rg.setColorAt(0.5f, c);
         rg.setColorAt(1.0f, Color::mid(c, Qt::black));
         p.setBrush(rg);
@@ -257,7 +259,8 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 }
 //0 0 0 min max close
 //static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFF8C96C, 0xFF8AC96B, 0xFFFE8D88 };
-static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFBE46, 0xFF05C850, 0xFFFB615F };
+//static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFBE46, 0xFF05C850, 0xFFFB615F };C0FF80
+static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFD580, 0xFF74B435, 0xFFFF8B80 };
 
 void
 ButtonBase::paintCloseButton(QPainter &p)
@@ -650,7 +653,7 @@ ButtonBase::paintQuickHelpButton(QPainter &p)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-Button::Button(Type type, QWidget *parent)
+WidgetButton::WidgetButton(Type type, QWidget *parent)
     : ButtonBase(type),
       QWidget(parent)
 {
@@ -661,7 +664,7 @@ Button::Button(Type type, QWidget *parent)
 }
 
 void
-Button::onClick(const Qt::MouseButton &btn)
+WidgetButton::onClick(const Qt::MouseButton &btn)
 {
     switch (type())
     {
@@ -673,7 +676,7 @@ Button::onClick(const Qt::MouseButton &btn)
 }
 
 const QColor
-Button::color(const ColorRole &c) const
+WidgetButton::color(const ColorRole &c) const
 {
     if (c==Highlight)
         return palette().color(QPalette::Highlight);
@@ -683,14 +686,14 @@ Button::color(const ColorRole &c) const
 }
 
 const bool
-Button::isDark() const
+WidgetButton::isDark() const
 {
     const QWidget *w(parentWidget()?parentWidget():this);
     return Color::luminosity(w->palette().color(w->foregroundRole())) > Color::luminosity(w->palette().color(w->backgroundRole()));
 }
 
 void
-Button::paintEvent(QPaintEvent *)
+WidgetButton::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
     ButtonBase::paint(p);

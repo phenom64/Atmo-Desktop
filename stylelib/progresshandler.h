@@ -4,13 +4,15 @@
 #include <QObject>
 #include <QMap>
 
+class QProgressBar;
+namespace DSP
+{
 struct TimerData
 {
     bool goingBack;
     int busyValue, timerId;
 };
 
-class QProgressBar;
 class Q_DECL_EXPORT ProgressHandler : public QObject
 {
     Q_OBJECT
@@ -34,5 +36,5 @@ private:
     QList<QProgressBar *> m_bars;
     QMap<QProgressBar *, TimerData *> m_data;
 };
-
+} //namespace
 #endif // PROGRESSHANDLER_H

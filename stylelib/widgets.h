@@ -5,6 +5,8 @@
 #include <QSplitterHandle>
 #include <QMap>
 
+namespace DSP
+{
 class Q_DECL_EXPORT ButtonBase
 {
 public:
@@ -80,11 +82,11 @@ private:
     int m_shadowOpacity;
 };
 
-class Q_DECL_EXPORT Button : public ButtonBase, public QWidget
+class Q_DECL_EXPORT WidgetButton : public ButtonBase, public QWidget
 {
 public:
-    Button(Type type, QWidget *parent = 0);
-    ~Button() {}
+    WidgetButton(Type type, QWidget *parent = 0);
+    ~WidgetButton() {}
 
     const QRect buttonRect() const { return rect(); }
     const bool isHovered() const { return underMouse(); }
@@ -119,5 +121,6 @@ private:
     QPoint m_enterPoint;
     bool m_hasPress;
 };
+} //namespace
 
 #endif //WIDGETS_H

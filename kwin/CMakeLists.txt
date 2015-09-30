@@ -3,15 +3,11 @@ message(STATUS "preparing kwin deco")
 if (QT5BUILD)
     #NOTE: most of this copied from the default breeze deco and partly rewritten for dsp
     find_package(KF5 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons)
-    
+
     include(KDEInstallDirs)
     include(KDECMakeSettings)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
-    
-#     find_package(KWin)
-#     message(STATUS ${KWin_FOUND})
-    #add_subdirectory(effects)
 
     set(SRCS
         kwinclient2.cpp
@@ -20,7 +16,14 @@ if (QT5BUILD)
         kwinclient2.h
         decobutton.h
         decoadaptor.h)
-    
+
+    find_library(KWIN_EFFECTS NAMES kwineffects)
+    find_library(KWIN_GLUTILS NAMES kwinglutils)
+    find_package(OpenGL)
+    if (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
+        add_subdirectory(effects)
+    endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
+
     ### build library
     add_library(dspdecoration MODULE ${SRCS} ${HDRS})
 

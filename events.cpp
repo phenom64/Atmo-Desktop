@@ -18,7 +18,7 @@
 #include <QPushButton>
 #include <QDebug>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/ops.h"
 #include "stylelib/handlers.h"
@@ -32,8 +32,10 @@
 #include "stylelib/macmenu.h"
 #endif
 
+using namespace DSP;
+
 bool
-StyleProject::eventFilter(QObject *o, QEvent *e)
+Style::eventFilter(QObject *o, QEvent *e)
 {
     if (!e || !o || !o->isWidgetType())
         return false;
@@ -107,7 +109,7 @@ StyleProject::eventFilter(QObject *o, QEvent *e)
 }
 
 bool
-StyleProject::paintEvent(QObject *o, QEvent *e)
+Style::paintEvent(QObject *o, QEvent *e)
 {
     /* for some reason KTabWidget is an idiot and
      * doesnt use the style at all for painting, only
@@ -189,7 +191,7 @@ StyleProject::paintEvent(QObject *o, QEvent *e)
 }
 
 bool
-StyleProject::resizeEvent(QObject *o, QEvent *e)
+Style::resizeEvent(QObject *o, QEvent *e)
 {
     if (!o->isWidgetType())
         return false;
@@ -209,7 +211,7 @@ StyleProject::resizeEvent(QObject *o, QEvent *e)
 }
 
 bool
-StyleProject::showEvent(QObject *o, QEvent *e)
+Style::showEvent(QObject *o, QEvent *e)
 {
     if (!o->isWidgetType())
         return QCommonStyle::eventFilter(o, e);

@@ -54,6 +54,7 @@ public:
         Decoicon,
         Decoshadowsize,
         Decoframe,
+        Decoembedded,
         Pushbtnrnd,
         Pushbtnshadow,
         Pushbtngrad,
@@ -125,7 +126,7 @@ public:
         struct deco
         {
             int buttons, shadowSize, frameSize;
-            bool icon;
+            bool icon, embed;
         } deco;
 
         struct pushbtn
@@ -236,6 +237,6 @@ private:
     static Settings *s_instance;
 };
 
-}
+} //namespace
 
 #endif //SETTINGS_H

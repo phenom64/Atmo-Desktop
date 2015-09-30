@@ -18,7 +18,7 @@
 #include <QToolBox>
 #include <QStatusBar>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
 #include "stylelib/color.h"
@@ -27,11 +27,12 @@
 #include "config/settings.h"
 #include "stylelib/handlers.h"
 
+using namespace DSP;
 
 static QPixmap s_tabBarShadow;
 
 bool
-StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
 //    return false;
     drawTabShape(option, painter, widget);
@@ -40,7 +41,7 @@ StyleProject::drawTab(const QStyleOption *option, QPainter *painter, const QWidg
 }
 
 bool
-StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const
+Style::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const
 {
     const bool isFirst(opt->position == QStyleOptionTab::Beginning),
             isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
@@ -63,7 +64,7 @@ StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const
     r.setRight(r.right()+rightMargin);
 
     QPainterPath p;
-    Render::renderTab(r, painter, isLeftOf ? Render::BeforeSelected : isSelected ? Render::Selected : Render::AfterSelected, &p, dConf.shadows.opacity);
+    Render::renderTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p, dConf.shadows.opacity);
     if (isSelected)
     {
         painter->save();
@@ -90,7 +91,7 @@ StyleProject::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const
 }
 
 bool
-StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const
+Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar *bar) const
 {
     const bool isFirst(opt->position == QStyleOptionTab::Beginning),
             isOnly(opt->position == QStyleOptionTab::OnlyOneTab),
@@ -98,7 +99,7 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
             isRtl(opt->direction == Qt::RightToLeft),
             isSelected(opt->state & State_Selected);
 
-    Render::Sides sides(Render::All);
+    Sides sides(All);
     QPalette::ColorRole fg(Ops::fgRole(bar, QPalette::ButtonText)),
             bg(Ops::bgRole(bar, QPalette::Button));
 
@@ -125,9 +126,9 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
         if (isOnly)
             break;
         if (isRtl)
-            sides &= ~((!isFirst*Render::Right)|(!isLast*Render::Left));
+            sides &= ~((!isFirst*Right)|(!isLast*Left));
         else
-            sides &= ~((!isFirst*Render::Left)|(!isLast*Render::Right));
+            sides &= ~((!isFirst*Left)|(!isLast*Right));
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
@@ -141,7 +142,7 @@ StyleProject::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const 
         vert = true;
         if (isOnly)
             break;
-        sides &= ~((!isLast*Render::Bottom)|(!isFirst*Render::Top));
+        sides &= ~((!isLast*Bottom)|(!isFirst*Top));
         break;
     default: break;
     }
@@ -213,7 +214,7 @@ static QPainterPath tabPath(QRect rect, int r = 8)
 }
 
 bool
-StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
     if (!opt)
@@ -399,7 +400,7 @@ StyleProject::drawTabShape(const QStyleOption *option, QPainter *painter, const 
 }
 
 bool
-StyleProject::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
+Style::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
 {
     if (!tab)
         return false;
@@ -417,7 +418,7 @@ StyleProject::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
 }
 
 bool
-StyleProject::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
     if (!opt)
@@ -500,7 +501,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         p->drawLine(r.topLeft(), r.topRight());
         p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        Render::renderShadow(Render::Sunken, r, p, 32, Render::Top, dConf.shadows.opacity/2);
+        Render::renderShadow(Sunken, r, p, 32, Top, dConf.shadows.opacity/2);
         p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     else if (bar->documentMode() && bar->isVisible())
@@ -601,7 +602,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
 }
 
 bool
-StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTabWidget"))
         return true;
@@ -626,9 +627,9 @@ StyleProject::drawTabBar(const QStyleOption *option, QPainter *painter, const QW
 }
 
 bool
-StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    Render::Sides sides = Render::checkedForWindowEdges(widget);
+    Sides sides = Render::checkedForWindowEdges(widget);
     const QTabWidget *tabWidget = qobject_cast<const QTabWidget *>(widget);
     const QStyleOptionTabWidgetFrame *opt = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(option);
 
@@ -686,12 +687,12 @@ StyleProject::drawTabWidget(const QStyleOption *option, QPainter *painter, const
         }
     }
     if (!tabWidget->documentMode())
-        Render::renderShadow(Render::Sunken, rect, painter, 7, sides, dConf.shadows.opacity);
+        Render::renderShadow(Sunken, rect, painter, 7, sides, dConf.shadows.opacity);
     return true;
 }
 
 bool
-StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const int size(qMin(option->rect.width(), option->rect.height())), _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
@@ -776,7 +777,7 @@ StyleProject::drawTabCloser(const QStyleOption *option, QPainter *painter, const
 }
 
 bool
-StyleProject::drawToolBoxTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawToolBoxTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (option && widget && widget->parentWidget())
         const_cast<QStyleOption *>(option)->palette = widget->parentWidget()->palette();
@@ -786,7 +787,7 @@ StyleProject::drawToolBoxTab(const QStyleOption *option, QPainter *painter, cons
 }
 
 bool
-StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionToolBoxV2 *opt = qstyleoption_cast<const QStyleOptionToolBoxV2 *>(option);
     if (!opt)
@@ -825,11 +826,11 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
         }
     }
 
-    Render::Sides sides(Render::All);
+    Sides sides(All);
     if (!first)
-        sides &= ~Render::Top;
+        sides &= ~Top;
     if (!last)
-        sides &= ~Render::Bottom;
+        sides &= ~Bottom;
 
     QLinearGradient lg(0, 0, 0, Render::maskRect(dConf.tabs.shadow, theRect).height());
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
@@ -840,7 +841,7 @@ StyleProject::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter,
 }
 
 bool
-StyleProject::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionToolBoxV2 *opt = qstyleoption_cast<const QStyleOptionToolBoxV2 *>(option);
     if (!opt)

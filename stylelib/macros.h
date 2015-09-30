@@ -13,8 +13,8 @@
 #define castOpt(_Type_, _varName_, _fromVar_) const QStyleOption##_Type_ *_varName_ = qstyleoption_cast<const QStyleOption##_Type_ *>(_fromVar_)
 #define castObj(_Type_, _varName_, _fromVar_) _Type_ _varName_ = qobject_cast<_Type_>(_fromVar_)
 
-#define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
-#define sAdjust(_X1_, _Y1_, _X2_, _Y2_) adjust(bool(sides&Render::Left)*_X1_, bool(sides&Render::Top)*_Y1_, bool(sides&Render::Right)*_X2_, bool(sides&Render::Bottom)*_Y2_)
+#define sAdjusted(_X1_, _Y1_, _X2_, _Y2_) adjusted(bool(sides&Left)*_X1_, bool(sides&Top)*_Y1_, bool(sides&Right)*_X2_, bool(sides&Bottom)*_Y2_)
+#define sAdjust(_X1_, _Y1_, _X2_, _Y2_) adjust(bool(sides&Left)*_X1_, bool(sides&Top)*_Y1_, bool(sides&Right)*_X2_, bool(sides&Bottom)*_Y2_)
 #define sShrink(_S_) sAdjust(_S_, _S_, -_S_, -_S_)
 #define sShrinked(_S_) sAdjusted(_S_, _S_, -_S_, -_S_)
 #define shrinked(_S_) adjusted(_S_, _S_, -_S_, -_S_)

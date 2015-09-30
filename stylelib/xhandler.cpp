@@ -18,6 +18,8 @@
 #include "fixx11h.h"
 #endif
 
+using namespace DSP;
+
 static char *atoms[XHandler::ValueCount] =
 {
     "_NET_WORKAREA",

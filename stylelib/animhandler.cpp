@@ -13,6 +13,7 @@
 #include <QAbstractScrollArea>
 #include <QAbstractItemView>
 
+using namespace DSP;
 using namespace Anim;
 
 static bool s_block(false);

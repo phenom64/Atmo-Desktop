@@ -16,6 +16,8 @@
 #include "../config/settings.h"
 #include "macros.h"
 
+using namespace DSP;
+
 Q_DECL_EXPORT ShadowHandler *ShadowHandler::m_instance(0);
 
 ShadowHandler
@@ -50,20 +52,18 @@ ShadowHandler::eventFilter(QObject *o, QEvent *e)
 static XHandler::XPixmap pix[2][8] = {{ 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }};
 static XHandler::XPixmap menupix[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-enum Pos { Top = 0, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft };
-
 static QRect part(int part, int size, int d = 1)
 {
     switch (part)
     {
-    case Top:           return QRect(size,      0,      1,      size);
-    case TopRight:      return QRect(size+d,    0,      size,   size);
-    case Right:         return QRect(size+d,    size,   size,   1);
-    case BottomRight:   return QRect(size+d,    size+d, size,   size);
-    case Bottom:        return QRect(size,      size+d, 1,      size);
-    case BottomLeft:    return QRect(0,         size+d, size,   size);
-    case Left:          return QRect(0,         size,   size,   1);
-    case TopLeft:       return QRect(0,         0,      size,   size);
+    case 0: return QRect(size,      0,      1,      size);
+    case 1: return QRect(size+d,    0,      size,   size);
+    case 2: return QRect(size+d,    size,   size,   1);
+    case 3: return QRect(size+d,    size+d, size,   size);
+    case 4: return QRect(size,      size+d, 1,      size);
+    case 5: return QRect(0,         size+d, size,   size);
+    case 6: return QRect(0,         size,   size,   1);
+    case 7: return QRect(0,         0,      size,   size);
     default: return QRect();
     }
 }
@@ -97,13 +97,17 @@ XHandler::XPixmap
         rg.setColorAt(1.0f, Qt::transparent);
         p.fillRect(img.rect(), rg);
         const quint32 sd[4] = { size*0.5f, size*0.7f, size*0.9f, size*0.7f };
-        QRect r(0, 0, s, s);
-        r.adjust(sd[3], sd[0], -sd[1], -sd[2]);
-        p.setBrush(QColor(0, 0, 0, 63));
-        p.drawRoundedRect(r.adjusted(-1, -1, 1, 1), 5, 5);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        p.setBrush(Qt::black);
-        p.drawRoundedRect(r, 5, 5);
+//        QRect r(0, 0, s, s);
+//        r.adjust(sd[3], sd[0], -sd[1], -sd[2]);
+//        p.setBrush(QColor(0, 0, 0, 63));
+
+//        //roundness
+//        int rnd(10);
+
+//        p.drawRoundedRect(r.adjusted(-1, -1, 1, 1), rnd, rnd);
+//        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        p.setBrush(Qt::black);
+//        p.drawRoundedRect(r, rnd, rnd);
         p.end();
 
         for (int i = 0; i < 12; ++i)
@@ -161,7 +165,7 @@ XHandler::XPixmap
     int center(size+(tb->width()/2-arrow.width()/2));
     arrow.moveLeft(center);
 
-    Ops::drawArrow(&p, p.brush().color(), arrow, up?Ops::Up:Ops::Down, 9000);
+    Render::drawArrow(&p, p.brush().color(), arrow, up?North:South, 9000);
     p.end();
 
     QImage img(mask.size(), QImage::Format_ARGB32);

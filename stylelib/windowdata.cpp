@@ -8,6 +8,8 @@
 #include <QDBusConnection>
 #endif
 
+using namespace DSP;
+
 static const int s_memSize = (sizeof(unsigned int)*6)+(256*256*4);
 
 WindowData
@@ -15,7 +17,7 @@ WindowData
 {
     if (!wid)
     {
-        qDebug() << "DSP: cant get windowdata w/o window id";
+//        qDebug() << "DSP: cant get windowdata w/o window id";
         return 0;
     }
     const QString &keyName = QString("dsp_windowdata-%1").arg(QString::number(wid));
@@ -45,7 +47,7 @@ WindowData
         }
         return m;
     }
-    qDebug() << "DSP: unable to get/create shared memory.\n" << "error:\n" << m->errorString() << "memory key:" << m->key();
+//    qDebug() << "DSP: unable to get/create shared memory.\n" << "error:\n" << m->errorString() << "memory key:" << m->key();
     if (m)
         m->deleteLater();
     return 0;

@@ -9,14 +9,17 @@
 #include <QGroupBox>
 #include <QComboBox>
 #include <QAbstractItemView>
+#include <QPainter>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/render.h"
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
 #include "config/settings.h"
+
+using namespace DSP;
 
 static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, const QStyleOption *opt = 0)
 {
@@ -28,12 +31,12 @@ static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, con
         c = new QBrush(opt->palette.color(QPalette::Highlight));
         focus = true;
     }
-    Render::renderShadow(Render::Etched, r, p, 32, Render::All, 0.1f, c);
-    Render::renderShadow(Render::Sunken, r, p, 32, Render::All, focus?0.6f:0.2f, c);
+    Render::renderShadow(Etched, r, p, 32, All, 0.1f, c);
+    Render::renderShadow(Sunken, r, p, 32, All, focus?0.6f:0.2f, c);
 }
 
 bool
-StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (qobject_cast<const QComboBox *>(widget?widget->parentWidget():0))
         return true;
@@ -42,11 +45,11 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
 
     QBrush mask(option->palette.base());
 
-    Render::Shadow shadow = dConf.input.shadow;
-    const bool isInactive = dConf.differentInactive && shadow == Render::Yosemite && widget && qobject_cast<QToolBar *>(widget->parent()) && !widget->window()->isActiveWindow();
+    Shadow shadow = dConf.input.shadow;
+    const bool isInactive = dConf.differentInactive && shadow == Yosemite && widget && qobject_cast<QToolBar *>(widget->parent()) && !widget->window()->isActiveWindow();
 
     if (isInactive)
-        shadow = Render::Rect;
+        shadow = Rect;
 
     if (mask.style() == Qt::SolidPattern || mask.style() == Qt::NoBrush)
     {
@@ -65,7 +68,7 @@ StyleProject::drawLineEdit(const QStyleOption *option, QPainter *painter, const 
 }
 
 bool
-StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionComboBox *opt = qstyleoption_cast<const QStyleOptionComboBox *>(option);
     if (!opt)
@@ -123,7 +126,7 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
         mask = QBrush(lga);
 
         painter->setClipRect(arrowRect);
-        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask, 0, Render::All & ~(ltr?Render::Left:Render::Right));
+        Render::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, dConf.pushbtn.rnd, dConf.shadows.opacity, widget, option, &mask, 0, All & ~(ltr?Left:Right));
         painter->setClipping(false);
     }
     else
@@ -152,13 +155,13 @@ StyleProject::drawComboBox(const QStyleOptionComplex *option, QPainter *painter,
     int m(qMax(2, Render::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
     a1.moveLeft(a1.left()+(ltr?-m:m));
     a2.moveLeft(a2.left()+(ltr?-m:m));
-    Ops::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Up, 7);
-    Ops::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, Ops::Down, 7);
+    Render::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, North, 7);
+    Render::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, South, 7);
     return true;
 }
 
 bool
-StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionComboBox *opt = qstyleoption_cast<const QStyleOptionComboBox *>(option);
     if (!opt || opt->editable)
@@ -180,7 +183,7 @@ StyleProject::drawComboBoxLabel(const QStyleOption *option, QPainter *painter, c
 }
 
 bool
-StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
+Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionSpinBox *opt = qstyleoption_cast<const QStyleOptionSpinBox *>(option);
     if (!opt)
@@ -196,7 +199,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
     QBrush mask(option->palette.brush(QPalette::Base));
 //    QRect r = opt->rect;
 //    r.setLeft(edit.right());
-//    Render::drawClickable(dConf.input.shadow, r, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask, 0, Render::All&~Render::Left);
+//    Render::drawClickable(dConf.input.shadow, r, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask, 0, All&~Left);
 //    mask = option->palette.brush(QPalette::Base);
     if (mask.style() < 2)
     {
@@ -209,7 +212,7 @@ StyleProject::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, 
     }
     Render::drawClickable(dConf.input.shadow, edit, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask);
 
-    Ops::drawArrow(painter, opt->palette.color(QPalette::WindowText), up, Ops::Up, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
-    Ops::drawArrow(painter, opt->palette.color(QPalette::WindowText), down, Ops::Down, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
+    Render::drawArrow(painter, opt->palette.color(QPalette::WindowText), up, North, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
+    Render::drawArrow(painter, opt->palette.color(QPalette::WindowText), down, South, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
     return true;
 }

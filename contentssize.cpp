@@ -11,7 +11,7 @@
 #include <QApplication>
 #include <QSpinBox>
 
-#include "styleproject.h"
+#include "dsp.h"
 #include "stylelib/ops.h"
 #include "stylelib/render.h"
 #include "config/settings.h"
@@ -47,6 +47,8 @@
     CT_CustomBase = 0xf0000000
 }; */
 
+using namespace DSP;
+
 static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, QSize cs)
 {
     if (!item)
@@ -79,7 +81,7 @@ static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, Q
 }
 
 QSize
-StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget) const
+Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &contentsSize, const QWidget *widget) const
 {
     switch (ct)
     {
@@ -180,28 +182,28 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             sz.setWidth(bar->iconSize().width());
             sz.rheight()+=16;
         }
-        sz+=QSize(hor?8:4, hor?4:8);
+        sz+=QSize(hor?9:4, hor?4:9);
 
         if (!dConf.toolbtn.flat)
         {
-            Render::Sides sides = Render::All;
+            Sides sides = All;
             if (bar)
             {
                 if (Handlers::ToolBar::isDirty(bar))
                     Handlers::ToolBar::processToolBar(bar);
                 sides = Handlers::ToolBar::sides(btn);
             }
-            const bool isFull(sides == Render::All);
+            const bool isFull(sides == All);
 
             int *hvsz = hor?&sz.rwidth():&sz.rheight();
-            int ends = hor?(Render::Left|Render::Right):(Render::Top|Render::Bottom);
+            int ends = hor?(Left|Right):(Top|Bottom);
 
             if (bar && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
             {
                 if (isFull)
                     *hvsz += 16;
                 else if (sides & ends)
-                    *hvsz += (2+(dConf.toolbtn.shadow==Render::Carved)*2);
+                    *hvsz += (2+(dConf.toolbtn.shadow==Carved)*2);
                 if (btn && btn->group())
                     *hvsz += 8;
                 if (btn && btn->isCheckable() && !isFull)
@@ -298,7 +300,7 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
     {
         const QStyleOptionComboBox *box = qstyleoption_cast<const QStyleOptionComboBox *>(opt);
         if (!box)
-            return contentsSize;
+            return contentsSize+QSize(16, 0);
         if (box->editable)
         {
             QSize sz(contentsSize);
@@ -353,6 +355,12 @@ StyleProject::sizeFromContents(ContentsType ct, const QStyleOption *opt, const Q
             }
             return sz;
         }
+        if (sz.width()<128)
+            sz.setWidth(128);
+        return contentsSize;
+    }
+    case CT_ProgressBar:
+    {
         return contentsSize;
     }
     default: break;

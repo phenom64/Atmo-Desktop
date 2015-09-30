@@ -73,10 +73,13 @@ public slots:
     void defaults() {}
 };
 class Grip;
+class EmbeddedWidget;
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
     friend class Grip;
+    friend class EmbeddedWidget;
+    friend class EmbeddedButton;
     Q_OBJECT
 public:
     class Data
@@ -101,6 +104,8 @@ public:
     explicit Deco(QObject *parent = 0, const QVariantList &args = QVariantList());
     ~Deco();
     void paint(QPainter *painter, const QRect &repaintArea);
+    bool event(QEvent *event);
+    const int titleHeight() const;
 
 public slots:
     /**
@@ -117,11 +122,13 @@ public slots:
 protected slots:
     void widthChanged(const int width);
     void activeChanged(const bool active);
-    void updateMask();
     void captionChanged(const QString &caption) { update(); }
     void dataDestroyed() { if (sender() == m_wd) m_wd = 0; }
 
 protected:
+    void hoverEnter();
+    void hoverLeave();
+
     void checkForDataFromWindowClass();
     void updateBgPixmap();
     void initMemory(WindowData *data);
@@ -132,16 +139,18 @@ protected:
 
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
-    QPixmap m_pix, m_bevelCorner[3];
+    EmbeddedWidget *m_embeddedWidget;
+    QPixmap m_pix/*, m_bevelCorner[3]*/;
     QSharedMemory *m_mem;
     QColor m_bg, m_fg;
     Gradient m_gradient;
     WindowData *m_wd; 
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle;
-    bool m_separator;
+    bool m_separator, m_isHovered;
 };
 
+class DecoAdaptor;
 class AdaptorManager : public QObject
 {
     Q_OBJECT
@@ -173,6 +182,7 @@ public:
             }
         }
     }
+    void windowChanged(uint win, bool active);
 
 protected:
     AdaptorManager();
@@ -181,6 +191,7 @@ protected:
 private:
     static AdaptorManager *s_instance;
     QList<DSP::Deco *> m_decos;
+    DecoAdaptor *m_adaptor;
 };
 
 class Grip : public QWidget
@@ -189,7 +200,7 @@ class Grip : public QWidget
     Q_OBJECT
 public:
     Grip(Deco *d);
-    enum Data { Size = 16 };
+    enum Data { Margin = 4, Size = 12 };
 
 protected:
     void mousePressEvent(QMouseEvent *e);
