@@ -84,17 +84,21 @@ protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
     void checkForArrowPress(QToolButton *tb, const QPoint pos);
     bool eventFilter(QObject *, QEvent *);
+    static void unembed(QToolBar *bar);
 
 protected slots:
-    void adjustMarginsSlot();
+    void toolBarMovableChanged(const bool movable);
+    void toolBarFloatingChagned(const bool floating);
+    void toolBarOrientationChagned(const Qt::Orientation o);
+    void toolBarVisibilityChanged(const bool visible);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
     void setupNoTitleBarWindow(qulonglong bar);
-    void fixSpacer(qulonglong toolbar);
+    void fixSpacer(qulonglong toolbar, int width = 7);
     void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
 
 private:
-    static ToolBar s_instance;
+    static ToolBar *s_instance;
     static QMap<QToolButton *, Sides> s_sides;
     static QMap<QToolBar *, bool> s_dirty;
     static QMap<QToolBar *, QAction *> s_spacers;

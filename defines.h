@@ -13,4 +13,8 @@
 #define HASDBUS 0
 #endif
 
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+
 #endif //DEFINES_H

@@ -311,38 +311,41 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
         }
     }
-    QColor bgc(opt->palette.color(bg));
-    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-    if (option->ENABLED)
-    {
-        int hl(Anim::Basic::level(widget));
-        bgc = Color::mid(bgc, sc, STEPS-hl, hl);
-    }
+//    if (opt->state & State_MouseOver)
+//    {
+        QColor bgc(opt->palette.color(bg));
+        QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+        if (option->ENABLED)
+        {
+            int hl(Anim::Basic::level(widget));
+            bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+        }
 
-    const Shadow sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
-    const QRect &sliderMask = Render::maskRect(sliderShadow, slider);
-    QLinearGradient lg(0, 0, 0, sliderMask.height());
-    lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
-    QBrush mask(lg);
+        const Shadow sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
+        const QRect &sliderMask = Render::maskRect(sliderShadow, slider);
+        QLinearGradient lg(0, 0, 0, sliderMask.height());
+        lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+        QBrush mask(lg);
 
-    Render::renderShadow(sliderShadow, slider, painter, 32, All, dConf.shadows.opacity);
-    Render::renderMask(sliderMask, painter, mask);
-//    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
+        Render::renderShadow(sliderShadow, slider, painter, 32, All, dConf.shadows.opacity);
+        Render::renderMask(sliderMask, painter, mask);
+        //    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
 
-    if (dConf.sliders.dot)
-    {
-        const int ds(slider.height()/3);
-        const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
-        QLinearGradient dg(dot.topLeft(), dot.bottomLeft());
-        dg.setColorAt(0.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
-        dg.setColorAt(1.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
-        painter->save();
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->setBrush(dg);
-        painter->setPen(Qt::NoPen);
-        painter->drawEllipse(dot);
-        painter->restore();
-    }
+        if (dConf.sliders.dot)
+        {
+            const int ds(slider.height()/3);
+            const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
+            QLinearGradient dg(dot.topLeft(), dot.bottomLeft());
+            dg.setColorAt(0.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
+            dg.setColorAt(1.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
+            painter->save();
+            painter->setRenderHint(QPainter::Antialiasing);
+            painter->setBrush(dg);
+            painter->setPen(Qt::NoPen);
+            painter->drawEllipse(dot);
+            painter->restore();
+        }
+//    }
     return true;
 }
 

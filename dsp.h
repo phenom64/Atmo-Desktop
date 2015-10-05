@@ -9,8 +9,6 @@
 #include "stylelib/ops.h"
 #include "config/settings.h"
 
-#define DEBUG 1
-
 class QToolBar;
 class QTabBar;
 class QProgressBar;

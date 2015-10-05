@@ -45,7 +45,7 @@ Style::eventFilter(QObject *o, QEvent *e)
     QWidget *w(static_cast<QWidget *>(o));
     switch (e->type())
     {
-#if 0
+#if DEBUG
     case QEvent::Show:
     case QEvent::Leave:
     case QEvent::HoverLeave:

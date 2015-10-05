@@ -9,6 +9,7 @@
 #include "config/settings.h"
 #include "stylelib/color.h"
 #include "stylelib/stackanimator.h"
+#include "defines.h"
 
 #include <QStackedLayout>
 #include <QWidget>
@@ -87,7 +88,7 @@ Style::polish(QWidget *widget)
 
 //    if (widget->inherits("KateTabBar")) //that new fancy kate tabbar
 //        qDebug() << widget;
-#if 0
+#if DEBUG
     if (widget->parentWidget())
         qDebug() << widget << widget->parentWidget();
 
