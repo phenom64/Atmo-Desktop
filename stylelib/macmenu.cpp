@@ -31,13 +31,19 @@
 
 using namespace BE;
 
-static MacMenu *instance = 0;
+static MacMenu *s_instance = 0;
 static QStringList title_seps;
 #define MSG(_FNC_) QDBusMessage::createMethodCall( "org.kde.XBar", "/XBar", "org.kde.XBar", _FNC_ )
 #define XBAR_SEND( _MSG_ ) QDBusConnection::sessionBus().send( _MSG_ )
 
 inline bool operator< (const MacMenu::QMenuBar_p &ptr1, const MacMenu::QMenuBar_p &ptr2) {
     return ptr1.data() < ptr2.data();
+}
+
+MacMenu
+*MacMenu::instance()
+{
+    return s_instance;
 }
 
 bool
@@ -47,9 +53,9 @@ FullscreenWatcher::eventFilter(QObject *o, QEvent *ev)
     if (!(window && ev->type() == QEvent::WindowStateChange))
         return false;
     if (window->windowState() & Qt::WindowFullScreen)
-        instance->deactivate(window);
+        s_instance->deactivate(window);
     else
-        instance->activate(window);
+        s_instance->activate(window);
     return false;
 }
 
@@ -61,6 +67,7 @@ MacMenu::MacMenu() : QObject()
                         QString(" %1 ").arg(QChar(0x2013)) << // utf-8 dash
                         QString(" %1 ").arg(QChar(0x2014)); // utf-8 em dash
     usingMacMenu = QDBusConnection::sessionBus().interface()->isServiceRegistered("org.kde.XBar");
+    emit activeChanged();
     service = QString("org.kde.XBar-%1").arg(QCoreApplication::applicationPid());
     // register me
     QDBusConnection::sessionBus().registerService(service);
@@ -85,42 +92,42 @@ MacMenu::manage(QMenuBar *menu)
 //         return;
 
 
-    if (!instance)
+    if (!s_instance)
     {
-        instance = new MacMenu;
-        /*MacMenuAdaptor *adapt = */new MacMenuAdaptor(instance);
+        s_instance = new MacMenu;
+        /*MacMenuAdaptor *adapt = */new MacMenuAdaptor(s_instance);
         fullscreenWatcher = new FullscreenWatcher;
     }
-    else if (instance->items.contains(menu))
+    else if (s_instance->items.contains(menu))
         return; // no double adds please!
 
-    if (instance->usingMacMenu)
-        instance->activate(menu);
+    if (s_instance->usingMacMenu)
+        s_instance->activate(menu);
 
-    connect (menu, SIGNAL(destroyed(QObject *)), instance, SLOT(_release(QObject *)));
+    connect (menu, SIGNAL(destroyed(QObject *)), s_instance, SLOT(_release(QObject *)));
 
-    instance->items.append(menu);
+    s_instance->items.append(menu);
 }
 
 
 bool
 MacMenu::manages(const QMenuBar *menu)
 {
-    return isActive() && instance->items.contains(const_cast<QMenuBar*>(menu));
+    return isActive() && s_instance->items.contains(const_cast<QMenuBar*>(menu));
 }
 
 void
 MacMenu::release(QMenuBar *menu)
 {
-    if (!instance)
+    if (!s_instance)
         return;
-    instance->_release(menu);
+    s_instance->_release(menu);
 }
 
 bool
 MacMenu::isActive()
 {
-    return instance && instance->usingMacMenu;
+    return s_instance && s_instance->usingMacMenu;
 }
 
 void
@@ -147,6 +154,7 @@ MacMenu::activate()
             { actions.remove(*menu); menu = items.erase(menu); }
     }
     usingMacMenu = true;
+    emit activeChanged();
 }
 
 void
@@ -251,6 +259,7 @@ MacMenu::deactivate()
         else
             i = items.erase(i);
     }
+    emit activeChanged();
 }
 
 void

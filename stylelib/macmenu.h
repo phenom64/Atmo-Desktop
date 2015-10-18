@@ -44,6 +44,7 @@ class Q_DECL_EXPORT MacMenu : public QObject
 {
    Q_OBJECT
 public:
+    static MacMenu *instance();
     static void manage(QMenuBar *menu);
     static bool manages(const QMenuBar *menu);
     static void release(QMenuBar *menu);
@@ -53,6 +54,8 @@ public:
     void popDown(qlonglong key);
     void raise(qlonglong key);
     typedef QPointer<QMenuBar> QMenuBar_p;
+signals:
+    void activeChanged();
 public slots:
     void activate();
     void deactivate();

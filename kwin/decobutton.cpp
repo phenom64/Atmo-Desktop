@@ -38,7 +38,19 @@ Button
 *Button::create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent)
 {
     if (Deco *d = qobject_cast<Deco *>(decoration))
-        return new Button(type, d, parent);
+    {
+        bool supported(true);
+        switch (type)
+        {
+        case KDecoration2::DecorationButtonType::Close: supported = d->client().data()->isCloseable(); break;
+        case KDecoration2::DecorationButtonType::Maximize: supported = d->client().data()->isMaximizeable(); break;
+        case KDecoration2::DecorationButtonType::Minimize: supported = d->client().data()->isMinimizeable(); break;
+        case KDecoration2::DecorationButtonType::Shade: supported = d->client().data()->isShadeable(); break;
+        default: break;
+        }
+        if (supported)
+            return new Button(type, d, parent);
+    }
     return 0;
 }
 
@@ -189,8 +201,8 @@ void
 EmbeddedWidget::paintEvent(QPaintEvent *e)
 {
     QPainter p(this);
-    if (WindowData *d = m_deco->m_wd)
-            if (d->lock())
+    WindowData *d = m_deco->m_wd;
+    if (d && d->lock())
     {
         p.setBrushOrigin(-QPoint(8, 4+m_deco->titleHeight()));
         const QImage img = d->image();
@@ -198,6 +210,7 @@ EmbeddedWidget::paintEvent(QPaintEvent *e)
             p.fillRect(rect(), img);
         d->unlock();
     }
+    p.end();
 }
 
 void
@@ -210,7 +223,8 @@ void
 EmbeddedWidget::wheelEvent(QWheelEvent *e)
 {
     QWheelEvent we(QPoint(), e->delta(), e->buttons(), e->modifiers(), e->orientation());
-    QCoreApplication::sendEvent(m_deco->client().data(), &we);
+    QCoreApplication::sendEvent(m_deco, &we);
+    QCoreApplication::sendPostedEvents();
     e->accept();
 }
 

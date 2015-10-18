@@ -318,7 +318,7 @@ Deco::checkForDataFromWindowClass()
 }
 
 const int
-Deco::titleHeight() const
+Deco::titleHeight() const //FIIIIIIIIIIIIIIXXXXXXXXXXXXXXXXXXXX!!!! NO shared data here!!!!!!!!!
 {
     return client().data()->isModal()?20:m_wd&&m_wd->value<bool>(WindowData::EmbeddedButtons, false)?6:25;
 }
@@ -582,7 +582,9 @@ Deco::updateBgPixmap()
 bool
 Deco::event(QEvent *event)
 {
-    if (event->type() == QEvent::HoverMove)
+    switch (event->type())
+    {
+    case QEvent::HoverMove:
     {
         if (s_hovered != this)
         {
@@ -595,8 +597,21 @@ Deco::event(QEvent *event)
             hoverEnter();
         else if (m_isHovered && !titleBar().contains(p))
             hoverLeave();
+        break;
+    }
+    case QEvent::Wheel:
+        qDebug() << event;
+        return true;
+        break;
+    default: break;
     }
     return KDecoration2::Decoration::event(event);
+}
+
+void
+Deco::wheelEvent(QWheelEvent *event)
+{
+    qDebug() << "wheelEvent" << event;
 }
 
 void

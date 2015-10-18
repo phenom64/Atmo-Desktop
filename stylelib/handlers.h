@@ -74,7 +74,7 @@ public:
     static void manageToolBar(QToolBar *tb);
     static void manage(QWidget *child);
     static bool isArrowPressed(const QToolButton *tb);
-    static void setupNoTitleBarWindowLater(QToolBar *toolBar);
+    static void embedTitleWidgetLater(QToolBar *toolBar);
     static void adjustMargins(QToolBar *toolBar);
     static Sides sides(const QToolButton *btn);
     static void processToolBar(QToolBar *bar, bool forceSizeUpdate = false);
@@ -93,9 +93,10 @@ protected slots:
     void toolBarVisibilityChanged(const bool visible);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
-    void setupNoTitleBarWindow(qulonglong bar);
+    void embedTitleWidget(qulonglong bar);
     void fixSpacer(qulonglong toolbar, int width = 7);
     void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
+    void macMenuChanged();
 
 private:
     static ToolBar *s_instance;

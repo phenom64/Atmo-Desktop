@@ -137,6 +137,8 @@ protected:
     const QColor bgColor() const;
     const QColor fgColor() const;
 
+    void wheelEvent(QWheelEvent *event);
+
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
     EmbeddedWidget *m_embeddedWidget;

@@ -149,8 +149,8 @@ TitleWidget::paintEvent(QPaintEvent *)
     QPalette pal(palette());
     pal.setCurrentColorGroup(active?QPalette::Active:QPalette::Disabled);
     f.setBold(active);
-    f.setPointSize(f.pointSize()-2);
-    p.setFont(f);
+    f.setPointSize(f.pointSize()-1.5f);
+//    p.setFont(f);
     int align(Qt::AlignVCenter);
     switch (dConf.titlePos)
     {
@@ -169,8 +169,8 @@ TitleWidget::paintEvent(QPaintEvent *)
 #if QT_VERSION > 0x050000
     align = Qt::AlignBottom|Qt::AlignHCenter;
     QFont fb(p.font());
-    fb.setPointSize(fb.pointSize()-1);
-    fb.setBold(true);
+    fb.setPointSize(fb.pointSize()-3);
+    fb.setBold(false);
     QColor c(pal.color(foregroundRole()));
     c.setAlpha(127);
     p.setPen(c);
@@ -233,7 +233,14 @@ ToolBar
 *ToolBar::instance()
 {
     if (!s_instance)
+    {
         s_instance = new ToolBar();
+#if HASDBUS
+        if (dConf.deco.embed && BE::MacMenu::instance())
+            connect(BE::MacMenu::instance(), SIGNAL(activeChanged()), s_instance, SLOT(macMenuChanged()));
+#endif
+    }
+
     return s_instance;
 }
 
@@ -280,6 +287,26 @@ ToolBar::toolBtnDeleted(QObject *toolBtn)
     QToolButton *btn(static_cast<QToolButton *>(toolBtn));
     if (s_sides.contains(btn))
         s_sides.remove(btn);
+}
+
+void
+ToolBar::macMenuChanged()
+{
+#if HASDBUS
+    const QList<QWidget *> allWidgets(qApp->allWidgets());
+    for (int i = 0; i < allWidgets.count(); ++i)
+        if (QMainWindow *win = qobject_cast<QMainWindow *>(allWidgets.at(i)))
+        {
+            const QList<QToolBar *> toolBars = win->findChildren<QToolBar *>();
+            for (int t = 0; t < toolBars.count(); ++t)
+            {
+                if (BE::MacMenu::isActive() && dConf.deco.embed)
+                    embedTitleWidgetLater(toolBars.at(t));
+                else
+                    unembed(toolBars.at(t));
+            }
+        }
+#endif
 }
 
 void
@@ -335,7 +362,7 @@ ToolBar::toolBarMovableChanged(const bool movable)
     if (!movable)
         unembed(toolBar);
     else
-        setupNoTitleBarWindowLater(toolBar);
+        embedTitleWidgetLater(toolBar);
 }
 
 void
@@ -347,7 +374,7 @@ ToolBar::toolBarVisibilityChanged(const bool visible)
         adjustMargins(toolBar);
         s_dirty.insert(toolBar, true);
         if (dConf.deco.embed)
-            setupNoTitleBarWindowLater(toolBar);
+            embedTitleWidgetLater(toolBar);
     }
     else if (!toolBar->isVisibleTo(toolBar->parentWidget()))
         unembed(toolBar);
@@ -494,8 +521,13 @@ ToolBar::fixSpacer(qulonglong toolbar, int width)
             || !tb->styleSheet().isEmpty())
         return;
 
+    qDebug() << tb << tb->isMovable() << width;
     if (tb->isMovable() && width == 7)
+    {
+        if (QAction *spacer = tb->findChild<QAction *>("DSP_TOOLBARSPACER"))
+            spacer->deleteLater();
         return;
+    }
 
     tb->removeEventFilter(this);
     QAction *spacer = tb->findChild<QAction *>("DSP_TOOLBARSPACER");
@@ -519,6 +551,7 @@ ToolBar::unembed(QToolBar *bar)
         return;
     if (QAction *spacer = bar->findChild<QAction *>("DSP_TOOLBARSPACER"))
     {
+        static_cast<QWidgetAction *>(spacer)->defaultWidget()->setFixedSize(1, 1);
         spacer->deleteLater();
         if (WindowData *data = WindowData::memory(bar->window()->winId(), bar->window()))
         {
@@ -584,7 +617,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             if (e->type() == QEvent::ShowToParent)
             {
                 if (tb->findChild<TitleWidget *>())
-                    setupNoTitleBarWindowLater(tb);
+                    embedTitleWidgetLater(tb);
                 QMetaObject::invokeMethod(this, "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)tb));
             }
         }
@@ -683,19 +716,29 @@ static QWidget *getCenterWidget(QToolBar *bar)
     return w;
 }
 
+static QList<qulonglong> s_titleQueue;
+
 void
-ToolBar::setupNoTitleBarWindowLater(QToolBar *toolBar)
+ToolBar::embedTitleWidgetLater(QToolBar *toolBar)
 {
-    QMetaObject::invokeMethod(instance(), "setupNoTitleBarWindow", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)toolBar));
+    if (!s_titleQueue.contains((qulonglong)toolBar))
+    {
+        s_titleQueue << (qulonglong)toolBar;
+        QMetaObject::invokeMethod(instance(), "embedTitleWidget", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)toolBar));
+    }
 }
 
 void
-ToolBar::setupNoTitleBarWindow(qulonglong bar)
+ToolBar::embedTitleWidget(qulonglong bar)
 {
+    s_titleQueue.removeOne(bar);
     QToolBar *toolBar = getChild<QToolBar *>(bar);
-    toolBar->blockSignals(true);
-    toolBar->setMovable(true);
-    toolBar->blockSignals(false);
+    if (toolBar)
+    {
+        toolBar->blockSignals(true);
+        toolBar->setMovable(true);
+        toolBar->blockSignals(false);
+    }
     if (!toolBar
             || toolBar->isFloating()
             || !toolBar->isMovable()
