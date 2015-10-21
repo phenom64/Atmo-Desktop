@@ -16,6 +16,7 @@ public:
     static Button *create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent);
     void paint(QPainter *painter, const QRect &repaintArea);
     const QRect buttonRect() const {return geometry().toRect();}
+    static bool isSupported(KDecoration2::DecorationButtonType t, Deco *d);
 
 protected:
     explicit Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObject *parent = 0);
@@ -45,17 +46,23 @@ class EmbeddedWidget : public QWidget
     Q_OBJECT
     friend class EmbeddedButton;
 public:
-    explicit EmbeddedWidget(Deco *d);
+    enum Side { Left = 0, Right = 1 };
+    explicit EmbeddedWidget(Deco *d, const Side s = Left);
+    const QPoint topLeft() const;
 
 protected:
     void wheelEvent(QWheelEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void paintEvent(QPaintEvent *e);
+    void showEvent(QShowEvent *e);
     void restack();
+
+protected slots:
     void updatePosition();
 
 private:
     Deco *m_deco;
+    Side m_side;
 };
 
 class EmbeddedButton : public QWidget, public ButtonBase

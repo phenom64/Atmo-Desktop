@@ -123,7 +123,7 @@ AdaptorManager
 
 AdaptorManager::AdaptorManager()
 {
-    DSP::Settings::read();
+    Settings::read();
     XHandler::init();
     ShadowHandler::removeDelete();
     Render::makeNoise();
@@ -149,6 +149,13 @@ AdaptorManager::windowChanged(uint win, bool active)
         emit m_adaptor->windowActiveChanged(win, active);
 }
 
+void
+AdaptorManager::dataChanged(uint win)
+{
+    if (m_adaptor)
+        emit m_adaptor->dataChanged(win);
+}
+
 ///-------------------------------------------------------------------------------------------------
 
 static Deco *s_hovered(0);
@@ -165,16 +172,18 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_grip(0)
     , m_buttonStyle(0)
     , m_isHovered(false)
-    , m_embeddedWidget(0)
 {
+    for (int i = 0; i < 2; ++i)
+        m_embeddedWidget[i] = 0;
 }
 
 Deco::~Deco()
 {
     if (m_grip)
         m_grip->deleteLater();
-    if (m_embeddedWidget)
-        m_embeddedWidget->deleteLater();
+    if (m_embeddedWidget[0])
+        for (int i = 0; i < 2; ++i)
+            m_embeddedWidget[i]->deleteLater();
     if (s_hovered && s_hovered == this)
         s_hovered = 0;
     AdaptorManager::instance()->removeDeco(this);
@@ -183,7 +192,9 @@ Deco::~Deco()
 void
 Deco::init()
 {
-    setBorders(QMargins(0, titleHeight(), 0, 0));
+    setBorders(QMargins(0, 0, 0, 0));
+    setTitleHeight(client().data()->isModal()?20:25);
+
     if (const uint id = client().data()->windowId())
     {
         AdaptorManager::instance()->addDeco(this);
@@ -230,8 +241,9 @@ Deco::init()
 
     if (client().data()->isResizeable() && !m_grip)
         m_grip = new Grip(this);
-    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embeddedWidget)
-        m_embeddedWidget = new EmbeddedWidget(this);
+    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embeddedWidget[0])
+        for (int i = 0; i < 2; ++i)
+            m_embeddedWidget[i] = new EmbeddedWidget(this);
 }
 
 void
@@ -256,24 +268,24 @@ Deco::updateData()
         initMemory(WindowData::memory(client().data()->windowId(), this));
     if (m_wd)
     {
-        if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embeddedWidget)
-            m_embeddedWidget = new EmbeddedWidget(this);
-        else if (!m_wd->value<bool>(WindowData::EmbeddedButtons, false) && m_embeddedWidget)
+        if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embeddedWidget[0])
         {
-            m_embeddedWidget->deleteLater();
-            m_embeddedWidget = 0;
+            for (int i = 0; i < 2; ++i)
+                m_embeddedWidget[i] = new EmbeddedWidget(this, EmbeddedWidget::Side(i));
         }
-        const int oldTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
-        if (oldTitleHeight != titleHeight())
+        else if (!m_wd->value<bool>(WindowData::EmbeddedButtons, false) && m_embeddedWidget[0])
         {
-            m_wd->setValue<int>(WindowData::TitleHeight, titleHeight());
-            AdaptorManager::instance()->windowChanged(client().data()->windowId(), client().data()->isActive());
+            for (int i = 0; i < 2; ++i)
+            {
+                m_embeddedWidget[i]->deleteLater();
+                m_embeddedWidget[i] = 0;
+            }
         }
-        setTitleBar(QRect(0, 0, titleBar().width(), titleHeight()));
-        setBorders(QMargins(0, titleHeight(), 0, 0));
+        setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
         const bool buttonShouldBeVisible(titleHeight()>6);
-        if (m_embeddedWidget)
-            m_embeddedWidget->repaint();
+        if (m_embeddedWidget[0])
+            for (int i = 0; i < 2; ++i)
+                m_embeddedWidget[i]->repaint();
 
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
@@ -318,9 +330,20 @@ Deco::checkForDataFromWindowClass()
 }
 
 const int
-Deco::titleHeight() const //FIIIIIIIIIIIIIIXXXXXXXXXXXXXXXXXXXX!!!! NO shared data here!!!!!!!!!
+Deco::titleHeight() const
 {
-    return client().data()->isModal()?20:m_wd&&m_wd->value<bool>(WindowData::EmbeddedButtons, false)?6:25;
+    return titleBar().height();
+}
+
+void
+Deco::setTitleHeight(const int h)
+{
+    QRect tb(titleBar());
+    tb.setHeight(h);
+    setTitleBar(tb);
+    QMargins b(borders());
+    b.setTop(h);
+    setBorders(b);
 }
 
 void

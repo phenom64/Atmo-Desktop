@@ -3,6 +3,8 @@
 #include "../stylelib/color.h"
 #include "../stylelib/xhandler.h"
 
+#include <KDecoration2/DecorationButtonGroup>
+#include <KDecoration2/DecorationButton>
 #include <KDecoration2/Decoration>
 #include <KDecoration2/DecoratedClient>
 #include <QPainter>
@@ -34,23 +36,27 @@ Button::Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObjec
     setGeometry(QRectF(0, 0, 16, 16));
 }
 
+bool
+Button::isSupported(KDecoration2::DecorationButtonType t, Deco *d)
+{
+    bool supported(true);
+    switch (t)
+    {
+    case KDecoration2::DecorationButtonType::Close: supported = d->client().data()->isCloseable(); break;
+    case KDecoration2::DecorationButtonType::Maximize: supported = d->client().data()->isMaximizeable(); break;
+    case KDecoration2::DecorationButtonType::Minimize: supported = d->client().data()->isMinimizeable(); break;
+    case KDecoration2::DecorationButtonType::Shade: supported = d->client().data()->isShadeable(); break;
+    default: break;
+    }
+    return supported;
+}
+
 Button
 *Button::create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent)
 {
     if (Deco *d = qobject_cast<Deco *>(decoration))
-    {
-        bool supported(true);
-        switch (type)
-        {
-        case KDecoration2::DecorationButtonType::Close: supported = d->client().data()->isCloseable(); break;
-        case KDecoration2::DecorationButtonType::Maximize: supported = d->client().data()->isMaximizeable(); break;
-        case KDecoration2::DecorationButtonType::Minimize: supported = d->client().data()->isMinimizeable(); break;
-        case KDecoration2::DecorationButtonType::Shade: supported = d->client().data()->isShadeable(); break;
-        default: break;
-        }
-        if (supported)
+        if (isSupported(type, d))
             return new Button(type, d, parent);
-    }
     return 0;
 }
 
@@ -150,9 +156,10 @@ Button::hoverChanged()
 
 //--------------------------------------------------------------------------------------------------------
 
-EmbeddedWidget::EmbeddedWidget(Deco *d)
+EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
     : QWidget(0)
     , m_deco(d)
+    , m_side(s)
 {
     bool isX11(false);
 #if HASXCB
@@ -169,9 +176,10 @@ EmbeddedWidget::EmbeddedWidget(Deco *d)
 //    KDecoration2::DecoratedClient *c = m_deco->client().data();
 
     QHBoxLayout *l = new QHBoxLayout(this);
-    l->addWidget(new EmbeddedButton(this, ButtonBase::Close));
-    l->addWidget(new EmbeddedButton(this, ButtonBase::Minimize));
-    l->addWidget(new EmbeddedButton(this, ButtonBase::Maximize));
+    KDecoration2::DecorationButtonGroup *group = s == Left ? m_deco->m_leftButtons : m_deco->m_rightButtons;
+    QVector< QPointer<KDecoration2::DecorationButton > > buttons = group->buttons();
+    for (int i = 0; i < buttons.count(); ++i)
+        l->addWidget(new EmbeddedButton(this, (ButtonBase::Type)buttons.at(i).data()->type()));
     l->setContentsMargins(0, 0, 0, 0);
     l->setSpacing(4);
     setContentsMargins(0, 0, 0, 0);
@@ -179,13 +187,34 @@ EmbeddedWidget::EmbeddedWidget(Deco *d)
 
     restack();
     updatePosition();
+
+    if (s == Right)
+        connect(d->client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &EmbeddedWidget::updatePosition);
+
     show();
+}
+
+void
+EmbeddedWidget::showEvent(QShowEvent *e)
+{
+    QWidget::showEvent(e);
+    if (WindowData *d = m_deco->m_wd)
+    {
+        d->setValue<uint>(m_side == Left ? WindowData::LeftEmbedSize : WindowData::RightEmbedSize, width()+8);
+        AdaptorManager::instance()->dataChanged(m_deco->client().data()->windowId());
+    }
+}
+
+const QPoint
+EmbeddedWidget::topLeft() const
+{
+    return QPoint(m_side==Left?8:m_deco->titleBar().width()-width()-8, 4);
 }
 
 void
 EmbeddedWidget::updatePosition()
 {
-    XHandler::move(winId(), QPoint(8, 4));
+    XHandler::move(winId(), topLeft());
 }
 
 void
@@ -204,7 +233,7 @@ EmbeddedWidget::paintEvent(QPaintEvent *e)
     WindowData *d = m_deco->m_wd;
     if (d && d->lock())
     {
-        p.setBrushOrigin(-QPoint(8, 4+m_deco->titleHeight()));
+        p.setBrushOrigin(-(topLeft()+QPoint(0, m_deco->titleHeight())));
         const QImage img = d->image();
         if (!img.isNull())
             p.fillRect(rect(), img);

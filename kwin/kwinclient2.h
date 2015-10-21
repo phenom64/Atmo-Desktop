@@ -106,6 +106,7 @@ public:
     void paint(QPainter *painter, const QRect &repaintArea);
     bool event(QEvent *event);
     const int titleHeight() const;
+    void setTitleHeight(const int h);
 
 public slots:
     /**
@@ -141,7 +142,7 @@ protected:
 
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
-    EmbeddedWidget *m_embeddedWidget;
+    EmbeddedWidget *m_embeddedWidget[2];
     QPixmap m_pix/*, m_bevelCorner[3]*/;
     QSharedMemory *m_mem;
     QColor m_bg, m_fg;
@@ -185,6 +186,7 @@ public:
         }
     }
     void windowChanged(uint win, bool active);
+    void dataChanged(uint win);
 
 protected:
     AdaptorManager();

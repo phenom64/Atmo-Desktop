@@ -148,12 +148,19 @@ WindowData::isEmpty()
 }
 
 bool
-WindowData::sync()
+WindowData::sync(uint win)
 {
 #if HASDBUS
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
-    msg << m_winId;
-    QDBusConnection::sessionBus().send(msg);
+    if (win)
+    {
+
+    }
+    else
+    {
+        QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.kwindeco", "/DSPDecoAdaptor", "org.kde.dsp.deco", "updateData");
+        msg << m_winId;
+        QDBusConnection::sessionBus().send(msg);
+    }
     return true;
 #endif
     return false;

@@ -388,7 +388,7 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         return;
     QMainWindow *win = qobject_cast<QMainWindow *>(toolBar->parentWidget());
     if (!win || !toolBar->layout() || toolBar->actions().isEmpty())
-      return;
+        return;
 
     if (toolBar->isFloating())
     {
@@ -401,7 +401,11 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         if (toolBar->geometry().top() <= win->rect().top())
         {
             toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            toolBar->QWidget::setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent), 6);
+            WindowData *d = WindowData::memory(win->winId(), win);
+            int m(0);
+            if (d)
+                m = d->value<uint>(WindowData::RightEmbedSize, 0);
+            toolBar->QWidget::setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
         }
         else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
         {
@@ -521,7 +525,6 @@ ToolBar::fixSpacer(qulonglong toolbar, int width)
             || !tb->styleSheet().isEmpty())
         return;
 
-    qDebug() << tb << tb->isMovable() << width;
     if (tb->isMovable() && width == 7)
     {
         if (QAction *spacer = tb->findChild<QAction *>("DSP_TOOLBARSPACER"))
@@ -541,6 +544,14 @@ ToolBar::fixSpacer(qulonglong toolbar, int width)
     tb->removeAction(spacer);
     tb->insertAction(tb->actions().first(), spacer);
     spacer->setVisible(!tb->isMovable()||width>7);
+
+//    if (width > 7 && tb->layout())
+//    {
+//        QMargins m(tb->layout()->contentsMargins());
+//        m.setRight(80);
+//        tb->layout()->setContentsMargins(m);
+//    }
+
     tb->installEventFilter(this);
 }
 
@@ -556,6 +567,7 @@ ToolBar::unembed(QToolBar *bar)
         if (WindowData *data = WindowData::memory(bar->window()->winId(), bar->window()))
         {
             data->setValue<bool>(WindowData::EmbeddedButtons, false);
+            data->setValue<uint>(WindowData::TitleHeight, 25);
             data->sync();
         }
     }
@@ -760,6 +772,7 @@ ToolBar::embedTitleWidget(qulonglong bar)
     if (!data)
         return;
     data->setValue<bool>(WindowData::EmbeddedButtons, true);
+    data->setValue<uint>(WindowData::TitleHeight, 6);
     toolBar->removeEventFilter(instance());
     QAction *a(0);
     if (dConf.titlePos == TitleWidget::Center)
@@ -787,7 +800,7 @@ ToolBar::embedTitleWidget(qulonglong bar)
     if (!isAdded)
         toolBar->insertWidget(a, title);
     title->show();
-    fixSpacer(bar, 3*16+3*4+4);
+    fixSpacer(bar, data->value<uint>(WindowData::LeftEmbedSize));
     data->sync();
     toolBar->installEventFilter(instance());
 }
@@ -808,6 +821,7 @@ Window::Window(QObject *parent)
                 path("/DSPDecoAdaptor");
         QDBusInterface *iface = new QDBusInterface(service, path, interface);
         iface->connection().connect(service, path, interface, "windowActiveChanged", this, SLOT(decoActiveChanged(QDBusMessage)));
+        iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
     }
 #endif
 }
@@ -830,6 +844,33 @@ Window::decoActiveChanged(QDBusMessage msg)
         }
     }
 }
+
+void
+Window::dataChanged(QDBusMessage msg)
+{
+    const uint win = msg.arguments().first().toUInt();
+    QList<QWidget *> widgets = qApp->allWidgets();
+    for (int i = 0; i < widgets.count(); ++i)
+    {
+        QWidget *w(widgets.at(i));
+        if (w->isWindow() && w->winId() == win)
+        {
+            if (dConf.deco.embed)
+            {
+                QList<QToolBar *> toolBars(w->findChildren<QToolBar *>());
+                for (int i = 0; i < toolBars.count(); ++i)
+                {
+                    if (TitleWidget::supported(toolBars.at(i)))
+                        ToolBar::embedTitleWidgetLater(toolBars.at(i));
+                    ToolBar::adjustMargins(toolBars.at(i));
+                }
+            }
+            updateWindowData((qulonglong)w);
+            break;
+        }
+    }
+}
+
 #endif
 
 void

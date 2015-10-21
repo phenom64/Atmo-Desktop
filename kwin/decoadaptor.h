@@ -25,6 +25,7 @@ public slots:
 
 signals:
      void windowActiveChanged(uint win, bool active);
+     void dataChanged(uint win);
 
 private:
     AdaptorManager *m_manager;

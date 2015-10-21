@@ -31,12 +31,14 @@ public:
         Horizontal =    1<<3,
         WindowIcon =    1<<4,
         EmbeddedButtons=1<<5,
-        Opacity =       0x0000ff00,
+        Opacity =       0x0000f00,
         UnoHeight =     0x00ff0000, //the height of the head is never more then 255 right? ..right?
         Buttons =       0x0f000000, //enough long as we dont have more then 15 buttons styles
         Frame =         0xf0000000,  //same here... long as we dont set framesize over 15, unsure if this is enough....
-        TitleHeight =   0x0000ffff,
-        ShadowOpacity = 0xffff0000
+        TitleHeight =   0x000000ff,
+        ShadowOpacity = 0x0000fe00,
+        LeftEmbedSize = 0x00fe0000,
+        RightEmbedSize= 0xff000000
     };
     enum SharedValue { //when data cast to unsigned int ptr
         BgColor = 2,
@@ -65,7 +67,9 @@ public:
             case Buttons:           d[0] = (d[0] & ~Buttons) | (((value + 1) << 24) & Buttons); break;
             case Frame:             d[0] = (d[0] & ~Frame) | ((value << 28) & Frame); break;
             case TitleHeight:       d[1] = (d[1] & ~TitleHeight) | (value & TitleHeight); break;
-            case ShadowOpacity:     d[1] = (d[1] & ~ShadowOpacity) | ((value << 16) & ShadowOpacity); break;
+            case ShadowOpacity:     d[1] = (d[1] & ~ShadowOpacity) | ((value << 8) & ShadowOpacity); break;
+            case LeftEmbedSize:     d[1] = (d[1] & ~LeftEmbedSize) | ((value << 16) & LeftEmbedSize); break;
+            case RightEmbedSize:    d[1] = (d[1] & ~RightEmbedSize) | ((value << 24) & RightEmbedSize); break;
             default: break;
             }
             unlock();
@@ -91,7 +95,9 @@ public:
             case Buttons:           return T(((d[0] & Buttons) >> 24) - 1);
             case Frame:             return T((d[0] & Frame) >> 28);
             case TitleHeight:       return T(d[1] & TitleHeight);
-            case ShadowOpacity:     return T((d[1] & ShadowOpacity) >> 16);
+            case ShadowOpacity:     return T((d[1] & ShadowOpacity) >> 8);
+            case LeftEmbedSize:     return T((d[1] & LeftEmbedSize) >> 16);
+            case RightEmbedSize:    return T((d[1] & RightEmbedSize) >> 24);
             default:                return T();
             }
         }
@@ -100,7 +106,7 @@ public:
     static WindowData *memory(const unsigned int wid, QObject *parent, const bool create = false);
 
     bool isEmpty();
-    bool sync();
+    bool sync(uint win = 0);
 
     const QColor bg();
     void setBg(const QColor &c);

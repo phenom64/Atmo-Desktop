@@ -140,6 +140,7 @@ public:
 public slots:
 #if HASDBUS
     void decoActiveChanged(QDBusMessage msg);
+    void dataChanged(QDBusMessage msg);
 #endif
     void updateWindowData(qulonglong window);
     void updateDecoBg(QWidget *w);
