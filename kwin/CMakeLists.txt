@@ -22,7 +22,7 @@ if (QT5BUILD)
 
     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
     find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
-    find_package(OPENGL NAMES GL)
+    find_library(OPENGL NAMES GL)
     
     if (NOT KWIN_EFFECTS)
         message(STATUS "didnt find kwineffects lib, not building effects")
