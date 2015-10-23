@@ -135,6 +135,26 @@ XHandler::freeData(void *data)
 #endif
 }
 
+void wheelEvent(const QPoint &localPos, const QPoint &globalPos, const XHandler::XWindow win, XHandler::XWindow dest)
+{
+    xcb_connection_t *connection = QX11Info::connection();
+    xcb_button_release_event_t wheelEvent;
+    memset(&wheelEvent, 0, sizeof(wheelEvent));
+    wheelEvent.response_type = XCB_BUTTON_PRESS;
+    wheelEvent.event =  win;
+    wheelEvent.child = XCB_WINDOW_NONE;
+    wheelEvent.root = QX11Info::appRootWindow();
+    wheelEvent.event_x = localPos.x();
+    wheelEvent.event_y = localPos.y();
+    wheelEvent.root_x = globalPos.x();
+    wheelEvent.root_y = globalPos.y();
+    wheelEvent.detail = XCB_BUTTON_INDEX_1;
+    wheelEvent.state = XCB_BUTTON_MASK_1;
+    wheelEvent.time = XCB_CURRENT_TIME;
+    wheelEvent.same_screen = true;
+    xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_3_MOTION, reinterpret_cast<const char*>(&wheelEvent));
+}
+
 void
 XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow win, bool resize, XWindow dest)
 {

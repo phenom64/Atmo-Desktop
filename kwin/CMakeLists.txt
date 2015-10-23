@@ -17,8 +17,8 @@ if (QT5BUILD)
         decobutton.h
         decoadaptor.h)
 
-    find_library(KWIN_EFFECTS NAMES kwineffects)
-    find_library(KWIN_GLUTILS NAMES kwinglutils)
+    find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
+    find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
     find_package(OpenGL)
     if (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
         add_subdirectory(effects)
