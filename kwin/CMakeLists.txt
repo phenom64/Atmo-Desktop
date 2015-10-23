@@ -38,9 +38,9 @@ if (QT5BUILD)
     
     message(STATUS "${KWIN_EFFECTS} ${KWIN_GLUTILS} ${OPENGL}")
     
-    if (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
+    if (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
         add_subdirectory(effects)
-    endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
+    endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
 
     ### build library
     add_library(dspdecoration MODULE ${SRCS} ${HDRS})
