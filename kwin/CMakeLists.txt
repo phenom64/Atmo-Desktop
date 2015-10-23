@@ -8,7 +8,9 @@ if (QT5BUILD)
     include(KDECMakeSettings)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
-    
+
+    execute_process(COMMAND kf5-config --install module OUTPUT_VARIABLE MODULEPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
+
     find_path(EFFECTS_H kwineffects.h PATH_SUFFIXES kf5)
     include_directories(${EFFECTS_H})
 
@@ -23,21 +25,19 @@ if (QT5BUILD)
     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
     find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
     find_library(OPENGL NAMES GL)
-    
+
     if (NOT KWIN_EFFECTS)
         message(STATUS "didnt find kwineffects lib, not building effects")
     endif (NOT KWIN_EFFECTS)
-    
+
     if (NOT KWIN_GLUTILS)
         message(STATUS "didnt find kwin glutils lib, not building effects")
     endif (NOT KWIN_GLUTILS)
-    
+
     if (NOT OPENGL)
         message(STATUS "didnt find opengl, not building effects")
     endif (NOT OPENGL)
-    
-    message(STATUS "${KWIN_EFFECTS} ${KWIN_GLUTILS} ${OPENGL}")
-    
+
     if (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
         add_subdirectory(effects)
     endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
@@ -68,8 +68,8 @@ if (QT5BUILD)
             target_link_libraries(dspdecoration PUBLIC Qt5::X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
         endif (X11_FOUND)
     endif (XCB_FOUND)
-
-    install(TARGETS dspdecoration DESTINATION ${PLUGINPATH}/org.kde.kdecoration2)
+    
+    install(TARGETS dspdecoration DESTINATION ${MODULEPATH}/org.kde.kdecoration2)
 else (QT5BUILD)
     find_file(KDECORATION_H kdecoration.h ${KDE4_INCLUDES})
     if (KDECORATION_H)

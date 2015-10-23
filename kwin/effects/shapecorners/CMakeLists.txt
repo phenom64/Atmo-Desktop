@@ -32,7 +32,7 @@ endif (XCB_FOUND)
 
 #kcoreaddons_desktop_to_json(${SHAPECORNERS} shapecorners.desktop)
 
-install(TARGETS ${SHAPECORNERS} DESTINATION ${PLUGINPATH}/kwin/effects/plugins)
+install(TARGETS ${SHAPECORNERS} DESTINATION ${MODULEPATH}/kwin/effects/plugins)
 execute_process(COMMAND kf5-config --install services OUTPUT_VARIABLE SERVICEPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 #install(FILES shapecorners.desktop DESTINATION ${SERVICEPATH}/kwin)
 install(FILES shapecorners.frag DESTINATION ${DATA_INSTALL_DIR}/kwin/shaders/1.40)
