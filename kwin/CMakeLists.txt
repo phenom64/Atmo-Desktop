@@ -8,6 +8,9 @@ if (QT5BUILD)
     include(KDECMakeSettings)
     include(KDECompilerSettings)
     include(GenerateExportHeader)
+    
+    find_path(EFFECTS_H kwineffects.h PATH_SUFFIXES kf5)
+    include_directories(${EFFECTS_H})
 
     set(SRCS
         kwinclient2.cpp
