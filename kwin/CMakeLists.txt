@@ -20,6 +20,19 @@ if (QT5BUILD)
     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
     find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
     find_package(OpenGL)
+    
+    if (NOT KWIN_EFFECTS)
+        message(STATUS "didnt find kwineffects lib, not building effects")
+    endif (NOT KWIN_EFFECTS)
+    
+    if (NOT KWIN_GLUTILS)
+        message(STATUS "didnt find kwin glutils lib, not building effects")
+    endif (NOT KWIN_GLUTILS)
+    
+    if (NOT OpenGL_FOUND)
+        message(STATUS "didnt find opengl, not building effects")
+    endif (NOT OpenGL_FOUND)
+    
     if (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
         add_subdirectory(effects)
     endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
