@@ -33,6 +33,8 @@ if (QT5BUILD)
         message(STATUS "didnt find opengl, not building effects")
     endif (NOT OpenGL_FOUND)
     
+    message(STATUS "${KWIN_EFFECTS} ${KWIN_GLUTILS} ${OpenGL_FOUND}")
+    
     if (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)
         add_subdirectory(effects)
     endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OpenGL_FOUND)

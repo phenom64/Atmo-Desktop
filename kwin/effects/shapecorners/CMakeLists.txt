@@ -1,5 +1,7 @@
 set(SHAPECORNERS kwin4_effect_dsp_shapecorners)
 
+message(STATUS "configuring dsp effect to shape corners")
+
 project(${SHAPECORNERS})
 
 add_library(${SHAPECORNERS} MODULE shapecorners.cpp)
