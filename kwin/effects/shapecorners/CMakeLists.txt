@@ -35,4 +35,7 @@ endif (XCB_FOUND)
 install(TARGETS ${SHAPECORNERS} DESTINATION ${MODULEPATH}/kwin/effects/plugins)
 execute_process(COMMAND kf5-config --install services OUTPUT_VARIABLE SERVICEPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 #install(FILES shapecorners.desktop DESTINATION ${SERVICEPATH}/kwin)
-install(FILES shapecorners.frag DESTINATION ${DATA_INSTALL_DIR}/kwin/shaders/1.40)
+
+execute_process(COMMAND kf5-config --install data OUTPUT_VARIABLE DATAPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+install(FILES shapecorners.frag DESTINATION ${DATAPATH}/kwin/shaders/1.40)
