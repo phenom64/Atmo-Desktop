@@ -74,6 +74,10 @@ public:
     static void init();
     static void restack(const XWindow win, const XWindow parent);
     static void move(const XWindow win, const QPoint &p);
+    static void wheelEvent(const XHandler::XWindow win, const bool up);
+    static void pressEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button);
+    static void releaseEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button);
+    static void doubleClickEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button);
 
 protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);

@@ -49,10 +49,14 @@ public:
     enum Side { Left = 0, Right = 1 };
     explicit EmbeddedWidget(Deco *d, const Side s = Left);
     const QPoint topLeft() const;
+    void setButtonShadowOpacity(const int o);
+    void setButtonStyle(ButtonBase::ButtonStyle style);
 
 protected:
     void wheelEvent(QWheelEvent *e);
     void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
     void paintEvent(QPaintEvent *e);
     void showEvent(QShowEvent *e);
     void restack();
@@ -63,6 +67,7 @@ protected slots:
 private:
     Deco *m_deco;
     Side m_side;
+    bool m_press;
 };
 
 class EmbeddedButton : public QWidget, public ButtonBase
@@ -80,7 +85,7 @@ protected:
     void enterEvent(QEvent *e) { hover(); QWidget::enterEvent(e); }
     void leaveEvent(QEvent *e) { unhover(); QWidget::enterEvent(e); }
     void mousePressEvent(QMouseEvent *e) { processMouseEvent(e); /*QWidget::mousePressEvent(e);*/ }
-    void mouseReleaseEvent(QMouseEvent *e) { processMouseEvent(e); /*QWidget::mouseReleaseEvent(e);*/ }
+    void mouseReleaseEvent(QMouseEvent *e) { processMouseEvent(e); update();/*QWidget::mouseReleaseEvent(e);*/ }
 
     //pure virtuals from buttonbase
     const QColor color(const ColorRole &c = Fg) const;

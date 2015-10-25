@@ -160,6 +160,7 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
     : QWidget(0)
     , m_deco(d)
     , m_side(s)
+    , m_press(false)
 {
     bool isX11(false);
 #if HASXCB
@@ -245,16 +246,48 @@ EmbeddedWidget::paintEvent(QPaintEvent *e)
 void
 EmbeddedWidget::mousePressEvent(QMouseEvent *e)
 {
-    XHandler::mwRes(e->pos(), e->globalPos(), winId(), false, m_deco->client().data()->windowId());
+    m_press = true;
+    QWidget::mousePressEvent(e);
+    XHandler::pressEvent(e->globalPos(), m_deco->client().data()->decorationId(), e->button());
+}
+
+void
+EmbeddedWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+    m_press = false;
+    QWidget::mouseReleaseEvent(e);
+    XHandler::releaseEvent(e->globalPos(), m_deco->client().data()->decorationId(), e->button());
+}
+
+void
+EmbeddedWidget::mouseMoveEvent(QMouseEvent *e)
+{
+    QWidget::mouseMoveEvent(e);
+    if (m_press)
+        XHandler::mwRes(e->pos(), e->globalPos(), m_deco->client().data()->windowId());
 }
 
 void
 EmbeddedWidget::wheelEvent(QWheelEvent *e)
 {
-    QWheelEvent we(QPoint(), e->delta(), e->buttons(), e->modifiers(), e->orientation());
-    QCoreApplication::sendEvent(m_deco, &we);
-    QCoreApplication::sendPostedEvents();
+    XHandler::wheelEvent(m_deco->client().data()->decorationId(), e->delta()>0);
     e->accept();
+}
+
+void
+EmbeddedWidget::setButtonShadowOpacity(const int o)
+{
+    QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>());
+    for (int i = 0; i < buttons.count(); ++i)
+        buttons.at(i)->setShadowOpacity(o);
+}
+
+void
+EmbeddedWidget::setButtonStyle(ButtonBase::ButtonStyle style)
+{
+    QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>());
+    for (int i = 0; i < buttons.count(); ++i)
+        buttons.at(i)->setButtonStyle(style);
 }
 
 //--------------------------------------------------------------------------------------------------------

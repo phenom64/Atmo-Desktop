@@ -191,6 +191,26 @@ TitleWidget::paintEvent(QPaintEvent *)
     p.end();
 }
 
+void
+TitleWidget::mousePressEvent(QMouseEvent *e)
+{
+    QWidget::mousePressEvent(e);
+    if (e->button() == Qt::LeftButton)
+        return;
+    if (WindowData *data = WindowData::memory(window()->winId(), window()))
+    if (uint deco = data->decoId())
+        XHandler::pressEvent(e->globalPos(), deco, e->button());
+}
+
+void
+TitleWidget::wheelEvent(QWheelEvent *e)
+{
+    e->accept();
+    if (WindowData *data = WindowData::memory(window()->winId(), window()))
+    if (uint deco = data->decoId())
+        XHandler::wheelEvent(deco, e->delta()>0);
+}
+
 bool
 TitleWidget::supported(QToolBar *toolBar)
 {
@@ -363,6 +383,8 @@ ToolBar::toolBarMovableChanged(const bool movable)
         unembed(toolBar);
     else
         embedTitleWidgetLater(toolBar);
+    adjustMargins(toolBar);
+    Window::updateWindowDataLater(toolBar->window());
 }
 
 void
@@ -515,6 +537,8 @@ protected:
     }
 };
 
+static const char *s_spacerName("DSP_TOOLBARSPACER");
+
 void
 ToolBar::fixSpacer(qulonglong toolbar, int width)
 {
@@ -525,33 +549,24 @@ ToolBar::fixSpacer(qulonglong toolbar, int width)
             || !tb->styleSheet().isEmpty())
         return;
 
+    tb->removeEventFilter(this);
     if (tb->isMovable() && width == 7)
     {
-        if (QAction *spacer = tb->findChild<QAction *>("DSP_TOOLBARSPACER"))
+        if (QAction *spacer = tb->findChild<QAction *>(s_spacerName))
             spacer->deleteLater();
         return;
     }
-
-    tb->removeEventFilter(this);
-    QAction *spacer = tb->findChild<QAction *>("DSP_TOOLBARSPACER");
+    QAction *spacer = tb->findChild<QAction *>(s_spacerName);
     if (!spacer)
     {
         QWidget *w = new QWidget(tb);
         spacer = tb->insertWidget(tb->actions().first(), w);
-        spacer->setObjectName("DSP_TOOLBARSPACER");
+        spacer->setObjectName(s_spacerName);
     }
     tb->widgetForAction(spacer)->setFixedSize(width, 7);
     tb->removeAction(spacer);
     tb->insertAction(tb->actions().first(), spacer);
     spacer->setVisible(!tb->isMovable()||width>7);
-
-//    if (width > 7 && tb->layout())
-//    {
-//        QMargins m(tb->layout()->contentsMargins());
-//        m.setRight(80);
-//        tb->layout()->setContentsMargins(m);
-//    }
-
     tb->installEventFilter(this);
 }
 
@@ -560,7 +575,7 @@ ToolBar::unembed(QToolBar *bar)
 {
     if (!bar)
         return;
-    if (QAction *spacer = bar->findChild<QAction *>("DSP_TOOLBARSPACER"))
+    if (QAction *spacer = bar->findChild<QAction *>(s_spacerName))
     {
         static_cast<QWidgetAction *>(spacer)->defaultWidget()->setFixedSize(1, 1);
         spacer->deleteLater();

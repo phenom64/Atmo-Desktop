@@ -135,6 +135,29 @@ WindowData::setFg(const QColor &c)
     }
 }
 
+void
+WindowData::setDecoId(const uint id)
+{
+    if (lock())
+    {
+        uint *d = reinterpret_cast<uint *>(data());
+        d[DecoID] = id;
+        unlock();
+    }
+}
+
+const uint
+WindowData::decoId()
+{
+    MemoryLocker locker(this);
+    if (locker.lockObtained())
+    {
+        const uint *d = reinterpret_cast<const uint *>(constData());
+        return d[DecoID];
+    }
+    return 0;
+}
+
 bool
 WindowData::isEmpty()
 {

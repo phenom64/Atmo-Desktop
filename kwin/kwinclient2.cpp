@@ -241,9 +241,9 @@ Deco::init()
 
     if (client().data()->isResizeable() && !m_grip)
         m_grip = new Grip(this);
-    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embeddedWidget[0])
+    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons) && !m_embeddedWidget[0])
         for (int i = 0; i < 2; ++i)
-            m_embeddedWidget[i] = new EmbeddedWidget(this);
+            m_embeddedWidget[i] = new EmbeddedWidget(this, EmbeddedWidget::Side(i));
 }
 
 void
@@ -283,12 +283,17 @@ Deco::updateData()
         }
         setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
         const bool buttonShouldBeVisible(titleHeight()>6);
-        if (m_embeddedWidget[0])
-            for (int i = 0; i < 2; ++i)
-                m_embeddedWidget[i]->repaint();
-
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
+
+        if (m_embeddedWidget[0])
+            for (int i = 0; i < 2; ++i)
+            {
+                m_embeddedWidget[i]->repaint();
+                m_embeddedWidget[i]->setButtonStyle(buttonStyle);
+                m_embeddedWidget[i]->setButtonShadowOpacity(shadowOpacity);
+            }
+
         if (m_leftButtons)
             for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
             {
@@ -317,6 +322,7 @@ Deco::updateData()
                     }
                 }
             }
+        m_wd->setDecoId(client().data()->decorationId());
     }
     update();
 }

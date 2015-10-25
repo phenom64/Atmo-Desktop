@@ -47,6 +47,8 @@ public:
     static bool supported(QToolBar *toolBar);
 protected:
     void paintEvent(QPaintEvent *);
+    void mousePressEvent(QMouseEvent *e);
+    void wheelEvent(QWheelEvent *e);
 };
 
 namespace Handlers

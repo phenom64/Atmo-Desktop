@@ -42,10 +42,11 @@ public:
     };
     enum SharedValue { //when data cast to unsigned int ptr
         BgColor = 2,
-        FgColor = 3,
-        ImageWidth = 4,
-        ImageHeight = 5,
-        ImageData = 6
+        FgColor,
+        DecoID,
+        ImageWidth,
+        ImageHeight,
+        ImageData
     };
 
     typedef unsigned int Type;
@@ -113,6 +114,9 @@ public:
 
     const QColor fg();
     void setFg(const QColor &c);
+
+    const uint decoId();
+    void setDecoId(const uint id);
 
     const QImage image() const;
 

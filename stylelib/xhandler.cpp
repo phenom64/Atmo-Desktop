@@ -135,24 +135,105 @@ XHandler::freeData(void *data)
 #endif
 }
 
-void wheelEvent(const QPoint &localPos, const QPoint &globalPos, const XHandler::XWindow win, XHandler::XWindow dest)
+#if HASXCB
+static void xcbIndexMask(const Qt::MouseButton b, xcb_button_index_t &i, xcb_button_mask_t &m)
 {
+    //this is rather confusing, xcb says *_2 shoudl be right click, but *_3 is rightclick....
+    switch (b)
+    {
+    case 1: i = XCB_BUTTON_INDEX_1; m = XCB_BUTTON_MASK_1; break;
+    case 2: i = XCB_BUTTON_INDEX_3; m = XCB_BUTTON_MASK_3; break;
+    case 4: i = XCB_BUTTON_INDEX_2; m = XCB_BUTTON_MASK_2; break;
+    default: break;
+    }
+}
+
+#endif
+
+void
+XHandler::doubleClickEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
+{
+    pressEvent(globalPos, win, button);
+    releaseEvent(globalPos, win, button);
+    pressEvent(globalPos, win, button);
+    releaseEvent(globalPos, win, button);
+}
+
+void
+XHandler::releaseEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
+{
+#if HASXCB
+    xcb_button_mask_t mask;
+    xcb_button_index_t index;
+    xcbIndexMask(button, index, mask);
     xcb_connection_t *connection = QX11Info::connection();
-    xcb_button_release_event_t wheelEvent;
+    xcb_button_release_event_t releaseEvent;
+    memset(&releaseEvent, 0, sizeof(releaseEvent));
+    releaseEvent.response_type = XCB_BUTTON_RELEASE;
+    releaseEvent.event =  win;
+    releaseEvent.child = XCB_WINDOW_NONE;
+    releaseEvent.root = QX11Info::appRootWindow();
+    releaseEvent.event_x = 0;
+    releaseEvent.event_y = 0;
+    releaseEvent.root_x = globalPos.x();
+    releaseEvent.root_y = globalPos.y();
+    releaseEvent.detail = index;
+    releaseEvent.state = mask;
+    releaseEvent.time = QX11Info::appTime();
+    releaseEvent.same_screen = true;
+    xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_RELEASE, reinterpret_cast<const char*>(&releaseEvent));
+    xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);
+    xcb_flush(connection);
+#endif
+}
+
+void
+XHandler::pressEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
+{
+#if HASXCB
+    qDebug() << "pressEvent";
+    xcb_button_mask_t mask;
+    xcb_button_index_t index;
+    xcbIndexMask(button, index, mask);
+    xcb_connection_t *connection = QX11Info::connection();
+    xcb_button_press_event_t pressEvent;
+    memset(&pressEvent, 0, sizeof(pressEvent));
+    pressEvent.response_type = XCB_BUTTON_PRESS;
+    pressEvent.event =  win;
+    pressEvent.child = XCB_WINDOW_NONE;
+    pressEvent.root = QX11Info::appRootWindow();
+    pressEvent.event_x = 0;
+    pressEvent.event_y = 0;
+    pressEvent.root_x = globalPos.x();
+    pressEvent.root_y = globalPos.y();
+    pressEvent.detail = index;
+    pressEvent.state = mask;
+    pressEvent.time = /*XCB_CURRENT_TIME*/ QX11Info::appTime();
+    pressEvent.same_screen = true;
+    xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_PRESS, reinterpret_cast<const char*>(&pressEvent));
+    xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);
+    xcb_flush(connection);
+#endif
+}
+
+void
+XHandler::wheelEvent(const XHandler::XWindow win, const bool up)
+{
+#if HASXCB
+    xcb_connection_t *connection = QX11Info::connection();
+    xcb_button_press_event_t wheelEvent;
     memset(&wheelEvent, 0, sizeof(wheelEvent));
     wheelEvent.response_type = XCB_BUTTON_PRESS;
     wheelEvent.event =  win;
     wheelEvent.child = XCB_WINDOW_NONE;
     wheelEvent.root = QX11Info::appRootWindow();
-    wheelEvent.event_x = localPos.x();
-    wheelEvent.event_y = localPos.y();
-    wheelEvent.root_x = globalPos.x();
-    wheelEvent.root_y = globalPos.y();
-    wheelEvent.detail = XCB_BUTTON_INDEX_1;
-    wheelEvent.state = XCB_BUTTON_MASK_1;
+    wheelEvent.detail = up?XCB_BUTTON_INDEX_4:XCB_BUTTON_INDEX_5;
+    wheelEvent.state = up?XCB_BUTTON_MASK_4:XCB_BUTTON_MASK_5;
     wheelEvent.time = XCB_CURRENT_TIME;
     wheelEvent.same_screen = true;
-    xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_3_MOTION, reinterpret_cast<const char*>(&wheelEvent));
+    xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_PRESS, reinterpret_cast<const char*>(&wheelEvent));
+    xcb_flush(connection);
+#endif
 }
 
 void
