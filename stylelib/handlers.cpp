@@ -192,11 +192,23 @@ TitleWidget::paintEvent(QPaintEvent *)
 }
 
 void
+TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
+{
+    e->accept();
+    if (WindowData *data = WindowData::memory(window()->winId(), window()))
+    if (uint deco = data->decoId())
+        XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
+}
+
+void
 TitleWidget::mousePressEvent(QMouseEvent *e)
 {
-    QWidget::mousePressEvent(e);
     if (e->button() == Qt::LeftButton)
+    {
+        QWidget::mousePressEvent(e);
         return;
+    }
+    e->accept();
     if (WindowData *data = WindowData::memory(window()->winId(), window()))
     if (uint deco = data->decoId())
         XHandler::pressEvent(e->globalPos(), deco, e->button());

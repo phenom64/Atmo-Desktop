@@ -191,7 +191,6 @@ void
 XHandler::pressEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
 {
 #if HASXCB
-    qDebug() << "pressEvent";
     xcb_button_mask_t mask;
     xcb_button_index_t index;
     xcbIndexMask(button, index, mask);
