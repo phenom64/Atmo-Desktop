@@ -43,13 +43,43 @@
 #include <QX11Info>
 #endif
 
-K_PLUGIN_FACTORY_WITH_JSON(
-    DSPDecoFactory,
-    "dsp.json",
-    registerPlugin<DSP::Deco>();
-    registerPlugin<DSP::Button>(QStringLiteral("button"));
-    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
-)
+//K_PLUGIN_FACTORY_WITH_JSON(
+//    DSPDecoFactory,
+//    "dsp.json",
+//    registerPlugin<DSP::Deco>();
+//    registerPlugin<DSP::Button>(QStringLiteral("button"));
+//    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
+//)
+
+
+class DSPDecoFactory : public KPluginFactory
+{
+    Q_OBJECT
+    Q_INTERFACES(KPluginFactory)
+    Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE "dsp.json")
+public:
+    explicit DSPDecoFactory()
+    {
+        registerPlugin<DSP::Deco>();
+        registerPlugin<DSP::Button>(QStringLiteral("button"));
+        registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
+        DSP::Deco::Data::readWindowData();
+//        DSP::SharedDataAdaptorManager::instance();
+        DSP::Settings::read();
+        DSP::XHandler::init();
+        DSP::ShadowHandler::removeDelete();
+        DSP::Render::makeNoise();
+        DSP::Render::generateData(QPalette());
+    }
+    ~DSPDecoFactory() {}
+
+//protected:
+//    QObject *create(const char *iface, QWidget *parentWidget, QObject *parent, const QVariantList &args, const QString &keyword)
+//    {
+//        qDebug() << iface << parentWidget << parent << args << keyword;
+//        return KPluginFactory::create(iface, parentWidget, parent, args, keyword);
+//    }
+};
 
 namespace DSP
 {
@@ -63,21 +93,23 @@ ConfigModule::ConfigModule(QWidget *parent, const QVariantList &args) : KCModule
 
 QMap<QString, Deco::Data> Deco::Data::s_data;
 
-static void addDataForWinClass(const QString &winClass, QSettings &s)
+void
+Deco::Data::addDataForWinClass(const QString &winClass, QSettings &s)
 {
-    Deco::Data d;
+    Data d;
     d.fg = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
     d.bg = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
     d.grad = DSP::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noise = s.value("noise", 20).toUInt();
     d.separator = s.value("separator", true).toBool();
     d.btnStyle = s.value("btnstyle", -2).toInt();
-    Deco::Data::s_data.insert(winClass, d);
+    Data::s_data.insert(winClass, d);
 }
 
-static void readWindowData()
+void
+Deco::Data::readWindowData()
 {
-    Deco::Data::s_data.clear();
+    s_data.clear();
     static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
     QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
     bool hasDefault(false);
@@ -123,12 +155,6 @@ AdaptorManager
 
 AdaptorManager::AdaptorManager()
 {
-    Settings::read();
-    XHandler::init();
-    ShadowHandler::removeDelete();
-    Render::makeNoise();
-    Render::generateData(QPalette());
-    readWindowData();
     m_adaptor = new DecoAdaptor(this);
     QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
     QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
@@ -172,18 +198,16 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_grip(0)
     , m_buttonStyle(0)
     , m_isHovered(false)
+    , m_embedder(0)
 {
-    for (int i = 0; i < 2; ++i)
-        m_embeddedWidget[i] = 0;
 }
 
 Deco::~Deco()
 {
+    if (m_embedder)
+        removeEmbedder();
     if (m_grip)
         m_grip->deleteLater();
-    if (m_embeddedWidget[0])
-        for (int i = 0; i < 2; ++i)
-            m_embeddedWidget[i]->deleteLater();
     if (s_hovered && s_hovered == this)
         s_hovered = 0;
     AdaptorManager::instance()->removeDeco(this);
@@ -241,9 +265,17 @@ Deco::init()
 
     if (client().data()->isResizeable() && !m_grip)
         m_grip = new Grip(this);
-    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons) && !m_embeddedWidget[0])
-        for (int i = 0; i < 2; ++i)
-            m_embeddedWidget[i] = new EmbeddedWidget(this, EmbeddedWidget::Side(i));
+    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons) && !m_embedder)
+        m_embedder = new EmbedHandler(this);
+}
+
+void
+Deco::removeEmbedder()
+{
+    if (!m_embedder)
+        return;
+    delete m_embedder;
+    m_embedder = 0;
 }
 
 void
@@ -252,6 +284,7 @@ Deco::initMemory(WindowData *data)
     if (!data)
         return;
     m_wd = data;
+//    connect(m_wd, &WindowData::dataChanged, this, &Deco::updateData);
     connect(m_wd, &QObject::destroyed, this, &Deco::dataDestroyed);
     if (m_wd->isEmpty())
     {
@@ -259,40 +292,32 @@ Deco::initMemory(WindowData *data)
         m_wd->setValue<bool>(WindowData::Uno, true);
     }
     m_wd->setValue<int>(WindowData::TitleHeight, titleHeight());
+    activeChanged(true);
 }
 
 void
 Deco::updateData()
 {
     if (!m_wd)
-        initMemory(WindowData::memory(client().data()->windowId(), this));
+        initMemory(WindowData::memory(client().data()->windowId(), this, true));
     if (m_wd)
     {
-        if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embeddedWidget[0])
-        {
-            for (int i = 0; i < 2; ++i)
-                m_embeddedWidget[i] = new EmbeddedWidget(this, EmbeddedWidget::Side(i));
-        }
-        else if (!m_wd->value<bool>(WindowData::EmbeddedButtons, false) && m_embeddedWidget[0])
-        {
-            for (int i = 0; i < 2; ++i)
-            {
-                m_embeddedWidget[i]->deleteLater();
-                m_embeddedWidget[i] = 0;
-            }
-        }
+        if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embedder)
+            m_embedder = new EmbedHandler(this);
+        else if (!m_wd->value<bool>(WindowData::EmbeddedButtons, false) && m_embedder)
+            removeEmbedder();
+
         setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
         const bool buttonShouldBeVisible(titleHeight()>6);
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
 
-        if (m_embeddedWidget[0])
-            for (int i = 0; i < 2; ++i)
-            {
-                m_embeddedWidget[i]->repaint();
-                m_embeddedWidget[i]->setButtonStyle(buttonStyle);
-                m_embeddedWidget[i]->setButtonShadowOpacity(shadowOpacity);
-            }
+        if (m_embedder)
+        {
+            m_embedder->setButtonStyle(buttonStyle);
+            m_embedder->setButtonShadowOpacity(shadowOpacity);
+            m_embedder->repaint();
+        }
 
         if (m_leftButtons)
             for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
@@ -366,7 +391,13 @@ void
 Deco::activeChanged(const bool active)
 {
     update();
-    AdaptorManager::instance()->windowChanged(client().data()->windowId(), active);
+//    AdaptorManager::instance()->windowChanged(client().data()->windowId(), active);
+    if (m_wd)
+    {
+        m_wd->setValue<bool>(WindowData::IsActiveWindow, active);
+        AdaptorManager::instance()->dataChanged(client().data()->windowId());
+        qDebug() << active << client().data()->isActive() << client().data()->windowId();
+    }
     if (m_grip)
         m_grip->setColor(Color::mid(fgColor(), bgColor(), 2, 1));;
     ShadowHandler::installShadows(client().data()->windowId(), active);
@@ -706,12 +737,14 @@ Grip::Grip(Deco *d)
     setFocusPolicy(Qt::NoFocus);
     setFixedSize(Size, Size);
     setCursor(Qt::SizeFDiagCursor);
+
+    static const QPolygon &p = QPolygon() << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size); //topright, bottomright, bottomleft
+    setMask(p);
+
     KDecoration2::DecoratedClient *c = m_deco->client().data();
     connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
     connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
     restack();
-    static const QPolygon &p = QPolygon() << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size); //topright, bottomright, bottomleft
-    setMask(p);
     updatePosition();
     show();
 }
@@ -744,6 +777,7 @@ Grip::restack()
 void
 Grip::mousePressEvent(QMouseEvent *e)
 {
+    QWidget::mousePressEvent(e);
     XHandler::mwRes(e->pos(), e->globalPos(), winId(), true, m_deco->client().data()->windowId());
 }
 

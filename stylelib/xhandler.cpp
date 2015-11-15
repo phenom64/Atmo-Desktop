@@ -15,7 +15,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#include "fixx11h.h"
+//#include "fixx11h.h"
 #endif
 
 using namespace DSP;
@@ -435,6 +435,18 @@ XHandler::freePix(const XPixmap pixmap)
 }
 
 void
+XHandler::reparent(const XWindow child, const XWindow parent)
+{
+#if HASXCB
+    xcb_connection_t *c = QX11Info::connection();
+    xcb_reparent_window(c, child, parent, 0, 0);
+//    static const quint32 value[] = {XCB_STACK_MODE_ABOVE};
+//    xcb_configure_window(c, child, XCB_CONFIG_WINDOW_STACK_MODE, value);
+//    xcb_map_window(c, child);
+#endif
+}
+
+void
 XHandler::restack(const XWindow win, const XWindow parent)
 {
 #if HASXCB
@@ -443,7 +455,13 @@ XHandler::restack(const XWindow win, const XWindow parent)
     xcb_query_tree_cookie_t cookie = xcb_query_tree_unchecked(c, current);
     xcb_query_tree_reply_t *tree = xcb_query_tree_reply(c, cookie, 0);
     if (tree && tree->parent)
+    {
         current = tree->parent;
+//        xcb_query_tree_cookie_t cookie2 = xcb_query_tree_unchecked(c, current);
+//        xcb_query_tree_reply_t *tree2 = xcb_query_tree_reply(c, cookie2, 0);
+//        if (tree2 && tree2->parent != tree2->root)
+//            current = tree2->parent;
+    }
     // reparent
     xcb_reparent_window(c, win, current, 0, 0);
     static const quint32 value[] = {XCB_STACK_MODE_ABOVE};

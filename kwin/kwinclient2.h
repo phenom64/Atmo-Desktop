@@ -73,7 +73,7 @@ public slots:
     void defaults() {}
 };
 class Grip;
-class EmbeddedWidget;
+class EmbedHandler;
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
@@ -98,6 +98,8 @@ public:
             separator = d.separator;
             btnStyle = d.btnStyle;
         }
+        static void addDataForWinClass(const QString &winClass, QSettings &s);
+        static void readWindowData();
         static void decoData(const QString &winClass, Deco *d);
         static QMap<QString, Data> s_data;
     };
@@ -140,9 +142,11 @@ protected:
 
     void wheelEvent(QWheelEvent *event);
 
+    void removeEmbedder();
+
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
-    EmbeddedWidget *m_embeddedWidget[2];
+    EmbedHandler *m_embedder;
     QPixmap m_pix/*, m_bevelCorner[3]*/;
     QSharedMemory *m_mem;
     QColor m_bg, m_fg;

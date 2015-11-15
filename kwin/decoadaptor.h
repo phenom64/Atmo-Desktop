@@ -17,7 +17,7 @@ class DecoAdaptor : public QDBusAbstractAdaptor
     Q_CLASSINFO("D-Bus Interface", "org.kde.dsp.deco")
 
 public:
-    DecoAdaptor(DSP::AdaptorManager *parent = 0) : QDBusAbstractAdaptor(parent), m_manager(parent){}
+    DecoAdaptor(AdaptorManager *parent = 0) : QDBusAbstractAdaptor(parent), m_manager(parent){}
 
 public slots:
     Q_NOREPLY void updateData(uint win) { m_manager->updateData(win); }

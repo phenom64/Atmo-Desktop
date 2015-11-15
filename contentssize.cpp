@@ -190,7 +190,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             if (bar)
             {
                 if (Handlers::ToolBar::isDirty(bar))
-                    Handlers::ToolBar::processToolBar(bar);
+                    Handlers::ToolBar::queryToolBarLater(bar);
                 sides = Handlers::ToolBar::sides(btn);
             }
             const bool isFull(sides == All);

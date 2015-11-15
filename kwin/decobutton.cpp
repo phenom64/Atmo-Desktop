@@ -161,6 +161,7 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
     , m_deco(d)
     , m_side(s)
     , m_press(false)
+    , m_hasBeenShown(false)
 {
     bool isX11(false);
 #if HASXCB
@@ -176,9 +177,9 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
 //    setFixedSize(48, 16);
 //    KDecoration2::DecoratedClient *c = m_deco->client().data();
 
-    QHBoxLayout *l = new QHBoxLayout(this);
     KDecoration2::DecorationButtonGroup *group = s == Left ? m_deco->m_leftButtons : m_deco->m_rightButtons;
     QVector< QPointer<KDecoration2::DecorationButton > > buttons = group->buttons();
+    QHBoxLayout *l = new QHBoxLayout(this);
     for (int i = 0; i < buttons.count(); ++i)
         l->addWidget(new EmbeddedButton(this, (ButtonBase::Type)buttons.at(i).data()->type()));
     l->setContentsMargins(0, 0, 0, 0);
@@ -196,13 +197,26 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
 }
 
 void
+EmbeddedWidget::cleanUp()
+{
+    if (m_hasBeenShown)
+    if (WindowData *d = m_deco->m_wd)
+    {
+        d->setValue<uint>(m_side == Left ? WindowData::LeftEmbedSize : WindowData::RightEmbedSize, 0);
+        AdaptorManager::instance()->dataChanged(m_deco->client().data()->windowId());
+    }
+}
+
+void
 EmbeddedWidget::showEvent(QShowEvent *e)
 {
     QWidget::showEvent(e);
+    if (!m_hasBeenShown)
     if (WindowData *d = m_deco->m_wd)
     {
         d->setValue<uint>(m_side == Left ? WindowData::LeftEmbedSize : WindowData::RightEmbedSize, width()+8);
         AdaptorManager::instance()->dataChanged(m_deco->client().data()->windowId());
+        m_hasBeenShown = true;
     }
 }
 
@@ -288,6 +302,58 @@ EmbeddedWidget::setButtonStyle(ButtonBase::ButtonStyle style)
     QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>());
     for (int i = 0; i < buttons.count(); ++i)
         buttons.at(i)->setButtonStyle(style);
+}
+
+//--------------------------------------------------------------------------------------------------------
+
+EmbedHandler::EmbedHandler(Deco *d) : m_deco(d)
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        m_embedded[i] = new EmbeddedWidget(m_deco, (EmbeddedWidget::Side)i);
+        if (!m_embedded[i]->findChild<EmbeddedButton *>())
+        {
+            m_embedded[i]->cleanUp();
+            m_embedded[i]->deleteLater();
+            m_embedded[i] = 0;
+        }
+    }
+
+}
+
+EmbedHandler::~EmbedHandler()
+{
+    for (int i = 0; i < 2; ++i)
+        if (m_embedded[i])
+        {
+            m_embedded[i]->cleanUp();
+            m_embedded[i]->deleteLater();
+            m_embedded[i] = 0;
+        }
+}
+
+void
+EmbedHandler::repaint()
+{
+    for (int i = 0; i < 2; ++i)
+        if (m_embedded[i])
+            m_embedded[i]->repaint();
+}
+
+void
+EmbedHandler::setButtonShadowOpacity(const int o)
+{
+    for (int i = 0; i < 2; ++i)
+        if (m_embedded[i])
+            m_embedded[i]->setButtonShadowOpacity(o);
+}
+
+void
+EmbedHandler::setButtonStyle(ButtonBase::ButtonStyle style)
+{
+    for (int i = 0; i < 2; ++i)
+        if (m_embedded[i])
+            m_embedded[i]->setButtonStyle(style);
 }
 
 //--------------------------------------------------------------------------------------------------------

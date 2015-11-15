@@ -343,7 +343,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
 
         QLinearGradient lg(0, 0, !hor*Render::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*Render::maskHeight(dConf.toolbtn.shadow, rect.height()));
-        if (dConf.differentInactive && shadow == Yosemite && !bar->window()->isActiveWindow())
+        if (dConf.differentInactive && shadow == Yosemite && !Handlers::Window::isActiveWindow(bar->window()))
         {
             shadow = Rect;
             bc.setAlpha(127);

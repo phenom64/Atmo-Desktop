@@ -46,11 +46,11 @@ Style::eventFilter(QObject *o, QEvent *e)
     switch (e->type())
     {
 #if DEBUG
-    case QEvent::Show:
-    case QEvent::Leave:
-    case QEvent::HoverLeave:
+//    case QEvent::Show:
+//    case QEvent::Leave:
+//    case QEvent::HoverLeave:
     case QEvent::Enter:
-    case QEvent::HoverEnter:
+//    case QEvent::HoverEnter:
     {
         qDebug() << w << w->parentWidget();
     }
@@ -63,11 +63,11 @@ Style::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::LayoutRequest:
     {
-        if (w->inherits("KTitleWidget"))
+        if (w->inherits("KTitleWidget") && !dConf.animateStack)
         {
-            QList<QLabel *> lbls = w->findChildren<QLabel *>();
-            for (int i = 0; i < lbls.count(); ++i)
-                lbls.at(i)->setAlignment(Qt::AlignCenter);
+//            QList<QLabel *> lbls = w->findChildren<QLabel *>();
+//            for (int i = 0; i < lbls.count(); ++i)
+//                lbls.at(i)->setAlignment(Qt::AlignCenter);
         }
         else if (qobject_cast<QMenuBar *>(w))
         {
@@ -90,12 +90,12 @@ Style::eventFilter(QObject *o, QEvent *e)
         }
         break;
     }
-    case QEvent::MetaCall:
-    {
-        if (w->property("DSP_KTitleLabel").toBool())
-            static_cast<QLabel *>(w)->setAlignment(Qt::AlignCenter);
-        break;
-    }
+//    case QEvent::MetaCall:
+//    {
+//        if (w->property("DSP_KTitleLabel").toBool() && !dConf.animateStack)
+//            static_cast<QLabel *>(w)->setAlignment(Qt::AlignCenter);
+//        break;
+//    }
 #if 0
     case QEvent::HoverEnter:
     {
@@ -197,11 +197,11 @@ Style::resizeEvent(QObject *o, QEvent *e)
         return false;
     QWidget *w(static_cast<QWidget *>(o));
     QResizeEvent *re = static_cast<QResizeEvent *>(e);
-    if (w->inherits("KTitleWidget"))
+    if (w->inherits("KTitleWidget") && !dConf.animateStack)
     {
-        QList<QLabel *> lbls = w->findChildren<QLabel *>();
-        for (int i = 0; i < lbls.count(); ++i)
-            lbls.at(i)->setAlignment(Qt::AlignCenter);
+//        QList<QLabel *> lbls = w->findChildren<QLabel *>();
+//        for (int i = 0; i < lbls.count(); ++i)
+//            lbls.at(i)->setAlignment(Qt::AlignCenter);
     }
     else if (dConf.uno.enabled
              && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o))
@@ -248,12 +248,12 @@ Style::showEvent(QObject *o, QEvent *e)
             Handlers::Window::updateWindowDataLater(w->window());
         return false;
     }
-    else if (w->inherits("KTitleWidget"))
+    else if (w->inherits("KTitleWidget") && !dConf.animateStack)
     {
-        QList<QLabel *> lbls = w->findChildren<QLabel *>();
-        for (int i = 0; i < lbls.count(); ++i)
-            lbls.at(i)->setAlignment(Qt::AlignCenter);
-        return false;
+//        QList<QLabel *> lbls = w->findChildren<QLabel *>();
+//        for (int i = 0; i < lbls.count(); ++i)
+//            lbls.at(i)->setAlignment(Qt::AlignCenter);
+//        return false;
     }
     return QCommonStyle::eventFilter(o, e);
 }

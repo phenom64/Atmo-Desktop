@@ -44,7 +44,7 @@ class Q_DECL_EXPORT TitleWidget : public QWidget
 public:
     enum TitlePos { Left = 0, Center, Right };
     explicit TitleWidget(QWidget *parent = 0);
-    static bool supported(QToolBar *toolBar);
+    static bool supported(const QToolBar *toolBar);
 protected:
     void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *e);
@@ -80,8 +80,9 @@ public:
     static void embedTitleWidgetLater(QToolBar *toolBar);
     static void adjustMargins(QToolBar *toolBar);
     static Sides sides(const QToolButton *btn);
-    static void processToolBar(QToolBar *bar, bool forceSizeUpdate = false);
+    static void queryToolBarLater(QToolBar *bar, bool forceSizeUpdate = false);
     static bool isDirty(QToolBar *bar);
+    static void fixSpacerLater(QToolBar *toolbar, int width = 7);
 
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
@@ -139,12 +140,10 @@ public:
     static void updateWindowDataLater(QWidget *win);
     static void unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data);
     static QImage windowBg(const QSize &sz, const QColor &bgColor);
+    static bool isActiveWindow(const QWidget *w);
 
 public slots:
-#if HASDBUS
-    void decoActiveChanged(QDBusMessage msg);
     void dataChanged(QDBusMessage msg);
-#endif
     void updateWindowData(qulonglong window);
     void updateDecoBg(QWidget *w);
 

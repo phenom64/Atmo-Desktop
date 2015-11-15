@@ -72,6 +72,7 @@ public:
     static void freePix(const XPixmap pixmap);
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
     static void init();
+    static void reparent(const XWindow child, const XWindow parent);
     static void restack(const XWindow win, const XWindow parent);
     static void move(const XWindow win, const QPoint &p);
     static void wheelEvent(const XHandler::XWindow win, const bool up);

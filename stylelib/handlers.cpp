@@ -131,55 +131,55 @@ Buttons::eventFilter(QObject *o, QEvent *e)
 
 //-------------------------------------------------------------------------------------------------
 
+static const char *s_spacerName("DSP_TOOLBARSPACER");
+
 TitleWidget::TitleWidget(QWidget *parent)
     : QWidget(parent)
 {
     setContentsMargins(8, 0, 0, 0);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setAttribute(Qt::WA_NoMousePropagation);
 }
 
 void
 TitleWidget::paintEvent(QPaintEvent *)
 {
-    const QString title(window()->windowTitle());
-    const QRect rect(contentsRect());
+    QString title(window()->windowTitle());
+    const QRect rect(mapFrom(parentWidget(), QPoint()), parentWidget()->contentsRect().size());
     QPainter p(this);
     QFont f(p.font());
-    const bool active(window()->property(s_active).toBool());
+    const bool active(Handlers::Window::isActiveWindow(this));
     QPalette pal(palette());
     pal.setCurrentColorGroup(active?QPalette::Active:QPalette::Disabled);
     f.setBold(active);
-    f.setPointSize(f.pointSize()-1.5f);
-//    p.setFont(f);
+//    f.setPointSize(f.pointSize()-1.5f);
+    p.setFont(f);
     int align(Qt::AlignVCenter);
     switch (dConf.titlePos)
     {
-    case Left:
-        align |= Qt::AlignLeft;
-        break;
-    case Center:
-        align |= Qt::AlignHCenter;
-        break;
-    case Right:
-        align |= Qt::AlignRight;
-        break;
+    case Left: align |= Qt::AlignLeft; break;
+    case Center: align |= Qt::AlignHCenter; break;
+    case Right: align |= Qt::AlignRight; break;
     default: break;
     }
 //    Render::renderShadow(dConf.toolbtn.shadow, rect(), &p, dConf.toolbtn.rnd, All, dConf.shadows.opacity);
 #if QT_VERSION > 0x050000
-    align = Qt::AlignBottom|Qt::AlignHCenter;
-    QFont fb(p.font());
-    fb.setPointSize(fb.pointSize()-3);
-    fb.setBold(false);
-    QColor c(pal.color(foregroundRole()));
-    c.setAlpha(127);
-    p.setPen(c);
-    p.setFont(fb);
-    p.drawText(rect, Qt::AlignTop|Qt::AlignHCenter, qApp->applicationDisplayName());
-    p.setFont(f);
+//    align = Qt::AlignBottom|Qt::AlignHCenter;
+//    QFont fb(p.font());
+//    fb.setPointSize(fb.pointSize()-3);
+//    fb.setBold(false);
+//    QColor c(pal.color(foregroundRole()));
+//    c.setAlpha(127);
+//    p.setPen(c);
+//    p.setFont(fb);
+//    p.drawText(rect, Qt::AlignTop|Qt::AlignHCenter, qApp->applicationDisplayName());
+//    p.setFont(f);
+    if (!title.isEmpty())
+        title.append(QString(" - "));
+    title.append(qApp->applicationDisplayName());
 #endif
     const QRect tr(p.fontMetrics().boundingRect(rect, align, p.fontMetrics().elidedText(title, Qt::ElideRight, rect.width())));
-    style()->drawItemText(&p, tr, align, pal, true, p.fontMetrics().elidedText(title, Qt::ElideRight, tr.width()), foregroundRole());
+    style()->drawItemText(&p, rect, align, pal, true, p.fontMetrics().elidedText(title, Qt::ElideRight, tr.width()), foregroundRole());
     if (dConf.deco.icon && !title.isEmpty())
     {
         const QPixmap icon(window()->windowIcon().pixmap(16, active?QIcon::Normal:QIcon::Disabled));
@@ -206,9 +206,9 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
     if (e->button() == Qt::LeftButton)
     {
         QWidget::mousePressEvent(e);
+        XHandler::mwRes(e->pos(), e->globalPos(), window()->winId());
         return;
     }
-    e->accept();
     if (WindowData *data = WindowData::memory(window()->winId(), window()))
     if (uint deco = data->decoId())
         XHandler::pressEvent(e->globalPos(), deco, e->button());
@@ -224,31 +224,49 @@ TitleWidget::wheelEvent(QWheelEvent *e)
 }
 
 bool
-TitleWidget::supported(QToolBar *toolBar)
+TitleWidget::supported(const QToolBar *toolBar)
 {
     if (!dConf.deco.embed||!dConf.uno.enabled||!toolBar)
         return false;
     bool hasMacMenu(false);
-#if HASDBUS
+#if HASDBUS//        if (!qobject_cast<QToolButton *>(w) && w->isVisible())
+    //            return false;
         hasMacMenu = BE::MacMenu::isActive();
 #endif
     if (!hasMacMenu
             || toolBar->isFloating()
+            || !toolBar->isMovable()
             || toolBar->orientation() == Qt::Vertical
-            || !qobject_cast<QMainWindow *>(toolBar->parentWidget()))
+            || !qobject_cast<QMainWindow *>(toolBar->parentWidget())
+            || toolBar->width() != toolBar->parentWidget()->width()
+            || toolBar->toolButtonStyle() != Qt::ToolButtonIconOnly
+            || toolBar->iconSize().height() != 16)
         return false;
-    const QList<QAction *> actions(toolBar->actions());
-    for (int i = 0; i < actions.count(); ++i)
+
+    const QList<QWidget *> kids(toolBar->findChildren<QWidget *>());
+    for (int i = 0; i < kids.count(); ++i)
     {
-        QAction *a(actions.at(i));
-        if (a->isSeparator() || a->objectName() == "DSP_TOOLBARSPACER")
-            continue;
-        QWidget *w(toolBar->widgetForAction(actions.at(i)));
-        if (!w || qobject_cast<TitleWidget *>(w))
+        QWidget *w(kids.at(i));
+//        qDebug() << w;
+        if (/*!w->inherits("QToolBarSeparator") || w->inherits("QToolBarExtension") ||*/ qobject_cast<TitleWidget *>(w) || w->width() < 128)
             continue;
         if (!qobject_cast<QToolButton *>(w) && w->isVisible())
             return false;
     }
+
+//    const QList<QAction *> actions(toolBar->actions());
+//    for (int i = 0; i < actions.count(); ++i)
+//    {
+//        QAction *a(actions.at(i));
+//        if (a->isSeparator() || a->objectName() == s_spacerName)
+//            continue;
+//        QWidget *w(toolBar->widgetForAction(actions.at(i)));
+//        qDebug() << w;
+//        if (!w || qobject_cast<TitleWidget *>(w) || w->width() < 192)
+//            continue;
+//        if (!qobject_cast<QToolButton *>(w) && w->isVisible())
+//            return false;
+//    }
     return true;
 }
 
@@ -272,7 +290,6 @@ ToolBar
             connect(BE::MacMenu::instance(), SIGNAL(activeChanged()), s_instance, SLOT(macMenuChanged()));
 #endif
     }
-
     return s_instance;
 }
 
@@ -284,7 +301,10 @@ ToolBar::manage(QWidget *child)
     child->removeEventFilter(instance());
     child->installEventFilter(instance());
     if (qobject_cast<QToolButton *>(child))
+    {
+        child->disconnect(instance());
         connect(child, SIGNAL(destroyed(QObject*)), instance(), SLOT(toolBtnDeleted(QObject*)));
+    }
 }
 
 void
@@ -295,6 +315,7 @@ ToolBar::manageToolBar(QToolBar *tb)
     tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
     tb->disconnect(instance());
+
     if (qobject_cast<QMainWindow *>(tb->parentWidget()))
     {
         connect(tb, SIGNAL(topLevelChanged(bool)), instance(), SLOT(toolBarFloatingChagned(bool)));
@@ -420,35 +441,35 @@ ToolBar::adjustMargins(QToolBar *toolBar)
 {
     if (!toolBar)
         return;
-    QMainWindow *win = qobject_cast<QMainWindow *>(toolBar->parentWidget());
-    if (!win || !toolBar->layout() || toolBar->actions().isEmpty())
-        return;
 
     if (toolBar->isFloating())
     {
         toolBar->setMovable(true);
         toolBar->setContentsMargins(0, 0, 0, 0);
         toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+        return;
     }
-    else if (win->toolBarArea(toolBar) == Qt::TopToolBarArea)
+
+    QMainWindow *win = qobject_cast<QMainWindow *>(toolBar->parentWidget());
+    if (!win || !toolBar->layout() || toolBar->actions().isEmpty() || win->toolBarArea(toolBar) != Qt::TopToolBarArea)
+        return;
+
+    if (toolBar->geometry().top() <= win->rect().top())
     {
-        if (toolBar->geometry().top() <= win->rect().top())
-        {
-            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            WindowData *d = WindowData::memory(win->winId(), win);
-            int m(0);
-            if (d)
-                m = d->value<uint>(WindowData::RightEmbedSize, 0);
-            toolBar->QWidget::setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
-        }
-        else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
-        {
-            toolBar->layout()->setContentsMargins(0, 0, 0, 0);
-            toolBar->setMovable(false);
-        }
-        else
-            toolBar->layout()->setContentsMargins(2, 2, 2, 2);
+        toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+        WindowData *d = WindowData::memory(win->winId(), win);
+        int m(0);
+        if (d)
+            m = d->value<uint>(WindowData::RightEmbedSize, 0);
+        toolBar->QWidget::setContentsMargins(0, 0, toolBar->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
     }
+    else if (toolBar->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
+    {
+        toolBar->layout()->setContentsMargins(0, 0, 0, 0);
+        toolBar->setMovable(false);
+    }
+    else
+        toolBar->layout()->setContentsMargins(2, 2, 2, 2);
 }
 
 bool
@@ -458,9 +479,9 @@ ToolBar::isDirty(QToolBar *bar)
 }
 
 void
-ToolBar::processToolBar(QToolBar *bar, bool forceSizeUpdate)
+ToolBar::queryToolBarLater(QToolBar *bar, bool forceSizeUpdate)
 {
-    instance()->queryToolBar((qulonglong)bar, forceSizeUpdate);
+    QMetaObject::invokeMethod(instance(), "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)bar), Q_ARG(bool,forceSizeUpdate));
 }
 
 void
@@ -532,7 +553,7 @@ ToolBar::sides(const QToolButton *btn)
 {
     if (QToolBar *bar = qobject_cast<QToolBar *>(btn->parentWidget()))
         if (isDirty(bar))
-            processToolBar(bar);
+            queryToolBarLater(bar);
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
@@ -549,7 +570,11 @@ protected:
     }
 };
 
-static const char *s_spacerName("DSP_TOOLBARSPACER");
+void
+ToolBar::fixSpacerLater(QToolBar *toolbar, int width)
+{
+    QMetaObject::invokeMethod(instance(), "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)toolbar), Q_ARG(int, width));
+}
 
 void
 ToolBar::fixSpacer(qulonglong toolbar, int width)
@@ -561,6 +586,16 @@ ToolBar::fixSpacer(qulonglong toolbar, int width)
             || !tb->styleSheet().isEmpty())
         return;
 
+//    QToolBar *sp = tb->parentWidget()->findChild<QToolBar *>("DSP_SPACERBAR");
+//    if (!sp)
+//    {
+//        sp = new QToolBar(tb->parentWidget());
+//        sp->setObjectName("DSP_SPACERBAR");
+//        sp->setMovable(false);
+//    }
+//    sp->setFixedWidth(80);
+//    static_cast<QMainWindow *>(tb->parentWidget())->insertToolBarBreak(tb);
+//    return;
     tb->removeEventFilter(this);
     if (tb->isMovable() && width == 7)
     {
@@ -609,88 +644,41 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e || !o->isWidgetType())
         return false;
-    QToolBar *tb = qobject_cast<QToolBar *>(o);
-    QToolButton *tbn = qobject_cast<QToolButton *>(o);
-    QToolBar *childParent(0);
-    if (!tbn && !tb)
-        childParent = qobject_cast<QToolBar *>(o->parent());
 
     switch (e->type())
     {
     case QEvent::ChildAdded:
     case QEvent::ChildRemoved:
     {
-        if (tb)
+        if (QToolBar *tb = qobject_cast<QToolBar *>(o))
             s_dirty.insert(tb, true);
-        return false;
-    }
-    case QEvent::Show:
-    case QEvent::Hide:
-    {
-//        if (tb)
-//        {
-//            s_dirty.insert(tb, true);
-//            if (dConf.deco.embed)
-//            {
-//                if (e->type() == QEvent::Show)
-//                    setupNoTitleBarWindowLater(tb);
-//                else
-//                    unembed(tb, true);
-//            }
-//            if (e->type() == QEvent::Show)
-//            {
-//                adjustMargins(tb);
-//                Window::updateWindowDataLater(tb->window());
-//            }
-//        }
-        if (childParent) //non-toolbutton child shown/hidden in toolbar, this does apparently not trigger a size-from-content reload.
-            QMetaObject::invokeMethod(this, "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)childParent), Q_ARG(bool,true));
         return false;
     }
     case QEvent::HideToParent:
     case QEvent::ShowToParent:
     {
-        if (tb)
+        if (QToolBar *tb = qobject_cast<QToolBar *>(o))
         {
             s_dirty.insert(tb, true);
             if (e->type() == QEvent::ShowToParent)
             {
                 if (tb->findChild<TitleWidget *>())
                     embedTitleWidgetLater(tb);
-                QMetaObject::invokeMethod(this, "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)tb));
+                fixSpacerLater(tb);
             }
+            queryToolBarLater(tb, true);
         }
         return false;
     }
-    case QEvent::ActionAdded:
-    case QEvent::ActionRemoved:
     case QEvent::ActionChanged:
     {
-        QActionEvent *ae = static_cast<QActionEvent *>(e);
-        if (tb)
-        {
-            if (e->type() == QEvent::ActionChanged)
-            {
-                tb->update();
-                return false;
-            }
-            else
-                s_dirty.insert(tb, true);
-//            if (dConf.deco.embed)
-//            {
-//                QWidget *w(tb->widgetForAction(ae->action()));
-//                if (qobject_cast<QToolButton *>(w))
-//                    setupNoTitleBarWindowLater(tb);
-//            }
-//            else if (tb->isVisible() && !tb->actions().isEmpty())
-//            {
-//                QMetaObject::invokeMethod(this, "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)tb));
-//            }
-        }
+        if (QToolBar *tb = qobject_cast<QToolBar *>(o))
+            tb->update();
         return false;
     }
     case QEvent::MouseButtonPress:
     {
+        QToolButton *tbn = qobject_cast<QToolButton *>(o);
         if (tbn && Ops::hasMenu(tbn))
             checkForArrowPress(tbn, static_cast<QMouseEvent *>(e)->pos());
         return false;
@@ -698,6 +686,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     case QEvent::Resize:
     {
         QResizeEvent *re(static_cast<QResizeEvent *>(e));
+        QToolBar *tb = qobject_cast<QToolBar *>(o);
         if (tb && dConf.uno.enabled && re->oldSize().height() != re->size().height())
             Window::updateWindowDataLater(tb->window());
         return false;
@@ -770,6 +759,7 @@ ToolBar::embedTitleWidgetLater(QToolBar *toolBar)
 void
 ToolBar::embedTitleWidget(qulonglong bar)
 {
+
     s_titleQueue.removeOne(bar);
     QToolBar *toolBar = getChild<QToolBar *>(bar);
     if (toolBar)
@@ -778,16 +768,9 @@ ToolBar::embedTitleWidget(qulonglong bar)
         toolBar->setMovable(true);
         toolBar->blockSignals(false);
     }
+
     if (!toolBar
-            || toolBar->isFloating()
-            || !toolBar->isMovable()
-            || !toolBar->parentWidget()
-            || toolBar->parentWidget()->parentWidget()
-            || !qobject_cast<QMainWindow *>(toolBar->parentWidget())
-            || toolBar->geometry().topLeft() != QPoint(0, 0)
-            || toolBar->orientation() != Qt::Horizontal
             || !TitleWidget::supported(toolBar)
-            || !toolBar->layout()
             || toolBar->layout()->count()<3)
     {
         if (toolBar)
@@ -795,9 +778,11 @@ ToolBar::embedTitleWidget(qulonglong bar)
         return;
     }
 
+
     WindowData *data = WindowData::memory(toolBar->window()->winId(), toolBar->window());
     if (!data)
         return;
+
     data->setValue<bool>(WindowData::EmbeddedButtons, true);
     data->setValue<uint>(WindowData::TitleHeight, 6);
     toolBar->removeEventFilter(instance());
@@ -841,47 +826,38 @@ Window::Window(QObject *parent)
     : QObject(parent)
 {
 #if HASDBUS
-    if (dConf.differentInactive)
-    {
-        static const QString service("org.kde.dsp.kwindeco"),
-                interface("org.kde.dsp.deco"),
-                path("/DSPDecoAdaptor");
-        QDBusInterface *iface = new QDBusInterface(service, path, interface);
-        iface->connection().connect(service, path, interface, "windowActiveChanged", this, SLOT(decoActiveChanged(QDBusMessage)));
-        iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
-    }
+    static const QString service("org.kde.dsp.kwindeco"),
+            interface("org.kde.dsp.deco"),
+            path("/DSPDecoAdaptor");
+    QDBusInterface *iface = new QDBusInterface(service, path, interface);
+//    iface->connection().connect(service, path, interface, "windowActiveChanged", this, SLOT(decoActiveChanged(QDBusMessage)));
+    iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
 #endif
 }
 
-#if HASDBUS
-void
-Window::decoActiveChanged(QDBusMessage msg)
+bool
+Window::isActiveWindow(const QWidget *w)
 {
-    const uint win = msg.arguments().first().toUInt();
-    const bool active = msg.arguments().last().toBool();
-    QList<QWidget *> widgets = qApp->allWidgets();
-    for (int i = 0; i < widgets.count(); ++i)
-    {
-        QWidget *w(widgets.at(i));
-        if (w->isWindow() && w->winId() == win)
-        {
-            w->setProperty(s_active, active);
-            updateWindowData((qulonglong)w);
-            break;
-        }
-    }
+    if (!w)
+        return true;
+    QWidget *win = w->window();
+    if (!win->property(s_active).isValid())
+        return true;
+    return (win->property(s_active).toBool());
 }
 
 void
 Window::dataChanged(QDBusMessage msg)
 {
-    const uint win = msg.arguments().first().toUInt();
+    uint winId = msg.arguments().at(0).toUInt();
     QList<QWidget *> widgets = qApp->allWidgets();
     for (int i = 0; i < widgets.count(); ++i)
     {
         QWidget *w(widgets.at(i));
-        if (w->isWindow() && w->winId() == win)
+        if (w->isWindow() && w->winId() == winId)
         {
+            WindowData *data = WindowData::memory(winId, w);
+            w->setProperty(s_active, data->value<bool>(WindowData::IsActiveWindow));
             if (dConf.deco.embed)
             {
                 QList<QToolBar *> toolBars(w->findChildren<QToolBar *>());
@@ -892,13 +868,11 @@ Window::dataChanged(QDBusMessage msg)
                     ToolBar::adjustMargins(toolBars.at(i));
                 }
             }
-            updateWindowData((qulonglong)w);
+            updateWindowDataLater(/*(qulonglong)*/w);
             break;
         }
     }
 }
-
-#endif
 
 void
 Window::manage(QWidget *w)
@@ -1019,7 +993,15 @@ Window::eventFilter(QObject *o, QEvent *e)
     case QEvent::Show:
     {
         if (w->isWindow())
+        {
+            if (!w->property(s_active).isValid())
+            {
+                if (WindowData *d = WindowData::memory(w->winId(), w))
+                    d->setValue<bool>(WindowData::IsActiveWindow, true);
+                w->setProperty(s_active, true);
+            }
             updateWindowDataLater(w);
+        }
 //        if (!dConf.uno.enabled)
 //            QMetaObject::invokeMethod(this,
 //                                      "updateDecoBg",
@@ -1170,10 +1152,10 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
 unsigned int
 Window::getHeadHeight(QWidget *win, bool &separator)
 {
-    WindowData *d = WindowData::memory(win->winId(), win);
-    int h = 0;
-    if (d)
-        h = d->value<int>(WindowData::TitleHeight, 0);
+    WindowData *d = WindowData::memory(win->winId(), win); //guaranteed by caller method
+    int h = d->value<int>(WindowData::TitleHeight);
+    if (!h)
+        h = 25;
     if (!h)
     {
         separator = false;
@@ -1248,7 +1230,7 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
     if (!dConf.uno.gradient.isEmpty())
     {
         QLinearGradient lg(0, 0, hor?win->width():0, hor?0:h);
-        if (dConf.differentInactive && !win->property(s_active).toBool())
+        if (dConf.differentInactive && !isActiveWindow(win))
             lg.setStops(QGradientStops()
                         << DSP::Settings::pairToStop(DSP::GradientStop(0.0f, 0), bc)
                         << DSP::Settings::pairToStop(DSP::GradientStop(1.0f, 0), bc));
@@ -1348,6 +1330,30 @@ Window::updateWindowDataLater(QWidget *win)
     }
 }
 
+//class Red2Widget : public QWidget
+//{
+//public:
+//    Red2Widget(uint p, QWidget *win) : QWidget(0), parent(p)
+//    {
+//        setFixedSize(72, 8);
+//        QWindow *window = QWindow::fromWinId(winId());
+//        QWindow *deco = QWindow::fromWinId(parent);
+//        QWidget *shit = QWidget::createWindowContainer(window);
+//        shit->setFixedSize(72, 8);
+//        shit->show();
+//        show();
+//    }
+//protected:
+//    void paintEvent(QPaintEvent *e)
+//    {
+//        QPainter p(this);
+//        p.fillRect(rect(), Qt::red);
+//        p.end();
+//    }
+//private:
+//    uint parent;
+//};
+
 void
 Window::updateWindowData(qulonglong window)
 {
@@ -1366,28 +1372,42 @@ Window::updateWindowData(qulonglong window)
     if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify
         pal = QApplication::palette();
 
-    if (dConf.differentInactive && win->property(s_active).isValid())
+    if (dConf.differentInactive)
     {
-        if (!win->property(s_active).toBool())
-        {
-            pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
-            pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
-            pal.setCurrentColorGroup(QPalette::Inactive);
-        }
-        else
+        if (isActiveWindow(win))
         {
             pal.setColor(QPalette::Active, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::black, 10, 1));
             pal.setColor(QPalette::Active, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::black, 10, 1));
             pal.setCurrentColorGroup(QPalette::Active);
         }
+        else
+        {
+            pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
+            pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
+            pal.setCurrentColorGroup(QPalette::Inactive);
+        }
 //        win->setPalette(pal);
     }
+
+
+//    static bool shown(false);
+//    if (!shown)
+//    {
+//        if (uint deco = data->decoId())
+//        {
+//            static Red2Widget *l = 0;
+//            if (!l)
+//                l = new Red2Widget(deco, win);
+//        }
+//    }
+
 
     if (dConf.uno.enabled && height)
     {
         int width(0);
         if (data->lock())
         {
+
             unoBg(win, width, height, pal, data->imageData());
             data->setImageSize(width, height);
             data->unlock();

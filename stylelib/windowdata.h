@@ -5,10 +5,68 @@
 #include <QSharedMemory>
 #include <QDebug>
 
+#if HASDBUS
+#include <QDBusAbstractAdaptor>
+#include <QDBusConnection>
+#include <QDBusMessage>
+#endif
+
+//class QImage;
+
 namespace DSP
 {
+
+class WindowData;
+class ClientData;
+class DecoData;
+class SharedDataAdaptorManager;
+class SharedDataAdaptor;
+#if 0
+
+class SharedDataAdaptorManager : public QObject
+{
+    Q_OBJECT
+public:
+    static SharedDataAdaptorManager *instance();
+    void updateData(uint win);
+    void emitWindowActiveChanged(uint win, bool active);
+    void emitDataChanged(uint win);
+
+protected:
+    SharedDataAdaptorManager(QObject *parent = 0);
+    ~SharedDataAdaptorManager();
+
+private:
+    static SharedDataAdaptorManager *s_instance;
+    SharedDataAdaptor *m_adaptor;
+};
+
+class SharedDataAdaptor : public QDBusAbstractAdaptor
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.kde.dsp.sharedmemory")
+
+public:
+    SharedDataAdaptor(SharedDataAdaptorManager *parent);
+
+public slots:
+    Q_NOREPLY void updateData(uint win) { m_manager->updateData(win); }
+
+signals:
+     void windowActiveChanged(uint win, bool active);
+     void dataChanged(uint win);
+
+private:
+     SharedDataAdaptorManager *m_manager;
+};
+
+#endif
+
 class Q_DECL_EXPORT WindowData : public QSharedMemory
 {
+    Q_OBJECT
+    friend class DecoData;
+    friend class ClientData;
     /// Convenience class for functions returning values
     /// so one doesnt have to store the return val in a var
     /// and then return that
@@ -31,6 +89,7 @@ public:
         Horizontal =    1<<3,
         WindowIcon =    1<<4,
         EmbeddedButtons=1<<5,
+        IsActiveWindow =1<<6,
         Opacity =       0x0000f00,
         UnoHeight =     0x00ff0000, //the height of the head is never more then 255 right? ..right?
         Buttons =       0x0f000000, //enough long as we dont have more then 15 buttons styles
@@ -62,7 +121,8 @@ public:
             case Uno:
             case Horizontal:
             case WindowIcon:
-            case EmbeddedButtons:   d[0] ^= (-value ^ d[0]) & type; break; //just boolean vals...
+            case EmbeddedButtons:
+            case IsActiveWindow:    d[0] ^= (-value ^ d[0]) & type; break; //just boolean vals...
             case Opacity:           d[0] = (d[0] & ~Opacity) | ((value << 8) & Opacity); break;
             case UnoHeight:         d[0] = (d[0] & ~UnoHeight) | ((value << 16) & UnoHeight); break;
             case Buttons:           d[0] = (d[0] & ~Buttons) | (((value + 1) << 24) & Buttons); break;
@@ -90,7 +150,8 @@ public:
             case Uno:
             case Horizontal:
             case WindowIcon:
-            case EmbeddedButtons:   return T(d[0] & type);
+            case EmbeddedButtons:
+            case IsActiveWindow:    return T(d[0] & type);
             case Opacity:           return T((d[0] & Opacity) >> 8);
             case UnoHeight:         return T((d[0] & UnoHeight) >> 16);
             case Buttons:           return T(((d[0] & Buttons) >> 24) - 1);
@@ -107,7 +168,7 @@ public:
     static WindowData *memory(const unsigned int wid, QObject *parent, const bool create = false);
 
     bool isEmpty();
-    bool sync(uint win = 0);
+    bool sync();
 
     const QColor bg();
     void setBg(const QColor &c);
@@ -127,12 +188,46 @@ public:
     void setImageSize(const int w, const int h);
     const QSize imageSize() const;
 
+    inline const uint winId() const { return m_winId; }
+    static QList<WindowData *> instances();
+
 protected:
-    WindowData(const QString &key, QObject *parent, uint id = 0):QSharedMemory(key, parent),m_winId(id){setObjectName(key);}
+    WindowData(const QString &key, QObject *parent, uint id = 0);
 
 private:
     unsigned int m_winId;
 };
+
+#if 0
+class ClientData : public WindowData
+{
+    Q_OBJECT
+    friend class WindowData;
+public:
+    bool sync(uint win = 0);
+//    void update(uint win = 0);
+
+protected:
+    ClientData(const QString &key, QObject *parent, uint id = 0);
+
+protected slots:
+//    void decoActiveChanged(QDBusMessage);
+    void dataChangedSlot(QDBusMessage);
+};
+
+class DecoData : public WindowData
+{
+    friend class WindowData;
+public:
+    ~DecoData();
+    bool sync(uint win = 0);
+//    static void update(uint win);
+
+protected:
+    DecoData(const QString &key, QObject *parent, uint id = 0);
+};
+#endif
+
 } //namespace
 
 #endif //WINDOWDATA_H

@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 2.8.12)
 option(QT5BUILD "build for qt5" OFF)
+option(DEBUG "verbose debugging messages in output" OFF)
+
+if (DEBUG)
+    add_definitions(-DDEBUG=1)
+endif (DEBUG)
 
 if (NOT LIBDIR)
     set(LIBDIR lib)

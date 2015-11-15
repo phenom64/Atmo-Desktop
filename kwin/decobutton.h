@@ -48,9 +48,11 @@ class EmbeddedWidget : public QWidget
 public:
     enum Side { Left = 0, Right = 1 };
     explicit EmbeddedWidget(Deco *d, const Side s = Left);
+
     const QPoint topLeft() const;
     void setButtonShadowOpacity(const int o);
     void setButtonStyle(ButtonBase::ButtonStyle style);
+    void cleanUp();
 
 protected:
     void wheelEvent(QWheelEvent *e);
@@ -67,7 +69,21 @@ protected slots:
 private:
     Deco *m_deco;
     Side m_side;
-    bool m_press;
+    bool m_press, m_hasBeenShown;
+};
+
+class EmbedHandler
+{
+public:
+    explicit EmbedHandler(Deco *d);
+    ~EmbedHandler();
+    void repaint();
+    void setButtonShadowOpacity(const int o);
+    void setButtonStyle(ButtonBase::ButtonStyle style);
+
+private:
+    Deco *m_deco;
+    EmbeddedWidget *m_embedded[2];
 };
 
 class EmbeddedButton : public QWidget, public ButtonBase

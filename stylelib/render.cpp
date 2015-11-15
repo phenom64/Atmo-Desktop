@@ -17,6 +17,7 @@
 #include "../config/settings.h"
 #include "macros.h"
 #include "ops.h"
+#include "handlers.h"
 
 using namespace DSP;
 
@@ -847,7 +848,7 @@ Render::drawClickable(Shadow s,
                       const Sides sides,
                       const QPoint &offSet)
 {
-    const int maxRnd(qFloor(qMin<float>(r.height(), r.width())/2.0f));
+    const int maxRnd(qMin(r.height(), r.width())>>1);
     rnd = qMin(rnd, maxRnd);
     if (s >= ShadowCount)
         return;
@@ -856,7 +857,7 @@ Render::drawClickable(Shadow s,
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     const bool sunken(opt && opt->state & (QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange));
     const bool inActive(dConf.differentInactive
-                        &&w&&!w->isActiveWindow()
+                        &&!Handlers::Window::isActiveWindow(w)
                         &&!sunken
                         &&!(s==Raised||s==Carved)
                         &&qobject_cast<const QToolButton *>(w)

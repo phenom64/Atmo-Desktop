@@ -90,7 +90,7 @@ Style::polish(QWidget *widget)
 //        qDebug() << widget;
 #if DEBUG
     if (widget->parentWidget())
-        qDebug() << widget << widget->parentWidget();
+        qDebug() << "polishing widget:" << widget << "with parentWidget:" << widget->parentWidget();
 
     installFilter(widget);
 #endif
@@ -112,7 +112,7 @@ Style::polish(QWidget *widget)
         SplitterExt::manage(widget);
 
     if (dConf.uno.enabled
-            && dConf.app == DSP::Settings::Konversation
+            && dConf.app == Settings::Konversation
             && qobject_cast<QMainWindow *>(widget->window())
             && (qobject_cast<QHBoxLayout *>(widget->layout())
                 || qobject_cast<QVBoxLayout *>(widget->layout())))
@@ -182,25 +182,23 @@ Style::polish(QWidget *widget)
                 || (qobject_cast<QDialog *>(widget) && !(widget->windowFlags() & Qt::FramelessWindowHint)))
             applyBlur(widget);
     }
-    if (qobject_cast<QToolBar *>(widget->parent()))
-        Handlers::ToolBar::manage(widget);
 
     //main if segment for all widgets
     if (QToolBar *bar = qobject_cast<QToolBar *>(widget))
     {
-        Handlers::ToolBar::manageToolBar(bar);
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
+        Handlers::ToolBar::manageToolBar(bar);
     }
     else if (QToolButton *btn = qobject_cast<QToolButton *>(widget))
     {
-        Anim::ToolBtns::manage(btn);
-        Handlers::ToolBar::manage(btn);
         if (!qobject_cast<QToolBar *>(btn->parentWidget()))
         {
             btn->setBackgroundRole(QPalette::Window);
             btn->setForegroundRole(QPalette::WindowText);
         }
+        Anim::ToolBtns::manage(btn);
+        Handlers::ToolBar::manage(btn);
     }
     else if (QHeaderView *hw = qobject_cast<QHeaderView *>(widget))
     {
