@@ -15,6 +15,7 @@ class Q_DECL_EXPORT StackAnimator : public QObject
 public:
     enum Info { Steps = 10 };
     StackAnimator(QObject *parent = 0);
+    ~StackAnimator();
     static void manage(QStackedLayout *l);
 
 protected:
@@ -22,6 +23,7 @@ protected:
 
 protected slots:
     void currentChanged(int i);
+    void widgetRemoved(int i);
     void animate();
     void activate();
 

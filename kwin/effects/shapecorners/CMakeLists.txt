@@ -38,4 +38,5 @@ install(TARGETS ${SHAPECORNERS} DESTINATION ${MODULEPATH}/kwin/effects/plugins)
 
 execute_process(COMMAND kf5-config --install data OUTPUT_VARIABLE DATAPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-install(FILES shapecorners.frag DESTINATION ${DATAPATH}/kwin/shaders/1.40)
+install(FILES shaders_140/shapecorners.frag DESTINATION ${DATAPATH}/kwin/shaders/1.40)
+install(FILES shaders_110/shapecorners.frag DESTINATION ${DATAPATH}/kwin/shaders/1.10)

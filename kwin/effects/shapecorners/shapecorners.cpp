@@ -42,7 +42,16 @@ ShapeCornersEffect::ShapeCornersEffect()
         m_rect[i] = 0;
     }
     reconfigure(ReconfigureAll);
-    const QString shadersDir(QStringLiteral("kwin/shaders/1.40/"));
+
+    QString shadersDir(QStringLiteral("kwin/shaders/1.10/"));
+#ifdef KWIN_HAVE_OPENGLES
+    const qint64 coreVersionNumber = kVersionNumber(3, 0);
+#else
+    const qint64 version = KWin::kVersionNumber(1, 40);
+#endif
+    if (KWin::GLPlatform::instance()->glslVersion() >= version)
+        shadersDir = QStringLiteral("kwin/shaders/1.40/");
+
     const QString fragmentshader = QStandardPaths::locate(QStandardPaths::GenericDataLocation, shadersDir + QStringLiteral("shapecorners.frag"));
     m_shader = KWin::ShaderManager::instance()->loadFragmentShader(KWin::ShaderManager::GenericShader, fragmentshader);
 }

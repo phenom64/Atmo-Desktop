@@ -112,7 +112,7 @@ public:
         Invalid
     };
 
-    enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, DFM, Unspecific }; //app specific hacks should be avoided when possible.
+    enum AppName { Eiskalt = 0, Konversation, Konsole, KWin, BEShell, Yakuake, Plasma, DFM, SystemSettings, Unspecific }; //app specific hacks should be avoided when possible.
     typedef uint App;
     typedef struct _Conf
     {

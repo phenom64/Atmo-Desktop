@@ -82,6 +82,7 @@ public:
     static Sides sides(const QToolButton *btn);
     static void queryToolBarLater(QToolBar *bar, bool forceSizeUpdate = false);
     static bool isDirty(QToolBar *bar);
+    static void setDirty(QToolBar *bar);
     static void fixSpacerLater(QToolBar *toolbar, int width = 7);
 
 protected:

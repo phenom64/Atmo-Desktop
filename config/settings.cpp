@@ -368,6 +368,8 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0
         conf.app = Plasma;
     else if (conf.appName == "dfm")
         conf.app = DFM;
+    else if (conf.appName == "systemsettings")
+        conf.app = SystemSettings;
     else
         conf.app = Unspecific;
 

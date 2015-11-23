@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QPaintEvent>
 #include <QApplication>
+#include <QElapsedTimer>
 
 using namespace DSP;
 
@@ -33,11 +34,17 @@ StackAnimator::StackAnimator(QObject *parent)
         deleteLater();
 }
 
+StackAnimator::~StackAnimator()
+{
+
+}
+
 void
 StackAnimator::activate()
 {
     connect(m_timer, SIGNAL(timeout()), this, SLOT(animate()));
     connect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
+    connect(m_stack, SIGNAL(widgetRemoved(int)), this, SLOT(widgetRemoved(int)));
     connect(qApp, SIGNAL(aboutToQuit()), this, SLOT(deleteLater()));
     m_prevIndex = m_stack->currentIndex();
     m_isActivated = true;
@@ -54,15 +61,31 @@ StackAnimator::manage(QStackedLayout *l)
 }
 
 void
+StackAnimator::widgetRemoved(int i)
+{
+    m_prevPix = m_activePix = m_pix = QPixmap();
+}
+
+//static QElapsedTimer timer;
+
+void
 StackAnimator::currentChanged(int i)
 {
+    if (m_timer->isActive())
+    {
+        m_stack->currentWidget()->hide(); //sometimes this gets called while timer is active (mainly systemsettings does this)
+        return;
+    }
     if (m_stack->parentWidget()->isHidden() || QCoreApplication::closingDown())
         return;
-    m_pix = QPixmap(m_widget->size());
+
     m_widget->setAttribute(Qt::WA_UpdatesDisabled, true);
+    m_widget->move(m_stack->parentWidget()->mapTo(m_stack->parentWidget(), QPoint()));
+    m_widget->resize(m_stack->parentWidget()->size());
     m_widget->show();
     m_widget->raise();
     m_widget->setAttribute(Qt::WA_UpdatesDisabled, false);
+    m_pix = QPixmap(m_widget->size());
 
     if (QWidget *w = m_stack->widget(m_prevIndex))
     {
@@ -71,8 +94,8 @@ StackAnimator::currentChanged(int i)
         w->render(&m_prevPix, w->mapTo(m_stack->parentWidget(), QPoint()));
         m_pix = m_prevPix;
         m_widget->repaint();
-        m_prevIndex = i;
     }
+    m_prevIndex = i;
     if (QWidget *w = m_stack->widget(i))
     {
         m_activePix = QPixmap(m_widget->size());
@@ -80,8 +103,8 @@ StackAnimator::currentChanged(int i)
         w->render(&m_activePix, w->mapTo(m_stack->parentWidget(), QPoint()));
         w->setAttribute(Qt::WA_UpdatesDisabled, true);
         m_widget->setAttribute(Qt::WA_UpdatesDisabled, false);
-        animate();
         m_step = 0;
+        animate();
         m_timer->start(20);
     }
 }
@@ -97,13 +120,13 @@ StackAnimator::animate()
         QPixmap tmp(m_prevPix);
         QPainter tmpP(&tmp);
         tmpP.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        tmpP.fillRect(m_widget->rect(), QColor(0, 0, 0, m_step*(255.0f/Steps)));
+        tmpP.fillRect(m_pix.rect(), QColor(0, 0, 0, m_step*(255.0f/Steps)));
         tmpP.setCompositionMode(QPainter::CompositionMode_SourceOver);
         tmpP.end();
 
         QPainter p(&m_pix);
-        p.drawPixmap(m_pix.rect(), m_activePix);
-        p.drawPixmap(m_pix.rect(), tmp);
+        p.drawPixmap(m_activePix.rect(), m_activePix);
+        p.drawPixmap(tmp.rect(), tmp);
         p.end();
         m_widget->repaint();
     }
@@ -116,6 +139,7 @@ StackAnimator::animate()
         if (QWidget *w = m_stack->currentWidget())
         {
             w->setAttribute(Qt::WA_UpdatesDisabled, false);
+            w->show();
             w->update();
         }
         m_stack->parentWidget()->update();
@@ -135,10 +159,13 @@ StackAnimator::eventFilter(QObject *o, QEvent *e)
         p.end();
         return true;
     }
-    if (e->type() == QEvent::Resize && o == m_stack->parentWidget())
-        m_widget->resize(m_stack->parentWidget()->size());
+//    if (e->type() == QEvent::Resize && o == m_stack->parentWidget())
+//        m_widget->resize(m_stack->parentWidget()->size());
+//    if (e->type() == QEvent::Move && o == m_stack->parentWidget())
+//        m_widget->move(m_stack->parentWidget()->mapTo(m_stack->parentWidget()->window(), QPoint()));
     if (e->type() == QEvent::Close && o == m_stack->parentWidget())
-        disconnect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
+//        disconnect(m_stack, SIGNAL(currentChanged(int)), this, SLOT(currentChanged(int)));
+        deleteLater();
     return false;
 }
 

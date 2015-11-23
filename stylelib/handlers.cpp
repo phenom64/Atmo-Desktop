@@ -234,6 +234,7 @@ TitleWidget::supported(const QToolBar *toolBar)
         hasMacMenu = BE::MacMenu::isActive();
 #endif
     if (!hasMacMenu
+            || dConf.app == Settings::SystemSettings
             || toolBar->isFloating()
             || !toolBar->isMovable()
             || toolBar->orientation() == Qt::Vertical
@@ -315,6 +316,7 @@ ToolBar::manageToolBar(QToolBar *tb)
     tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
     tb->disconnect(instance());
+    s_dirty.insert(tb, true);
 
     if (qobject_cast<QMainWindow *>(tb->parentWidget()))
     {
@@ -472,21 +474,35 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         toolBar->layout()->setContentsMargins(2, 2, 2, 2);
 }
 
+void
+ToolBar::setDirty(QToolBar *bar)
+{
+    s_dirty.insert(bar, true);
+}
+
 bool
 ToolBar::isDirty(QToolBar *bar)
 {
     return bar&&s_dirty.value(bar, true);
 }
 
+static QList<qulonglong> s_toolBarQuery[2];
+
 void
 ToolBar::queryToolBarLater(QToolBar *bar, bool forceSizeUpdate)
 {
-    QMetaObject::invokeMethod(instance(), "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,(qulonglong)bar), Q_ARG(bool,forceSizeUpdate));
+    const qulonglong tb = (qulonglong)bar;
+    if (!s_toolBarQuery[forceSizeUpdate].contains(tb))
+    {
+        s_toolBarQuery[forceSizeUpdate] << tb;
+        QMetaObject::invokeMethod(instance(), "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,tb), Q_ARG(bool,forceSizeUpdate));
+    }
 }
 
 void
 ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
 {
+    s_toolBarQuery[forceSizeUpdate].removeOne(toolbar);
     QToolBar *bar = getChild<QToolBar *>(toolbar);
     if (!bar)
         return;
@@ -552,8 +568,11 @@ Sides
 ToolBar::sides(const QToolButton *btn)
 {
     if (QToolBar *bar = qobject_cast<QToolBar *>(btn->parentWidget()))
+    {
+        qDebug() << "sides" << isDirty(bar);
         if (isDirty(bar))
-            queryToolBarLater(bar);
+            queryToolBarLater(bar, true);
+    }
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
@@ -650,8 +669,8 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     case QEvent::ChildAdded:
     case QEvent::ChildRemoved:
     {
-        if (QToolBar *tb = qobject_cast<QToolBar *>(o))
-            s_dirty.insert(tb, true);
+        if (qobject_cast<QToolBar *>(o) && static_cast<QChildEvent *>(e)->child()->isWidgetType())
+            s_dirty.insert(static_cast<QToolBar *>(o), true);
         return false;
     }
     case QEvent::HideToParent:
@@ -659,14 +678,31 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     {
         if (QToolBar *tb = qobject_cast<QToolBar *>(o))
         {
-            s_dirty.insert(tb, true);
             if (e->type() == QEvent::ShowToParent)
             {
                 if (tb->findChild<TitleWidget *>())
                     embedTitleWidgetLater(tb);
                 fixSpacerLater(tb);
             }
-            queryToolBarLater(tb, true);
+            s_dirty.insert(tb, true);
+//            queryToolBarLater(tb, true);
+        }
+        return false;
+    }
+    case QEvent::Show:
+    case QEvent::Hide:
+    case QEvent::Move:
+    {
+        if (QToolBar *tb = qobject_cast<QToolBar *>(o))
+        {
+            s_dirty.insert(tb, true);
+            fixSpacerLater(tb);
+        }
+        else if (QToolButton *tbn = qobject_cast<QToolButton *>(o))
+        {
+            QToolBar *tb = qobject_cast<QToolBar *>(tbn->parentWidget());
+            if (tb)
+                s_dirty.insert(tb, true);
         }
         return false;
     }
