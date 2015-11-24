@@ -145,12 +145,12 @@ Factory::Factory()
 
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
-    ShadowHandler::removeDelete();
+    DSP::ShadowHandler::removeDelete();
 }
 
 Factory::~Factory()
 {
-    ShadowHandler::removeDelete();
+    DSP::ShadowHandler::removeDelete();
 //    if (this == s_instance)
 //    {
 //        s_instance = 0;
