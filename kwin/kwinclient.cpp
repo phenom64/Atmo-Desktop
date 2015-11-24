@@ -47,7 +47,7 @@ DButton::isDark() const
 {
     QColor fgc(m_client->fgColor());
     QColor bgc(m_client->bgColor());
-    return Color::luminosity(fgc) > Color::luminosity(bgc);
+    return DSP::Color::luminosity(fgc) > DSP::Color::luminosity(bgc);
 }
 
 const QColor
@@ -62,7 +62,7 @@ DButton::color(const ColorRole &c) const
     if (c == Bg)
         return bgc;
     const bool isd(isDark());
-    return Color::mid(fgc, bgc, 1, (!isd*4)+(!isActive()*(isd?2:8)));
+    return DSP::Color::mid(fgc, bgc, 1, (!isd*4)+(!isActive()*(isd?2:8)));
 }
 
 void
