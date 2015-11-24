@@ -29,8 +29,8 @@
 
 ///-------------------------------------------------------------------
 
-DButton::DButton(const Type &t, KwinClient *client)
-    : ButtonBase(t)
+DButton::DButton(const DSP::ButtonBase::Type &t, KwinClient *client)
+    : DSP::ButtonBase(t)
     , QSpacerItem(16, 16)
     , m_client(client)
 {

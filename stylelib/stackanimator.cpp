@@ -112,7 +112,7 @@ StackAnimator::currentChanged(int i)
 void
 StackAnimator::animate()
 {
-    if (m_step < Steps)
+    if (m_step < Steps && !m_prevPix.isNull())
     {
         ++m_step;
         m_pix = QPixmap(m_widget->size());

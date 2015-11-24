@@ -16,10 +16,10 @@ class Factory;
 class KwinClient;
 class SizeGrip;
 
-class DButton : public ButtonBase, public QSpacerItem
+class DButton : public DSP::ButtonBase, public QSpacerItem
 {
 public:
-    DButton(const Type &t, KwinClient *client = 0);
+    DButton(const DSP::ButtonBase::Type &t, KwinClient *client = 0);
     ~DButton(){}
 
     QSize sizeHint() const { return QSize(16, 16); }

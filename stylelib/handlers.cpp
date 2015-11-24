@@ -568,11 +568,8 @@ Sides
 ToolBar::sides(const QToolButton *btn)
 {
     if (QToolBar *bar = qobject_cast<QToolBar *>(btn->parentWidget()))
-    {
-        qDebug() << "sides" << isDirty(bar);
         if (isDirty(bar))
             queryToolBarLater(bar, true);
-    }
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
@@ -589,15 +586,23 @@ protected:
     }
 };
 
+//static QList<QPair<qulonglong, int> > s_spacerQueue;
+
 void
 ToolBar::fixSpacerLater(QToolBar *toolbar, int width)
 {
-    QMetaObject::invokeMethod(instance(), "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)toolbar), Q_ARG(int, width));
+    const qulonglong tb = (qulonglong)toolbar;
+//    if (!s_spacerQueue.contains(QPair<qulonglong, int>(tb, width)))
+//    {
+//        s_spacerQueue << QPair<qulonglong, int>(tb, width);
+        QMetaObject::invokeMethod(instance(), "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong, tb), Q_ARG(int, width));
+//    }
 }
 
 void
 ToolBar::fixSpacer(qulonglong toolbar, int width)
 {
+//    s_spacerQueue.removeOne(QPair<qulonglong, int>(toolbar, width));
     QToolBar *tb = getChild<QToolBar *>(toolbar);
     if (!tb
             || !qobject_cast<QMainWindow *>(tb->parentWidget())
@@ -691,7 +696,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::Show:
     case QEvent::Hide:
-    case QEvent::Move:
+//    case QEvent::Move:
     {
         if (QToolBar *tb = qobject_cast<QToolBar *>(o))
         {
