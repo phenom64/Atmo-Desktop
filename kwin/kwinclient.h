@@ -12,14 +12,16 @@
 #include "../stylelib/widgets.h"
 #include "../config/settings.h"
 
+namespace DSP
+{
 class Factory;
 class KwinClient;
 class SizeGrip;
 
-class DButton : public DSP::ButtonBase, public QSpacerItem
+class DButton : public ButtonBase, public QSpacerItem
 {
 public:
-    DButton(const DSP::ButtonBase::Type &t, KwinClient *client = 0);
+    DButton(const ButtonBase::Type &t, KwinClient *client = 0);
     ~DButton(){}
 
     QSize sizeHint() const { return QSize(16, 16); }
@@ -52,7 +54,7 @@ public:
     {
     public:
         int noise;
-        DSP::Gradient grad;
+        Gradient grad;
         QColor bg, fg;
         bool separator;
         void operator =(const Data &d)
@@ -119,11 +121,10 @@ private:
     friend class DButton;
     Buttons m_buttons;
     QSharedMemory *m_mem;
-    DSP::Gradient m_gradient;
+    Gradient m_gradient;
     WindowData *m_wd;
 };
-namespace DSP
-{
+
 class AdaptorManager : public QObject
 {
     Q_OBJECT

@@ -29,8 +29,10 @@
 
 ///-------------------------------------------------------------------
 
-DButton::DButton(const DSP::ButtonBase::Type &t, KwinClient *client)
-    : DSP::ButtonBase(t)
+using namespace DSP;
+
+DButton::DButton(const ButtonBase::Type &t, KwinClient *client)
+    : ButtonBase(t)
     , QSpacerItem(16, 16)
     , m_client(client)
 {
@@ -47,7 +49,7 @@ DButton::isDark() const
 {
     QColor fgc(m_client->fgColor());
     QColor bgc(m_client->bgColor());
-    return DSP::Color::luminosity(fgc) > DSP::Color::luminosity(bgc);
+    return Color::luminosity(fgc) > Color::luminosity(bgc);
 }
 
 const QColor
@@ -62,7 +64,7 @@ DButton::color(const ColorRole &c) const
     if (c == Bg)
         return bgc;
     const bool isd(isDark());
-    return DSP::Color::mid(fgc, bgc, 1, (!isd*4)+(!isActive()*(isd?2:8)));
+    return Color::mid(fgc, bgc, 1, (!isd*4)+(!isActive()*(isd?2:8)));
 }
 
 void
@@ -130,7 +132,7 @@ static void addDataForWinClass(const QString &winClass, QSettings &s)
     KwinClient::Data d;
     d.fg = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
     d.bg = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
-    d.grad = DSP::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+    d.grad = Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noise = s.value("noise", 20).toUInt();
     d.separator = s.value("separator", true).toBool();
     KwinClient::Data::s_data.insert(winClass, d);
@@ -170,19 +172,19 @@ KwinClient::Data::decoData(const QString &winClass, KwinClient *d)
 
 ///-------------------------------------------------------------------------------------------------
 
-DSP::AdaptorManager *DSP::AdaptorManager::s_instance = 0;
+AdaptorManager *AdaptorManager::s_instance = 0;
 
-DSP::AdaptorManager
-*DSP::AdaptorManager::instance()
+AdaptorManager
+*AdaptorManager::instance()
 {
     if (!s_instance)
-        s_instance = new DSP::AdaptorManager();
+        s_instance = new AdaptorManager();
     return s_instance;
 }
 
-DSP::AdaptorManager::AdaptorManager()
+AdaptorManager::AdaptorManager()
 {
-    DSP::Settings::read();
+    Settings::read();
     Render::makeNoise();
     readWindowData();
     new DecoAdaptor(this);
@@ -190,7 +192,7 @@ DSP::AdaptorManager::AdaptorManager()
     QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
 }
 
-DSP::AdaptorManager::~AdaptorManager()
+AdaptorManager::~AdaptorManager()
 {
     QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
     QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
@@ -220,7 +222,7 @@ KwinClient::KwinClient(KDecorationBridge *bridge, Factory *factory)
 
 KwinClient::~KwinClient()
 {
-    DSP::AdaptorManager::instance()->removeDeco(this);
+    AdaptorManager::instance()->removeDeco(this);
     if (m_mem && m_mem->isAttached())
         m_mem->detach();
     if (m_sizeGrip)
@@ -251,7 +253,7 @@ KwinClient::init()
     widget()->setLayout(l);
     if (!isPreview() && windowId())
     {
-        DSP::AdaptorManager::instance()->addDeco(this);
+        AdaptorManager::instance()->addDeco(this);
         if (m_wd = WindowData::memory(windowId(), this))
         {
             QObject::connect(m_wd, SIGNAL(destroyed(QObject*)), this, SLOT(memoryDestroyed(QObject*)));
@@ -802,7 +804,7 @@ KwinClient::updateBgPixmap()
     QRect r(0, 0, 1, titleHeight());
     QLinearGradient lg(r.topLeft(), r.bottomLeft());
     if (!m_gradient.isEmpty())
-        lg.setStops(DSP::Settings::gradientStops(m_gradient, bgColor()));
+        lg.setStops(Settings::gradientStops(m_gradient, bgColor()));
     else
         lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
 

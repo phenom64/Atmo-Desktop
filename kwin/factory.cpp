@@ -14,6 +14,8 @@
 
 KWIN_DECORATION(Factory)
 
+using namespace DSP;
+
 #if 0
 static QMap<QString, DecoData> s_data;
 

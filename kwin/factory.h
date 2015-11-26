@@ -9,6 +9,9 @@
 #include "kwinclient.h"
 #include "../config/settings.h"
 
+namespace DSP
+{
+
 class KwinClient;
 class Factory : public QObject, public KDecorationFactory
 {
@@ -27,6 +30,6 @@ private:
 //    static Atom s_wmAtom;
     static Factory *s_instance;
 };
-
+} //dsp
 
 #endif //FACTORY_H
