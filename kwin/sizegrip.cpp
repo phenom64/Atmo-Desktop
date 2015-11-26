@@ -11,6 +11,9 @@
 
 #define SZ 8
 #define SM 4
+
+using namespace DSP;
+
 SizeGrip::SizeGrip(KwinClient *client) : QWidget(/*client->widget()*/0), m_client(client) //if I parent the widget I get garbled painting when compositing active.... weird.
 {
     hide();

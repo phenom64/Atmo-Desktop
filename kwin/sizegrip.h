@@ -3,6 +3,8 @@
 
 #include "kwinclient.h"
 
+namespace DSP
+{
 class KwinClient;
 class SizeGrip : public QWidget
 {
@@ -26,5 +28,6 @@ protected slots:
 private:
     KwinClient *m_client;
 };
+}
 
 #endif // SIZEGRIP_H
