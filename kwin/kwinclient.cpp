@@ -689,7 +689,7 @@ KwinClient::paint(QPainter &p)
         p.setClipping(false);
     }
     else if (!isModal() && m_compositingActive)
-        Render::shapeCorners(&p, Render::All);
+        Render::shapeCorners(&p, DSP::All);
 
     for (int i = 0; i < m_buttons.count(); ++i)
         m_buttons.at(i)->paint(p);
