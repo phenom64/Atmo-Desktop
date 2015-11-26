@@ -12,7 +12,7 @@
 #include "../stylelib/xhandler.h"
 #include "../stylelib/shadowhandler.h"
 
-KWIN_DECORATION(Factory)
+KWIN_DECORATION(DSP::Factory)
 
 using namespace DSP;
 
