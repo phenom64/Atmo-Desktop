@@ -288,28 +288,28 @@ KwinClient::populate(const QString &buttons, int &sz)
     int size(0);
     for (int i = 0; i < buttons.size(); ++i)
     {
-        Button::Type t;
+        DButton::Type t;
         bool supported(true);
         switch (buttons.at(i).toAscii())
         {
         /*
         * @li 'R' resize button
         */
-        case 'H': t = Button::ContextHelp; break;
-        case 'L': t = Button::Shade; break;
-        case 'N': t = Button::ApplicationMenu; break;
-        case 'B': t = Button::KeepBelow; break;
-        case 'F': t = Button::KeepAbove; break;
-        case 'M': t = Button::Menu; break;
-        case 'S': t = Button::OnAllDesktops; break;
-        case 'X': t = Button::Close; break;
-        case 'I': t = Button::Minimize; break;
-        case 'A': t = Button::Maximize; break;
+        case 'H': t = DButton::ContextHelp; break;
+        case 'L': t = DButton::Shade; break;
+        case 'N': t = DButton::ApplicationMenu; break;
+        case 'B': t = DButton::KeepBelow; break;
+        case 'F': t = DButton::KeepAbove; break;
+        case 'M': t = DButton::Menu; break;
+        case 'S': t = DButton::OnAllDesktops; break;
+        case 'X': t = DButton::Close; break;
+        case 'I': t = DButton::Minimize; break;
+        case 'A': t = DButton::Maximize; break;
         case '_': m_titleLayout->addSpacing(SPACING); supported = false; size += SPACING; break;
         default: supported = false; break;
         }
 
-        if (t == Button::ContextHelp && !providesContextHelp())
+        if (t == DButton::ContextHelp && !providesContextHelp())
             supported = false;
 
         if (supported)
@@ -477,7 +477,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         for (int i = 0; i < m_buttons.size(); ++i)
         {
             DButton *button(m_buttons.at(i));
-            if (button->type() == Button::Minimize || button->type() == Button::Maximize || button->type() == Button::Close)
+            if (button->type() == DButton::Minimize || button->type() == DButton::Maximize || button->type() == DButton::Close)
                 button->hover();
         }
         return true;
@@ -488,7 +488,7 @@ KwinClient::eventFilter(QObject *o, QEvent *e)
         for (int i = 0; i < m_buttons.size(); ++i)
         {
             DButton *button(m_buttons.at(i));
-            if (button->type() == Button::Minimize || button->type() == Button::Maximize || button->type() == Button::Close)
+            if (button->type() == DButton::Minimize || button->type() == DButton::Maximize || button->type() == DButton::Close)
                 button->unhover();
         }
         return true;
