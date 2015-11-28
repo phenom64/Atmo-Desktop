@@ -36,8 +36,8 @@ public:
     ~Overlay();
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
-    static Overlay *hasOverlay(const QWidget *frame);
-    inline Sides &lines() { return m_lines; }
+    static Overlay *overlay(const QWidget *frame);
+    inline Sides &sides() { return m_sides; }
 
 protected:
     Overlay(QWidget *parent = 0, int opacity = 0);
@@ -45,8 +45,10 @@ protected:
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);
     static QRect mappedRect(const QWidget *widget);
-    bool frameIsInteresting(const QFrame *frame, const Position pos) const;
-    QFrame *getFrameForWidget(QWidget *w, const Position pos) const;
+    bool frameIsInteresting(const QFrame *frame, const Position p) const;
+    QFrame *getFrameForWidget(QWidget *w, const Position p) const;
+    void removeSide(const Side s);
+    void addSide(const Side s);
 
 private slots:
     void updateOverlay();
@@ -54,7 +56,7 @@ private slots:
 private:
     int m_alpha;
     bool m_hasFocus;
-    Sides m_lines;
+    Sides m_sides;
     QWidget *m_frame;
     QWidget *m_window;
     QPoint m_position[PosCount];

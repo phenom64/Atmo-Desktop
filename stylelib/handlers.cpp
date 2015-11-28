@@ -1111,22 +1111,22 @@ Window::eventFilter(QObject *o, QEvent *e)
         }
         return false;
     }
-    case QEvent::Resize:
-    {
-        if (!dConf.uno.enabled && !dConf.windows.gradient.isEmpty() && w->isWindow())
-        {
-            QResizeEvent *re = static_cast<QResizeEvent *>(e);
-            const bool horChanged = dConf.windows.hor && re->oldSize().width() != re->size().width();
-            const bool verChanged = !dConf.windows.hor && re->oldSize().height() != re->size().height();
-            QSize sz(re->size());
-            if (verChanged)
-                if (unsigned char th = unoHeight(w, TitleBar))
-                    sz.rheight() += th;
-            if (horChanged  || verChanged)
-                updateDecoBg(w);
-        }
-        return false;
-    }
+//    case QEvent::Resize:
+//    {
+//        if (!dConf.uno.enabled && !dConf.windows.gradient.isEmpty() && w->isWindow())
+//        {
+//            QResizeEvent *re = static_cast<QResizeEvent *>(e);
+//            const bool horChanged = dConf.windows.hor && re->oldSize().width() != re->size().width();
+//            const bool verChanged = !dConf.windows.hor && re->oldSize().height() != re->size().height();
+//            QSize sz(re->size());
+//            if (verChanged)
+//                if (unsigned char th = unoHeight(w, TitleBar))
+//                    sz.rheight() += th;
+//            if (horChanged  || verChanged)
+//                updateDecoBg(w);
+//        }
+//        return false;
+//    }
     case QEvent::PaletteChange:
     {
         if (w->isWindow())

@@ -18,6 +18,7 @@
 #include <QMap>
 #include <QStackedWidget>
 #include <QMainWindow>
+#include <QLayout>
 
 using namespace DSP;
 
@@ -63,7 +64,7 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
 Overlay::Overlay(QWidget *parent, int opacity)
     : QWidget(parent)
     , m_alpha(opacity)
-    , m_lines(All)
+    , m_sides(All)
     , m_frame(parent)
     , m_hasFocus(false)
 {
@@ -118,22 +119,22 @@ Overlay::paintEvent(QPaintEvent *)
     p.setPen(QPen(QColor(0, 0, 0, m_alpha), 1));
     p.setBrush(Qt::NoBrush);
     QRect r(rect());
-    if (lines() & Top)
+    if (sides() & Top)
     {
         p.drawLine(r.topLeft(), r.topRight());
         r.setTop(r.top()+1);
     }
-    if (lines() & Right)
+    if (sides() & Right)
     {
         p.drawLine(r.topRight(), r.bottomRight());
         r.setRight(r.right()-1);
     }
-    if (lines() & Bottom)
+    if (sides() & Bottom)
     {
         p.drawLine(r.bottomLeft(), r.bottomRight());
         r.setBottom(r.bottom()-1);
     }
-    if (lines() & Left)
+    if (sides() & Left)
         p.drawLine(r.topLeft(), r.bottomLeft());
     p.end();
 }
@@ -170,6 +171,25 @@ static QRect windowGeo(QWidget *widget)
     return QRect(widget->mapTo(widget->window(), QPoint(0, 0)), widget->size());
 }
 
+static const QString sideString[4] = { "Left", "Top", "Right", "Bottom" };
+static const QString reversedSideString[4] = { "Right", "Bottom", "Left", "Top" };
+
+void
+Overlay::removeSide(const Side s)
+{
+//    static const Position pos[4] = { West, North, East, South };
+//    qDebug() << "removing side" << s << "from" << m_frame;
+    sides() &= ~s;
+}
+
+void
+Overlay::addSide(const Side s)
+{
+//    static const Position pos[4] = { West, North, East, South };
+//    qDebug() << "adding side" << sideString[pos[s]] << "to" << m_frame;
+    sides() |= s;
+}
+
 void
 Overlay::updateOverlay()
 {
@@ -179,6 +199,8 @@ Overlay::updateOverlay()
 //        deleteLater();
 //        return;
 //    }
+    if (!m_frame->isVisible())
+        return;
     static QMap<QWidget *, QSize> sm;
     if (sm.value(m_frame, QSize()) != m_frame->size())
     {
@@ -186,9 +208,20 @@ Overlay::updateOverlay()
         return;
     }
 
-    const QRect &r(m_frame->rect());
-    static const int d(1);
+    const QRect r(m_frame->rect());
 
+    const QRect frameGeo = windowGeo(m_frame);
+    if (frameGeo.x() < 0 || frameGeo.y() < 0)
+    {
+        QTimer::singleShot(500, this, SLOT(updateOverlay()));
+        return;
+    }
+
+    static const Position pos[4] = { West, North, East, South };
+    static const Side l[4] = { Left, Top, Right, Bottom };
+    static const Side wl[4] = { Right, Bottom, Left, Top }; //reversed/adjacent
+
+    static const int d(1);
 #define GP(_X_, _Y_) m_frame->mapTo(m_frame->window(), QPoint(_X_, _Y_))
     m_position[West] = GP(r.x()-d, r.center().y());
     m_position[North] = GP(r.center().x(), r.y()-d);
@@ -196,54 +229,66 @@ Overlay::updateOverlay()
     m_position[South] = GP(r.center().x(), r.bottom()+1+d);
 #undef GP
 
-    static const Position pos[4] = { West, North, East, South };
-    static const Side l[4] = { Left, Top, Right, Bottom };
-    static const Side wl[4] = { Right, Bottom, Left, Top }; //reversed/adjacent
-    //debugging purposes
-//    static QString s[4] = { "Left", "Top", "Right", "Bottom" };250
-//    static QString ws[4] = { "Right", "Bottom", "Left", "Top" };
-
     for (int i = 0; i < PosCount; ++i)
     {
         QWidget *w = m_frame->window()->childAt(m_position[i]);
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        const bool isSplitter(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter" && w->style()->pixelMetric(QStyle::PM_SplitterWidth, 0, w) == 1));
+        bool isSplitter(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter" && qMin(w->width(), w->height()) == 5));
+        if (isSplitter && !qobject_cast<QSplitterHandle *>(w))
+        {
+            QRect geo = windowGeo(w);
+            if (w->height() == 5)
+            {
+                geo.setY(geo.y()+2+(pos[i]==North));
+                geo.setHeight(1);
+            }
+            else if (w->width() == 5)
+            {
+                geo.setX(geo.x()+2+(pos[i]==East));
+                geo.setWidth(1);
+            }
+            isSplitter = geo.contains(m_position[i]);
+        }
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
         const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode());
         if ( isStatusBar || isSplitter || isTabBar )
-            lines() &= ~l[i];
-        else if (Overlay *ol = hasOverlay(getFrameForWidget(w, pos[i])))
-        {
-            int (QWidget::*widthOrHeight)() const = (pos[i]==West||pos[i]==East) ? &Overlay::width : &Overlay::height;
-            if ((ol->lines() & wl[i]) && ((ol->*widthOrHeight)() >= (this->*widthOrHeight)()))
-                lines() &= ~l[i];
-            else
-                lines() |= l[i];
-        }
+            removeSide(l[i]);
         else
-            lines() |= l[i];
+        {
+            QFrame *frame = getFrameForWidget(w, pos[i]);
+            Overlay *ol = overlay(frame);
+            int (QWidget::*widthOrHeight)() const = (pos[i]==West||pos[i]==East) ? &Overlay::width : &Overlay::height;
+            if (ol && frame && !frame->isAncestorOf(m_frame) && (ol->sides() & wl[i]) && ((ol->*widthOrHeight)() >= (this->*widthOrHeight)()))
+            {
+                if (windowGeo(m_frame).topLeft() != windowGeo(frame).topLeft())
+                    removeSide(l[i]);
+                else
+                   addSide(l[i]);
+            }
+            else
+                addSide(l[i]);
+        }
     }
     QRect winRect = m_frame->window()->rect();
-    winRect.moveTopLeft(m_frame->mapFrom(m_frame->window(), winRect.topLeft()));
-    if (r.top() <= winRect.top())
-        lines() &= ~Top;
-    if (r.left() <= winRect.left())
-        lines() &= ~Left;
-    if (r.bottom() >= winRect.bottom())
-        lines() &= ~Bottom;
-    if (r.right() >= winRect.right())
-        lines() &= ~Right;
+    if (frameGeo.top() <= winRect.top())
+        removeSide(Top);
+    if (frameGeo.left() <= winRect.left())
+        removeSide(Left);
+    if (frameGeo.bottom() >= winRect.bottom())
+        removeSide(Bottom);
+    if (frameGeo.right() >= winRect.right())
+        removeSide(Right);
 
-    update();
     raise();
+    update();
 }
 
 bool
 Overlay::manage(QWidget *frame, int opacity)
 {
-    if (!frame || hasOverlay(frame))
+    if (!frame || overlay(frame))
         return false;
 
     if (qobject_cast<QMainWindow *>(frame->window()))
@@ -269,8 +314,8 @@ Overlay::release(QWidget *frame)
 QRegion
 Overlay::mask() const
 {
-    const int &d = m_hasFocus ? 6 : 1;
-    const QRegion &outer(rect()), &inner(rect().adjusted(d, d, -d, -d));
+    const int d = m_hasFocus ? 6 : 1;
+    const QRegion outer(rect()), inner(rect().adjusted(d, d, -d, -d));
     return outer-inner;
 }
 
@@ -282,28 +327,28 @@ Overlay::mappedRect(const QWidget *widget)
 }
 
 bool
-Overlay::frameIsInteresting(const QFrame *frame, const Position pos) const
+Overlay::frameIsInteresting(const QFrame *frame, const Position p) const
 {
     if (frame && frame->frameStyle() == (QFrame::Sunken|QFrame::StyledPanel))
-        if (mappedRect(frame).contains(m_position[pos]))
+        if (mappedRect(frame).contains(m_position[p]))
             return true;
     return false;
 }
 
 QFrame
-*Overlay::getFrameForWidget(QWidget *w, const Position pos) const
+*Overlay::getFrameForWidget(QWidget *w, const Position p) const
 {
     QFrame *frame = 0;
     while (w->parentWidget())
     {
         frame = qobject_cast<QFrame *>(w);
-        if (frameIsInteresting(frame, pos))
+        if (frameIsInteresting(frame, p))
             return frame;
         QList<QFrame *> frames = w->findChildren<QFrame *>();
         for (int i = 0; i < frames.count(); ++i)
         {
             frame = frames.at(i);
-            if (frameIsInteresting(frame, pos))
+            if (frameIsInteresting(frame, p))
                 return frame;
         }
         w = w->parentWidget();
@@ -312,7 +357,7 @@ QFrame
 }
 
 Overlay
-*Overlay::hasOverlay(const QWidget *frame)
+*Overlay::overlay(const QWidget *frame)
 {
     if (!frame)
         return 0;

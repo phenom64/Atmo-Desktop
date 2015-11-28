@@ -238,7 +238,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
 bool
 Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || widget->isWindow())
+    if (!widget || widget->isWindow() || widget->inherits("KTextEditor::ViewPrivate"))
         return true;
 
     const QStyleOptionFrameV3 *opt = qstyleoption_cast<const QStyleOptionFrameV3 *>(option);
@@ -278,7 +278,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
 #undef RESTOREPEN
 
     const QFrame *frame = qobject_cast<const QFrame *>(widget);
-    if (Overlay::hasOverlay(frame))
+    if (Overlay::overlay(frame))
         return true;
 
     QRect r(option->rect);
@@ -288,9 +288,10 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
         o/=2;
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
+    {
         Render::renderShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All, o);
-
-    if (opt->state & State_Raised)
+    }
+    else if (opt->state & State_Raised)
     {
         QPixmap pix(frame->rect().size());
         pix.fill(Qt::transparent);
@@ -301,7 +302,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
         p.end();
         painter->drawTiledPixmap(frame->rect(), pix);
     }
-    if (frame && frame->frameShadow() == QFrame::Plain)
+    else if (frame && frame->frameShadow() == QFrame::Plain)
         Render::renderShadow(Etched, r, painter, 6, All, o);
     return true;
 }

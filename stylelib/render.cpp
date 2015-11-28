@@ -748,7 +748,37 @@ Render::makeNoise()
 {
     if (!s_noise)
         s_noise = new QPixmap();
-    if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
+    if (dConf.uno.enabled&&dConf.uno.noiseStyle == 4 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 4)
+    {
+        QImage img(4, 3, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[4*3] = { 127, 127, 127, 127,
+                                     127, 0, 0, 127,
+                                     127, 255, 255, 127};
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        *s_noise = QPixmap::fromImage(img);
+    }
+    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 3 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 3)
+    {
+        QImage img(3, 3, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[9] = { 0, 0, 255, 0, 255, 0, 255, 0, 0 };
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        *s_noise = QPixmap::fromImage(img);
+    }
+    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
     {
         QImage img(3, 4, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
