@@ -1,6 +1,7 @@
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "stylelib/widgets.h"
+#include "config/settings.h"
 
 #include <QSplitterHandle>
 #include <QStyle>
@@ -235,7 +236,7 @@ Overlay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        bool isSplitter(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter" && qMin(w->width(), w->height()) == 5));
+        bool isSplitter(dConf.app!=Settings::Eiskalt&&(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter" && qMin(w->width(), w->height()) == 5)));
         if (isSplitter && !qobject_cast<QSplitterHandle *>(w))
         {
             QRect geo = windowGeo(w);

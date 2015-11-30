@@ -145,7 +145,7 @@ void
 TitleWidget::paintEvent(QPaintEvent *)
 {
     QString title(window()->windowTitle());
-    const QRect rect(mapFrom(parentWidget(), QPoint()), parentWidget()->contentsRect().size());
+    const QRect mappedRect(mapFrom(parentWidget(), QPoint()), parentWidget()->contentsRect().size());
     QPainter p(this);
     QFont f(p.font());
     const bool active(Handlers::Window::isActiveWindow(this));
@@ -178,12 +178,15 @@ TitleWidget::paintEvent(QPaintEvent *)
         title.append(QString(" - "));
     title.append(qApp->applicationDisplayName());
 #endif
-    const QRect tr(p.fontMetrics().boundingRect(rect, align, p.fontMetrics().elidedText(title, Qt::ElideRight, rect.width())));
-    style()->drawItemText(&p, rect, align, pal, true, p.fontMetrics().elidedText(title, Qt::ElideRight, tr.width()), foregroundRole());
+    const QString &elidedTitle = p.fontMetrics().elidedText(title, Qt::ElideRight, rect().width()-20);
+    QRect tr(p.fontMetrics().boundingRect(mappedRect, align, elidedTitle));
+    if (tr.x() < 20)
+        tr.moveLeft(20);
+    style()->drawItemText(&p, tr, align, pal, true, elidedTitle, foregroundRole());
     if (dConf.deco.icon && !title.isEmpty())
     {
         const QPixmap icon(window()->windowIcon().pixmap(16, active?QIcon::Normal:QIcon::Disabled));
-        QRect ir(QPoint(0, rect.height()/2-qMax(1, icon.height())/2), icon.size());
+        QRect ir(QPoint(0, mappedRect.height()/2-qMax(1, icon.height())/2), icon.size());
         ir.moveRight(tr.left()-4);
         if (icon.width() && ir.right() >= icon.width())
             style()->drawItemPixmap(&p, ir, Qt::AlignVCenter|Qt::AlignRight, icon);
