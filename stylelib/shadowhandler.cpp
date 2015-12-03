@@ -249,15 +249,18 @@ ShadowHandler::removeShadows(WId w)
 void
 ShadowHandler::manage(QWidget *w)
 {
+
     w->removeEventFilter(instance());
-    w->installEventFilter(instance());
+    if (w->isWindow())
+        w->installEventFilter(instance());
 }
 
 void
 ShadowHandler::release(QWidget *w)
 {
     w->removeEventFilter(instance());
-    XHandler::deleteXProperty(w->winId(), XHandler::_KDE_NET_WM_SHADOW);
+    if (w->isWindow())
+        removeShadows(w->winId());
 }
 
 void

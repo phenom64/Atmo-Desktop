@@ -112,7 +112,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_HeaderArrow:
     {
-        castOpt(Header, hdr, opt);
+        const QStyleOptionHeader *hdr = qstyleoption_cast<const QStyleOptionHeader *>(opt);
         QRect r(opt->rect);
         const int extraMargin(16); // some space for good measure...
         const int margin(pixelMetric(PM_HeaderMarkSize)+extraMargin);
@@ -124,7 +124,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_HeaderLabel:
     {
-        castOpt(Header, hdr, opt);
+        const QStyleOptionHeader *hdr = qstyleoption_cast<const QStyleOptionHeader *>(opt);
         QRect r(opt->rect);
         int space(0);
         if (opt->state & State_Sunken)
@@ -248,7 +248,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     case SE_DockWidgetTitleBarText:
     case SE_DockWidgetIcon:
     {
-        castOpt(DockWidget, dw, opt);
+        const QStyleOptionDockWidget *dw = qstyleoption_cast<const QStyleOptionDockWidget *>(opt);
         if (!dw)
             return QRect();
 
@@ -385,7 +385,7 @@ QRect
 Style::sliderRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
-    castOpt(Slider, slider, opt);
+    const QStyleOptionSlider *slider = qstyleoption_cast<const QStyleOptionSlider *>(opt);
     if (!slider)
         return ret;
 
@@ -431,7 +431,7 @@ QRect
 Style::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
 {
     QRect ret;
-    castOpt(GroupBox, box, opt);
+    const QStyleOptionGroupBox *box = qstyleoption_cast<const QStyleOptionGroupBox *>(opt);
     if (!box)
         return ret;
     ret = box->rect;

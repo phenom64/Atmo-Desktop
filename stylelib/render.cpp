@@ -654,9 +654,8 @@ Render::renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *pa
     px.fill(Qt::transparent);
     QPainter pt(&px);
     for (int i = 0; i < PartCount; ++i)
-        if (i != CenterPart)
-            if (needPart((Parts)i, sides))
-                pt.drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides, true), s_shadow[shadow][roundNess][i]);
+        if (i != CenterPart && needPart((Parts)i, sides))
+            pt.drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides, true), s_shadow[shadow][roundNess][i]);
     pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
     pt.fillRect(px.rect(), QColor(0, 0, 0, opacity*255.0f));
     pt.end();

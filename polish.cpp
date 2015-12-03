@@ -370,7 +370,7 @@ Style::polish(QWidget *widget)
 
         ShadowHandler::manage(widget);
         if (dConf.balloonTips)
-            Handlers::BalloonHelper::manage(widget);
+            Handlers::BalloonHelper::manage(widget);    return;
     }
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment

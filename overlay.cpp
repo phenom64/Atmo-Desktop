@@ -253,7 +253,7 @@ Overlay::updateOverlay()
             isSplitter = geo.contains(m_position[i]);
         }
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
-        const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode());
+        const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode() && l[i] == Top);
         if ( isStatusBar || isSplitter || isTabBar )
             removeSide(l[i]);
         else
