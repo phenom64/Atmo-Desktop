@@ -399,7 +399,7 @@ Style::drawProgressBar(const QStyleOption *option, QPainter *painter, const QWid
 bool
 Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBar, opt, option);
+    const QStyleOptionProgressBar *opt = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
     if (!opt)
         return true;
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
@@ -409,7 +409,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
-    castOpt(ProgressBarV2, optv2, option);
+    const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
 //    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, All));
     const quint64 s((hor?groove.height():groove.width())+2);
@@ -475,7 +475,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
 bool
 Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBarV2, opt, option);
+    const QStyleOptionProgressBarV2 *opt = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
     if (!opt)
         return true;
 
@@ -494,8 +494,8 @@ Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, cons
 bool
 Style::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(ProgressBar, opt, option);
-    castOpt(ProgressBarV2, optv2, option);
+    const QStyleOptionProgressBar *opt = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
+    const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
     if (!opt || opt->text.isEmpty())
         return true;
 

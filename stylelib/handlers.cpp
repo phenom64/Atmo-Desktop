@@ -244,9 +244,11 @@ TitleWidget::supported(const QToolBar *toolBar)
             || !qobject_cast<QMainWindow *>(toolBar->parentWidget())
             || toolBar->width() != toolBar->parentWidget()->width()
             || toolBar->toolButtonStyle() != Qt::ToolButtonIconOnly
-            || toolBar->iconSize().height() != 16)
+            || toolBar->iconSize().height() != 16
+            || (toolBar->parentWidget() && toolBar->parentWidget()->parentWidget()))
         return false;
 
+    qDebug() << toolBar->parentWidget()->parentWidget();
     const QList<QWidget *> kids(toolBar->findChildren<QWidget *>());
     for (int i = 0; i < kids.count(); ++i)
     {

@@ -11,6 +11,7 @@
 #include <QLineEdit>
 #include <QToolButton>
 #include <QPainter>
+#include <QBrush>
 
 #include "render.h"
 #include "color.h"
@@ -521,6 +522,7 @@ Render::renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, 
     p->drawPixmap(r, pix);
 }
 
+
 QRect
 Render::partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow)
 {
@@ -548,15 +550,15 @@ Render::partRect(const QRect &rect, const Part part, int roundNess, const Sides 
 
     switch (part)
     {
-    case TopLeftPart: return QRect(0, 0, roundNess, roundNess);
-    case TopMidPart: return QRect(left, 0, midWidth, roundNess);
-    case TopRightPart: return QRect(w-right, 0, roundNess, roundNess);
-    case LeftPart: return QRect(0, top, roundNess, midHeight);
-    case CenterPart: return QRect(left, top, midWidth, midHeight);
-    case RightPart: return QRect(w-right, top, roundNess, midHeight);
-    case BottomLeftPart: return QRect(0, h-bottom, roundNess, roundNess);
-    case BottomMidPart: return QRect(left, h-bottom, midWidth, roundNess);
-    case BottomRightPart: return QRect(w-right, h-bottom, roundNess, roundNess);
+    case TopLeftPart: return QRect(x, y, roundNess, roundNess);
+    case TopMidPart: return QRect(x+left, y, midWidth, roundNess);
+    case TopRightPart: return QRect(x+(w-right), y, roundNess, roundNess);
+    case LeftPart: return QRect(x, y+top, roundNess, midHeight);
+    case CenterPart: return QRect(x+left, y+top, midWidth, midHeight);
+    case RightPart: return QRect(x+(w-right), y+top, roundNess, midHeight);
+    case BottomLeftPart: return QRect(x, y+(h-bottom), roundNess, roundNess);
+    case BottomMidPart: return QRect(x+left, y+(h-bottom), midWidth, roundNess);
+    case BottomRightPart: return QRect(x+(w-right), y+(h-bottom), roundNess, roundNess);
     default: return QRect();
     }
 }
@@ -583,19 +585,6 @@ Render::shapeCorners(QPainter *p, Sides s, int roundNess, const QSize &forceSize
     p->setCompositionMode(mode);
 }
 
-QPixmap
-Render::genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides)
-{
-    QPixmap rt = source.copy(partRect(source.rect(), part, roundNess, sides));
-    if (!isCornerPart(part) || !roundNess)
-        return rt;
-    QPainter p(&rt);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p.drawTiledPixmap(rt.rect(), s_mask[roundNess][part]);
-    p.end();
-    return rt;
-}
-
 bool
 Render::needPart(const Part part, const Sides sides)
 {
@@ -620,63 +609,137 @@ Render::renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, in
     if (!rect.isValid())
         return;
     roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
-    QPixmap pix(rect.size());
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    QRect r(pix.rect());
-    p.setBrushOrigin(offSet);
-    p.fillRect(r, brush);
-    if (opacity < 255)
+
+    switch (brush.style())
     {
-        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        p.fillRect(r, QColor(0, 0, 0, opacity));
-    }
-    p.end();
-
-    for (int i = 0; i < PartCount; ++i)
-        if (needPart(i, sides))
+    case Qt::TexturePattern:
+    {
+        QPixmap pix(rect.size());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        QRect r(pix.rect());
+        p.setBrushOrigin(offSet);
+        p.fillRect(r, brush);
+        if (opacity < 255)
         {
-            if (i != CenterPart && !roundNess)
-                continue;
-            const QPixmap &partPix = genPart(i, pix, roundNess, sides);
-            painter->drawPixmap(partRect(QRect(QPoint(0, 0), rect.size()), i, roundNess, sides).translated(rect.x(), rect.y()), partPix);
+            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            p.fillRect(r, QColor(0, 0, 0, opacity));
         }
-}
+        p.end();
 
-void
-Render::renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides)
-{
-    if (!rect.isValid())
-        return;
-    roundNess = qMin(qMin(MAXRND, roundNess), qFloor(qMin<float>(rect.height(), rect.width())/2.0f));
+        for (int i = 0; i < PartCount; ++i)
+            if (needPart(i, sides))
+            {
+                if (i != CenterPart && !roundNess)
+                    continue;
 
-    QPixmap px(rect.size());
-    px.fill(Qt::transparent);
-    QPainter pt(&px);
-    for (int i = 0; i < PartCount; ++i)
-        if (i != CenterPart && needPart((Parts)i, sides))
-            pt.drawTiledPixmap(partRect(QRect(QPoint(0, 0), rect.size()), (Parts)i, roundNess, sides, true), s_shadow[shadow][roundNess][i]);
-    pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    pt.fillRect(px.rect(), QColor(0, 0, 0, opacity*255.0f));
-    pt.end();
-    painter->drawPixmap(rect, px);
+                QPixmap partPix = pix.copy(partRect(pix.rect(), i, roundNess, sides));
+                if (isCornerPart(i) && roundNess)
+                {
+                    QPainter p(&partPix);
+                    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                    p.drawTiledPixmap(partPix.rect(), s_mask[roundNess][i]);
+                    p.end();
+                }
+                painter->drawTiledPixmap(partRect(rect, i, roundNess, sides), partPix);
+            }
+        break;
+    }
+    case Qt::LinearGradientPattern:
+    {
+        const QLinearGradient *gl = static_cast<const QLinearGradient *>(brush.gradient());
+        const bool isHor(gl->start().x() != gl->finalStop().x());
+//        const_cast<QLinearGradient *>(gl)->setStart(rect.topLeft());
+//        const_cast<QLinearGradient *>(gl)->setFinalStop(isHor?rect.topRight():rect.bottomLeft());
+        QPixmap pix(isHor?rect.width():1, isHor?1:rect.height());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        QRect r(pix.rect());
+//        p.setBrushOrigin(rect.topLeft());
+        p.setBrushOrigin(offSet);
+        p.fillRect(r, brush);
+        if (opacity < 255)
+        {
+            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            p.fillRect(r, QColor(0, 0, 0, opacity));
+        }
+        p.end();
+
+        for (int i = 0; i < PartCount; ++i)
+            if (needPart(i, sides))
+            {
+                if (i != CenterPart && !roundNess)
+                    continue;
+
+                const QRect part = partRect(rect, i, roundNess, sides);
+                if (isCornerPart(i) && roundNess)
+                {
+                    QPixmap partPix(part.size());
+                    partPix.fill(Qt::transparent);
+                    QPainter p(&partPix);
+                    p.drawTiledPixmap(partPix.rect(), pix, part.topLeft()-rect.topLeft());
+                    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                    p.drawPixmap(partPix.rect(), s_mask[roundNess][i]);
+                    p.end();
+                    painter->drawPixmap(part, partPix);
+                }
+                else
+                    painter->drawTiledPixmap(part, pix, part.topLeft()-rect.topLeft());
+            }
+        break;
+    }
+    case Qt::SolidPattern:
+    {
+        for (int i = 0; i < PartCount; ++i)
+            if (needPart(i, sides))
+            {
+                if (i != CenterPart && !roundNess)
+                    continue;
+
+                const QRect part = partRect(rect, i, roundNess, sides);
+                if (isCornerPart(i) && roundNess)
+                {
+                    QPixmap partPix(part.size());
+                    partPix.fill(Qt::transparent);
+                    QPainter p(&partPix);
+                    p.fillRect(partPix.rect(), brush.color());
+                    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                    p.drawPixmap(partPix.rect(), s_mask[roundNess][i]);
+                    p.end();
+                    painter->drawPixmap(part, partPix);
+                }
+                else
+                    painter->fillRect(part, brush.color());
+            }
+        break;
+    }
+    default: break;
+    }
 }
 
 void
 Render::renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush)
 {
-    if (!brush)
-    {
-        renderShadowPrivate(shadow, rect, painter, roundNess, opacity, sides);
+
+    if (!rect.isValid())
         return;
-    }
-    QPixmap pix(rect.size());
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    renderShadowPrivate(shadow, pix.rect(), &p, roundNess, 1.0f, sides);
-    p.end();
-    colorizePixmap(pix, *brush);
-    painter->drawTiledPixmap(rect, pix);
+    roundNess = qMin(qMin(MAXRND, roundNess), qFloor(qMin<float>(rect.height(), rect.width())/2.0f));
+
+    for (int i = 0; i < PartCount; ++i)
+        if (i != CenterPart && needPart((Parts)i, sides))
+        {
+            const QRect pr = partRect(rect, (Parts)i, roundNess, sides, true);
+            QPixmap px(pr.size());
+            px.fill(Qt::transparent);
+            QPainter pt(&px);
+            pt.drawTiledPixmap(px.rect(), s_shadow[shadow][roundNess][i]);
+            pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+            pt.fillRect(px.rect(), QColor(0, 0, 0, brush?255.0f:opacity*255.0f));
+            pt.end();
+            if (brush)
+                colorizePixmap(px, *brush);
+            painter->drawTiledPixmap(pr, px);
+        }
 }
 
 Sides

@@ -6,7 +6,7 @@
 #include <QtGlobal>
 #include <QtGui>
 
-#define MAXRND 32
+#define MAXRND 12
 
 class QStyleOption;
 class QPainter;
@@ -79,7 +79,7 @@ public:
 protected:
 //    void generateData(const QPalette &pal);
 //    void _renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet);
-    static void renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
+//    static void renderShadowPrivate(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const float opacity, const Sides sides);
 //    void _renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush);
 //    void _renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o);
     static void initMaskParts();
@@ -89,7 +89,7 @@ protected:
     static void splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source);
     static bool isCornerPart(const Part part);
     static bool needPart(const Part part, const Sides sides);
-    static QPixmap genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides);
+//    static QPixmap genPart(const Part part, const QPixmap &source, const int roundNess, const Sides sides);
     static QRect partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow = false);
     static QImage stretched(QImage img);
     static QImage stretched(QImage img, const QColor &c);
