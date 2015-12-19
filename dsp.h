@@ -8,6 +8,9 @@
 #include "stylelib/macros.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
+#include "namespace.h"
+#include "stylelib/shadows.h"
+#include "stylelib/masks.h"
 
 class QToolBar;
 class QTabBar;
@@ -159,6 +162,7 @@ public:
 protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
     static int layoutSpacingAndMargins(const QWidget *w);
+
 
 private:
     StyleComplexControl m_cc[CCSize];

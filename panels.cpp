@@ -75,32 +75,7 @@ Style::drawToolBar(const QStyleOption *option, QPainter *painter, const QWidget 
             && widget
             && option
             && qobject_cast<const QMainWindow *>(widget->parentWidget()))
-        {
-            Sides sides(Render::checkedForWindowEdges(widget));
-            sides = All-sides;
             Handlers::Window::drawUnoPart(painter, option->rect, widget, widget->geometry().topLeft());
-            if (dConf.removeTitleBars
-                    && sides & Top
-                    && (!widget->parentWidget()->mask().isEmpty()
-                        || widget->parentWidget()->windowFlags() & Qt::FramelessWindowHint))
-            {
-                Render::shapeCorners(painter, sides);
-                const QRectF bevel(widget->x()+0.5f, 0.5f, widget->width()-0.5f, 10.0f);
-                QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
-                lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255.0f, Color::luminosity(option->palette.color(widget->backgroundRole()))*1.1f)));
-                lg.setColorAt(0.5f, Qt::transparent);
-                const QPen pen(painter->pen());
-                const QBrush brush(painter->brush());
-                const bool hadAnti(painter->testRenderHint(QPainter::Antialiasing));
-                painter->setRenderHint(QPainter::Antialiasing);
-                painter->setBrush(Qt::NoBrush);
-                painter->setPen(QPen(lg, 1.0f));
-                painter->drawRoundedRect(bevel, 5, 5);
-                painter->setPen(pen);
-                painter->setBrush(brush);
-                painter->setRenderHint(QPainter::Antialiasing, hadAnti);
-            }
-        }
     return true;
 }
 
@@ -137,7 +112,7 @@ Style::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *wi
     Sides sides(All);
     if (widget && widget->property("DSP_SHAPETOP").toBool())
         sides &= ~Top;
-    Render::renderMask(option->rect, painter, bgc, 4, sides);
+    Render::drawMask(option->rect, painter, bgc, 4, sides);
 //    painter->drawRoundedRect(option->rect, 4, 4);
 //    painter->restore();
     return true;
@@ -155,7 +130,7 @@ Style::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const 
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
-    Render::renderShadow(Sunken, cont, painter, 8, All, dConf.shadows.opacity);
+    Render::drawShadow(Sunken, cont, painter, 8, All, dConf.shadows.opacity);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -238,7 +213,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
 bool
 Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || widget->isWindow() || widget->inherits("KTextEditor::ViewPrivate"))
+    if (!widget || widget->isWindow())
         return true;
 
     const QStyleOptionFrameV3 *opt = qstyleoption_cast<const QStyleOptionFrameV3 *>(option);
@@ -289,20 +264,20 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
     {
-        Render::renderShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All, o);
+        Render::drawShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All, o);
     }
     else if (opt->state & State_Raised)
     {
         QPixmap pix(frame->rect().size());
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-        Render::renderShadow(Raised, pix.rect(), &p, 8, All, o);
+        Render::drawShadow(Raised, pix.rect(), &p, 8, All, o);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        Render::renderMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
+        Render::drawMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
         p.end();
         painter->drawTiledPixmap(frame->rect(), pix);
     }
     else if (frame && frame->frameShadow() == QFrame::Plain)
-        Render::renderShadow(Etched, r, painter, 6, All, o);
+        Render::drawShadow(Etched, r, painter, 6, All, o);
     return true;
 }

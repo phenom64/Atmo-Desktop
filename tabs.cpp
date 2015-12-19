@@ -64,7 +64,7 @@ Style::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBa
     r.setRight(r.right()+rightMargin);
 
     QPainterPath p;
-    Render::renderTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p, dConf.shadows.opacity);
+    Render::drawTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p, dConf.shadows.opacity);
     if (isSelected)
     {
         painter->save();
@@ -501,7 +501,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         p->drawLine(r.topLeft(), r.topRight());
         p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        Render::renderShadow(Sunken, r, p, 32, Top, dConf.shadows.opacity/2);
+        Render::drawShadow(Sunken, r, p, 0, Top, dConf.shadows.opacity/2);
         p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     else if (bar->documentMode() && bar->isVisible())
@@ -629,7 +629,6 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
 bool
 Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    Sides sides = Render::checkedForWindowEdges(widget);
     const QTabWidget *tabWidget = qobject_cast<const QTabWidget *>(widget);
     const QStyleOptionTabWidgetFrame *opt = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(option);
 
@@ -687,7 +686,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         }
     }
     if (!tabWidget->documentMode())
-        Render::renderShadow(Sunken, rect, painter, 7, sides, dConf.shadows.opacity);
+        Render::drawShadow(Sunken, rect, painter, 7, All, dConf.shadows.opacity);
     return true;
 }
 

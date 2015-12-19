@@ -8,6 +8,8 @@
 #include "stylelib/render.h"
 #include "stylelib/handlers.h"
 #include "config/settings.h"
+#include "namespace.h"
+#include "stylelib/shadows.h"
 
 using namespace DSP;
 

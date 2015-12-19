@@ -16,6 +16,8 @@ namespace Anim
 
 #define STEPS 16
 
+//enum { STEPS };
+
 class Q_DECL_EXPORT Basic : public QObject
 {
     Q_OBJECT

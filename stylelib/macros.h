@@ -1,11 +1,6 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#define CCSize CC_MdiControls+1
-#define CESize CE_ShapedFrame+1
-#define PESize PE_PanelMenu+1
-#define EVSize QEvent::PlatformPanel+1
-
 #define SUNKEN state & (QStyle::State_Sunken | QStyle::State_Selected | QStyle::State_On)
 #define HOVER state & QStyle::State_MouseOver
 #define ENABLED state & QStyle::State_Enabled

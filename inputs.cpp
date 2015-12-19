@@ -23,7 +23,7 @@ using namespace DSP;
 
 static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, const QStyleOption *opt = 0)
 {
-    Render::renderMask(r.adjusted(1, 1, -1, -2), p, b);
+    Render::drawMask(r.adjusted(1, 1, -1, -2), p, b);
     QBrush *c = 0;
     bool focus(false);
     if (opt && opt->state & QStyle::State_HasFocus)
@@ -31,8 +31,8 @@ static void drawSafariLineEdit(const QRect &r, QPainter *p, const QBrush &b, con
         c = new QBrush(opt->palette.color(QPalette::Highlight));
         focus = true;
     }
-    Render::renderShadow(Etched, r, p, 32, All, 0.1f, c);
-    Render::renderShadow(Sunken, r, p, 32, All, focus?0.6f:0.2f, c);
+    Render::drawShadow(Etched, r, p, 32, All, 0.1f, c);
+    Render::drawShadow(Sunken, r, p, 32, All, focus?0.6f:0.2f, c);
 }
 
 bool
@@ -45,7 +45,7 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
 
     QBrush mask(option->palette.base());
 
-    Shadow shadow = dConf.input.shadow;
+    ShadowStyle shadow = dConf.input.shadow;
     const bool isInactive = dConf.differentInactive && shadow == Yosemite && widget && qobject_cast<QToolBar *>(widget->parent()) && !widget->window()->isActiveWindow();
 
     if (isInactive)

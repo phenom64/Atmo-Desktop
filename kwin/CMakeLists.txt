@@ -13,15 +13,6 @@ if (QT5BUILD)
 
     find_path(EFFECTS_H kwineffects.h PATH_SUFFIXES kf5)
     include_directories(${EFFECTS_H})
-
-    set(SRCS
-        kwinclient2.cpp
-        decobutton.cpp)
-    set(HDRS
-        kwinclient2.h
-        decobutton.h
-        decoadaptor.h)
-
     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
     find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
     find_library(OPENGL NAMES GL)
@@ -41,6 +32,14 @@ if (QT5BUILD)
     if (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
         add_subdirectory(effects)
     endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
+
+    set(SRCS
+        kwinclient2.cpp
+        decobutton.cpp)
+    set(HDRS
+        kwinclient2.h
+        decobutton.h
+        decoadaptor.h)
 
     ### build library
     add_library(dspdecoration MODULE ${SRCS} ${HDRS})

@@ -13,407 +13,42 @@
 #include <QPainter>
 #include <QBrush>
 
+#include "fx.h"
 #include "render.h"
 #include "color.h"
 #include "../config/settings.h"
 #include "macros.h"
 #include "ops.h"
 #include "handlers.h"
+#include "masks.h"
+#include "shadows.h"
 
 using namespace DSP;
 
-QPixmap **Render::s_mask = 0;
-QPixmap ***Render::s_shadow = 0;
 QPixmap *Render::s_tab = 0;
 QPixmap *Render::s_noise = 0;
-
-/* blurring function below from:
- * http://stackoverflow.com/questions/3903223/qt4-how-to-blur-qpixmap-image
- * unclear to me who wrote it.
- */
-QImage
-Render::blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly)
-{
-    if (image.isNull())
-        return QImage();
-   int tab[] = { 14, 10, 8, 6, 5, 5, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2 };
-   int alpha = (radius < 1)  ? 16 : (radius > 17) ? 1 : tab[radius-1];
-
-   QImage result = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-   int r1 = rect.top();
-   int r2 = rect.bottom();
-   int c1 = rect.left();
-   int c2 = rect.right();
-
-   int bpl = result.bytesPerLine();
-   int rgba[4];
-   unsigned char* p;
-
-   int i1 = 0;
-   int i2 = 3;
-
-   if (alphaOnly)
-       i1 = i2 = (QSysInfo::ByteOrder == QSysInfo::BigEndian ? 0 : 3);
-
-   for (int col = c1; col <= c2; col++) {
-       p = result.scanLine(r1) + col * 4;
-       for (int i = i1; i <= i2; i++)
-           rgba[i] = p[i] << 4;
-
-       p += bpl;
-       for (int j = r1; j < r2; j++, p += bpl)
-           for (int i = i1; i <= i2; i++)
-               p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
-   }
-
-   for (int row = r1; row <= r2; row++) {
-       p = result.scanLine(row) + c1 * 4;
-       for (int i = i1; i <= i2; i++)
-           rgba[i] = p[i] << 4;
-
-       p += 4;
-       for (int j = c1; j < c2; j++, p += 4)
-           for (int i = i1; i <= i2; i++)
-               p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
-   }
-
-   for (int col = c1; col <= c2; col++) {
-       p = result.scanLine(r2) + col * 4;
-       for (int i = i1; i <= i2; i++)
-           rgba[i] = p[i] << 4;
-
-       p -= bpl;
-       for (int j = r1; j < r2; j++, p -= bpl)
-           for (int i = i1; i <= i2; i++)
-               p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
-   }
-
-   for (int row = r1; row <= r2; row++) {
-       p = result.scanLine(row) + c2 * 4;
-       for (int i = i1; i <= i2; i++)
-           rgba[i] = p[i] << 4;
-
-       p -= 4;
-       for (int j = c1; j < c2; j++, p -= 4)
-           for (int i = i1; i <= i2; i++)
-               p[i] = (rgba[i] += ((p[i] << 4) - rgba[i]) * alpha / 16) >> 4;
-   }
-
-   return result;
-}
-
-/*
-// Exponential blur, Jani Huhtanen, 2006 ==========================
-*  expblur(QImage &img, int radius)
-*
-*  In-place blur of image 'img' with kernel of approximate radius 'radius'.
-*  Blurs with two sided exponential impulse response.
-*
-*  aprec = precision of alpha parameter in fixed-point format 0.aprec
-*  zprec = precision of state parameters zR,zG,zB and zA in fp format 8.zprec
-*/
-
-template<int aprec, int zprec>
-static inline void blurinner(unsigned char *bptr, int &zR, int &zG, int &zB, int &zA, int alpha)
-{
-    int R,G,B,A;
-    R = *bptr;
-    G = *(bptr+1);
-    B = *(bptr+2);
-    A = *(bptr+3);
-
-    zR += (alpha * ((R<<zprec)-zR))>>aprec;
-    zG += (alpha * ((G<<zprec)-zG))>>aprec;
-    zB += (alpha * ((B<<zprec)-zB))>>aprec;
-    zA += (alpha * ((A<<zprec)-zA))>>aprec;
-
-    *bptr =     zR>>zprec;
-    *(bptr+1) = zG>>zprec;
-    *(bptr+2) = zB>>zprec;
-    *(bptr+3) = zA>>zprec;
-}
-
-template<int aprec,int zprec>
-static inline void blurrow( QImage & im, int line, int alpha)
-{
-    int zR,zG,zB,zA;
-
-    QRgb *ptr = (QRgb *)im.scanLine(line);
-
-    zR = *((unsigned char *)ptr    )<<zprec;
-    zG = *((unsigned char *)ptr + 1)<<zprec;
-    zB = *((unsigned char *)ptr + 2)<<zprec;
-    zA = *((unsigned char *)ptr + 3)<<zprec;
-
-    for(int index=1; index<im.width(); index++)
-        blurinner<aprec,zprec>((unsigned char *)&ptr[index],zR,zG,zB,zA,alpha);
-
-    for(int index=im.width()-2; index>=0; index--)
-        blurinner<aprec,zprec>((unsigned char *)&ptr[index],zR,zG,zB,zA,alpha);
-}
-
-template<int aprec, int zprec>
-static inline void blurcol( QImage & im, int col, int alpha)
-{
-    int zR,zG,zB,zA;
-
-    QRgb *ptr = (QRgb *)im.bits();
-    ptr+=col;
-
-    zR = *((unsigned char *)ptr    )<<zprec;
-    zG = *((unsigned char *)ptr + 1)<<zprec;
-    zB = *((unsigned char *)ptr + 2)<<zprec;
-    zA = *((unsigned char *)ptr + 3)<<zprec;
-
-    for(int index=im.width(); index<(im.height()-1)*im.width(); index+=im.width())
-        blurinner<aprec,zprec>((unsigned char *)&ptr[index],zR,zG,zB,zA,alpha);
-
-    for(int index=(im.height()-2)*im.width(); index>=0; index-=im.width())
-        blurinner<aprec,zprec>((unsigned char *)&ptr[index],zR,zG,zB,zA,alpha);
-}
-
-void
-Render::expblur(QImage &img, int radius, Qt::Orientations o)
-{
-    if(radius<1)
-        return;
-
-    static const int aprec = 16; static const int zprec = 7;
-
-    // Calculate the alpha such that 90% of the kernel is within the radius. (Kernel extends to infinity)
-    int alpha = (int)((1<<aprec)*(1.0f-expf(-2.3f/(radius+1.f))));
-
-    if (o & Qt::Horizontal) {
-        for(int row=0;row<img.height();row++)
-            blurrow<aprec,zprec>(img,row,alpha);
-    }
-
-    if (o & Qt::Vertical) {
-        for(int col=0;col<img.width();col++)
-            blurcol<aprec,zprec>(img,col,alpha);
-    }
-}
+Shadow *Render::s_shadows[MaxRnd+1][ShadowCount][2] = {0};
 
 void
 Render::generateData(const QPalette &pal)
 {
-    initMaskParts();
-    initShadowParts(pal);
+    initShadows(pal);
     initTabs();
     makeNoise();
 }
 
 void
-Render::initMaskParts()
+Render::initShadows(const QPalette &pal)
 {
-    if (!s_mask)
-    {
-        s_mask = new QPixmap*[MAXRND+1]();
-        for(int i = 0; i < MAXRND+1; ++i)
-            s_mask[i] = new QPixmap[PartCount]();
-//        s_mask = (QPixmap (*)[MAXRND+1][PartCount])mask;
-    }
-    for (int i = 0; i < MAXRND+1; ++i)
-    {
-        const int size = i*2+1;
-        QPixmap pix(size, size);
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        p.setRenderHint(QPainter::Antialiasing);
-        p.fillRect(pix.rect(), Qt::black);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        p.setBrush(Qt::black);
-        p.setPen(Qt::NoPen);
-        p.drawRoundedRect(pix.rect(), i, i);
-        p.end();
-
-        s_mask[i][TopLeftPart] = pix.copy(0, 0, i, i);
-        //m_mask[TopMidPart] = pix.copy(RND, 0, SIZE-RND*2, RND);
-        s_mask[i][TopRightPart] = pix.copy(size-i, 0, i, i);
-        //m_mask[Left] = pix.copy(0, RND, RND, SIZE-RND*2);
-        //m_mask[CenterPart] = pix.copy(RND, RND, SIZE-RND*2, SIZE-RND*2);
-        //m_mask[Right] = pix.copy(SIZE-RND, RND, RND, SIZE-RND*2);
-        s_mask[i][BottomLeftPart] = pix.copy(0, size-i, i, i);
-        //m_mask[BottomMidPart] = pix.copy(RND, SIZE-RND, SIZE-RND*2, RND);
-        s_mask[i][BottomRightPart] = pix.copy(size-i, size-i, i, i);
-    }
-}
-
-void
-Render::initShadowParts(const QPalette &pal)
-{
-    if (!s_shadow)
-    {
-        s_shadow = new QPixmap**[ShadowCount]();
-        for (int s = 0; s < ShadowCount; ++s)
-        {
-            s_shadow[s] = new QPixmap*[MAXRND+1]();
-            for(int i = 0; i < MAXRND+1; ++i)
-                s_shadow[s][i] = new QPixmap[PartCount]();
-        }
-    }
-
     const int winLum = Color::luminosity(pal.color(QPalette::Window));
-//    const int winTxtLum = Color::luminosity(pal.color(QPalette::WindowText));
-//    const int btnLum = Color::luminosity(pal.color(QPalette::Button));
-//    const int btnTxtLum = Color::luminosity(pal.color(QPalette::ButtonText));
-    for (Shadow s = 0; s < ShadowCount; ++s)
-    for (int r = 0; r < MAXRND+1; ++r)
+    for (int r = 0; r < MaxRnd+1; ++r)
+    for (ShadowStyle s = 0; s < ShadowCount; ++s)
     {
-        const int cornerSize(qMax(3, r));
-        const int size = cornerSize*2+1;
-        QPixmap pix(size, size);
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        p.setRenderHint(QPainter::Antialiasing);
-        switch (s)
-        {
-        case Sunken:
-        {
-            QRect rect(pix.rect());
-            p.setPen(Qt::NoPen);
-            p.setBrush(QColor(255, 255, 255, winLum));
-            p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
-            p.drawRoundedRect(rect, r, r);
-            p.setClipping(false);
-            rect.setBottom(rect.bottom()-1);
-            p.setBrush(Qt::black);
-            p.drawRoundedRect(rect, r, r);
-
-            if (r)
-            {
-                QImage img(pix.size(), QImage::Format_ARGB32);
-                img.fill(Qt::transparent);
-                QPainter pt(&img);
-                pt.setRenderHint(QPainter::Antialiasing);
-                pt.setPen(Qt::NoPen);
-                pt.setBrush(Qt::black);
-                QRectF rt(rect);
-                rt.adjust(1.0f, 1.5f, -1.0f, -0.75f);
-                int rnd(r);
-                if (rnd)
-                    --rnd;
-                pt.drawRoundedRect(rt, rnd, rnd);
-                pt.end();
-
-                expblur(img, r>4?2:1);
-
-                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                p.fillRect(pix.rect(), img);
-            }
-            else
-            {
-                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                QRectF rf(rect);
-                rf.adjust(0.5f, 1.0f, -0.5f, -0.5f);
-                p.fillRect(rf, Qt::black);
-                p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-                QLinearGradient lg(rf.topLeft(), rf.bottomLeft());
-                lg.setColorAt(0.0f, QColor(0, 0, 0, 170));
-                lg.setColorAt(0.5f, Qt::transparent);
-                p.fillRect(rf, lg);
-            }
-            break;
-        }
-        case Raised:
-        {
-            QImage img(pix.size(), QImage::Format_ARGB32);
-            img.fill(Qt::transparent);
-            QPainter pt(&img);
-            pt.setRenderHint(QPainter::Antialiasing);
-            pt.setPen(Qt::NoPen);
-            pt.setBrush(Qt::black);
-            QRectF rf(img.rect());
-            float f(1.0f);
-            rf.adjust(f, f, -f, -f);
-            pt.drawRoundedRect(rf.translated(0.0f, 0.5f), r, r);
-            pt.end();
-            expblur(img, 1);
-            p.fillRect(pix.rect(), img);
-            break;
-        }
-        case Etched:
-        {
-            QPixmap white(pix.size()-QSize(0, 1));
-            white.fill(Qt::transparent);
-            QPainter pt(&white);
-            pt.setRenderHint(QPainter::Antialiasing);
-            pt.setBrush(QColor(255, 255, 255, winLum));
-            pt.setPen(Qt::NoPen);
-            pt.drawRoundedRect(white.rect(), r, r);
-            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            pt.setBrush(Qt::black);
-            pt.drawRoundedRect(white.rect().adjusted(1, 1, -1, -1), r-1, r-1);
-            pt.end();
-
-            QPixmap black(pix.size()-QSize(0, 1));
-            black.fill(Qt::transparent);
-            pt.begin(&black);
-            pt.setRenderHint(QPainter::Antialiasing);
-            pt.setPen(Qt::NoPen);
-            pt.setBrush(Qt::black);
-            pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-            pt.drawRoundedRect(black.rect(), r, r);
-            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            pt.drawRoundedRect(black.rect().adjusted(1, 1, -1, -1), r-1, r-1);
-            pt.end();
-
-            p.drawTiledPixmap(white.rect().translated(0, 1), white);
-            p.drawTiledPixmap(black.rect(), black);
-            break;
-        }
-        case Yosemite:
-        {
-            p.setPen(Qt::NoPen);
-            p.setBrush(Qt::black);
-            p.drawRoundedRect(pix.rect(), r, r);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
-            break;
-        }
-        case Rect:
-        {
-            p.setPen(Qt::NoPen);
-            p.setBrush(Qt::black);
-            QRect rt(pix.rect());
-            const int w(1);
-            p.drawRoundedRect(rt, r, r);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            p.drawRoundedRect(rt.adjusted(w, w, -w, -w), r-w, r-w);
-            break;
-        }
-        case ElCapitan:
-        {
-            p.setPen(Qt::NoPen);
-            p.setBrush(Qt::black);
-            p.drawRoundedRect(pix.rect(), r, r);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), r-1, r-1);
-            p.setBrush(QColor(0, 0, 0, 63));
-            p.drawRoundedRect(pix.rect().translated(0, -1), r, r);
-            break;
-        }
-        default: break;
-        }
-        p.end();
-        splitShadowParts(s, r, size, pix);
+        s_shadows[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity*255);
+        s_shadows[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*255);
     }
 }
 
-void
-Render::splitShadowParts(const Shadow shadow, int roundNess, int size, const QPixmap &source)
-{
-    int cornerSize(qMax(3, roundNess));
-    s_shadow[shadow][roundNess][TopLeftPart] = source.copy(0, 0, cornerSize, cornerSize);
-    s_shadow[shadow][roundNess][TopMidPart] = source.copy(cornerSize, 0, size-cornerSize*2, cornerSize);
-    s_shadow[shadow][roundNess][TopRightPart] = source.copy(size-cornerSize, 0, cornerSize, cornerSize);
-    s_shadow[shadow][roundNess][LeftPart] = source.copy(0, cornerSize, cornerSize, size-cornerSize*2);
-    s_shadow[shadow][roundNess][CenterPart] = source.copy(cornerSize, cornerSize, size-cornerSize*2, size-cornerSize*2);
-    s_shadow[shadow][roundNess][RightPart] = source.copy(size-cornerSize, cornerSize, cornerSize, size-cornerSize*2);
-    s_shadow[shadow][roundNess][BottomLeftPart] = source.copy(0, size-cornerSize, cornerSize, cornerSize);
-    s_shadow[shadow][roundNess][BottomMidPart] = source.copy(cornerSize, size-cornerSize, size-cornerSize*2, cornerSize);
-    s_shadow[shadow][roundNess][BottomRightPart] = source.copy(size-cornerSize, size-cornerSize, cornerSize, cornerSize);
-}
 
 static QPainterPath tab(const QRect &r, int rnd)
 {
@@ -451,11 +86,12 @@ Render::initTabs()
     QPainterPath path(tab(r.adjusted(ts, 0, -ts, 0), tr));
     QPainter p(&img);
     p.setRenderHint(QPainter::Antialiasing);
-    p.setPen(Qt::NoPen);
+    p.setPen(QPen(Qt::black, 2.0f));
     p.setBrush(Qt::black);
     p.drawPath(path);
     p.end();
-    img = blurred(img, img.rect(), ts);
+//    img = FX::blurred(img, img.rect(), ts);
+    FX::expblur(img, 1);
     p.begin(&img);
     p.setRenderHint(QPainter::Antialiasing);
     p.setPen(QPen(Qt::black, 2.0f));
@@ -466,7 +102,7 @@ Render::initTabs()
     p.drawPath(path);
     p.setPen(Qt::black);
     p.drawLine(img.rect().topLeft(), img.rect().topRight());
-    renderShadow(Sunken, img.rect(), &p, ts*4, Top, 0.2f);
+    drawShadow(Sunken, img.rect(), &p, 0, Top, 0.2f);
     p.end();
     --hsz;
     hsz/=2;
@@ -484,7 +120,7 @@ Render::initTabs()
 }
 
 void
-Render::renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, const float o)
+Render::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, const float o)
 {
     const QSize sz(s_tab[TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
@@ -522,263 +158,21 @@ Render::renderTab(const QRect &r, QPainter *p, const Tab t, QPainterPath *path, 
     p->drawPixmap(r, pix);
 }
 
-
-QRect
-Render::partRect(const QRect &rect, const Part part, int roundNess, const Sides sides, bool isShadow)
+void
+Render::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet, const int opacity)
 {
-    if (isShadow && roundNess < 3)
-        roundNess = 3;
-    int x, y, w, h;
-    rect.getRect(&x, &y, &w, &h);
-
-    int midWidth = w;
-    if (sides&Right)
-        midWidth-=roundNess;
-    if (sides&Left)
-        midWidth-=roundNess;
-
-    int midHeight = h;
-    if (sides&Top)
-        midHeight-=roundNess;
-    if (sides&Bottom)
-        midHeight-=roundNess;
-
-    int left(bool(sides&Left)*roundNess)
-            , top(bool(sides&Top)*roundNess)
-            , right(bool(sides&Right)*roundNess)
-            , bottom(bool(sides&Bottom)*roundNess);
-
-    switch (part)
-    {
-    case TopLeftPart: return QRect(x, y, roundNess, roundNess);
-    case TopMidPart: return QRect(x+left, y, midWidth, roundNess);
-    case TopRightPart: return QRect(x+(w-right), y, roundNess, roundNess);
-    case LeftPart: return QRect(x, y+top, roundNess, midHeight);
-    case CenterPart: return QRect(x+left, y+top, midWidth, midHeight);
-    case RightPart: return QRect(x+(w-right), y+top, roundNess, midHeight);
-    case BottomLeftPart: return QRect(x, y+(h-bottom), roundNess, roundNess);
-    case BottomMidPart: return QRect(x+left, y+(h-bottom), midWidth, roundNess);
-    case BottomRightPart: return QRect(x+(w-right), y+(h-bottom), roundNess, roundNess);
-    default: return QRect();
-    }
-}
-
-bool
-Render::isCornerPart(const Part part)
-{
-    return part==TopLeftPart||part==TopRightPart||part==BottomLeftPart||part==BottomRightPart;
+    Mask::render(rect, brush, painter, qMin(roundNess, qMin(rect.height(), rect.width())/2), sides);
 }
 
 void
-Render::shapeCorners(QPainter *p, Sides s, int roundNess, const QSize &forceSize)
-{
-    const QPainter::CompositionMode mode(p->compositionMode());
-    p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p->setPen(Qt::NoPen);
-    for (int i = 0; i < PartCount; ++i)
-    if (needPart(i, s))
-    {
-        if (i != CenterPart && !roundNess)
-            continue;
-        p->drawPixmap(partRect(QRect(QPoint(), forceSize.isValid()?forceSize:QSize(p->device()->width(), p->device()->height())), i, roundNess, s), s_mask[roundNess][i]);
-    }
-    p->setCompositionMode(mode);
-}
-
-bool
-Render::needPart(const Part part, const Sides sides)
-{
-    switch (part)
-    {
-    case TopLeftPart: return bool((sides&Top)&&(sides&Left));
-    case TopMidPart: return bool(sides&Top);
-    case TopRightPart: return bool((sides&Top)&&(sides&Right));
-    case LeftPart: return bool(sides&Left);
-    case CenterPart: return true;
-    case RightPart: return bool(sides&Right);
-    case BottomLeftPart: return bool((sides&Bottom)&&(sides&Left));
-    case BottomMidPart: return bool(sides&Bottom);
-    case BottomRightPart: return bool((sides&Bottom)&&(sides&Right));
-    default: return false;
-    }
-}
-
-void
-Render::renderMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet, const int opacity)
+Render::drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush)
 {
     if (!rect.isValid())
         return;
-    roundNess = qMin(qMin(MAXRND, roundNess), qMin(rect.height(), rect.width())/2);
-
-    switch (brush.style())
-    {
-    case Qt::TexturePattern:
-    {
-        QPixmap pix(rect.size());
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        QRect r(pix.rect());
-        p.setBrushOrigin(offSet);
-        p.fillRect(r, brush);
-        if (opacity < 255)
-        {
-            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            p.fillRect(r, QColor(0, 0, 0, opacity));
-        }
-        p.end();
-
-        for (int i = 0; i < PartCount; ++i)
-            if (needPart(i, sides))
-            {
-                if (i != CenterPart && !roundNess)
-                    continue;
-
-                QPixmap partPix = pix.copy(partRect(pix.rect(), i, roundNess, sides));
-                if (isCornerPart(i) && roundNess)
-                {
-                    QPainter p(&partPix);
-                    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                    p.drawTiledPixmap(partPix.rect(), s_mask[roundNess][i]);
-                    p.end();
-                }
-                painter->drawTiledPixmap(partRect(rect, i, roundNess, sides), partPix);
-            }
-        break;
-    }
-    case Qt::LinearGradientPattern:
-    {
-        const QLinearGradient *gl = static_cast<const QLinearGradient *>(brush.gradient());
-        const bool isHor(gl->start().x() != gl->finalStop().x());
-//        const_cast<QLinearGradient *>(gl)->setStart(rect.topLeft());
-//        const_cast<QLinearGradient *>(gl)->setFinalStop(isHor?rect.topRight():rect.bottomLeft());
-        QPixmap pix(isHor?rect.width():1, isHor?1:rect.height());
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        QRect r(pix.rect());
-//        p.setBrushOrigin(rect.topLeft());
-        p.setBrushOrigin(offSet);
-        p.fillRect(r, brush);
-        if (opacity < 255)
-        {
-            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            p.fillRect(r, QColor(0, 0, 0, opacity));
-        }
-        p.end();
-
-        for (int i = 0; i < PartCount; ++i)
-            if (needPart(i, sides))
-            {
-                if (i != CenterPart && !roundNess)
-                    continue;
-
-                const QRect part = partRect(rect, i, roundNess, sides);
-                if (isCornerPart(i) && roundNess)
-                {
-                    QPixmap partPix(part.size());
-                    partPix.fill(Qt::transparent);
-                    QPainter p(&partPix);
-                    p.drawTiledPixmap(partPix.rect(), pix, part.topLeft()-rect.topLeft());
-                    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                    p.drawPixmap(partPix.rect(), s_mask[roundNess][i]);
-                    p.end();
-                    painter->drawPixmap(part, partPix);
-                }
-                else
-                    painter->drawTiledPixmap(part, pix, part.topLeft()-rect.topLeft());
-            }
-        break;
-    }
-    case Qt::SolidPattern:
-    {
-        for (int i = 0; i < PartCount; ++i)
-            if (needPart(i, sides))
-            {
-                if (i != CenterPart && !roundNess)
-                    continue;
-
-                const QRect part = partRect(rect, i, roundNess, sides);
-                if (isCornerPart(i) && roundNess)
-                {
-                    QPixmap partPix(part.size());
-                    partPix.fill(Qt::transparent);
-                    QPainter p(&partPix);
-                    p.fillRect(partPix.rect(), brush.color());
-                    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-                    p.drawPixmap(partPix.rect(), s_mask[roundNess][i]);
-                    p.end();
-                    painter->drawPixmap(part, partPix);
-                }
-                else
-                    painter->fillRect(part, brush.color());
-            }
-        break;
-    }
-    default: break;
-    }
+    const quint8 r = qMin(roundNess, qMin(rect.height(), rect.width())/2);
+    if (r >= 0 && r <= MaxRnd)
+        s_shadows[r][shadow][true]->render(rect, painter, sides);
 }
-
-void
-Render::renderShadow(const Shadow shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush)
-{
-
-    if (!rect.isValid())
-        return;
-    roundNess = qMin(qMin(MAXRND, roundNess), qFloor(qMin<float>(rect.height(), rect.width())/2.0f));
-
-    for (int i = 0; i < PartCount; ++i)
-        if (i != CenterPart && needPart((Parts)i, sides))
-        {
-            const QRect pr = partRect(rect, (Parts)i, roundNess, sides, true);
-            QPixmap px(pr.size());
-            px.fill(Qt::transparent);
-            QPainter pt(&px);
-            pt.drawTiledPixmap(px.rect(), s_shadow[shadow][roundNess][i]);
-            pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            pt.fillRect(px.rect(), QColor(0, 0, 0, brush?255.0f:opacity*255.0f));
-            pt.end();
-            if (brush)
-                colorizePixmap(px, *brush);
-            painter->drawTiledPixmap(pr, px);
-        }
-}
-
-Sides
-Render::checkedForWindowEdges(const QWidget *w, Sides from)
-{
-    if (!w)
-        return from;
-    QPoint topLeft = w->mapTo(w->window(), w->rect().topLeft());
-    QRect winRect = w->window()->rect();
-    QRect widgetRect = QRect(topLeft, w->size());
-
-    if (widgetRect.left() <= winRect.left())
-        from &= ~Left;
-    if (widgetRect.right() >= winRect.right())
-        from &= ~Right;
-    if (widgetRect.bottom() >= winRect.bottom())
-        from &= ~Bottom;
-    if (widgetRect.top() <= winRect.top())
-        from &= ~Top;
-    return from;
-}
-
-Sides
-Render::checkedForParentEdges(const QWidget *w, Sides from)
-{
-    if (!w || !w->parentWidget())
-        return from;
-
-    if (!w->geometry().x())
-        from &= ~Left;
-    if (w->geometry().right() >= w->parentWidget()->rect().right())
-        from &= ~Right;
-    if (w->geometry().bottom() >= w->parentWidget()->rect().bottom())
-        from &= ~Bottom;
-    if (!w->geometry().y())
-        from &= ~Top;
-    return from;
-}
-
 
 void
 Render::colorizePixmap(QPixmap &pix, const QBrush &b)
@@ -809,7 +203,7 @@ void
 Render::makeNoise()
 {
     if (!s_noise)
-        s_noise = new QPixmap();
+        s_noise = new QPixmap[2]();
     if (dConf.uno.enabled&&dConf.uno.noiseStyle == 4 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 4)
     {
         QImage img(4, 3, QImage::Format_ARGB32);
@@ -824,7 +218,7 @@ Render::makeNoise()
             const int v(px[i]);
             rgb[i] = qRgb(v, v, v);
         }
-        *s_noise = QPixmap::fromImage(img);
+        s_noise[0] = QPixmap::fromImage(img);
     }
     else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 3 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 3)
     {
@@ -838,7 +232,7 @@ Render::makeNoise()
             const int v(px[i]);
             rgb[i] = qRgb(v, v, v);
         }
-        *s_noise = QPixmap::fromImage(img);
+        s_noise[0] = QPixmap::fromImage(img);
     }
     else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
     {
@@ -852,7 +246,7 @@ Render::makeNoise()
             const int v(px[i]);
             rgb[i] = qRgb(v, v, v);
         }
-        *s_noise = QPixmap::fromImage(img);
+        s_noise[0] = QPixmap::fromImage(img);
     }
     else
     {
@@ -870,8 +264,8 @@ Render::makeNoise()
         {
             const int b(32);
             QImage small = noise.copy(0, 0, 256, 256);
-            expblur(small, b, Qt::Horizontal);
-            small = stretched(small);
+            FX::expblur(small, b, Qt::Horizontal);
+            small = FX::stretched(small);
             const QImage horFlip(small.mirrored(true, false));
             const QImage verFlip(small.mirrored(false));
             const QImage bothFlip(small.mirrored(true, true));
@@ -885,50 +279,28 @@ Render::makeNoise()
             p.end();
             noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
         }
-        *s_noise = QPixmap::fromImage(noise);
+        s_noise[0] = QPixmap::fromImage(noise);
     }
-}
+    const QColor bg = qApp->palette().color(QPalette::Window);
 
-QPixmap
-Render::mid(const QPixmap &p1, const QPixmap &p2, const int a1, const int a2, const QSize &sz)
-{
-    int w(qMin(p1.width(), p2.width()));
-    int h(qMin(p1.height(), p2.height()));
-    if (sz.isValid())
-    {
-        w = sz.width();
-        h = sz.height();
-    }
-    QImage i1 = p1.copy(0, 0, w, h).toImage().convertToFormat(QImage::Format_ARGB32);
-    QImage i2 = p2.copy(0, 0, w, h).toImage().convertToFormat(QImage::Format_ARGB32);
-    const int size(w*h);
-    QImage i3(w, h, QImage::Format_ARGB32); //the resulting image
-    i3.fill(Qt::transparent);
-    QRgb *rgb1 = reinterpret_cast<QRgb *>(i1.bits());
-    QRgb *rgb2 = reinterpret_cast<QRgb *>(i2.bits());
-    QRgb *rgb3 = reinterpret_cast<QRgb *>(i3.bits());
+    s_noise[1] = QPixmap(s_noise[0].size());
+    s_noise[1].fill(bg);
+    QPainter pt(&s_noise[1]);
 
-    for (int i = 0; i < size; ++i)
-    {
-        const QColor c = Color::mid(QColor::fromRgba(rgb1[i]), QColor::fromRgba(rgb2[i]), a1, a2);
-        rgb3[i] = c.rgba();
-    }
-    return QPixmap::fromImage(i3);
-}
-
-QPixmap
-Render::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
-{
-    QPixmap p2(p1.size());
-    p2.fill(Qt::transparent);
-    QPainter p(&p2);
-    p.fillRect(p2.rect(), b);
-    p.end();
-    return mid(p1, p2, a1, a2);
+    QPixmap noise(s_noise[0].size());
+    noise.fill(Qt::transparent);
+    QPainter ptt(&noise);
+    ptt.drawTiledPixmap(noise.rect(), s_noise[0]);
+    ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    ptt.fillRect(noise.rect(), QColor(0, 0, 0, dConf.uno.noise*2.55f));
+    ptt.end();
+    pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+    pt.drawTiledPixmap(s_noise[0].rect(), s_noise[0]);
+    pt.end();
 }
 
 void
-Render::drawClickable(Shadow s,
+Render::drawClickable(ShadowStyle s,
                       QRect r,
                       QPainter *p,
                       int rnd,
@@ -962,8 +334,6 @@ Render::drawClickable(Shadow s,
             r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);
         s = Sunken;   
     }
-    if (s == Raised)
-        rnd = qMin(maxRnd, rnd+1); //we inset the mask of raised scheisse...
 
     int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
     if (w)
@@ -1034,10 +404,10 @@ Render::drawClickable(Shadow s,
             lg.setColorAt(0.8f, QColor(0, 0, 0, o/3));
             lg.setColorAt(1.0f, QColor(0, 0, 0, o));
             QBrush sh(lg);
-            renderShadow(s, r, p, rnd, sides, opacity, &sh);
+            drawShadow(s, r, p, rnd, sides, opacity, &sh);
         }
         else
-            renderShadow(s, r, p, rnd, sides, opacity, shadow);
+            drawShadow(s, r, p, rnd, sides, opacity, shadow);
         const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
         const int m(2);
         if (s==Yosemite)
@@ -1055,7 +425,7 @@ Render::drawClickable(Shadow s,
         int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
-        renderMask(r, p, lg, rnd, sides, offSet);
+        drawMask(r, p, lg, rnd, sides, offSet);
         const int m(qMin(r.height(), r.width())<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
@@ -1069,7 +439,7 @@ Render::drawClickable(Shadow s,
     if (mask)
     {
         const bool n(s == Sunken && bgLum > pbgLum);
-        renderMask(r.sAdjusted(n, n, -n, -n), p, *mask, rnd, sides, offSet, inActive?127:255);
+        drawMask(r.sAdjusted(n, n, -n, -n), p, *mask, rnd, sides, offSet, inActive?127:255);
         rnd = qMin(rnd, qFloor(qMin(r.height(), r.width())/2.0f));
     }
 
@@ -1078,17 +448,12 @@ Render::drawClickable(Shadow s,
     if (s==Carved)
     {
         const float o(parentContrast?qMax(pbgLum, bgLum)/255.0f:opacity);
-        renderShadow(Rect, r, p, rnd, sides, o);
+        drawShadow(Rect, r, p, rnd, sides, o);
     }
     else if (s==Sunken||s==Etched)
     {
-//        if (needStrong)
-//            renderShadow(Rect, r, p, rnd, sides, opacity);
         r.sAdjust(0, 0, 0, 1);
-//        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        renderShadow(s, r, p, rnd, sides, qMin(1.0f, (((255-qMin(pbgLum, bgLum))/255.0f)*opacity)+opacity));
-//        pt.setCompositionMode(QPainter::CompositionMode_Multiply);
-//        renderShadow(s, r, p, rnd, sides, opacity);
+        drawShadow(s, r, p, rnd, sides, qMin(1.0f, (((255-qMin(pbgLum, bgLum))/255.0f)*opacity)+opacity));
     }
     else if (s==Raised && !isToolBox)
     {
@@ -1097,7 +462,7 @@ Render::drawClickable(Shadow s,
         lg.setColorAt(0.0f, QColor(255, 255, 255, lumop));
         lg.setColorAt(0.5f, QColor(255, 255, 255, opacity*0.75f*bgLum));
         QBrush b(lg);
-        renderShadow(Rect, r, p, rnd, sides, 1.0f, &b);
+//        drawShadow(Rect, r, p, rnd, sides, 1.0f, &b);
 
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
@@ -1114,11 +479,11 @@ Render::drawClickable(Shadow s,
                 edges.setColorAt(1.0f-position, Qt::transparent);
                 edges.setColorAt(1.0f, edge);
             }
-            renderMask(r, p, edges, rnd, sides);
+            drawMask(r, p, edges, rnd, sides);
         }
     }
     else if (s==Rect || s==ElCapitan)
-        renderShadow(s, r, p, rnd, sides, opacity);
+        drawShadow(s, r, p, rnd, sides, opacity);
 }
 
 Pos
@@ -1149,7 +514,7 @@ Render::pos(const Sides s, const Qt::Orientation o)
 }
 
 int
-Render::maskHeight(const Shadow s, const int height)
+Render::maskHeight(const ShadowStyle s, const int height)
 {
     switch (s)
     {
@@ -1169,7 +534,7 @@ Render::maskHeight(const Shadow s, const int height)
 }
 
 int
-Render::maskWidth(const Shadow s, const int width)
+Render::maskWidth(const ShadowStyle s, const int width)
 {
     switch (s)
     {
@@ -1186,7 +551,7 @@ Render::maskWidth(const Shadow s, const int width)
 }
 
 QRect
-Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
+Render::maskRect(const ShadowStyle s, const QRect &r, const Sides sides)
 {
     //sides needed for sAdjusted macro even if seemingly unused
     switch (s)
@@ -1202,7 +567,7 @@ Render::maskRect(const Shadow s, const QRect &r, const Sides sides)
 }
 
 int
-Render::shadowMargin(const Shadow s)
+Render::shadowMargin(const ShadowStyle s)
 {
     switch (s)
     {
@@ -1213,302 +578,6 @@ Render::shadowMargin(const Shadow s)
     case Carved: return 4; break;
     default: return 0;
     }
-}
-
-QPixmap
-Render::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const QColor &ref)
-{
-    int m(4);
-    QImage img(r.size()+QSize(m, m), QImage::Format_ARGB32);
-    m/=2;
-    img.fill(Qt::transparent);
-    QPainter p(&img);
-    int rgb(isDark?255:0);
-    int alpha(qMin(255.0f, 2*dConf.shadows.opacity*255.0f));
-    p.fillRect(img.rect(), QColor(rgb, rgb, rgb, alpha));
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p.drawTiledPixmap(r.translated(m, m), source);
-    p.end();
-    QImage blur(img);
-    Render::expblur(blur, m*2);
-//    const QImage blur = Render::blurred(img, img.rect(), m*2);
-    QPixmap highlight(r.size());
-    highlight.fill(Qt::transparent);
-    p.begin(&highlight);
-    rgb = isDark?0:255;
-    p.fillRect(highlight.rect(), QColor(rgb, rgb, rgb, alpha));
-    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    p.drawTiledPixmap(highlight.rect(), source);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p.drawTiledPixmap(highlight.rect().translated(0, -1), source);
-    p.end();
-
-//    const int y(isDark?-1:1);
-    QPixmap pix(r.size());
-    pix.fill(Qt::transparent);
-    p.begin(&pix);
-    p.drawTiledPixmap(pix.rect(), source);
-    if (!isDark)
-        p.drawTiledPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(blur), QPoint(m, m));
-    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    p.drawTiledPixmap(pix.rect(), source);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOver);
-    p.drawTiledPixmap(pix.rect().translated(0, 1), highlight);
-    p.end();
-    return pix;
-}
-
-//colortoalpha directly stolen from gimp
-
-void
-colortoalpha (float *a1,
-          float *a2,
-          float *a3,
-          float *a4,
-          float c1,
-          float c2,
-          float c3)
-{
-  float alpha1, alpha2, alpha3, alpha4;
-
-  alpha4 = *a4;
-
-  if ( *a1 > c1 )
-    alpha1 = (*a1 - c1)/(255.0-c1);
-  else if ( *a1 < c1 )
-    alpha1 = (c1 - *a1)/(c1);
-  else alpha1 = 0.0;
-
-  if ( *a2 > c2 )
-    alpha2 = (*a2 - c2)/(255.0-c2);
-  else if ( *a2 < c2 )
-    alpha2 = (c2 - *a2)/(c2);
-  else alpha2 = 0.0;
-
-  if ( *a3 > c3 )
-    alpha3 = (*a3 - c3)/(255.0-c3);
-  else if ( *a3 < c3 )
-    alpha3 = (c3 - *a3)/(c3);
-  else alpha3 = 0.0;
-
-  if ( alpha1 > alpha2 )
-    if ( alpha1 > alpha3 )
-      {
-    *a4 = alpha1;
-      }
-    else
-      {
-    *a4 = alpha3;
-      }
-  else
-    if ( alpha2 > alpha3 )
-      {
-    *a4 = alpha2;
-      }
-    else
-      {
-    *a4 = alpha3;
-      }
-
-  *a4 *= 255.0;
-
-  if ( *a4 < 1.0 )
-    return;
-  *a1 = 255.0 * (*a1-c1)/ *a4 + c1;
-  *a2 = 255.0 * (*a2-c2)/ *a4 + c2;
-  *a3 = 255.0 * (*a3-c3)/ *a4 + c3;
-
-  *a4 *= alpha4/255.0;
-}
-
-static int stretch(const int v, const float n = 2.0f)
-{
-    static bool isInit(false);
-    static float table[256];
-    if (!isInit)
-    {
-        for (int i = 127; i < 256; ++i)
-            table[i] = (pow(((float)i/127.5f-1.0f), (1.0f/n))+1.0f)*127.5f;
-        for (int i = 0; i < 128; ++i)
-            table[i] = 255-table[255-i];
-        isInit = true;
-    }
-    return qRound(table[v]);
-}
-
-/**
-    http://spatial-analyst.net/ILWIS/htm/ilwisapp/stretch_algorithm.htm
-    OUTVAL
-    (INVAL - INLO) * ((OUTUP-OUTLO)/(INUP-INLO)) + OUTLO
-    where:
-    OUTVAL
-    Value of pixel in output map
-    INVAL
-    Value of pixel in input map
-    INLO
-    Lower value of 'stretch from' range
-    INUP
-    Upper value of 'stretch from' range
-    OUTLO
-    Lower value of 'stretch to' range
-    OUTUP
-    Upper value of 'stretch to' range
- */
-
-QImage
-Render::stretched(QImage img)
-{
-    QImage image = img.convertToFormat(QImage::Format_ARGB32);
-    int size = img.width() * img.height();
-    QRgb *pixels = reinterpret_cast<QRgb *>(img.bits());
-    for (int i = 0; i < size; ++i)
-    {
-        const int rgb(stretch(qGray(pixels[i])));
-        pixels[i] = qRgb(rgb, rgb, rgb);
-    }
-    return image;
-}
-
-QImage
-Render::stretched(QImage img, const QColor &c)
-{
-    img = img.convertToFormat(QImage::Format_ARGB32);
-    int size = img.width() * img.height();
-    QRgb *pixels[2] = { 0, 0 };
-    pixels[0] = reinterpret_cast<QRgb *>(img.bits());
-    int r, g, b;
-    c.getRgb(&r, &g, &b); //foregroundcolor
-
-#define ENSUREALPHA if (!qAlpha(pixels[0][i])) continue
-    QList<int> hues;
-    for (int i = 0; i < size; ++i)
-    {
-        ENSUREALPHA;
-        const int hue(QColor::fromRgba(pixels[0][i]).hue());
-        if (!hues.contains(hue))
-            hues << hue;
-    }
-
-    const bool useAlpha(hues.count() == 1);
-    if (useAlpha)
-    {
-        int l(0), h(0);
-        for (int i = 0; i < size; ++i)
-        {
-            ENSUREALPHA;
-            const QColor c(QColor::fromRgba(pixels[0][i]));
-            if (Color::luminosity(c) < 128)
-                ++l;
-            else
-                ++h;
-        }
-        const bool dark(l*2>h);
-        /**
-          * Alpha gets special treatment...
-          * we simply steal the colortoalpha
-          * function from gimp, color white to
-          * alpha, as in remove all white from
-          * the image (in case of monochrome icons
-          * add some sorta light bevel). Then simply
-          * push all remaining alpha values so the
-          * highest one is 255.
-          */
-        float alpha[size], lowAlpha(255), highAlpha(0);
-        for (int i = 0; i < size; ++i)
-        {
-            ENSUREALPHA;
-            const QRgb rgb(pixels[0][i]);
-            float val(dark?255.0f:0.0f);
-            float red(qRed(rgb)), green(qGreen(rgb)), blue(qBlue(rgb)), a(qAlpha(rgb));
-            colortoalpha(&red, &green, &blue, &a, val, val, val);
-            if (a < lowAlpha)
-                lowAlpha = a;
-            if (a > highAlpha)
-                highAlpha = a;
-            alpha[i] = a;
-        }
-        float add(255.0f/highAlpha);
-        for (int i = 0; i < size; ++i)
-        {
-            ENSUREALPHA;
-            pixels[0][i] = qRgba(r, g, b, stretch(qMin<int>(255, alpha[i]*add), 2.0f));
-        }
-        return img;
-    }
-
-    const int br(img.width()/4);
-    QImage bg(img.size() + QSize(br*2, br*2), QImage::Format_ARGB32); //add some padding avoid 'edge folding'
-    bg.fill(Qt::transparent);
-
-    QPainter bp(&bg);
-    bp.drawPixmap(br, br, QPixmap::fromImage(img), 0, 0, img.width(), img.height());
-    bp.end();
-    Render::blurred(bg, bg.rect(), br);
-    bg = bg.copy(bg.rect().adjusted(br, br, -br, -br)); //remove padding so we can easily access relevant pixels with [i]
-
-    enum Rgba { Red = 0, Green, Blue, Alpha };
-    enum ImageType { Fg = 0, Bg }; //fg is the actual image, bg is the blurred one we use as reference for the most contrasting channel
-
-    pixels[1] = reinterpret_cast<QRgb *>(bg.bits());
-    double rgbCount[3] = { 0.0d, 0.0d, 0.0d };
-    int (*rgba[4])(QRgb rgb) = { qRed, qGreen, qBlue, qAlpha };
-    int cVal[2][4] = {{ 0, 0, 0, 0 }, {0, 0, 0, 0}};
-
-    for (int i = 0; i < size; ++i) //pass 1, determine most contrasting channel, usually RED
-    for (int it = 0; it < 2; ++it)
-    for (int d = 0; d < 4; ++d)
-    {
-        ENSUREALPHA;
-        cVal[it][d] = (*rgba[d])(pixels[it][i]);
-        if (it && d < 3)
-            rgbCount[d] += (cVal[Fg][Alpha]+cVal[Bg][Alpha]) * qAbs(cVal[Fg][d]-cVal[Bg][d]) / (2.0f * cVal[Bg][d]);
-    }
-    double count = 0;
-    int channel = 0;
-    for (int i = 0; i < 3; ++i)
-        if (rgbCount[i] > count)
-        {
-            channel = i;
-            count = rgbCount[i];
-        }
-    float values[size];
-    float inLo = 255.0f, inHi = 0.0f;
-    qulonglong loCount(0), hiCount(0);
-    for ( int i = 0; i < size; ++i ) //pass 2, store darkest/lightest pixels
-    {
-        ENSUREALPHA;
-        const float px((*rgba[channel])(pixels[Fg][i]));
-        values[i] = px;
-        if ( px > inHi )
-            inHi = px;
-        if ( px < inLo )
-            inLo = px;
-        const int a(qAlpha(pixels[Fg][i]));
-        if (px < 128)
-            loCount += a*(255-px);
-        else
-            hiCount += a*px;
-    }
-    const bool isDark(loCount>hiCount);
-    for ( int i = 0; i < size; ++i )
-    {
-        ENSUREALPHA;
-        int a(qBound<int>(0, qRound((values[i] - inLo) * (255.0f / (inHi - inLo))), 255));
-        if (isDark)
-            a = qMax(0, qAlpha(pixels[Fg][i])-a);
-        pixels[Fg][i] = qRgba(r, g, b, stretch(a));
-    }
-#undef ENSUREALPHA
-    return img;
-}
-
-QPixmap
-Render::monochromized(const QPixmap &source, const QColor &color, const Effect effect, bool isDark)
-{
-    const QPixmap &result = QPixmap::fromImage(stretched(source.toImage(), color));
-    if (effect == Inset)
-        return sunkenized(result.rect(), result, isDark);
-    return result;
 }
 
 void
@@ -1603,5 +672,4 @@ Render::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction 
     p->drawPolygon(QPolygon(3, points));
     p->restore();
 }
-
 

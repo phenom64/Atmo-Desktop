@@ -13,6 +13,7 @@
 #include "xhandler.h"
 #include "macros.h"
 #include "windowdata.h"
+#include "fx.h"
 
 #define ISIZE 4
 
@@ -290,7 +291,7 @@ ButtonBase::paintCloseButton(QPainter &p)
             pt.drawLine(rect.topLeft(), rect.bottomRight());
             pt.drawLine(rect.topRight(), rect.bottomLeft());
             pt.end();
-            p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+            p.drawTiledPixmap(buttonRect(), FX::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
         }
         else
         {
@@ -354,7 +355,7 @@ ButtonBase::paintMaxButton(QPainter &p)
             pt.drawLine(x+w/2, y, x+w/2, y+h);
             pt.drawLine(x, y+h/2, x+w, y+h/2);
             pt.end();
-            p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), c));
+            p.drawTiledPixmap(buttonRect(), FX::sunkenized(pix.rect(), pix, isDark(), c));
         }
         else
         {
@@ -431,7 +432,7 @@ ButtonBase::paintMinButton(QPainter &p)
             rect.getRect(&x, &y, &w, &h);
             pt.drawLine(x, y+h/2, x+w, y+h/2);
             pt.end();
-            m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), c));
+            m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), c));
         }
         else
         {
@@ -492,8 +493,8 @@ ButtonBase::paintOnAllDesktopsButton(QPainter &p)
         if (!all)
             pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.end();
-        p.drawTiledPixmap(buttonRect(), Render::sunkenized(pix.rect(), pix, isDark(), c));
-        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), c));
+        p.drawTiledPixmap(buttonRect(), FX::sunkenized(pix.rect(), pix, isDark(), c));
+        m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), c));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }
@@ -519,7 +520,7 @@ ButtonBase::paintWindowMenuButton(QPainter &p)
         for (int i = 0; i < 3; ++i)
             pt.drawLine(x, y+i*4, x+w, y+i*4);
         pt.end();
-        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+        m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }
@@ -554,7 +555,7 @@ ButtonBase::paintKeepAboveButton(QPainter &p)
         polygon.setPoints(3, points);
         pt.drawPolygon(polygon);
         pt.end();
-        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+        m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }
@@ -583,7 +584,7 @@ ButtonBase::paintKeepBelowButton(QPainter &p)
         polygon.setPoints(3, points);
         pt.drawPolygon(polygon);
         pt.end();
-        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+        m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }
@@ -608,7 +609,7 @@ ButtonBase::paintShadeButton(QPainter &p)
         r.getRect(&x, &y, &w, &h);
         pt.drawLine(x, y+h/3, x+w, y+h/3);
         pt.end();
-        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
+        m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), color(Mid)));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }
@@ -646,7 +647,7 @@ ButtonBase::paintQuickHelpButton(QPainter &p)
         pt.setBrush(c);
         pt.drawEllipse(QPoint(x+rnd+rnd, y+rnd*4), 2, 2);
         pt.end();
-        m_bgPix.insert(check, Render::sunkenized(pix.rect(), pix, isDark(), c));
+        m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), c));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
 }

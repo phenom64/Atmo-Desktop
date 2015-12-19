@@ -15,6 +15,7 @@
 #include "render.h"
 #include "../config/settings.h"
 #include "macros.h"
+#include "fx.h"
 
 using namespace DSP;
 
@@ -174,7 +175,7 @@ XHandler::XPixmap
     p.setRenderHint(QPainter::Antialiasing);
     p.setBrush(Qt::black);
     p.setPen(Qt::NoPen);
-    const QPixmap &sh(QPixmap::fromImage(Render::blurred(mask.toImage(), mask.rect(), 8)));
+    const QPixmap &sh(QPixmap::fromImage(FX::blurred(mask.toImage(), mask.rect(), 8)));
     p.drawTiledPixmap(img.rect(), Render::colorized(sh, Qt::black));
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawTiledPixmap(img.rect(), mask);

@@ -67,7 +67,7 @@ add_subdirectory(config)
 # file(GLOB SRCS *.cpp)
 #file(GLOB HDRS *.h)
 set(SRCS buttons.cpp contentssize.cpp events.cpp init.cpp inputs.cpp items.cpp overlay.cpp panels.cpp pixelmetric.cpp polish.cpp sliders.cpp stylehint.cpp dsp.cpp subrects.cpp tabs.cpp)
-set(HDRS overlay.h dsp.h)
+set(HDRS overlay.h dsp.h namespace.h)
 set(MOC_HDRS overlay.h dsp.h)
 
 if (QTDBUS_FOUND)

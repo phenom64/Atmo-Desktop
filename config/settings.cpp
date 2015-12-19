@@ -7,6 +7,7 @@
 #include <QPalette>
 #include <QDebug>
 #include <QUrl>
+#include "../namespace.h"
 
 using namespace DSP;
 
@@ -638,12 +639,12 @@ Settings::read()
     conf.deco.frameSize         = readInt(Decoframe);
     conf.deco.embed             = readBool(Decoembedded);
     //pushbuttons
-    conf.pushbtn.rnd            = readInt(Pushbtnrnd);
+    conf.pushbtn.rnd            = qMin<quint8>(MaxRnd, readInt(Pushbtnrnd));
     conf.pushbtn.shadow         = readInt(Pushbtnshadow);
     conf.pushbtn.gradient       = stringToGrad(readString(Pushbtngrad));
     conf.pushbtn.tint           = tintColor(readString(Pushbtntint));
     //toolbuttons
-    conf.toolbtn.rnd            = readInt(Toolbtnrnd);
+    conf.toolbtn.rnd            = qMin<quint8>(MaxRnd, readInt(Toolbtnrnd));
     conf.toolbtn.shadow         = readInt(Toolbtnshadow);
     conf.toolbtn.gradient       = stringToGrad(readString(Toolbtngrad));
     conf.toolbtn.tint           = tintColor(readString(Toolbtntint));
@@ -651,13 +652,13 @@ Settings::read()
     conf.toolbtn.invAct         = readBool(Toolbtninvact);
     conf.toolbtn.flat           = readBool(Toolbtnflat);
     //inputs
-    conf.input.rnd              = readInt(Inputrnd);
+    conf.input.rnd              = qMin<quint8>(MaxRnd, readInt(Inputrnd));
     conf.input.shadow           = readInt(Inputshadow);
     conf.input.gradient         = stringToGrad(readString(Inputgrad));
     conf.input.tint             = tintColor(readString(Inputtint));
     //tabs
     conf.tabs.safari            = readBool(Tabsaf);
-    conf.tabs.rnd               = readInt(Tabrnd);
+    conf.tabs.rnd               = qMin<quint8>(MaxRnd, readInt(Tabrnd));
     conf.tabs.shadow            = readInt(Tabshadow);
     conf.tabs.gradient          = stringToGrad(readString(Tabgrad));
     conf.tabs.safrnd            = qMin(readInt(Saftabrnd), 8);
@@ -699,7 +700,7 @@ Settings::read()
     conf.views.treelines        = readBool(Viewtreelines);
     //progressbars
     conf.progressbars.shadow    = readInt(Progshadow);
-    conf.progressbars.rnd       = readInt(Progrnd);
+    conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));
     //shadows
     conf.shadows.opacity        = readFloat(Shadowopacity)/100.0f;
     conf.shadows.darkRaisedEdges = readBool(Shadowdarkraised);

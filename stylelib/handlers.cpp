@@ -7,6 +7,7 @@
 #include "ops.h"
 #include "../config/settings.h"
 #include "shadowhandler.h"
+#include "fx.h"
 
 #include <QMainWindow>
 #include <QCoreApplication>
@@ -248,7 +249,6 @@ TitleWidget::supported(const QToolBar *toolBar)
             || (toolBar->parentWidget() && toolBar->parentWidget()->parentWidget()))
         return false;
 
-    qDebug() << toolBar->parentWidget()->parentWidget();
     const QList<QWidget *> kids(toolBar->findChildren<QWidget *>());
     for (int i = 0; i < kids.count(); ++i)
     {
@@ -1019,11 +1019,12 @@ Window::eventFilter(QObject *o, QEvent *e)
                 if (XHandler::opacity() < 1.0f
                         && qobject_cast<QMainWindow *>(w))
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
-                p.fillRect(w->rect(), bgColor);
+//                p.fillRect(w->rect(), bgColor);
+                p.drawTiledPixmap(w->rect(), Render::noise(true));
             }
             else /// TODO
             {
-                p.fillRect(w->rect(), bgColor);
+                p.drawTiledPixmap(w->rect(), Render::noise(true));
             }
             if (WindowData *data = WindowData::memory(w->winId(), w))
                 if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
@@ -1714,7 +1715,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
             vp->setAttribute(Qt::WA_UpdatesDisabled, false);
         }
         if (dConf.uno.blur)
-            Render::expblur(img, dConf.uno.blur);
+            FX::expblur(img, dConf.uno.blur);
 
         if (dConf.uno.opacity < 1.0f)
         {
@@ -1824,7 +1825,7 @@ static QImage balloonTipShadow(const QRect &rect, const int radius)
     p.drawPath(balloonPath(img.rect().adjusted(radius, radius, -radius, -radius)));
     p.end();
 
-    Render::expblur(img, radius);
+    FX::expblur(img, radius);
     return img;
 }
 

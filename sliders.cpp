@@ -86,7 +86,9 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         }
         if (bar && !bar->isSliderDown())
             fgc.setAlpha(85.0f+((170.0f/(float)STEPS)*level));
-        Render::renderMask(slider, painter, fgc);
+        Render::drawMask(slider, painter, fgc);
+//        const int rnd(qMin(slider.height(), slider.width())/2);
+//        painter->drawRoundedRect(slider, rnd, rnd);
     }
     else if (dConf.scrollers.style >= 1)
     {
@@ -163,9 +165,9 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
-        Render::renderShadow(Rect, slider, painter, 32, All, dConf.shadows.opacity);
+        Render::drawShadow(Rect, slider, painter, 32, All, dConf.shadows.opacity);
         slider.adjust(1, 1, -1, -1);
-        Render::renderMask(slider, painter, lg);
+        Render::drawMask(slider, painter, lg);
     }
     return true;
 }
@@ -225,7 +227,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     QRect groove(realGroove);
 
     const bool hor(opt->orientation==Qt::Horizontal);
-    const Shadow gs(dConf.sliders.grooveShadow);
+    const ShadowStyle gs(dConf.sliders.grooveShadow);
     int d(/*gs==Carved?12:*/dConf.sliders.size/2); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
@@ -321,14 +323,14 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
             bgc = Color::mid(bgc, sc, STEPS-hl, hl);
         }
 
-        const Shadow sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
+        const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
         const QRect &sliderMask = Render::maskRect(sliderShadow, slider);
         QLinearGradient lg(0, 0, 0, sliderMask.height());
         lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
         QBrush mask(lg);
 
-        Render::renderShadow(sliderShadow, slider, painter, 32, All, dConf.shadows.opacity);
-        Render::renderMask(sliderMask, painter, mask);
+        Render::drawShadow(sliderShadow, slider, painter, 32, All, dConf.shadows.opacity);
+        Render::drawMask(sliderMask, painter, mask);
         //    Render::drawClickable(dConf.pushbtn.shadow, slider, painter, dConf.sliders.size/2, dConf.shadows.opacity, widget, option, &mask);
 
         if (dConf.sliders.dot)

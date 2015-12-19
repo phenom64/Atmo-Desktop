@@ -190,9 +190,9 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     else
     {
         if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && !(opt->SUNKEN))
-            Render::renderMask(opt->rect, painter, brush, rnd, All & ~Right);
+            Render::drawMask(opt->rect, painter, brush, rnd, All & ~Right);
         else if (opt->viewItemPosition == QStyleOptionViewItemV4::End && !(opt->SUNKEN))
-            Render::renderMask(opt->rect, painter, brush, rnd, All & ~Left);
+            Render::drawMask(opt->rect, painter, brush, rnd, All & ~Left);
         else
         {
             painter->fillRect(opt->rect, brush);

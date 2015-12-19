@@ -27,6 +27,7 @@
 #include <QRect>
 #include <QDialog>
 #include <QPainter>
+#include <QToolBox>
 
 using namespace DSP;
 
@@ -77,10 +78,10 @@ static TranslucencyWatcher t;
 
 Style::Style() : QCommonStyle()
 {
-    init();
-    XHandler::init();
-    assignMethods();
     DSP::Settings::read();
+    XHandler::init();
+    init();
+    assignMethods();
 #if QT_VERSION >= 0x050000
     if (XHandler::opacity() < 1.0f)
         qApp->installEventFilter(&t);

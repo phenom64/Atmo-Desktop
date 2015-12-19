@@ -19,14 +19,11 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
+#include "stylelib/shadows.h"
 #include "config/settings.h"
 #include "stylelib/handlers.h"
-
-/*
- * This here paints the button, in order to override
- * QCommonStyle painting, simply return true here
- * and paint what you want yourself.
- */
+#include "stylelib/masks.h"
+#include "stylelib/fx.h"
 
 using namespace DSP;
 
@@ -41,8 +38,6 @@ Style::drawPushButton(const QStyleOption *option, QPainter *painter, const QWidg
     drawPushButtonLabel(option, painter, widget);
     return true;
 }
-
-/* not sure if these 2 are needed at all */
 
 bool
 Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -195,7 +190,7 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
     QLinearGradient lg(0, 0, 0, Render::maskHeight(dConf.pushbtn.shadow, checkRect.height()));
     lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
     QBrush mask(lg);
-    Render::drawClickable(dConf.pushbtn.shadow, checkRect, painter, MAXRND, dConf.shadows.opacity, widget, option, &mask);
+    Render::drawClickable(dConf.pushbtn.shadow, checkRect, painter, MaxRnd, dConf.shadows.opacity, widget, option, &mask);
 
     if (opt->state & State_On)
     {
@@ -269,7 +264,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
     if (!widget || (dConf.toolbtn.flat&&option->SUNKEN))
     {
-        Render::renderShadow(option->SUNKEN?Sunken:Etched, option->rect, painter, dConf.toolbtn.rnd, All, dConf.shadows.opacity);
+        Render::drawShadow(option->SUNKEN?Sunken:Etched, option->rect, painter, dConf.toolbtn.rnd, All, dConf.shadows.opacity);
         return true;
     }
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
@@ -284,7 +279,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     if (dConf.toolbtn.flat||!bar)
     {
         if (hover[0] || opt->SUNKEN)
-            Render::renderShadow(opt->SUNKEN?Sunken:Etched, option->rect, painter, dConf.toolbtn.rnd, All, (dConf.shadows.opacity/STEPS)*hover[0]);
+            Render::drawShadow(opt->SUNKEN?Sunken:Etched, option->rect, painter, dConf.toolbtn.rnd, All, (dConf.shadows.opacity/STEPS)*hover[0]);
         return true;
     }
 
@@ -319,7 +314,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         QColor bca(bc);
         QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
-        Shadow shadow(dConf.toolbtn.shadow);
+        ShadowStyle shadow(dConf.toolbtn.shadow);
         bool ns(false);
         if (option->SUNKEN)
         {
@@ -378,9 +373,9 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
             QPainter pt(&pix);
             const Sides inv(All-sides);
             const QRect mr(Render::maskRect(shadow, rect, sides));
-            Render::renderShadow(shadow, mr, &pt, dConf.toolbtn.rnd, inv, dConf.shadows.opacity);
+            Render::drawShadow(shadow, mr, &pt, dConf.toolbtn.rnd, inv, dConf.shadows.opacity);
             pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            Render::renderShadow(shadow, mr, &pt, dConf.toolbtn.rnd, sides, dConf.shadows.opacity);
+            Render::drawShadow(shadow, mr, &pt, dConf.toolbtn.rnd, sides, dConf.shadows.opacity);
             pt.end();
             painter->drawTiledPixmap(rect, pix);
         }
@@ -540,7 +535,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
                     pix = s_pix.at(s_list.indexOf(check));
                 else
                 {
-                    pix = Render::monochromized(pix, opt->palette.color(textRole), Inset, isDark);
+                    pix = FX::monochromized(pix, opt->palette.color(textRole), Inset, isDark);
                     s_list << check;
                     s_pix << pix;
                 }

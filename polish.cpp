@@ -374,8 +374,12 @@ Style::polish(QWidget *widget)
     }
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment
-    if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))
-    if (static_cast<QFrame *>(widget)->frameShadow() == QFrame::Sunken
+    if (dConf.uno.enabled
+            && qobject_cast<QFrame *>(widget)
+//            && ((widget->parentWidget() && widget->parentWidget()->layout() && widget->parentWidget()->layout()->spacing() == 0
+//                && widget->parentWidget()->layout()->contentsMargins() == QMargins(0, 0, 0, 0))
+//                || (!widget->parentWidget() || widget->parentWidget()->layout()))
+            && static_cast<QFrame *>(widget)->frameShadow() == QFrame::Sunken
             && static_cast<QFrame *>(widget)->frameShape() == QFrame::StyledPanel)
         Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity*255.0f);
     QCommonStyle::polish(widget);

@@ -2,6 +2,7 @@
 #define OVERLAY_H
 
 #include <QWidget>
+#include "namespace.h"
 
 class QFrame;
 class QScrollBar;
@@ -30,9 +31,6 @@ class Overlay : public QWidget
 {
     Q_OBJECT
 public:
-    enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
-    enum Position { West = 0, North = 1, East = 2, South = 3, PosCount = 4 };
-    typedef uint Sides;
     ~Overlay();
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
