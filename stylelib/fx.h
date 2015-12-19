@@ -14,7 +14,7 @@ class QColor;
 namespace DSP
 {
 
-class FX
+class Q_DECL_EXPORT FX
 {
 public:
     FX();

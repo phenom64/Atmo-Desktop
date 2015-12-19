@@ -100,11 +100,11 @@ Shadow::genShadow(const ShadowStyle t)
         pt.end();
         FX::expblur(img, 1);
         p.drawImage(QPoint(0, 0), img);
+        p.setPen(Qt::NoPen);
         p.setBrush(Qt::black);
         p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), m_round, m_round);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.drawRoundedRect(pix.rect().adjusted(2, 2, -2, -2), m_round, m_round);
-//        p.fillRect(pix.rect(), img);
         break;
     }
     case Yosemite:
