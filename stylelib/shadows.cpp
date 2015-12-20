@@ -11,12 +11,12 @@ Shadow::Shadow(const ShadowStyle t, const quint8 r, const quint8 o)
     : m_type(t)
     , m_opacity(o)
     , m_round(r)
+    , m_pix(0)
 {
-    genShadow(t);
 }
 
 void
-Shadow::genShadow(const ShadowStyle t)
+Shadow::genShadow()
 {
     const int cornerSize(qMax<int>(4, m_round));
     const int size = cornerSize*2+1;
@@ -25,7 +25,7 @@ Shadow::genShadow(const ShadowStyle t)
     QPainter p(&pix);
     p.setRenderHint(QPainter::Antialiasing);
 
-    switch (t)
+    switch (m_type)
     {
     case Sunken:
     {
@@ -149,8 +149,10 @@ Shadow::genShadow(const ShadowStyle t)
 }
 
 void
-Shadow::render(const QRect &r, QPainter *p, const Sides s) const
+Shadow::render(const QRect &r, QPainter *p, const Sides s)
 {
+    if (!m_pix)
+        genShadow();
     const quint16 x(r.x()), y(r.y()), w(r.width()), h(r.height()), x2(x+w), y2(y+h), block(m_pix[TopLeftPart].width());
 
     //corners
@@ -204,6 +206,7 @@ Shadow::render(const QRect &r, QPainter *p, const Sides s) const
 void
 Shadow::split(const QPixmap &pix, const quint8 size, const quint8 cornerSize)
 {
+    m_pix = new QPixmap[PartCount]();
     m_pix[TopLeftPart] = pix.copy(0, 0, cornerSize, cornerSize);
     m_pix[TopMidPart] = pix.copy(cornerSize, 0, size-cornerSize*2, cornerSize);
     m_pix[TopRightPart] = pix.copy(size-cornerSize, 0, cornerSize, cornerSize);

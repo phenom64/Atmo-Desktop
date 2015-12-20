@@ -110,7 +110,7 @@ Basic::animate()
                 mouse = r.contains(slider->mapFromGlobal(QCursor::pos()));
             }
         const int val(it.value());
-        if (mouse && val < STEPS) //hovering...
+        if (mouse && val < Steps) //hovering...
         {
             needRunning = true;
             m_vals.insert(w, val+2);
@@ -241,7 +241,7 @@ Tabs::animate()
                 continue;
             const bool mouse(tb->tabRect(tab).contains(tb->mapFromGlobal(QCursor::pos())));
             const int val(levels.value(tab));
-            if (mouse && val < STEPS)
+            if (mouse && val < Steps)
             {
                 needRunning = true;
                 levels.insert(tab, val+2);
@@ -419,12 +419,12 @@ ToolBtns::animate()
         Level lvl(levels.first);
         ArrowLevel arLvl(levels.second);
 
-        if (btnMouse && lvl < STEPS)
+        if (btnMouse && lvl < Steps)
             lvl+=2;
         if (!btnMouse && lvl > 0)
             --lvl;
 
-        if (arrowMouse && arLvl < STEPS)
+        if (arrowMouse && arLvl < Steps)
             arLvl+=2;
         if (!arrowMouse && arLvl > 0)
             --arLvl;

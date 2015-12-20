@@ -110,7 +110,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         if (option->ENABLED && !(option->state & State_On))
         {
             int hl(Anim::Basic::level(widget));
-            bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+            bgc = Color::mid(bgc, sc, Steps-hl, hl);
         }
         if (dConf.pushbtn.tint.second > -1)
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);

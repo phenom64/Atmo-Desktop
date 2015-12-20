@@ -174,24 +174,7 @@ Render::drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painte
         s_shadows[r][shadow][true]->render(rect, painter, sides);
 }
 
-void
-Render::colorizePixmap(QPixmap &pix, const QBrush &b)
-{
-    QPixmap copy(pix);
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    p.fillRect(pix.rect(), b);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    p.drawPixmap(pix.rect(), copy);
-    p.end();
-}
 
-QPixmap
-Render::colorized(QPixmap pix, const QBrush &b)
-{
-    colorizePixmap(pix, b);
-    return pix;
-}
 
 static int randInt(int low, int high)
 {

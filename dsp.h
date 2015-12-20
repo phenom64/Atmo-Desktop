@@ -31,10 +31,6 @@ public:
 
     static void applyTranslucency(QWidget *widget);
 
-    /* reimplemented functions
-     * for now only some, we will
-     * reimplement as we go
-     */
     void drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;
     void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
@@ -137,6 +133,8 @@ public:
     DRAWARROW(South)
 #undef DRAWARROW
 
+    bool drawMultiTabBarTab(const QStyleOption *opt, QPainter *p, const QWidget *mt) const;
+
     /* events */
     bool paintEvent(QObject *o, QEvent *e);
     bool resizeEvent(QObject *o, QEvent *e);
@@ -162,6 +160,9 @@ public:
 protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
     static int layoutSpacingAndMargins(const QWidget *w);
+#define TESTOPT(_STATE_) static inline bool is##_STATE_(const QStyleOption *opt) { return opt->state & State_##_STATE_; }
+    TESTOPT(Sunken) TESTOPT(MouseOver) TESTOPT(Selected) TESTOPT(Active) TESTOPT(Enabled) TESTOPT(HasFocus) TESTOPT(On)
+#undef TESTOPT
 
 
 private:

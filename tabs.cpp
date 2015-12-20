@@ -26,6 +26,7 @@
 #include "stylelib/xhandler.h"
 #include "config/settings.h"
 #include "stylelib/handlers.h"
+#include "stylelib/fx.h"
 
 using namespace DSP;
 
@@ -111,7 +112,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     if (opt->ENABLED && !(opt->state & State_On) && bar)
     {
         int hl(Anim::Tabs::level(bar, bar->tabAt(opt->rect.center())));
-        bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+        bgc = Color::mid(bgc, sc, Steps-hl, hl);
     }
     QLinearGradient lg;
     QRect r(opt->rect);
@@ -749,7 +750,7 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     }
     int cc(isDark?0:255);
     QPixmap tmp(pix);
-    Render::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
+    FX::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
     QPixmap tmp2(pix);
     QPalette::ColorRole role(Ops::fgRole(bar, QPalette::WindowText));
     if (safTabs || (bar && bar->documentMode()))
@@ -758,7 +759,7 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
         role = QPalette::Highlight;
     else if (isSelected)
         role = Ops::opposingRole(role);
-    Render::colorizePixmap(tmp2, option->palette.color(role));
+    FX::colorizePixmap(tmp2, option->palette.color(role));
 
     QPixmap closer = QPixmap(option->rect.size());
     closer.fill(Qt::transparent);

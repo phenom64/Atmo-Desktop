@@ -22,13 +22,10 @@ class Shadow;
 class Q_DECL_EXPORT Render
 {
 public:
-    static void deleteInstance();
     static void generateData(const QPalette &pal);
     static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All, const QPoint &offSet = QPoint(), const int opacity = 255);
     static void drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, int roundNess = MaxRnd, const Sides sides = All, const float opacity = 1.0f, const QBrush *brush = 0);
     static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0, const float o = 1.0f);
-    static void colorizePixmap(QPixmap &pix, const QBrush &b);
-    static QPixmap colorized(QPixmap pix, const QBrush &b);
     static inline QPixmap &noise(const bool bg = false) { return s_noise[bg]; }
     static void drawClickable(ShadowStyle s,
                               QRect r,

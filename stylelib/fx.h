@@ -27,6 +27,8 @@ public:
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static QImage stretched(QImage img);
     static QImage stretched(QImage img, const QColor &c);
+    static void colorizePixmap(QPixmap &pix, const QBrush &b);
+    static QPixmap colorized(QPixmap pix, const QBrush &b);
 };
 
 }

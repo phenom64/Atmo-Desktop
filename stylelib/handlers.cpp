@@ -808,7 +808,7 @@ ToolBar::embedTitleWidget(qulonglong bar)
 
     s_titleQueue.removeOne(bar);
     QToolBar *toolBar = getChild<QToolBar *>(bar);
-    if (toolBar)
+    if (toolBar && toolBar->styleSheet().isEmpty())
     {
         toolBar->blockSignals(true);
         toolBar->setMovable(true);

@@ -176,7 +176,7 @@ XHandler::XPixmap
     p.setBrush(Qt::black);
     p.setPen(Qt::NoPen);
     const QPixmap &sh(QPixmap::fromImage(FX::blurred(mask.toImage(), mask.rect(), 8)));
-    p.drawTiledPixmap(img.rect(), Render::colorized(sh, Qt::black));
+    p.drawTiledPixmap(img.rect(), FX::colorized(sh, Qt::black));
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawTiledPixmap(img.rect(), mask);
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);

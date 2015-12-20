@@ -513,3 +513,22 @@ FX::monochromized(const QPixmap &source, const QColor &color, const Effect effec
     return result;
 }
 
+void
+FX::colorizePixmap(QPixmap &pix, const QBrush &b)
+{
+    QPixmap copy(pix);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.fillRect(pix.rect(), b);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    p.drawPixmap(pix.rect(), copy);
+    p.end();
+}
+
+QPixmap
+FX::colorized(QPixmap pix, const QBrush &b)
+{
+    colorizePixmap(pix, b);
+    return pix;
+}
+

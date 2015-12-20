@@ -85,7 +85,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             painter->setPen(saved);
         }
         if (bar && !bar->isSliderDown())
-            fgc.setAlpha(85.0f+((170.0f/(float)STEPS)*level));
+            fgc.setAlpha(85.0f+((170.0f/(float)Steps)*level));
         Render::drawMask(slider, painter, fgc);
 //        const int rnd(qMin(slider.height(), slider.width())/2);
 //        painter->drawRoundedRect(slider, rnd, rnd);
@@ -93,7 +93,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
     else if (dConf.scrollers.style >= 1)
     {
         if (opt->SUNKEN)
-            level = STEPS;
+            level = Steps;
         const QPalette pal = QApplication::palette();
         QColor bgColor(pal.color(QPalette::Window)), fgColor(pal.color(QPalette::WindowText));
 
@@ -164,7 +164,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         ///the slider
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
-        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, STEPS-level)));
+        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
         Render::drawShadow(Rect, slider, painter, 32, All, dConf.shadows.opacity);
         slider.adjust(1, 1, -1, -1);
         Render::drawMask(slider, painter, lg);
@@ -320,7 +320,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
         if (option->ENABLED)
         {
             int hl(Anim::Basic::level(widget));
-            bgc = Color::mid(bgc, sc, STEPS-hl, hl);
+            bgc = Color::mid(bgc, sc, Steps-hl, hl);
         }
 
         const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
