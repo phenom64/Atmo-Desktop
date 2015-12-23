@@ -5,7 +5,7 @@
 #include <QWidget>
 #include <QQueue>
 #include <QTimer>
-#include "render.h"
+#include "gfx.h"
 
 /**
  * This class is a mess atm, I just add stuff here
@@ -43,7 +43,6 @@ public:
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
-    static void toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, Sides &sides);
     static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
     static void swap(int &t1, int &t2);
     template<typename T>static void swap(T &t1, T &t2)

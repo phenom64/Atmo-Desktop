@@ -1,5 +1,5 @@
 #include "dsp.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 #include "stylelib/ops.h"
 #include "stylelib/xhandler.h"
 #include "stylelib/color.h"

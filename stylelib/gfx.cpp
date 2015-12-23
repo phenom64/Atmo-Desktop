@@ -14,7 +14,7 @@
 #include <QBrush>
 
 #include "fx.h"
-#include "render.h"
+#include "gfx.h"
 #include "color.h"
 #include "../config/settings.h"
 #include "macros.h"
@@ -25,12 +25,12 @@
 
 using namespace DSP;
 
-QPixmap *Render::s_tab = 0;
-QPixmap *Render::s_noise = 0;
-Shadow *Render::s_shadows[MaxRnd+1][ShadowCount][2] = {0};
+QPixmap *GFX::s_tab = 0;
+QPixmap *GFX::s_noise = 0;
+Shadow *GFX::s_shadow[MaxRnd+1][ShadowCount][2] = {0};
 
 void
-Render::generateData(const QPalette &pal)
+GFX::generateData(const QPalette &pal)
 {
     initShadows(pal);
     initTabs();
@@ -38,14 +38,14 @@ Render::generateData(const QPalette &pal)
 }
 
 void
-Render::initShadows(const QPalette &pal)
+GFX::initShadows(const QPalette &pal)
 {
     const int winLum = Color::luminosity(pal.color(QPalette::Window));
     for (int r = 0; r < MaxRnd+1; ++r)
     for (ShadowStyle s = 0; s < ShadowCount; ++s)
     {
-        s_shadows[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity*255);
-        s_shadows[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*255);
+        s_shadow[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity*255);
+        s_shadow[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*127);
     }
 }
 
@@ -71,7 +71,7 @@ static QPainterPath tab(const QRect &r, int rnd)
 static const int ts(4); //tab shadow...
 
 void
-Render::initTabs()
+GFX::initTabs()
 {
     if (!s_tab)
         s_tab = new QPixmap[PartCount]();
@@ -120,7 +120,7 @@ Render::initTabs()
 }
 
 void
-Render::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, const float o)
+GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, const float o)
 {
     const QSize sz(s_tab[TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
@@ -159,22 +159,20 @@ Render::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path,
 }
 
 void
-Render::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offSet, const int opacity)
+GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
 {
     Mask::render(rect, brush, painter, qMin(roundNess, qMin(rect.height(), rect.width())/2), sides);
 }
 
 void
-Render::drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, int roundNess, const Sides sides, const float opacity, const QBrush *brush)
+GFX::drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, const bool isEnabled, int roundNess, const Sides sides)
 {
     if (!rect.isValid())
         return;
-    const quint8 r = qMin(roundNess, qMin(rect.height(), rect.width())/2);
+    const quint8 r = qBound(0, roundNess, qMin(rect.height(), rect.width())/2);
     if (r >= 0 && r <= MaxRnd)
-        s_shadows[r][shadow][true]->render(rect, painter, sides);
+        s_shadow[r][shadow][isEnabled]->render(rect, painter, sides);
 }
-
-
 
 static int randInt(int low, int high)
 {
@@ -183,7 +181,7 @@ static int randInt(int low, int high)
 }
 
 void
-Render::makeNoise()
+GFX::makeNoise()
 {
     if (!s_noise)
         s_noise = new QPixmap[2]();
@@ -283,20 +281,16 @@ Render::makeNoise()
 }
 
 void
-Render::drawClickable(ShadowStyle s,
-                      QRect r,
-                      QPainter *p,
-                      int rnd,
-                      float opacity,
-                      const QWidget *w,
-                      const QStyleOption *opt,
-                      QBrush *mask ,
-                      QBrush *shadow,
-                      const Sides sides,
-                      const QPoint &offSet)
+GFX::drawClickable(ShadowStyle s,
+                   QRect r,
+                   QPainter *p,
+                   const QBrush mask,
+                   int rnd,
+                   const Sides sides,
+                   const QStyleOption *opt,
+                   const QWidget *w)
 {
-    const int maxRnd(qMin(r.height(), r.width())>>1);
-    rnd = qMin(rnd, maxRnd);
+    rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1)+2);
     if (s >= ShadowCount)
         return;
 
@@ -309,6 +303,7 @@ Render::drawClickable(ShadowStyle s,
                         &&!(s==Raised||s==Carved)
                         &&qobject_cast<const QToolButton *>(w)
                         &&qobject_cast<const QToolBar *>(w->parentWidget()));
+    const bool isEnabled(!opt || (opt->state & QStyle::State_Enabled));
     if (opt
             && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
             && s != Carved && s != Yosemite && s != Rect && s != ElCapitan && !isToolBox && !isLineEdit)
@@ -322,14 +317,12 @@ Render::drawClickable(ShadowStyle s,
     if (w)
     {
         int count(0);
-//        int r(0), g(0), b(0);
         QColor bgc(Qt::white);
         int bgl(255);
-        if (mask && mask->gradient())
+        if (mask.gradient())
         {
-            const QGradientStops stops(mask->gradient()->stops());
+            const QGradientStops stops(mask.gradient()->stops());
             count = stops.count();
-
             for (int i = 0; i < count; ++i)
             {
                 const QColor nbgc(stops.at(i).second);
@@ -339,11 +332,6 @@ Render::drawClickable(ShadowStyle s,
                     bgl = nbgl;
                     bgc = nbgc;
                 }
-//                int tr, tg, tb;
-//                stops.at(i).second.getRgb(&tr, &tg, &tb);
-//                r+=tr;
-//                g+=tg;
-//                b+=tb;
             }
         }
         //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
@@ -352,8 +340,6 @@ Render::drawClickable(ShadowStyle s,
         QPalette::ColorRole fg(sunken&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
         bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
         fgLum = Color::luminosity(w->palette().color(QPalette::Active, fg));
-//        if (checked)
-//            Ops::swap(bgLum, fgLum);
         if (QWidget *parent = w->parentWidget())
         {
             pbgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->backgroundRole()));
@@ -365,41 +351,20 @@ Render::drawClickable(ShadowStyle s,
             pfgLum = fgLum;
         }
     }
-
-//    const bool isDark(fgLum>bgLum);
     const bool darkParent(pfgLum>pbgLum);
     const bool parentContrast(qMax(pbgLum, bgLum)-qMin(pbgLum, bgLum) > 127);
-    if (bgLum > pbgLum && !darkParent)
-        opacity = qMin(1.0f, opacity+((bgLum-pbgLum)/255.0f));
-
-    if (opt && !(opt->ENABLED) && !qstyleoption_cast<const QStyleOptionToolButton *>(opt))
-        opacity/=2.0f;
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
-    if (s==Raised || s==Yosemite)
+
+    if (s==Yosemite)
     {
-        if (s==Yosemite && !shadow)
-        {
-            const int o(opacity*255);
-            QLinearGradient lg(0, 0, 0, r.height());
-            lg.setColorAt(0.0f, QColor(0, 0, 0, o/3));
-            lg.setColorAt(0.8f, QColor(0, 0, 0, o/3));
-            lg.setColorAt(1.0f, QColor(0, 0, 0, o));
-            QBrush sh(lg);
-            drawShadow(s, r, p, rnd, sides, opacity, &sh);
-        }
-        else
-            drawShadow(s, r, p, rnd, sides, opacity, shadow);
+        drawShadow(s, r, p, isEnabled, rnd, sides);
         const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
-        const int m(2);
-        if (s==Yosemite)
-            r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
-        else
-            r.sAdjust(m, m, -m, -m);
-        if (!inToolBar || s==Raised)
-            rnd = qMax(0, rnd-m);
+        r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
     }
+    else if (s==Raised)
+        r.sAdjust(2, 2, -2, -2);
     else if (s==Carved)
     {
         QLinearGradient lg(0, 0, 0, r.height());
@@ -408,7 +373,7 @@ Render::drawClickable(ShadowStyle s,
         int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0.1f, QColor(0, 0, 0, low));
         lg.setColorAt(1.0f, QColor(255, 255, 255, high));
-        drawMask(r, p, lg, rnd, sides, offSet);
+        drawMask(r, p, lg, rnd, sides);
         const int m(qMin(r.height(), r.width())<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
         r.sAdjust((m+needHor), m, -(m+needHor), -m);
@@ -419,36 +384,27 @@ Render::drawClickable(ShadowStyle s,
 
     /// BEGIN ACTUAL PLATE PAINTING
 
-    if (mask)
-    {
-        const bool n(s == Sunken && bgLum > pbgLum);
-        drawMask(r.sAdjusted(n, n, -n, -n), p, *mask, rnd, sides, offSet, inActive?127:255);
-        rnd = qMin(rnd, qFloor(qMin(r.height(), r.width())/2.0f));
-    }
+    const bool n(s == Sunken && bgLum > pbgLum);
+    drawMask(r.sAdjusted(n, n, -n, -n), p, mask, rnd, sides);
+    rnd = qMin(rnd, qFloor(qMin(r.height(), r.width())/2.0f));
 
     /// END PLATE
 
     if (s==Carved)
     {
-        const float o(parentContrast?qMax(pbgLum, bgLum)/255.0f:opacity);
-        drawShadow(Rect, r, p, rnd, sides, o);
+        drawShadow(Rect, r, p, isEnabled, rnd, sides);
     }
     else if (s==Sunken||s==Etched)
     {
         r.sAdjust(0, 0, 0, 1);
-        drawShadow(s, r, p, rnd, sides, qMin(1.0f, (((255-qMin(pbgLum, bgLum))/255.0f)*opacity)+opacity));
+        drawShadow(s, r, p, isEnabled, rnd, sides);
     }
     else if (s==Raised && !isToolBox)
     {
-        QLinearGradient lg(0, 0, 0, r.height());
-        const float lumop(qMin<float>(255.0f, opacity*1.5f*bgLum));
-        lg.setColorAt(0.0f, QColor(255, 255, 255, lumop));
-        lg.setColorAt(0.5f, QColor(255, 255, 255, opacity*0.75f*bgLum));
-        QBrush b(lg);
-//        drawShadow(Rect, r, p, rnd, sides, 1.0f, &b);
-
+        drawShadow(s, r.sAdjusted(-2, -2, 2, 2), p, isEnabled, rnd, sides);
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
+            const float lumop(qMin<float>(255.0f, 1.5f*bgLum));
             QLinearGradient edges(0, 0, r.width(), 0);
             const QColor edge(QColor(0, 0, 0, lumop));
             const float position(5.0f/r.width());
@@ -466,11 +422,11 @@ Render::drawClickable(ShadowStyle s,
         }
     }
     else if (s==Rect || s==ElCapitan)
-        drawShadow(s, r, p, rnd, sides, opacity);
+        drawShadow(s, r, p, isEnabled, rnd, sides);
 }
 
 Pos
-Render::pos(const Sides s, const Qt::Orientation o)
+GFX::pos(const Sides s, const Qt::Orientation o)
 {
     if (o == Qt::Horizontal)
     {
@@ -497,7 +453,7 @@ Render::pos(const Sides s, const Qt::Orientation o)
 }
 
 int
-Render::maskHeight(const ShadowStyle s, const int height)
+GFX::maskHeight(const ShadowStyle s, const int height)
 {
     switch (s)
     {
@@ -517,7 +473,7 @@ Render::maskHeight(const ShadowStyle s, const int height)
 }
 
 int
-Render::maskWidth(const ShadowStyle s, const int width)
+GFX::maskWidth(const ShadowStyle s, const int width)
 {
     switch (s)
     {
@@ -534,7 +490,7 @@ Render::maskWidth(const ShadowStyle s, const int width)
 }
 
 QRect
-Render::maskRect(const ShadowStyle s, const QRect &r, const Sides sides)
+GFX::maskRect(const ShadowStyle s, const QRect &r, const Sides sides)
 {
     //sides needed for sAdjusted macro even if seemingly unused
     switch (s)
@@ -550,7 +506,7 @@ Render::maskRect(const ShadowStyle s, const QRect &r, const Sides sides)
 }
 
 int
-Render::shadowMargin(const ShadowStyle s)
+GFX::shadowMargin(const ShadowStyle s)
 {
     switch (s)
     {
@@ -564,7 +520,7 @@ Render::shadowMargin(const ShadowStyle s)
 }
 
 void
-Render::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
+GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
 {
     p->save();
     p->translate(r.topLeft());
@@ -588,7 +544,7 @@ Render::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool t
 }
 
 void
-Render::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align)
+GFX::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align)
 {
     const QPalette::ColorRole bgRole(Ops::opposingRole(role));
     if (pal.color(role).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
@@ -607,13 +563,13 @@ Render::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &p
 }
 
 void
-Render::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align, const bool bevel)
+GFX::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align, const bool bevel)
 {
     if (bevel)
     {
         const int v = Color::luminosity(c);
         const int rgb = v < 128 ? 255 : 0;
-        drawArrow(p, QColor(rgb, rgb, rgb, v), r.translated(0,1), d, size);
+        drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity*255.0f), r.translated(0, 1), d, size);
     }
     p->save();
     p->setPen(Qt::NoPen);

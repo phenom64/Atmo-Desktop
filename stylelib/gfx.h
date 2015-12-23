@@ -1,5 +1,5 @@
-#ifndef RENDER_H
-#define RENDER_H
+#ifndef GFX_H
+#define GFX_H
 
 //#include <QPixmap>
 //#include <QPainter>
@@ -19,25 +19,22 @@ class QPalette;
 namespace DSP
 {
 class Shadow;
-class Q_DECL_EXPORT Render
+class Q_DECL_EXPORT GFX
 {
 public:
     static void generateData(const QPalette &pal);
-    static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All, const QPoint &offSet = QPoint(), const int opacity = 255);
-    static void drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, int roundNess = MaxRnd, const Sides sides = All, const float opacity = 1.0f, const QBrush *brush = 0);
+    static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All);
+    static void drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, const bool isEnabled = true, int roundNess = MaxRnd, const Sides sides = All);
     static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0, const float o = 1.0f);
     static inline QPixmap &noise(const bool bg = false) { return s_noise[bg]; }
     static void drawClickable(ShadowStyle s,
                               QRect r,
                               QPainter *p,
-                              int rnd = MaxRnd,
-                              float opacity = 1.0f,
-                              const QWidget *w = 0,
-                              const QStyleOption *o = 0,
-                              QBrush *mask = 0,
-                              QBrush *shadow = 0,
+                              const QBrush mask,
+                              int rnd,
                               const Sides sides = All,
-                              const QPoint &offSet = QPoint());
+                              const QStyleOption *opt = 0,
+                              const QWidget *w = 0);
     static Pos pos(const Sides s, const Qt::Orientation o);
     static int maskHeight(const ShadowStyle s, const int height);
     static int maskWidth(const ShadowStyle s, const int width);
@@ -55,9 +52,9 @@ protected:
 private:
     static QPixmap *s_tab;
     static QPixmap *s_noise;
-    static Shadow *s_shadows[MaxRnd+1][ShadowCount][2];
+    static Shadow *s_shadow[MaxRnd+1][ShadowCount][2];
 };
 
 } //namespace
 
-#endif // RENDER_H
+#endif // GFX_H

@@ -14,8 +14,11 @@ class OverlayHandler : public QObject
 {
     Q_OBJECT
 public:
-    static OverlayHandler *instance() { return &s_instance; }
+    static OverlayHandler *instance();
     static void manage(Overlay *o);
+
+public slots:
+    void manageOverlay(QWidget *f);
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -24,21 +27,22 @@ protected slots:
     void overlayDeleted();
 
 private:
-    static OverlayHandler s_instance;
+    static OverlayHandler *s_instance;
 };
 
 class Overlay : public QWidget
 {
     Q_OBJECT
 public:
+    Overlay(QWidget *parent = 0, int opacity = 0);
     ~Overlay();
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
     static Overlay *overlay(const QWidget *frame);
+    static bool isSupported(const QFrame *f);
     inline Sides &sides() { return m_sides; }
 
 protected:
-    Overlay(QWidget *parent = 0, int opacity = 0);
     void paintEvent(QPaintEvent *);
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);

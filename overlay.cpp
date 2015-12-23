@@ -21,10 +21,20 @@
 #include <QMainWindow>
 #include <QLayout>
 
+#include <QDialog>
+
 using namespace DSP;
 
-OverlayHandler OverlayHandler::s_instance;
+OverlayHandler *OverlayHandler::s_instance = 0;
 static QList<Overlay *> s_overLays;
+
+OverlayHandler
+*OverlayHandler::instance()
+{
+    if (!s_instance)
+        s_instance = new OverlayHandler();
+    return s_instance;
+}
 
 void
 OverlayHandler::manage(Overlay *o)
@@ -62,6 +72,63 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
     return false;
 }
 
+void
+OverlayHandler::manageOverlay(QWidget *f)
+{
+    if (Overlay::isSupported(static_cast<QFrame *>(f)))
+        new Overlay(f, dConf.shadows.opacity*255.0f);
+}
+
+//------------------------------------------------------------------------------------------------------------
+
+bool
+Overlay::isSupported(const QFrame *f)
+{
+    if (!f || dConf.app == Settings::Eiskalt)
+        return false;
+
+    if (f->frameShadow() != QFrame::Sunken || f->frameShape() != QFrame::StyledPanel)
+        return false;
+
+    QWidget *p = f->parentWidget();
+    if (!p)
+        return false;
+
+    if (f->inherits("KMultiTabBarInternal"))
+        return true;
+    QLayout *l = p->layout();
+    static const QMargins m(0, 0, 0, 0);
+    if ((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || f->size() == p->size())
+        return true;
+    return false;
+}
+
+bool
+Overlay::manage(QWidget *frame, int opacity)
+{
+    if (!frame || overlay(frame))
+        return false;
+//    QMetaObject::invokeMethod(OverlayHandler::instance(), "manageOverlay", Qt::QueuedConnection, Q_ARG(QWidget*, frame));
+    if (isSupported(qobject_cast<QFrame *>(frame)))
+    {
+        new Overlay(frame, opacity);
+        return true;
+    }
+    return false;
+}
+
+bool
+Overlay::release(QWidget *frame)
+{
+    if (Overlay *o = frame->findChild<Overlay *>())
+        if (o->parent() == frame)
+        {
+            o->deleteLater();
+            return true;
+        }
+    return false;
+}
+
 Overlay::Overlay(QWidget *parent, int opacity)
     : QWidget(parent)
     , m_alpha(opacity)
@@ -80,6 +147,8 @@ Overlay::Overlay(QWidget *parent, int opacity)
 //    const QList<QStackedWidget *> stacks(m_frame->window()->findChildren<QStackedWidget *>());
 //    for (int i = 0; i < stacks.count(); ++i)
 //        stacks.at(i)->installEventFilter(this);
+//    QMetaObject::invokeMethod(this, "updateOverlay", Qt::QueuedConnection);
+    raise();
 }
 
 Overlay::~Overlay()
@@ -236,13 +305,13 @@ Overlay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        bool isSplitter(dConf.app!=Settings::Eiskalt&&(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter" && qMin(w->width(), w->height()) == 5)));
+        bool isSplitter(style()->pixelMetric(QStyle::PM_SplitterWidth) == 1 && (qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter")));
         if (isSplitter && !qobject_cast<QSplitterHandle *>(w))
         {
             QRect geo = windowGeo(w);
             if (w->height() == 5)
             {
-                geo.setY(geo.y()+2+(pos[i]==North));
+                geo.setY(geo.y()+2+(pos[i]==South));
                 geo.setHeight(1);
             }
             else if (w->width() == 5)
@@ -284,32 +353,6 @@ Overlay::updateOverlay()
 
     raise();
     update();
-}
-
-bool
-Overlay::manage(QWidget *frame, int opacity)
-{
-    if (!frame || overlay(frame))
-        return false;
-
-    if (qobject_cast<QMainWindow *>(frame->window()))
-    {
-        new Overlay(frame, opacity);
-        return true;
-    }
-    return false;
-}
-
-bool
-Overlay::release(QWidget *frame)
-{
-    if (Overlay *o = frame->findChild<Overlay *>())
-        if (o->parent() == frame)
-        {
-            o->deleteLater();
-            return true;
-        }
-    return false;
 }
 
 QRegion

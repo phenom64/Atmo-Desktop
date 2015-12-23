@@ -6,7 +6,7 @@
 #include <QApplication>
 #include <QMap>
 #include <QLabel>
-#include "render.h"
+#include "gfx.h"
 #include "widgets.h"
 
 #if HASDBUS

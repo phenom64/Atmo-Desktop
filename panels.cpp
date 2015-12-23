@@ -14,7 +14,7 @@
 #include <QAbstractScrollArea>
 
 #include "dsp.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "stylelib/handlers.h"
@@ -112,7 +112,7 @@ Style::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *wi
     Sides sides(All);
     if (widget && widget->property("DSP_SHAPETOP").toBool())
         sides &= ~Top;
-    Render::drawMask(option->rect, painter, bgc, 4, sides);
+    GFX::drawMask(option->rect, painter, bgc, 4, sides);
 //    painter->drawRoundedRect(option->rect, 4, 4);
 //    painter->restore();
     return true;
@@ -130,7 +130,7 @@ Style::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const 
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
 
-    Render::drawShadow(Sunken, cont, painter, 8, All, dConf.shadows.opacity);
+    GFX::drawShadow(Sunken, cont, painter, isEnabled(opt), 8);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -264,20 +264,20 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
     {
-        Render::drawShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All, o);
+        GFX::drawShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All, o);
     }
     else if (opt->state & State_Raised)
     {
         QPixmap pix(frame->rect().size());
         pix.fill(Qt::transparent);
         QPainter p(&pix);
-        Render::drawShadow(Raised, pix.rect(), &p, 8, All, o);
+        GFX::drawShadow(Raised, pix.rect(), &p, 8, All, o);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        Render::drawMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
+        GFX::drawMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
         p.end();
         painter->drawTiledPixmap(frame->rect(), pix);
     }
     else if (frame && frame->frameShadow() == QFrame::Plain)
-        Render::drawShadow(Etched, r, painter, 6, All, o);
+        GFX::drawShadow(Etched, r, painter, 6, All, o);
     return true;
 }

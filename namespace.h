@@ -30,7 +30,7 @@ enum ShadowType { Sunken = 0,
 enum TabPos { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
 enum Effect { Noeffect =0, Inset, Outset };
 enum Control { Input, ProgressBar, PushBtn, Scroller, Slider, Tab, ToolBtn, ControlCount };
-enum { Enabled = 0, Disabled =1 };
+enum { Disabled = 0, Enabled = 1 };
 enum { Round = 0, Square =1 };
 
 typedef quint8 Sides, ShadowStyle, Part, Direction;

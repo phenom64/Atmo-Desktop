@@ -5,7 +5,7 @@
 
 #include "dsp.h"
 #include "stylelib/ops.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 #include "stylelib/handlers.h"
 #include "config/settings.h"
 #include "namespace.h"

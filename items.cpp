@@ -18,7 +18,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/color.h"
 #include "config/settings.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 
 using namespace DSP;
 
@@ -108,12 +108,12 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     if (opt->checked)
-        Render::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
+        GFX::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
     else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
-        Render::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
+        GFX::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
 
     if (isMenu && hasMenu)
-        Render::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
+        GFX::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
@@ -190,9 +190,9 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     else
     {
         if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && !(opt->SUNKEN))
-            Render::drawMask(opt->rect, painter, brush, rnd, All & ~Right);
+            GFX::drawMask(opt->rect, painter, brush, rnd, All & ~Right);
         else if (opt->viewItemPosition == QStyleOptionViewItemV4::End && !(opt->SUNKEN))
-            Render::drawMask(opt->rect, painter, brush, rnd, All & ~Left);
+            GFX::drawMask(opt->rect, painter, brush, rnd, All & ~Left);
         else
         {
             painter->fillRect(opt->rect, brush);
@@ -306,7 +306,7 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
                 fgc = Color::mid(fgc, option->palette.color(bg));
         }
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
-        Render::drawArrow(painter, fgc, option->rect, option->state & State_Open ? South : East, dConf.views.treelines?7:dConf.arrowSize);
+        GFX::drawArrow(painter, fgc, option->rect, option->state & State_Open ? South : East, dConf.views.treelines?7:dConf.arrowSize);
     }
 
     painter->restore();
@@ -368,7 +368,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
 //        Render::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, 7);
-        Render::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, pixelMetric(PM_HeaderMarkSize));
+        GFX::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, pixelMetric(PM_HeaderMarkSize));
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));

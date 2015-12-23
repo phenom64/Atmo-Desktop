@@ -72,13 +72,12 @@ Style::applyTranslucency(QWidget *widget)
     widget->setVisible(wasVisible);
 }
 
-/* a non-const environment that is called
- * for for every widget directly after its
- * creation, one can manipulate them in
- * pretty much any way here.
- */
-
-#define installFilter(_VAR_) { _VAR_->removeEventFilter(this); _VAR_->installEventFilter(this); }
+void
+Style::installFilter(QWidget *w)
+{
+    w->removeEventFilter(this);
+    w->installEventFilter(this);
+}
 
 void
 Style::polish(QWidget *widget)
@@ -86,8 +85,6 @@ Style::polish(QWidget *widget)
     if (!widget)
         return;
 
-//    if (widget->inherits("KateTabBar")) //that new fancy kate tabbar
-//        qDebug() << widget;
 #if DEBUG
     if (widget->parentWidget())
         qDebug() << "polishing widget:" << widget << "with parentWidget:" << widget->parentWidget();
@@ -354,11 +351,13 @@ Style::polish(QWidget *widget)
     else if (widget->inherits("KMultiTabBarTab"))
     {
         installFilter(widget);
-        if (QFrame *frame = qobject_cast<QFrame *>(widget->parentWidget()))
+    }
+    else if (widget->inherits("KMultiTabBarInternal"))
+    {
+        if (QFrame *frame = qobject_cast<QFrame *>(widget))
         {
             frame->setFrameShadow(QFrame::Sunken);
             frame->setFrameShape(QFrame::StyledPanel);
-            Overlay::manage(frame, 255.0f*dConf.shadows.opacity);
             installFilter(frame);
             frame->setContentsMargins(0, 0, 0, 0);
         }
@@ -374,13 +373,7 @@ Style::polish(QWidget *widget)
     }
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment
-    if (dConf.uno.enabled
-            && qobject_cast<QFrame *>(widget)
-//            && ((widget->parentWidget() && widget->parentWidget()->layout() && widget->parentWidget()->layout()->spacing() == 0
-//                && widget->parentWidget()->layout()->contentsMargins() == QMargins(0, 0, 0, 0))
-//                || (!widget->parentWidget() || widget->parentWidget()->layout()))
-            && static_cast<QFrame *>(widget)->frameShadow() == QFrame::Sunken
-            && static_cast<QFrame *>(widget)->frameShape() == QFrame::StyledPanel)
+    if (dConf.uno.enabled && qobject_cast<QFrame *>(widget) && Overlay::isSupported(static_cast<QFrame *>(widget)))
         Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity*255.0f);
     QCommonStyle::polish(widget);
 }
@@ -416,7 +409,7 @@ Style::polish(QPalette &p)
     QCommonStyle::polish(p);
     if (dConf.palette)
         p = *dConf.palette;
-    Render::generateData(p);
+    GFX::generateData(p);
 }
 
 void

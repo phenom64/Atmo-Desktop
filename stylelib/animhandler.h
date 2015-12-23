@@ -76,7 +76,7 @@ public:
     static ToolBtns *instance();
     static void manage(QToolButton *tb);
     static void release(QToolButton *tb);
-    static int level(const QToolButton *tb, bool arrow) { return instance()->hoverLevel(tb, arrow); }
+    static int level(const QToolButton *tb, bool arrow = false) { return instance()->hoverLevel(tb, arrow); }
 
 protected:
     bool eventFilter(QObject *, QEvent *);

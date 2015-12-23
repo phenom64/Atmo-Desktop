@@ -20,7 +20,7 @@
 
 #include "dsp.h"
 #include "stylelib/ops.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 #include "stylelib/color.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/xhandler.h"
@@ -65,7 +65,7 @@ Style::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBa
     r.setRight(r.right()+rightMargin);
 
     QPainterPath p;
-    Render::drawTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p, dConf.shadows.opacity);
+    GFX::drawTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p, dConf.shadows.opacity);
     if (isSelected)
     {
         painter->save();
@@ -123,7 +123,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     case QTabBar::TriangularNorth:
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
-        lg = QLinearGradient(0, 0, 0, Render::maskHeight(dConf.tabs.shadow, r.height()));
+        lg = QLinearGradient(0, 0, 0, GFX::maskHeight(dConf.tabs.shadow, r.height()));
         if (isOnly)
             break;
         if (isRtl)
@@ -133,12 +133,12 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
-        lg = QLinearGradient(0, 0, Render::maskWidth(dConf.tabs.shadow, r.width()), 0);
+        lg = QLinearGradient(0, 0, GFX::maskWidth(dConf.tabs.shadow, r.width()), 0);
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
         {
-            lg = QLinearGradient(Render::maskWidth(dConf.tabs.shadow, r.width()), 0, 0, 0);
+            lg = QLinearGradient(GFX::maskWidth(dConf.tabs.shadow, r.width()), 0, 0, 0);
         }
         vert = true;
         if (isOnly)
@@ -148,9 +148,8 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     default: break;
     }
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, bgc));
-    QBrush b(lg);
-    Render::drawClickable(dConf.tabs.shadow, r, painter, dConf.tabs.rnd, dConf.shadows.opacity, bar, opt, &b, 0, sides);
-    const QRect mask(Render::maskRect(dConf.tabs.shadow, r, sides));
+    GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, sides, opt, bar);
+    const QRect mask(GFX::maskRect(dConf.tabs.shadow, r, sides));
     if (isSelected && !isOnly)
     {
         const QPen pen(painter->pen());
@@ -498,11 +497,10 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
         p->setRenderHint(QPainter::Antialiasing, false);
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
-        p->setPen(QColor(0, 0, 0, 255.0f*(dConf.shadows.opacity/2.0f)));
-        p->drawLine(r.topLeft(), r.topRight());
         p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        Render::drawShadow(Sunken, r, p, 0, Top, dConf.shadows.opacity/2);
+        GFX::drawShadow(Sunken, r, p, bar->isEnabled(), 0, Top);
+//        GFX::s_shadow[0][Sunken][Enabled]->render(r, p, Top);
         p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     else if (bar->documentMode() && bar->isVisible())
@@ -687,7 +685,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         }
     }
     if (!tabWidget->documentMode())
-        Render::drawShadow(Sunken, rect, painter, 7, All, dConf.shadows.opacity);
+        GFX::drawShadow(Sunken, rect, painter, isEnabled(opt), 7, All);
     return true;
 }
 
@@ -832,11 +830,9 @@ Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const 
     if (!last)
         sides &= ~Bottom;
 
-    QLinearGradient lg(0, 0, 0, Render::maskRect(dConf.tabs.shadow, theRect).height());
+    QLinearGradient lg(0, 0, 0, GFX::maskRect(dConf.tabs.shadow, theRect).height());
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
-    QBrush b(lg);
-
-    Render::drawClickable(dConf.tabs.shadow, theRect, painter, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), dConf.shadows.opacity, w, option, &b, 0, sides, -geo.topLeft());
+    GFX::drawClickable(dConf.tabs.shadow, theRect, painter, lg, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), sides, option, w);
     return true;
 }
 

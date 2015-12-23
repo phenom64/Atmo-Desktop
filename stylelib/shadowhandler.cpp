@@ -12,7 +12,7 @@
 #include "shadowhandler.h"
 #include "xhandler.h"
 #include "ops.h"
-#include "render.h"
+#include "gfx.h"
 #include "../config/settings.h"
 #include "macros.h"
 #include "fx.h"
@@ -166,7 +166,7 @@ XHandler::XPixmap
     int center(size+(tb->width()/2-arrow.width()/2));
     arrow.moveLeft(center);
 
-    Render::drawArrow(&p, p.brush().color(), arrow, up?North:South, 9000);
+    GFX::drawArrow(&p, p.brush().color(), arrow, up?North:South, 9000);
     p.end();
 
     QImage img(mask.size(), QImage::Format_ARGB32);

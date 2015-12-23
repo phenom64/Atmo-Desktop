@@ -3,7 +3,7 @@
 #include "windowdata.h"
 #include "macros.h"
 #include "color.h"
-#include "render.h"
+#include "gfx.h"
 #include "ops.h"
 #include "../config/settings.h"
 #include "shadowhandler.h"
@@ -572,9 +572,10 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
 Sides
 ToolBar::sides(const QToolButton *btn)
 {
+    if (btn)
     if (QToolBar *bar = qobject_cast<QToolBar *>(btn->parentWidget()))
         if (isDirty(bar))
-            queryToolBarLater(bar, true);
+                queryToolBarLater(bar, true);
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
@@ -1020,11 +1021,11 @@ Window::eventFilter(QObject *o, QEvent *e)
                         && qobject_cast<QMainWindow *>(w))
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
 //                p.fillRect(w->rect(), bgColor);
-                p.drawTiledPixmap(w->rect(), Render::noise(true));
+                p.drawTiledPixmap(w->rect(), GFX::noise(true));
             }
             else /// TODO
             {
-                p.drawTiledPixmap(w->rect(), Render::noise(true));
+                p.drawTiledPixmap(w->rect(), GFX::noise(true));
             }
             if (WindowData *data = WindowData::memory(w->winId(), w))
                 if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
@@ -1286,7 +1287,7 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
         b = QBrush(lg);
     }
     const unsigned int n(dConf.uno.noise);
-    w = (hor?win->width():(n?Render::noise().width():1));
+    w = (hor?win->width():(n?GFX::noise().width():1));
     QImage img(data, w, h, QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     QPainter pt(&img);
@@ -1294,10 +1295,10 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
     if (n)
     {
 //        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
-        QPixmap noise(Render::noise().size());
+        QPixmap noise(GFX::noise().size());
         noise.fill(Qt::transparent);
         QPainter ptt(&noise);
-        ptt.drawTiledPixmap(noise.rect(), Render::noise());
+        ptt.drawTiledPixmap(noise.rect(), GFX::noise());
         ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
         ptt.fillRect(noise.rect(), QColor(0, 0, 0, n*2.55f));
         ptt.end();
@@ -1321,8 +1322,8 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
 QImage
 Window::windowBg(const QSize &sz, const QColor &bgColor)
 {
-    int w = dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.width() : dConf.windows.noise?Render::noise().width() : 1;
-    int h = !dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.height() : dConf.windows.noise?Render::noise().height() : 1;
+    int w = dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.width() : dConf.windows.noise?GFX::noise().width() : 1;
+    int h = !dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.height() : dConf.windows.noise?GFX::noise().height() : 1;
     QImage img(w, h, QImage::Format_ARGB32);
     if (XHandler::opacity() < 1.0f)
         img.fill(Qt::transparent);
@@ -1342,10 +1343,10 @@ Window::windowBg(const QSize &sz, const QColor &bgColor)
         static QPixmap noisePix;
         if (noisePix.isNull())
         {
-            noisePix = QPixmap(Render::noise().size());
+            noisePix = QPixmap(GFX::noise().size());
             noisePix.fill(Qt::transparent);
             QPainter p(&noisePix);
-            p.drawPixmap(noisePix.rect(), Render::noise());
+            p.drawPixmap(noisePix.rect(), GFX::noise());
             p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
             p.fillRect(noisePix.rect(), QColor(0, 0, 0, dConf.windows.noise*2.55f));
             p.end();

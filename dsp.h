@@ -123,7 +123,7 @@ public:
     bool drawArrow##_VAR_(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const \
     { \
         const bool selected(option->state & State_Selected); \
-        Render::drawArrow(painter, option->palette.color(selected?QPalette::HighlightedText:Ops::fgRole(widget)), option->rect, _VAR_, dConf.arrowSize); \
+        GFX::drawArrow(painter, option->palette.color(selected?QPalette::HighlightedText:Ops::fgRole(widget)), option->rect, _VAR_, dConf.arrowSize); \
         return true; \
     }
     /* Yes Thomas, macro-concept stolen from bespin */
@@ -160,6 +160,7 @@ public:
 protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
     static int layoutSpacingAndMargins(const QWidget *w);
+    void installFilter(QWidget *w);
 #define TESTOPT(_STATE_) static inline bool is##_STATE_(const QStyleOption *opt) { return opt->state & State_##_STATE_; }
     TESTOPT(Sunken) TESTOPT(MouseOver) TESTOPT(Selected) TESTOPT(Active) TESTOPT(Enabled) TESTOPT(HasFocus) TESTOPT(On)
 #undef TESTOPT

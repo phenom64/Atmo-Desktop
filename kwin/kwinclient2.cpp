@@ -4,7 +4,7 @@
 #include "../stylelib/color.h"
 #include "../stylelib/xhandler.h"
 #include "../stylelib/shadowhandler.h"
-#include "../stylelib/render.h"
+#include "../stylelib/gfx.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/DecorationButtonGroup>
@@ -68,8 +68,8 @@ public:
         DSP::Settings::read();
         DSP::XHandler::init();
         DSP::ShadowHandler::removeDelete();
-        DSP::Render::makeNoise();
-        DSP::Render::generateData(QPalette());
+        DSP::GFX::makeNoise();
+        DSP::GFX::generateData(QPalette());
     }
     ~DSPDecoFactory() {}
 
@@ -619,16 +619,16 @@ Deco::updateBgPixmap()
     else
         lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
 
-    QPixmap p(Render::noise().size().width(), r.height());
+    QPixmap p(GFX::noise().size().width(), r.height());
     p.fill(Qt::transparent);
     QPainter pt(&p);
     pt.fillRect(p.rect(), lg);
     if (m_noise)
     {
-        QPixmap noise(Render::noise().size());
+        QPixmap noise(GFX::noise().size());
         noise.fill(Qt::transparent);
         QPainter ptt(&noise);
-        ptt.drawTiledPixmap(noise.rect(), Render::noise());
+        ptt.drawTiledPixmap(noise.rect(), GFX::noise());
         ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
         ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_noise*2.55f));
         ptt.end();

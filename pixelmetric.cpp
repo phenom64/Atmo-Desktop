@@ -20,7 +20,7 @@
 #include "overlay.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 #include "stylelib/macros.h"
 //#include "stylelib/handlers.h"
 //#include "stylelib/windowdata.h"
@@ -144,12 +144,15 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
             return 8;
 
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
-        if (Overlay::overlay(frame))
+        if (Overlay::overlay(frame) || Overlay::isSupported(frame))
             return 0;
+
+        if (qobject_cast<const QAbstractScrollArea *>(widget))
+            return 2;
 
         if (frame && frame->frameShadow() == QFrame::Raised)
             return 8;
-        if (option && option->state & State_Raised) //the(const_cast<QWidget *> buttons in qtcreator....
+        if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
         const bool inMainWin(qobject_cast<QMainWindow *>(widget->window()));
@@ -174,7 +177,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
 //        if (TitleWidget::supported(qobject_cast<const QToolBar *>(widget)))
 //            if (WindowData *d = WindowData::memory(widget->window()->winId(), widget->window()))
 //                return d->value<uint>(WindowData::LeftEmbedSize)+8;
-        return 9-Render::shadowMargin(dConf.toolbtn.shadow);
+        return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
     }
 //    case PM_SliderThickness: return 12;
     case PM_ScrollBarExtent: return dConf.scrollers.size;

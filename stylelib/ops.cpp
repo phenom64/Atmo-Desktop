@@ -21,7 +21,7 @@
 #include "xhandler.h"
 #include "macros.h"
 #include "color.h"
-#include "render.h"
+#include "gfx.h"
 #include "../config/settings.h"
 #include "handlers.h"
 
@@ -151,39 +151,6 @@ Ops::hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb)
     if (tb && (/*tb->menu()||*/tb->popupMode()==QToolButton::MenuButtonPopup))
         return true;
     return false;
-}
-
-void
-Ops::toolButtonData(const QToolButton *tbtn, bool &nextsel, bool &prevsel, bool &isintop, Sides &sides)
-{
-    if (!tbtn)
-        return;
-    const QToolBar *bar = qobject_cast<const QToolBar *>(tbtn->parentWidget());
-    if (!bar)
-        return;
-
-    const QList<QAction *> actions(bar->actions());
-    int action(-1);
-    while (++action < actions.count())
-        if (bar->widgetForAction(actions.at(action)) == tbtn)
-            break;
-
-    sides = Handlers::ToolBar::sides(tbtn);
-    if (!(sides & Left)||!(sides & Top))
-    {
-        if (const QToolButton *prev = qobject_cast<const QToolButton *>(bar->widgetForAction(actions.at(action-1))))
-            prevsel = prev->isChecked();
-    }
-    if (!(sides & Right)||!(sides & Bottom))
-    {
-        if (const QToolButton *next = qobject_cast<const QToolButton *>(bar->widgetForAction(actions.at(action+1))))
-            nextsel = next->isChecked();
-    }
-    if (tbtn->isChecked())
-        nextsel = true;
-    if (const QMainWindow *win = qobject_cast<const QMainWindow *>(bar->parentWidget()))
-        if (win->toolBarArea(const_cast<QToolBar *>(bar)) == Qt::TopToolBarArea)
-            isintop = true;
 }
 
 void

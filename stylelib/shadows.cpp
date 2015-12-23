@@ -31,7 +31,7 @@ Shadow::genShadow()
     {
         QRect rect(pix.rect());
         p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 255, 255, 255)); //TODO: get luminosity from window bg
+        p.setBrush(QColor(255, 255, 255, 255));
         p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
         p.drawRoundedRect(rect, m_round, m_round);
         p.setClipping(false);
@@ -56,6 +56,19 @@ Shadow::genShadow()
 
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.fillRect(pix.rect(), img);
+
+        QImage r(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        r.fill(Qt::transparent);
+        pt.begin(&r);
+        pt.setPen(Qt::NoPen);
+        pt.setBrush(Qt::black);
+        pt.drawRoundedRect(r.rect().adjusted(0, 0, 0, -1), m_round, m_round);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        pt.drawRoundedRect(r.rect().adjusted(1, 1, -1, -2), rnd, rnd);
+        pt.end();
+
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        p.fillRect(pix.rect(), r);
         break;
     }
     case Etched:
@@ -95,16 +108,24 @@ Shadow::genShadow()
         QPainter pt(&img);
         pt.setRenderHint(QPainter::Antialiasing);
         pt.setPen(Qt::NoPen);
-        pt.setBrush(Qt::black);
-        pt.drawRoundedRect(QRectF(img.rect()).adjusted(0.75f, 1.0f, -0.75f, -0.5f), m_round, m_round);
+        pt.setBrush(QColor(0, 0, 0, 185));
+        pt.drawRoundedRect(QRectF(img.rect()).adjusted(0.75f, 1.0f, -0.75f, -0.5f), m_round+3, m_round+3);
         pt.end();
         FX::expblur(img, 1);
         p.drawImage(QPoint(0, 0), img);
         p.setPen(Qt::NoPen);
         p.setBrush(Qt::black);
-        p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), m_round, m_round);
+        p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), m_round+2, m_round+2);
+        p.setBrush(Qt::white);
+        p.drawRoundedRect(pix.rect().adjusted(2, 2, -2, -2), m_round+1, m_round+1);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        p.drawRoundedRect(pix.rect().adjusted(2, 2, -2, -2), m_round, m_round);
+        QLinearGradient lg(pix.rect().adjusted(2, 2, -2, -2).topLeft(), pix.rect().adjusted(2, 2, -2, -2).bottomLeft());
+        lg.setColorAt(0, Qt::transparent);
+        lg.setColorAt(1, QColor(0, 0, 0, 127));
+        p.setBrush(lg);
+        p.drawRoundedRect(pix.rect().adjusted(2, 2, -2, -2), m_round+1, m_round+1);
+        p.setBrush(Qt::black);
+        p.drawRoundedRect(pix.rect().adjusted(3, 3, -3, -3), m_round, m_round);
         break;
     }
     case Yosemite:
@@ -153,7 +174,7 @@ Shadow::render(const QRect &r, QPainter *p, const Sides s)
 {
     if (!m_pix)
         genShadow();
-    const quint16 x(r.x()), y(r.y()), w(r.width()), h(r.height()), x2(x+w), y2(y+h), block(m_pix[TopLeftPart].width());
+    const qint16 x(r.x()), y(r.y()), w(r.width()), h(r.height()), x2(x+w), y2(y+h), block(m_pix[TopLeftPart].width());
 
     //corners
     if ((s & (Top|Left)) == (Top|Left))
@@ -165,7 +186,7 @@ Shadow::render(const QRect &r, QPainter *p, const Sides s)
     if ((s & (Bottom|Right)) == (Bottom|Right))
         p->drawPixmap(QRect(x2-block, y2-block, block, block), m_pix[BottomRightPart]);
 
-    quint16 cx(x), cy(y), cw(w), ch(h);
+    qint16 cx(x), cy(y), cw(w), ch(h);
 
     //sides
     if (s & Top)

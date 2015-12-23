@@ -22,7 +22,7 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
-#include "stylelib/render.h"
+#include "stylelib/gfx.h"
 
 using namespace DSP;
 
@@ -104,7 +104,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_LineEditContents:
     {
-        QRect r(Render::maskRect(dConf.input.shadow, opt->rect));
+        QRect r(GFX::maskRect(dConf.input.shadow, opt->rect));
         int h(r.height());
         int hor(qMin(dConf.input.rnd, (h/2))/2);
         r.adjust(hor, 0, -hor, 0);
@@ -296,7 +296,7 @@ Style::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget
     if (!cb)
         return ret;
     const int arrowSize(20);
-    const int m(cb->editable?Render::shadowMargin(dConf.input.shadow):0);
+    const int m(cb->editable?GFX::shadowMargin(dConf.input.shadow):0);
     switch (sc)
     {
     case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...
@@ -496,7 +496,7 @@ Style::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget 
     int spinSize(pixelMetric(PM_SpinBoxSliderHeight, opt, w));
     QRect arrowUp(0, 0, spinSize, spinSize);
     QRect arrowDown(arrowUp);
-    int sm(Render::shadowMargin(dConf.input.shadow));
+    int sm(GFX::shadowMargin(dConf.input.shadow));
 //    int m((qMin(dConf.input.rnd, ret.height()/2)/2) + sm);
     int m(0);
     arrowUp.moveTopRight(ret.topRight()-QPoint(m, 0));

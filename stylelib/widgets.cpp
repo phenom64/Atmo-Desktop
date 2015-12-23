@@ -1,7 +1,7 @@
 #include "widgets.h"
 #include "../config/settings.h"
 #include "color.h"
-#include "render.h"
+#include "gfx.h"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>
@@ -226,12 +226,11 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     case FollowToolBtn:
     {
         r.adjust(2, 2, -2, -2);
-        QLinearGradient lg(0, 0, 0, r.height()-Render::shadowMargin(dConf.toolbtn.shadow));
+        QLinearGradient lg(0, 0, 0, r.height()-GFX::shadowMargin(dConf.toolbtn.shadow));
         lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, c));
-        QBrush b(lg);
         const bool hasDark(dConf.shadows.darkRaisedEdges);
         dConf.shadows.darkRaisedEdges = false;
-        Render::drawClickable(dConf.toolbtn.shadow, r, &p, 32, m_shadowOpacity/255.0f, 0, 0, &b);
+        GFX::drawClickable(dConf.toolbtn.shadow, r, &p, lg, MaxRnd);
         dConf.shadows.darkRaisedEdges = hasDark;
         r.adjust(4, 4, -4, -4);
         break;
