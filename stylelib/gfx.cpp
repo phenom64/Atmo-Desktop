@@ -120,7 +120,7 @@ GFX::initTabs()
 }
 
 void
-GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, const float o)
+GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, const quint8 o)
 {
     const QSize sz(s_tab[TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
@@ -150,7 +150,7 @@ GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, co
     pt.drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height(), halfH, halfV), s_tab[CenterPart]);
     pt.drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), s_tab[BottomMidPart]);
     pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    pt.fillRect(pix.rect(), QColor(0, 0, 0, o*255.0f));
+    pt.fillRect(pix.rect(), QColor(0, 0, 0, o));
     pt.end();
 
     if (path)
@@ -594,6 +594,7 @@ GFX::makeNoise()
     }
     const QColor bg = qApp->palette().color(QPalette::Window);
 
+//    s_noise[1] = FX::mid(s_noise[0], bg, dConf.uno.noise, 100-dConf.uno.noise);
     s_noise[1] = QPixmap(s_noise[0].size());
     s_noise[1].fill(bg);
     QPainter pt(&s_noise[1]);
@@ -606,7 +607,7 @@ GFX::makeNoise()
     ptt.fillRect(noise.rect(), QColor(0, 0, 0, dConf.uno.noise*2.55f));
     ptt.end();
     pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-    pt.drawTiledPixmap(s_noise[0].rect(), s_noise[0]);
+    pt.drawTiledPixmap(s_noise[1].rect(), noise);
     pt.end();
 }
 

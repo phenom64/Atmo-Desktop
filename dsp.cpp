@@ -82,6 +82,7 @@ Style::Style() : QCommonStyle()
     XHandler::init();
     init();
     assignMethods();
+    GFX::generateData();
 #if QT_VERSION >= 0x050000
     if (XHandler::opacity() < 1.0f)
         qApp->installEventFilter(&t);

@@ -5,6 +5,7 @@
 //#include <QPainter>
 #include <QtGlobal>
 #include <QtGui>
+#include <QPalette>
 #include "../namespace.h"
 
 class QStyleOption;
@@ -15,17 +16,17 @@ class QPoint;
 class QBrush;
 class QImage;
 class QWidget;
-class QPalette;
+
 namespace DSP
 {
 class Shadow;
 class Q_DECL_EXPORT GFX
 {
 public:
-    static void generateData(const QPalette &pal);
+    static void generateData(const QPalette &pal = QPalette());
     static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All);
     static void drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, const bool isEnabled = true, int roundNess = MaxRnd, const Sides sides = All);
-    static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0, const float o = 1.0f);
+    static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0, const quint8 o = 0xff);
     static inline QPixmap &noise(const bool bg = false) { return s_noise[bg]; }
     static void drawClickable(ShadowStyle s,
                               QRect r,

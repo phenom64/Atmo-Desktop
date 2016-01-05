@@ -409,7 +409,6 @@ Style::polish(QPalette &p)
     QCommonStyle::polish(p);
     if (dConf.palette)
         p = *dConf.palette;
-    GFX::generateData(p);
 }
 
 void

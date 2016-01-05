@@ -210,11 +210,11 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
     QColor c = opt->palette.color(QPalette::WindowText);
     if (!enabled || (box && box->maximum() == box->value()))
         c.setAlpha(127);
-    GFX::drawArrow(painter, c, up, North, dConf.arrowSize, Qt::AlignCenter, enabled && box->maximum() != box->value());
+    GFX::drawArrow(painter, c, up, North, dConf.arrowSize, Qt::AlignCenter, enabled && (box && box->minimum() != box->value()));
     if (!enabled || (box && box->minimum() == box->value()))
         c.setAlpha(127);
     else
         c.setAlpha(255);
-    GFX::drawArrow(painter, c, down, South, dConf.arrowSize, Qt::AlignCenter, enabled && box->minimum() != box->value());
+    GFX::drawArrow(painter, c, down, South, dConf.arrowSize, Qt::AlignCenter, enabled && (box && box->minimum() != box->value()));
     return true;
 }
