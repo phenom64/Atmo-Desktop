@@ -106,7 +106,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     {
         QRect r(GFX::maskRect(dConf.input.shadow, opt->rect));
         int h(r.height());
-        int hor(qMin(dConf.input.rnd, (h/2))/2);
+        int hor(qMin<int>(dConf.input.rnd, (h/2))/2);
         r.adjust(hor, 0, -hor, 0);
         return r;
     }

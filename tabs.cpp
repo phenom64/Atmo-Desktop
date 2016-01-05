@@ -392,7 +392,7 @@ Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget
 
     if (r.right()+8 < painter->device()->width())
     {
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         painter->drawLine(s);
     }
     painter->setPen(pen);
@@ -582,7 +582,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         const QPen pen(p->pen());
         const QBrush brush(p->brush());
 
-        p->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         p->setBrush(Qt::NoBrush);
 //        p->drawRect(orgRect.adjusted(0, 0, -1, -!aboveStatusBar));
         if (!s.isNull())

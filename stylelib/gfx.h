@@ -30,7 +30,7 @@ public:
     static void drawClickable(ShadowStyle s,
                               QRect r,
                               QPainter *p,
-                              const QBrush mask,
+                              const QBrush &mask,
                               int rnd,
                               const Sides sides = All,
                               const QStyleOption *opt = 0,

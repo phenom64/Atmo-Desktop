@@ -44,8 +44,8 @@ GFX::initShadows(const QPalette &pal)
     for (int r = 0; r < MaxRnd+1; ++r)
     for (ShadowStyle s = 0; s < ShadowCount; ++s)
     {
-        s_shadow[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity*255);
-        s_shadow[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*127);
+        s_shadow[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity);
+        s_shadow[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*0.5f);
     }
 }
 
@@ -169,141 +169,35 @@ GFX::drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, 
 {
     if (!rect.isValid())
         return;
-    const quint8 r = qBound(0, roundNess, qMin(rect.height(), rect.width())/2);
+    const quint8 r = qBound(0, roundNess, (qMin(rect.height(), rect.width())>>1));
     if (r >= 0 && r <= MaxRnd)
         s_shadow[r][shadow][isEnabled]->render(rect, painter, sides);
-}
-
-static int randInt(int low, int high)
-{
-    // Random number between low and high
-    return qrand() % ((high + 1) - low) + low;
-}
-
-void
-GFX::makeNoise()
-{
-    if (!s_noise)
-        s_noise = new QPixmap[2]();
-    if (dConf.uno.enabled&&dConf.uno.noiseStyle == 4 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 4)
-    {
-        QImage img(4, 3, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
-        const int size(img.width()*img.height());
-        static const int px[4*3] = { 127, 127, 127, 127,
-                                     127, 0, 0, 127,
-                                     127, 255, 255, 127};
-        for (int i = 0; i < size; ++i)
-        {
-            const int v(px[i]);
-            rgb[i] = qRgb(v, v, v);
-        }
-        s_noise[0] = QPixmap::fromImage(img);
-    }
-    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 3 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 3)
-    {
-        QImage img(3, 3, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
-        const int size(img.width()*img.height());
-        static const int px[9] = { 0, 0, 255, 0, 255, 0, 255, 0, 0 };
-        for (int i = 0; i < size; ++i)
-        {
-            const int v(px[i]);
-            rgb[i] = qRgb(v, v, v);
-        }
-        s_noise[0] = QPixmap::fromImage(img);
-    }
-    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
-    {
-        QImage img(3, 4, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
-        const int size(img.width()*img.height());
-        static const int px[12] = { 170, 255, 0, 85, 170, 0, 85, 0, 170, 0, 85, 128 };
-        for (int i = 0; i < size; ++i)
-        {
-            const int v(px[i]);
-            rgb[i] = qRgb(v, v, v);
-        }
-        s_noise[0] = QPixmap::fromImage(img);
-    }
-    else
-    {
-        static int s(512);
-        QImage noise(s, s, QImage::Format_ARGB32_Premultiplied);
-        noise.fill(Qt::transparent);
-        QRgb *rgb = reinterpret_cast<QRgb *>(noise.bits());
-        const int size(s*s);
-        for (int i = 0; i < size; ++i)
-        {
-            int v(randInt(0, 255));
-            rgb[i] = QColor(v, v, v).rgb();
-        }
-        if (dConf.uno.enabled&&dConf.uno.noiseStyle == 1 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 1)
-        {
-            const int b(32);
-            QImage small = noise.copy(0, 0, 256, 256);
-            FX::expblur(small, b, Qt::Horizontal);
-            small = FX::stretched(small);
-            const QImage horFlip(small.mirrored(true, false));
-            const QImage verFlip(small.mirrored(false));
-            const QImage bothFlip(small.mirrored(true, true));
-
-            noise.fill(Qt::transparent);
-            QPainter p(&noise);
-            p.drawImage(QPoint(), small);
-            p.drawImage(QPoint(256, 0), horFlip);
-            p.drawImage(QPoint(0, 256), verFlip);
-            p.drawImage(QPoint(256, 256), bothFlip);
-            p.end();
-            noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
-        }
-        s_noise[0] = QPixmap::fromImage(noise);
-    }
-    const QColor bg = qApp->palette().color(QPalette::Window);
-
-    s_noise[1] = QPixmap(s_noise[0].size());
-    s_noise[1].fill(bg);
-    QPainter pt(&s_noise[1]);
-
-    QPixmap noise(s_noise[0].size());
-    noise.fill(Qt::transparent);
-    QPainter ptt(&noise);
-    ptt.drawTiledPixmap(noise.rect(), s_noise[0]);
-    ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    ptt.fillRect(noise.rect(), QColor(0, 0, 0, dConf.uno.noise*2.55f));
-    ptt.end();
-    pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-    pt.drawTiledPixmap(s_noise[0].rect(), s_noise[0]);
-    pt.end();
 }
 
 void
 GFX::drawClickable(ShadowStyle s,
                    QRect r,
                    QPainter *p,
-                   const QBrush mask,
+                   const QBrush &mask,
                    int rnd,
                    const Sides sides,
                    const QStyleOption *opt,
                    const QWidget *w)
 {
-    rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1)+2);
+    rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1));
     if (s >= ShadowCount)
         return;
 
     const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     const bool sunken(opt && opt->state & (QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange));
-    const bool inActive(dConf.differentInactive
-                        &&!Handlers::Window::isActiveWindow(w)
-                        &&!sunken
-                        &&!(s==Raised||s==Carved)
-                        &&qobject_cast<const QToolButton *>(w)
-                        &&qobject_cast<const QToolBar *>(w->parentWidget()));
-    const bool isEnabled(!opt || (opt->state & QStyle::State_Enabled));
+//    const bool inActive(dConf.differentInactive
+//                        &&!Handlers::Window::isActiveWindow(w)
+//                        &&!sunken
+//                        &&!(s==Raised||s==Carved)
+//                        &&qobject_cast<const QToolButton *>(w)
+//                        &&qobject_cast<const QToolBar *>(w->parentWidget()));
+    const bool isEnabled(!opt || (qstyleoption_cast<const QStyleOptionToolButton *>(opt) || (opt->state & QStyle::State_Enabled)));
     if (opt
             && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
             && s != Carved && s != Yosemite && s != Rect && s != ElCapitan && !isToolBox && !isLineEdit)
@@ -352,7 +246,7 @@ GFX::drawClickable(ShadowStyle s,
         }
     }
     const bool darkParent(pfgLum>pbgLum);
-    const bool parentContrast(qMax(pbgLum, bgLum)-qMin(pbgLum, bgLum) > 127);
+//    const bool parentContrast(qMax(pbgLum, bgLum)-qMin(pbgLum, bgLum) > 127);
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
@@ -386,7 +280,6 @@ GFX::drawClickable(ShadowStyle s,
 
     const bool n(s == Sunken && bgLum > pbgLum);
     drawMask(r.sAdjusted(n, n, -n, -n), p, mask, rnd, sides);
-    rnd = qMin(rnd, qFloor(qMin(r.height(), r.width())/2.0f));
 
     /// END PLATE
 
@@ -396,8 +289,7 @@ GFX::drawClickable(ShadowStyle s,
     }
     else if (s==Sunken||s==Etched)
     {
-        r.sAdjust(0, 0, 0, 1);
-        drawShadow(s, r, p, isEnabled, rnd, sides);
+        drawShadow(s, r.sAdjusted(0, 0, 0, 1), p, isEnabled, rnd, sides);
     }
     else if (s==Raised && !isToolBox)
     {
@@ -569,7 +461,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, 
     {
         const int v = Color::luminosity(c);
         const int rgb = v < 128 ? 255 : 0;
-        drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity*255.0f), r.translated(0, 1), d, size);
+        drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), d, size);
     }
     p->save();
     p->setPen(Qt::NoPen);
@@ -610,5 +502,111 @@ GFX::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, 
     p->setBrush(c);
     p->drawPolygon(QPolygon(3, points));
     p->restore();
+}
+
+static int randInt(int low, int high)
+{
+    // Random number between low and high
+    return qrand() % ((high + 1) - low) + low;
+}
+
+void
+GFX::makeNoise()
+{
+    if (!s_noise)
+        s_noise = new QPixmap[2]();
+    if (dConf.uno.enabled&&dConf.uno.noiseStyle == 4 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 4)
+    {
+        QImage img(4, 3, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[4*3] = { 127, 127, 127, 127,
+                                     127, 0, 0, 127,
+                                     127, 255, 255, 127};
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        s_noise[0] = QPixmap::fromImage(img);
+    }
+    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 3 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 3)
+    {
+        QImage img(3, 3, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[9] = { 0, 0, 255, 0, 255, 0, 255, 0, 0 };
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        s_noise[0] = QPixmap::fromImage(img);
+    }
+    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
+    {
+        QImage img(3, 4, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[12] = { 170, 255, 0, 85, 170, 0, 85, 0, 170, 0, 85, 128 };
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        s_noise[0] = QPixmap::fromImage(img);
+    }
+    else
+    {
+        static int s(512);
+        QImage noise(s, s, QImage::Format_ARGB32_Premultiplied);
+        noise.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(noise.bits());
+        const int size(s*s);
+        for (int i = 0; i < size; ++i)
+        {
+            int v(randInt(0, 255));
+            rgb[i] = QColor(v, v, v).rgb();
+        }
+        if (dConf.uno.enabled&&dConf.uno.noiseStyle == 1 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 1)
+        {
+            const int b(32);
+            QImage small = noise.copy(0, 0, 256, 256);
+            FX::expblur(small, b, Qt::Horizontal);
+            small = FX::stretched(small);
+            const QImage horFlip(small.mirrored(true, false));
+            const QImage verFlip(small.mirrored(false));
+            const QImage bothFlip(small.mirrored(true, true));
+
+            noise.fill(Qt::transparent);
+            QPainter p(&noise);
+            p.drawImage(QPoint(), small);
+            p.drawImage(QPoint(256, 0), horFlip);
+            p.drawImage(QPoint(0, 256), verFlip);
+            p.drawImage(QPoint(256, 256), bothFlip);
+            p.end();
+            noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
+        }
+        s_noise[0] = QPixmap::fromImage(noise);
+    }
+    const QColor bg = qApp->palette().color(QPalette::Window);
+
+    s_noise[1] = QPixmap(s_noise[0].size());
+    s_noise[1].fill(bg);
+    QPainter pt(&s_noise[1]);
+
+    QPixmap noise(s_noise[0].size());
+    noise.fill(Qt::transparent);
+    QPainter ptt(&noise);
+    ptt.drawTiledPixmap(noise.rect(), s_noise[0]);
+    ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    ptt.fillRect(noise.rect(), QColor(0, 0, 0, dConf.uno.noise*2.55f));
+    ptt.end();
+    pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+    pt.drawTiledPixmap(s_noise[0].rect(), s_noise[0]);
+    pt.end();
 }
 

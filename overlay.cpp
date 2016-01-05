@@ -76,7 +76,7 @@ void
 OverlayHandler::manageOverlay(QWidget *f)
 {
     if (Overlay::isSupported(static_cast<QFrame *>(f)))
-        new Overlay(f, dConf.shadows.opacity*255.0f);
+        new Overlay(f, dConf.shadows.opacity);
 }
 
 //------------------------------------------------------------------------------------------------------------

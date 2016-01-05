@@ -51,7 +51,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
     if (isSeparator)
     {
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         painter->translate(0, 0.5f);
         const int top(opt->rect.top());
         const int y(top+(h/2));
@@ -89,7 +89,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         bg = QPalette::Highlight;
         painter->setBrush(pal.color(bg));
         painter->setPen(Qt::NoPen);
-        const int rnd(isMenuBar*(qMin(qMin(h, opt->rect.width())/2, dConf.pushbtn.rnd)));
+        const int rnd(isMenuBar*(qMin<int>(qMin<int>(h, opt->rect.width())/2, dConf.pushbtn.rnd)));
         painter->setRenderHint(QPainter::Antialiasing);
         painter->drawRoundedRect(opt->rect, rnd, rnd);
         painter->setRenderHint(QPainter::Antialiasing, false);
@@ -180,7 +180,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         brush = lg;
     }
 
-    const int rnd(qMin(6, dConf.input.rnd)); //too much roundness just looks silly
+    const int rnd(qMin<int>(6, dConf.input.rnd)); //too much roundness just looks silly
     if (listView && listView->viewMode() == QListView::IconMode)
     {
         painter->setPen(Qt::NoPen);

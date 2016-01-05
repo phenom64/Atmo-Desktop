@@ -10,6 +10,7 @@
 #include <QComboBox>
 #include <QAbstractItemView>
 #include <QPainter>
+#include <QSpinBox>
 
 #include "dsp.h"
 #include "stylelib/gfx.h"
@@ -133,14 +134,22 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
-    const QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText));
+    QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText));
     QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2).translated(0, 1));
     QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0).translated(0, -1));
     int m(qMax(2, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
     a1.moveLeft(a1.left()+(ltr?-m:m));
     a2.moveLeft(a2.left()+(ltr?-m:m));
-    GFX::drawArrow(painter, ac, a1/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, North, 7, Qt::AlignCenter, isEnabled(opt));
-    GFX::drawArrow(painter, ac, a2/*arrowRect.adjusted(m*1.25f, m, -m, -m)*/, South, 7, Qt::AlignCenter, isEnabled(opt));
+
+    const QComboBox *box = qobject_cast<const QComboBox *>(widget);
+    const bool enabled(isEnabled(opt) && (!box || box->count()));
+    const bool upDisabled(!enabled || (!box || !box->currentIndex()));
+    if (upDisabled)
+        ac.setAlpha(127);
+    GFX::drawArrow(painter, ac, a1, North, 7, Qt::AlignCenter, !upDisabled);
+    const bool downDisabled(!enabled || (!box || box->currentIndex()==box->count()-1));
+    ac.setAlpha(downDisabled?127:255);
+    GFX::drawArrow(painter, ac, a2, South, 7, Qt::AlignCenter, !downDisabled);
     return true;
 }
 
@@ -196,7 +205,16 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
     }
 
     GFX::drawClickable(dConf.input.shadow, edit, painter, mask, dConf.input.rnd, All, option, widget);
-    GFX::drawArrow(painter, opt->palette.color(QPalette::WindowText), up, North, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
-    GFX::drawArrow(painter, opt->palette.color(QPalette::WindowText), down, South, dConf.arrowSize, Qt::AlignCenter, opt->ENABLED);
+    const bool enabled(isEnabled(opt));
+    const QSpinBox *box = qobject_cast<const QSpinBox *>(widget);
+    QColor c = opt->palette.color(QPalette::WindowText);
+    if (!enabled || (box && box->maximum() == box->value()))
+        c.setAlpha(127);
+    GFX::drawArrow(painter, c, up, North, dConf.arrowSize, Qt::AlignCenter, enabled && box->maximum() != box->value());
+    if (!enabled || (box && box->minimum() == box->value()))
+        c.setAlpha(127);
+    else
+        c.setAlpha(255);
+    GFX::drawArrow(painter, c, down, South, dConf.arrowSize, Qt::AlignCenter, enabled && box->minimum() != box->value());
     return true;
 }

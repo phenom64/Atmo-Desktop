@@ -80,7 +80,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             else
                 slider.setRight(slider.right()+1);
             const QPen saved(painter->pen());
-            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
             painter->drawLine(l);
             painter->setPen(saved);
         }
@@ -103,8 +103,14 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         ///the background
         painter->fillRect(opt->rect, lg);
 
-        GFX::drawArrow(painter, fgColor, up, hor?West:North, 7);
-        GFX::drawArrow(painter, fgColor, down, hor?East:South, 7);
+        if (opt->minimum == opt->sliderValue)
+            fgColor.setAlpha(127);
+        GFX::drawArrow(painter, fgColor, up, hor?West:North, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
+        if (opt->maximum == opt->sliderValue)
+            fgColor.setAlpha(127);
+        else
+            fgColor.setAlpha(255);
+        GFX::drawArrow(painter, fgColor, down, hor?East:South, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
 
         const QPen pen(painter->pen());
         const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
@@ -115,7 +121,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             if (!i)
                 painter->setPen(pal.color(QPalette::Window));
             else
-                painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+                painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
 
             if (inView)
             {
@@ -194,7 +200,7 @@ Style::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const
         if (!bothVisible || !inView)
             return true;
         const QPen pen(painter->pen());
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         const QBrush brush(painter->brush());
         painter->setBrush(Qt::NoBrush);
         painter->setClipRect(option->rect.adjusted(0, 0, -1, -1));

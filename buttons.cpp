@@ -158,7 +158,9 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
         return true;
 
     QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
-    QRect checkRect(subElementRect(SE_RadioButtonIndicator, opt, widget));
+
+    const QRect realCheckRect(subElementRect(SE_RadioButtonIndicator, opt, widget));
+    QRect checkRect(realCheckRect.shrinked(3));
     if (widget)
     {
         bg = widget->backgroundRole();
@@ -169,10 +171,10 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
 
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, opt->ENABLED, opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
 //    Render::renderShadow(Raised, checkRect, painter);
 
-    if (opt->state & State_On)
+    if (isOn(opt))
     {
         fg = QPalette::HighlightedText;
         bg = QPalette::Highlight;
@@ -182,16 +184,17 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
     if (dConf.pushbtn.tint.second > -1)
         bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-    if (option->ENABLED && !(option->state & State_On))
+    if (isEnabled(opt) && !isOn(opt))
     {
         int hl(Anim::Basic::level(widget));
         bgc = Color::mid(bgc, sc, Steps-hl, hl);
     }
-    QLinearGradient lg(0, 0, 0, GFX::maskHeight(dConf.pushbtn.shadow, checkRect.height()));
-    lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
+
+    QLinearGradient lg(checkRect.topLeft(), checkRect.bottomLeft());
+    lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
     GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, MaxRnd, All, option, widget);
 
-    if (opt->state & State_On)
+    if (isOn(opt))
     {
         painter->save();
         painter->setBrush(opt->palette.color(fg));
@@ -234,7 +237,7 @@ Style::drawMultiTabBarTab(const QStyleOption *opt, QPainter *p, const QWidget *m
     }
     p->save();
     p->setBrush(Qt::NoBrush);
-    p->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+    p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
     if (mt->geometry().bottom() != mt->parentWidget()->rect().bottom())
         p->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
     if (mt->geometry().right() != mt->parentWidget()->rect().right())
@@ -286,13 +289,11 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
             GFX::drawMask(option->rect.adjusted(0, 0, -0, -1), painter, h, dConf.toolbtn.rnd);
         }
         if (sunken)
-            GFX::drawShadow(sunken?Sunken:Etched, option->rect, painter, isEnabled(opt), dConf.toolbtn.rnd);
+            GFX::drawShadow(Sunken, option->rect, painter, isEnabled(opt), dConf.toolbtn.rnd);
         return true;
     }
 
     Sides sides(Handlers::ToolBar::sides(btn));
-
-    painter->save();
     QRect rect(opt->rect);
 
     if (dConf.dfmHacks && dConf.app == DSP::Settings::DFM && btn && (btn->toolTip() == "Go Back" || btn->toolTip() == "Go Forward"))
@@ -307,108 +308,109 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     const bool hasMenu(Ops::hasMenu(btn, opt));
     const bool arrowPress(Handlers::ToolBar::isArrowPressed(btn));
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button)), fg(Ops::fgRole(widget, QPalette::ButtonText));
-    if (bar)
+    if (!bar)
+        return true;
+
+    const int hor(bar->orientation() == Qt::Horizontal);
+    if (hasMenu && arrow.isValid())
+        painter->setClipRegion(QRegion(rect)-QRegion(arrow));
+
+    QColor bc(option->palette.color(QPalette::Active, bg));
+    if (dConf.toolbtn.tint.second > -1)
+        bc = Color::mid(bc, dConf.toolbtn.tint.first, 100-dConf.toolbtn.tint.second, dConf.toolbtn.tint.second);
+    QColor bca(bc);
+    QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+
+    ShadowStyle shadow(dConf.toolbtn.shadow);
+    bool ns(false);
+    if (sunken)
     {
-        const int hor(bar->orientation() == Qt::Horizontal);
-        if (hasMenu && arrow.isValid())
-            painter->setClipRegion(QRegion(rect)-QRegion(arrow));
-
-        QColor bc(option->palette.color(QPalette::Active, bg));
-        if (dConf.toolbtn.tint.second > -1)
-            bc = Color::mid(bc, dConf.toolbtn.tint.first, 100-dConf.toolbtn.tint.second, dConf.toolbtn.tint.second);
-        QColor bca(bc);
-        QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
-
-        ShadowStyle shadow(dConf.toolbtn.shadow);
-        bool ns(false);
-        if (sunken)
+        if (shadow == Etched)
+            shadow = Sunken;
+        if (!arrowPress)
         {
-            if (shadow == Etched)
-                shadow = Sunken;
-            if (!arrowPress)
-            {
-                if (dConf.toolbtn.invAct)
-                    bc = Color::mid(bc, opt->palette.color(fg), 1, 2);
-                else
-                    bc = sc;
-            }
-        }
-        else if (isEnabled(opt))
-            bc = Color::mid(bc, sc, Steps-hover, hover);
-        if (Color::luminosity(bc) < Color::luminosity(bar->palette().color(bar->backgroundRole()))*0.8f)
-            ns = true;
-
-        if (dConf.differentInactive && shadow == Yosemite && !Handlers::Window::isActiveWindow(bar->window()))
-        {
-            shadow = Rect;
-            bc.setAlpha(127);
-        }
-
-        static QMap<quint64, QPixmap> s_map;
-        const quint64 check(bc.rgba() | (hor?rect.height():rect.width())<<32 | bar->orientation()<<40);
-        if (!s_map.contains(check))
-        {
-            QPixmap pix(!hor?rect.width():1, hor?rect.height():1);
-            if (bc.alpha() != 0xff)
-                pix.fill(Qt::transparent);
-            QPainter p(&pix);
-            QLinearGradient lg(0, 0, (!hor)*GFX::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*GFX::maskHeight(dConf.toolbtn.shadow, rect.height()));
-            lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bc));
-            p.fillRect(pix.rect(), lg);
-            s_map.insert(check, pix);
-        }
-        GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, sides, opt, widget);
-
-        if (hasMenu)
-        {
-            if (sunken && arrowPress)
-                bca = sc;
+            if (dConf.toolbtn.invAct)
+                bc = Color::mid(bc, opt->palette.color(fg), 1, 2);
             else
-            {
-                const int hla(Anim::ToolBtns::level(btn, true));
-                bca = Color::mid(bca, sc, Steps-hla, hla);
-            }
-
-            painter->setClipRect(arrow);
-            QLinearGradient lga(0, 0, !hor*GFX::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*GFX::maskHeight(dConf.toolbtn.shadow, rect.height()));
-            lga.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bca));
-            GFX::drawClickable(shadow, rect, painter, lga, dConf.toolbtn.rnd, sides, opt, widget);
-        }
-
-        if (sunken && dConf.toolbtn.shadow == Etched && GFX::pos(sides, bar->orientation()) != Alone)
-        {
-            QPixmap pix(rect.size());
-            pix.fill(Qt::transparent);
-            QPainter pt(&pix);
-            const Sides inv(All-sides);
-            const QRect mr(GFX::maskRect(shadow, rect, sides));
-            GFX::drawShadow(shadow, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, inv);
-            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            GFX::drawShadow(shadow, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, sides);
-            pt.end();
-            painter->drawTiledPixmap(rect, pix);
-        }
-
-        painter->setClipping(false);
-
-        bool nextSelected(false);
-        if (bar->orientation() == Qt::Horizontal && !(sides & Right))
-            if (const QToolButton *next = qobject_cast<const QToolButton *>(bar->childAt(btn->geometry().topRight()+QPoint(2, 0))))
-                nextSelected = next->isChecked();
-        if (bar->orientation() == Qt::Vertical && !(sides & Bottom))
-            if (const QToolButton *next = qobject_cast<const QToolButton *>(bar->childAt(btn->geometry().bottomRight()+QPoint(0, 2))))
-                nextSelected = next->isChecked();
-
-        const int nextSide=hor?Right:Bottom;
-        if (!(sides&nextSide) && !nextSelected)
-        {
-            painter->setPen(QColor(0, 0, 0, 32));
-            QPoint first(hor?mr.topRight():mr.bottomLeft());
-            QPoint second(hor?mr.bottomRight():mr.bottomRight());
-            painter->drawLine(first, second);
+                bc = sc;
         }
     }
-    painter->restore();
+    else if (isEnabled(opt))
+        bc = Color::mid(bc, sc, Steps-hover, hover);
+    if (Color::luminosity(bc) < Color::luminosity(bar->palette().color(bar->backgroundRole()))*0.8f)
+        ns = true;
+
+    if (dConf.differentInactive && shadow == Yosemite && !Handlers::Window::isActiveWindow(bar->window()))
+    {
+        shadow = Rect;
+        bc.setAlpha(127);
+    }
+
+    static QMap<quint64, QPixmap> s_map;
+    const quint64 check(bc.rgba() | (hor?rect.height():rect.width())<<32 | bar->orientation()<<40);
+    if (!s_map.contains(check))
+    {
+        QPixmap pix(!hor?rect.width():1, hor?rect.height():1);
+        if (bc.alpha() != 0xff)
+            pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        QLinearGradient lg(0, 0, (!hor)*GFX::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*GFX::maskHeight(dConf.toolbtn.shadow, rect.height()));
+        lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bc));
+        p.fillRect(pix.rect(), lg);
+        s_map.insert(check, pix);
+    }
+    GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, sides, opt, widget);
+
+    if (hasMenu)
+    {
+        if (sunken && arrowPress)
+            bca = sc;
+        else
+        {
+            const int hla(Anim::ToolBtns::level(btn, true));
+            bca = Color::mid(bca, sc, Steps-hla, hla);
+        }
+
+        painter->setClipRect(arrow);
+        QLinearGradient lga(0, 0, !hor*GFX::maskWidth(dConf.toolbtn.shadow, rect.width()), hor*GFX::maskHeight(dConf.toolbtn.shadow, rect.height()));
+        lga.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bca));
+        GFX::drawClickable(shadow, rect, painter, lga, dConf.toolbtn.rnd, sides, opt, widget);
+    }
+
+    if (sunken && dConf.toolbtn.shadow == Etched && GFX::pos(sides, bar->orientation()) != Alone)
+    {
+        QPixmap pix(rect.size());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        const Sides inv(All-sides);
+        const QRect mr(GFX::maskRect(shadow, rect, sides));
+        GFX::drawShadow(shadow, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, inv);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        GFX::drawShadow(shadow, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, sides);
+        pt.end();
+        painter->drawTiledPixmap(rect, pix);
+    }
+
+    painter->setClipping(false);
+
+    bool nextSelected(false);
+    if (bar->orientation() == Qt::Horizontal && !(sides & Right))
+        if (const QToolButton *next = qobject_cast<const QToolButton *>(bar->childAt(btn->geometry().topRight()+QPoint(2, 0))))
+            nextSelected = next->isChecked();
+    if (bar->orientation() == Qt::Vertical && !(sides & Bottom))
+        if (const QToolButton *next = qobject_cast<const QToolButton *>(bar->childAt(btn->geometry().bottomRight()+QPoint(0, 2))))
+            nextSelected = next->isChecked();
+
+    const int nextSide=hor?Right:Bottom;
+    if (!(sides&nextSide) && !nextSelected)
+    {
+        const QPen &pen(painter->pen());
+        painter->setPen(QColor(0, 0, 0, 32));
+        QPoint first(hor?mr.topRight():mr.bottomLeft());
+        QPoint second(hor?mr.bottomRight():mr.bottomRight());
+        painter->drawLine(first, second);
+        painter->setPen(pen);
+    }
     return true;
 }
 

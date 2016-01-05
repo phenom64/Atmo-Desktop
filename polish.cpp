@@ -374,7 +374,7 @@ Style::polish(QWidget *widget)
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment
     if (dConf.uno.enabled && qobject_cast<QFrame *>(widget) && Overlay::isSupported(static_cast<QFrame *>(widget)))
-        Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity*255.0f);
+        Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity);
     QCommonStyle::polish(widget);
 }
 

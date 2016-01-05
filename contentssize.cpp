@@ -305,7 +305,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         {
             QSize sz(contentsSize);
             int add(dConf.input.rnd?dConf.input.rnd/2:0);
-            sz+=QSize(add*2+20, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
+            sz+=QSize(add*2+40, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
             if (sz.height() < 23)
                 sz.setHeight(23);
             return sz;

@@ -218,10 +218,7 @@ Shadow::render(const QRect &r, QPainter *p, const Sides s)
 
     //center
     if (!m_pix[CenterPart].isNull())
-    {
-        QRect rect(cx, cy, cw, ch);
-        p->drawTiledPixmap(rect, m_pix[CenterPart]);
-    }
+        p->drawTiledPixmap(QRect(cx, cy, cw, ch), m_pix[CenterPart]);
 }
 
 void

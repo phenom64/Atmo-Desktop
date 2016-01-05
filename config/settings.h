@@ -120,57 +120,59 @@ public:
         App app;
         float opacity;
         QStringList blackList;
-        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks;
-        int titlePos, arrowSize, animateStack, animateScroll;
+        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks, animateStack, animateScroll;
+        quint8 titlePos, arrowSize;
         QPalette *palette;
         struct deco
         {
-            int buttons, shadowSize, frameSize;
+            quint8 buttons, shadowSize, frameSize;
             bool icon, embed;
         } deco;
 
         struct pushbtn
         {
-            int rnd, shadow;
+            quint8 rnd, shadow;
             Gradient gradient;
             Tint tint;
         } pushbtn;
         struct toolbtn
         {
-            int rnd, shadow;
+            quint8 rnd, shadow;
             bool folCol, invAct, flat;
             Gradient gradient;
             Tint tint;
         } toolbtn;
         struct input
         {
-            int rnd, shadow;
+            quint8 rnd, shadow;
             Gradient gradient;
             Tint tint;
         } input;
         struct sliders
         {
             bool dot, fillGroove;
-            int size, grooveShadow, grooveStyle;
+            quint8 size, grooveShadow;
+            qint16 grooveStyle;
             Gradient grooveGrad, sliderGrad;
         } sliders;
         struct scrollers
         {
-            int size, style, grooveStyle, grooveShadow;
+            quint8 size, style, grooveShadow;
+            qint16 grooveStyle;
             Gradient grooveGrad, sliderGrad;
         } scrollers;
         struct progressbars
         {
-            int shadow, rnd;
+            quint8 shadow, rnd;
         } progressbars;
         struct shadows
         {
-            float opacity;
+            quint8 opacity;
             bool darkRaisedEdges;
         } shadows;
         struct tabs
         {
-            int rnd, safrnd, closeButtonSide, shadow;
+            quint8 rnd, safrnd, closeButtonSide, shadow;
             Gradient gradient;
             bool safari;
         } tabs;

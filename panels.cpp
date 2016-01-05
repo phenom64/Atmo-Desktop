@@ -51,7 +51,7 @@ Style::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidge
         else if (!(sides & Bottom))
             Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget);
         const QPen &savedPen = painter->pen();
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         painter->drawLine(r.topLeft(), r.topRight());
         painter->setPen(savedPen);
     }
@@ -64,7 +64,7 @@ Style::drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget
     if (dConf.uno.enabled)
     if (widget && !qobject_cast<const QToolBar *>(widget->parentWidget()))
     if (option->rect.width() == 1 || option->rect.height() == 1)
-        painter->fillRect(option->rect, QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->fillRect(option->rect, QColor(0, 0, 0, dConf.shadows.opacity));
     return true;
 }
 
@@ -184,7 +184,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
     {
         const QDockWidget *dock = qobject_cast<const QDockWidget *>(widget);
         const QPen savedPen(painter->pen());
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         QRect l(tr);
         l.setLeft(0);
         l.setBottom(l.bottom()+1);
@@ -228,11 +228,11 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
     if (opt->frameShape == QFrame::HLine)
     {
         SAVEPEN;
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         int l, t, r, b, y(opt->rect.center().y());
         opt->rect.getRect(&l, &t, &r, &b);
         painter->drawLine(l, y, r, y);
-        painter->setPen(QColor(255, 255, 255, (dConf.shadows.opacity*255.0f)/2));
+        painter->setPen(QColor(255, 255, 255, (dConf.shadows.opacity)/2));
         painter->drawLine(l, y+1, r, y+1);
         RESTOREPEN;
         return true;
@@ -240,11 +240,11 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
     if (opt->frameShape == QFrame::VLine)
     {
         SAVEPEN;
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         int l, t, r, b, x(opt->rect.center().x());
         opt->rect.getRect(&l, &t, &r, &b);
         painter->drawLine(x, t, x, b);
-//        painter->setPen(QColor(255, 255, 255, (dConf.shadows.opacity*255.0f)/2));
+//        painter->setPen(QColor(255, 255, 255, (dConf.shadows.opacity)/2));
 //        painter->drawLine(l, y+1, r, y+1);
         RESTOREPEN;
         return true;
@@ -264,7 +264,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
     {
-        GFX::drawShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All, o);
+        GFX::drawShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All);
     }
     else if (opt->state & State_Raised)
     {

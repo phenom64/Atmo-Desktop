@@ -1030,7 +1030,7 @@ Window::eventFilter(QObject *o, QEvent *e)
             if (WindowData *data = WindowData::memory(w->winId(), w))
                 if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
                 {
-                    p.setPen(QColor(0, 0, 0, dConf.shadows.opacity*255.0f));
+                    p.setPen(QColor(0, 0, 0, dConf.shadows.opacity));
                     p.drawLine(0, Handlers::unoHeight(w, ToolBars)+0.5f, w->width(), Handlers::unoHeight(w, ToolBars)+0.5f);
                 }
 
@@ -1470,7 +1470,7 @@ Window::updateWindowData(qulonglong window)
     data->setValue<int>(WindowData::UnoHeight, height);
     data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
-    data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity*255.0f);
+    data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity);
     data->setFg(pal.color(win->foregroundRole()));
     data->setBg(pal.color(win->backgroundRole()));
     win->update();

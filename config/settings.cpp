@@ -702,7 +702,7 @@ Settings::read()
     conf.progressbars.shadow    = readInt(Progshadow);
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));
     //shadows
-    conf.shadows.opacity        = readFloat(Shadowopacity)/100.0f;
+    conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;
     conf.shadows.darkRaisedEdges = readBool(Shadowdarkraised);
     readPalette();
 }

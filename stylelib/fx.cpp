@@ -291,7 +291,7 @@ FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const Q
     img.fill(Qt::transparent);
     QPainter p(&img);
     int rgb(isDark?255:0);
-    int alpha(/*qMin(*/255.0f/*, 2*dConf.shadows.opacity*255.0f)*/);
+    int alpha(/*qMin(*/255.0f/*, 2*dConf.shadows.opacity)*/);
     p.fillRect(img.rect(), QColor(rgb, rgb, rgb, alpha));
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawTiledPixmap(r.translated(m, m), source);
