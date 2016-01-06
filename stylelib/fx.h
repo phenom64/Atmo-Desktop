@@ -20,7 +20,7 @@ public:
     FX();
     static QImage blurred(const QImage& image, const QRect& rect, int radius, bool alphaOnly = false);
     static void expblur(QImage &img, int radius, Qt::Orientations o = Qt::Horizontal|Qt::Vertical );
-    static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1);
+    static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
     static void colortoalpha(float *a1, float *a2, float *a3, float *a4, float c1, float c2, float c3);
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());

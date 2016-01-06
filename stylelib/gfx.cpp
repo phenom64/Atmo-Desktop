@@ -30,17 +30,20 @@ QPixmap *GFX::s_noise = 0;
 Shadow *GFX::s_shadow[MaxRnd+1][ShadowCount][2] = {0};
 
 void
-GFX::generateData(const QPalette &pal)
+GFX::generateData()
 {
-    initShadows(pal);
+    initShadows();
     initTabs();
     makeNoise();
 }
 
 void
-GFX::initShadows(const QPalette &pal)
+GFX::initShadows()
 {
-    const int winLum = Color::luminosity(pal.color(QPalette::Window));
+    static bool init(false);
+    if (init)
+        return;
+    init = true;
     for (int r = 0; r < MaxRnd+1; ++r)
     for (ShadowStyle s = 0; s < ShadowCount; ++s)
     {
@@ -510,12 +513,40 @@ static int randInt(int low, int high)
     return qrand() % ((high + 1) - low) + low;
 }
 
-void
-GFX::makeNoise()
+QPixmap
+GFX::noisePix(const quint8 style)
 {
-    if (!s_noise)
-        s_noise = new QPixmap[2]();
-    if (dConf.uno.enabled&&dConf.uno.noiseStyle == 4 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 4)
+    switch (style)
+    {
+    case 2:
+    {
+        QImage img(3, 4, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[12] = { 170, 255, 0, 85, 170, 0, 85, 0, 170, 0, 85, 128 };
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        return QPixmap::fromImage(img);
+    }
+    case 3:
+    {
+        QImage img(3, 3, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[9] = { 0, 0, 255, 0, 255, 0, 255, 0, 0 };
+        for (int i = 0; i < size; ++i)
+        {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        return QPixmap::fromImage(img);
+    }
+    case 4:
     {
         QImage img(4, 3, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
@@ -529,37 +560,9 @@ GFX::makeNoise()
             const int v(px[i]);
             rgb[i] = qRgb(v, v, v);
         }
-        s_noise[0] = QPixmap::fromImage(img);
+        return QPixmap::fromImage(img);
     }
-    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 3 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 3)
-    {
-        QImage img(3, 3, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
-        const int size(img.width()*img.height());
-        static const int px[9] = { 0, 0, 255, 0, 255, 0, 255, 0, 0 };
-        for (int i = 0; i < size; ++i)
-        {
-            const int v(px[i]);
-            rgb[i] = qRgb(v, v, v);
-        }
-        s_noise[0] = QPixmap::fromImage(img);
-    }
-    else if (dConf.uno.enabled&&dConf.uno.noiseStyle == 2 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 2)
-    {
-        QImage img(3, 4, QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
-        const int size(img.width()*img.height());
-        static const int px[12] = { 170, 255, 0, 85, 170, 0, 85, 0, 170, 0, 85, 128 };
-        for (int i = 0; i < size; ++i)
-        {
-            const int v(px[i]);
-            rgb[i] = qRgb(v, v, v);
-        }
-        s_noise[0] = QPixmap::fromImage(img);
-    }
-    else
+    default:
     {
         static int s(512);
         QImage noise(s, s, QImage::Format_ARGB32_Premultiplied);
@@ -571,7 +574,7 @@ GFX::makeNoise()
             int v(randInt(0, 255));
             rgb[i] = QColor(v, v, v).rgb();
         }
-        if (dConf.uno.enabled&&dConf.uno.noiseStyle == 1 || !dConf.uno.enabled&&dConf.windows.noiseStyle == 1)
+        if (style == 1)
         {
             const int b(32);
             QImage small = noise.copy(0, 0, 256, 256);
@@ -590,24 +593,36 @@ GFX::makeNoise()
             p.end();
             noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
         }
-        s_noise[0] = QPixmap::fromImage(noise);
+        return QPixmap::fromImage(noise);
     }
+    }
+    return QPixmap();
+}
+
+void
+GFX::makeNoise()
+{
+    if (!s_noise)
+        s_noise = new QPixmap[2]();
+
+    s_noise[0] = noisePix(dConf.uno.noiseStyle);
     const QColor bg = qApp->palette().color(QPalette::Window);
+    const QPixmap wNoise = noisePix(dConf.windows.noiseStyle);
 
-//    s_noise[1] = FX::mid(s_noise[0], bg, dConf.uno.noise, 100-dConf.uno.noise);
-    s_noise[1] = QPixmap(s_noise[0].size());
-    s_noise[1].fill(bg);
-    QPainter pt(&s_noise[1]);
+    s_noise[1] = FX::mid(wNoise, bg, dConf.uno.noise, 100-dConf.uno.noise);
+//    s_noise[1] = QPixmap(wNoise.size());
+//    s_noise[1].fill(bg);
+//    QPainter pt(&s_noise[1]);
 
-    QPixmap noise(s_noise[0].size());
-    noise.fill(Qt::transparent);
-    QPainter ptt(&noise);
-    ptt.drawTiledPixmap(noise.rect(), s_noise[0]);
-    ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    ptt.fillRect(noise.rect(), QColor(0, 0, 0, dConf.uno.noise*2.55f));
-    ptt.end();
-    pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-    pt.drawTiledPixmap(s_noise[1].rect(), noise);
-    pt.end();
+//    QPixmap noise(wNoise.size());
+//    noise.fill(Qt::transparent);
+//    QPainter ptt(&noise);
+//    ptt.drawTiledPixmap(noise.rect(), wNoise);
+//    ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+//    ptt.fillRect(noise.rect(), QColor(0, 0, 0, dConf.windows.noise*2.55f));
+//    ptt.end();
+//    pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+//    pt.drawTiledPixmap(s_noise[1].rect(), noise);
+//    pt.end();
 }
 

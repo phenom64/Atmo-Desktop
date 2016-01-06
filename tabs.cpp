@@ -497,7 +497,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
         p->setRenderHint(QPainter::Antialiasing, false);
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
-        p->setPen(QColor(0, 0, 0, 255.0f*dConf.shadows.opacity));
+        p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
         GFX::drawShadow(Sunken, r, p, bar->isEnabled(), 0, Top);
 //        GFX::s_shadow[0][Sunken][Enabled]->render(r, p, Top);
@@ -633,8 +633,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
 
     if (!tabWidget || !opt)
         return true;
-    const int m(2);
-    QRect r(opt->rect.adjusted(m, m, -m, -m));
+
     QRect rect(opt->rect);
     if (const QTabBar *tabBar = tabWidget->findChild<const QTabBar *>()) //tabBar() method of tabwidget is protected...
     {
@@ -648,7 +647,6 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
             barRect.setLeft(tabWidget->rect().left());
             barRect.setRight(tabWidget->rect().right());
             const int b(barRect.bottom()+1);
-            r.setTop(b);
             rect.setTop(b-h);
             break;
         }
@@ -656,7 +654,6 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         case QTabBar::TriangularSouth:
         {
             const int t(barRect.top()-1);
-            r.setBottom(t);
             rect.setBottom(t+h);
             break;
         }
@@ -664,7 +661,6 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         case QTabBar::TriangularWest:
         {
             const int right(barRect.right()+1);
-            r.setLeft(right);
             rect.setLeft(right-wh);
             break;
         }
@@ -672,7 +668,6 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         case QTabBar::TriangularEast:
         {
             const int l(barRect.left()-1);
-            r.setRight(l);
             rect.setRight(l+wh);
             break;
         }

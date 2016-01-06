@@ -1294,15 +1294,15 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
     pt.fillRect(img.rect(), b);
     if (n)
     {
-//        p = Render::mid(p, QBrush(Render::noise()), 100-n, n);
-        QPixmap noise(GFX::noise().size());
-        noise.fill(Qt::transparent);
-        QPainter ptt(&noise);
-        ptt.drawTiledPixmap(noise.rect(), GFX::noise());
-        ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        ptt.fillRect(noise.rect(), QColor(0, 0, 0, n*2.55f));
-        ptt.end();
-        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
+        const QPixmap noise = FX::mid(GFX::noise(), b, n, 100-n, img.size());
+//        QPixmap noise(GFX::noise().size());
+//        noise.fill(Qt::transparent);
+//        QPainter ptt(&noise);
+//        ptt.drawTiledPixmap(noise.rect(), GFX::noise());
+//        ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+//        ptt.fillRect(noise.rect(), QColor(0, 0, 0, n*2.55f));
+//        ptt.end();
+//        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
         pt.drawTiledPixmap(img.rect(), noise);
     }
     pt.end();

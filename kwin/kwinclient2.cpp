@@ -68,8 +68,7 @@ public:
         DSP::Settings::read();
         DSP::XHandler::init();
         DSP::ShadowHandler::removeDelete();
-        DSP::GFX::makeNoise();
-        DSP::GFX::generateData(QPalette());
+        DSP::GFX::generateData();
     }
     ~DSPDecoFactory() {}
 

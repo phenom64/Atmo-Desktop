@@ -180,14 +180,14 @@ public:
         {
             Gradient gradient;
             Tint tint;
-            unsigned int noise, blur, noiseStyle;
+            quint8 noise, blur, noiseStyle;
             float opacity;
             bool enabled, hor, contAware;
         } uno;
         struct windows
         {
             Gradient gradient;
-            unsigned int noise, noiseStyle;
+            quint8 noise, noiseStyle;
             bool hor;
         } windows;
         struct menues

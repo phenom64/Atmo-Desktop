@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QSize>
 #include <QBrush>
+#include <QDebug>
 
 using namespace DSP;
 
@@ -201,22 +202,28 @@ FX::mid(const QPixmap &p1, const QPixmap &p2, const int a1, const int a2, const 
     QRgb *rgb3 = reinterpret_cast<QRgb *>(i3.bits());
 
     for (int i = 0; i < size; ++i)
-    {
-        const QColor c = Color::mid(QColor::fromRgba(rgb1[i]), QColor::fromRgba(rgb2[i]), a1, a2);
-        rgb3[i] = c.rgba();
-    }
+        rgb3[i] = Color::mid(QColor::fromRgba(rgb1[i]), QColor::fromRgba(rgb2[i]), a1, a2).rgba();
     return QPixmap::fromImage(i3);
 }
 
 QPixmap
-FX::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2)
+FX::mid(const QPixmap &p1, const QBrush &b, const int a1, const int a2, const QSize &sz)
 {
-    QPixmap p2(p1.size());
+    QPixmap pix1;
+    if (sz.width() > p1.width() || sz.height() > p1.height())
+    {
+        pix1 = QPixmap(sz);
+        pix1.fill(Qt::transparent);
+        QPainter p(&pix1);
+        p.drawTiledPixmap(pix1.rect(), p1);
+        p.end();
+    }
+    QPixmap p2(sz.isValid()?sz:p1.size());
     p2.fill(Qt::transparent);
     QPainter p(&p2);
     p.fillRect(p2.rect(), b);
     p.end();
-    return mid(p1, p2, a1, a2);
+    return mid(pix1.isNull()?p1:pix1, p2, a1, a2, sz);
 }
 
 //colortoalpha directly stolen from gimp
