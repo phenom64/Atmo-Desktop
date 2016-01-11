@@ -140,9 +140,12 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 }
                 sz.setWidth(bar->count() == 1 ? bar->width() : (w/bar->count())-1);
             }
-            else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
-                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
-
+            else
+            {
+                if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+                    sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
+                sz.rwidth() += 4;
+            }
             if (!safBar)
                 sz.rheight()+=6;
         }

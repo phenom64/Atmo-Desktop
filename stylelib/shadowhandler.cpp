@@ -1,7 +1,6 @@
 #include <qtextstream.h>
 #include <QDebug>
 #include <QPixmap>
-#include <QX11Info>
 #include <QPainter>
 #include <QEvent>
 #include <QImage>
@@ -16,6 +15,14 @@
 #include "../config/settings.h"
 #include "macros.h"
 #include "fx.h"
+
+#if HASX11 || HASXCB
+#include <QX11Info>
+static ulong s_root = QX11Info::appRootWindow();
+#else
+static ulong s_root = 0;
+#endif
+
 
 using namespace DSP;
 
@@ -74,7 +81,7 @@ XHandler::XPixmap
 *ShadowHandler::shadows(bool active)
 {
     static XHandler::Value atom[2] = { XHandler::StoreInActiveShadow, XHandler::StoreActiveShadow };
-    XHandler::XPixmap *shadows = XHandler::getXProperty<XHandler::XPixmap>(QX11Info::appRootWindow(), atom[active]);
+    XHandler::XPixmap *shadows = XHandler::getXProperty<XHandler::XPixmap>(s_root, atom[active]);
     if (!shadows)
     {
         int size(dConf.deco.shadowSize);
@@ -118,9 +125,9 @@ XHandler::XPixmap
             else
                 data[i] = sd[i-8];
         }
-        XHandler::setXProperty<XHandler::XPixmap>(QX11Info::appRootWindow(), atom[active], XHandler::Long, data, 12);
+        XHandler::setXProperty<XHandler::XPixmap>(s_root, atom[active], XHandler::Long, data, 12);
     }
-    return XHandler::getXProperty<XHandler::XPixmap>(QX11Info::appRootWindow(), atom[active]);
+    return XHandler::getXProperty<XHandler::XPixmap>(s_root, atom[active]);
 }
 
 static QRect menupart(int part, int size, int hor = 128, int ver = 1, int d = 4)
@@ -206,7 +213,7 @@ XHandler::XPixmap
 void
 ShadowHandler::installShadows(WId w, bool active)
 {
-    if (w != QX11Info::appRootWindow())
+    if (w != s_root)
         XHandler::setXProperty<XHandler::XPixmap>(w, XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows(active), 12);
 }
 
@@ -231,7 +238,7 @@ ShadowHandler::installShadows(QMenu *m)
     QPoint tbPoint(tb->mapToGlobal(tb->rect().topLeft()));
     QPoint muPoint(m->mapToGlobal(m->rect().topLeft()));
     const bool up(tbPoint.y()<muPoint.y());
-    if (m->winId() != QX11Info::appRootWindow() && tbPoint.x() == muPoint.x())
+    if (m->winId() != s_root && tbPoint.x() == muPoint.x())
     {
         XHandler::XPixmap *shadows = menuShadow(up, m, tb);
         XHandler::setXProperty<XHandler::XPixmap>(m->winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows, 12);
@@ -243,7 +250,7 @@ ShadowHandler::installShadows(QMenu *m)
 void
 ShadowHandler::removeShadows(WId w)
 {
-    if (w != QX11Info::appRootWindow())
+    if (w != s_root)
         XHandler::deleteXProperty(w, XHandler::_KDE_NET_WM_SHADOW);
 }
 
@@ -274,6 +281,6 @@ ShadowHandler::removeDelete()
         XHandler::freePix(pix[a][i]);
         pix[a][i] = 0;
     }
-    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreActiveShadow);
-    XHandler::deleteXProperty(QX11Info::appRootWindow(), XHandler::StoreInActiveShadow);
+    XHandler::deleteXProperty(s_root, XHandler::StoreActiveShadow);
+    XHandler::deleteXProperty(s_root, XHandler::StoreInActiveShadow);
 }

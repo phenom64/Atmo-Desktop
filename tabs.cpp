@@ -476,7 +476,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     if (isVertical(opt, bar))
         elide = Qt::ElideRight;
     const QString text(fm.elidedText(opt->text, elide, tr.width()));
-    drawItemText(painter, tr, Qt::AlignCenter, option->palette, option->ENABLED, text, fg);
+    drawItemText(painter, tr, Qt::AlignCenter, option->palette, isEnabled(opt), text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
     painter->restore();

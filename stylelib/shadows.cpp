@@ -60,6 +60,7 @@ Shadow::genShadow()
         QImage r(pix.size(), QImage::Format_ARGB32_Premultiplied);
         r.fill(Qt::transparent);
         pt.begin(&r);
+        pt.setRenderHint(QPainter::Antialiasing);
         pt.setPen(Qt::NoPen);
         pt.setBrush(Qt::black);
         pt.drawRoundedRect(r.rect().adjusted(0, 0, 0, -1), m_round, m_round);

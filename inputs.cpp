@@ -107,7 +107,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
 
         GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, All, option, widget);
 
-        const QColor hc(Color::mid(bgc, opt->palette.color(QPalette::Highlight), 1, 3));
+        const QColor hc(Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1));
         QLinearGradient lga(0, 0, 0, GFX::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
         lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
 
@@ -134,7 +134,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
-    QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::HighlightedText));
+    QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::ButtonText));
     QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2).translated(0, 1));
     QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0).translated(0, -1));
     int m(qMax(2, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);

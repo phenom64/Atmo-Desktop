@@ -1021,12 +1021,17 @@ Window::eventFilter(QObject *o, QEvent *e)
                         && qobject_cast<QMainWindow *>(w))
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
 //                p.fillRect(w->rect(), bgColor);
-                p.drawTiledPixmap(w->rect(), GFX::noise(true));
+                if (dConf.windows.noise)
+                    p.drawTiledPixmap(w->rect(), GFX::noise(true));
+                else
+                    p.fillRect(w->rect(), bgColor);
             }
-            else /// TODO
+            else if (dConf.windows.noise)
             {
                 p.drawTiledPixmap(w->rect(), GFX::noise(true));
             }
+            else
+                p.fillRect(w->rect(), bgColor);
             if (WindowData *data = WindowData::memory(w->winId(), w))
                 if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
                 {
