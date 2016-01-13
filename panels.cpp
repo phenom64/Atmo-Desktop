@@ -264,7 +264,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
     {
-        GFX::drawShadow(Sunken, r.adjusted(1, 1, -1, 0), painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All);
+        GFX::drawShadow(Sunken, r, painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All);
     }
     else if (opt->state & State_Raised)
     {

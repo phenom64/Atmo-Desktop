@@ -104,7 +104,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_LineEditContents:
     {
-        QRect r(GFX::maskRect(dConf.input.shadow, opt->rect));
+        const quint8 sm = GFX::shadowMargin(dConf.input.shadow);
+        QRect r(opt->rect.adjusted(sm, sm, -sm, -sm));
         int h(r.height());
         int hor(qMin<int>(dConf.input.rnd, (h/2))/2);
         r.adjust(hor, 0, -hor, 0);

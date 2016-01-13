@@ -4,6 +4,7 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QtGlobal>
+#include <QDebug>
 
 using namespace DSP;
 
@@ -24,12 +25,12 @@ Shadow::genShadow()
     pix.fill(Qt::transparent);
     QPainter p(&pix);
     p.setRenderHint(QPainter::Antialiasing);
-
     switch (m_type)
     {
     case Sunken:
     {
         QRect rect(pix.rect());
+        rect.adjust(1, 1, -1, 0);
         p.setPen(Qt::NoPen);
         p.setBrush(QColor(255, 255, 255, 255));
         p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
@@ -63,9 +64,9 @@ Shadow::genShadow()
         pt.setRenderHint(QPainter::Antialiasing);
         pt.setPen(Qt::NoPen);
         pt.setBrush(Qt::black);
-        pt.drawRoundedRect(r.rect().adjusted(0, 0, 0, -1), m_round, m_round);
+        pt.drawRoundedRect(rect, m_round, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.drawRoundedRect(r.rect().adjusted(1, 1, -1, -2), rnd, rnd);
+        pt.drawRoundedRect(rect.adjusted(1, 1, -1, -1), rnd, rnd);
         pt.end();
 
         p.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -74,32 +75,35 @@ Shadow::genShadow()
     }
     case Etched:
     {
-        QPixmap white(pix.size()-QSize(0, 1));
+        QPixmap white(size, size);
         white.fill(Qt::transparent);
+        QRect rect(pix.rect().adjusted(1, 1, -1, 0));
         QPainter pt(&white);
         pt.setRenderHint(QPainter::Antialiasing);
         pt.setBrush(Qt::white);
         pt.setPen(Qt::NoPen);
-        pt.drawRoundedRect(white.rect(), m_round, m_round);
+        pt.drawRoundedRect(rect, m_round, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         pt.setBrush(Qt::black);
-        pt.drawRoundedRect(white.rect().adjusted(1, 1, -1, -1), m_round-1, m_round-1);
+        pt.drawRoundedRect(rect.adjusted(1, 1, -1, -1), m_round-1, m_round-1);
         pt.end();
 
-        QPixmap black(pix.size()-QSize(0, 1));
+        rect.setBottom(rect.bottom()-1);
+
+        QPixmap black(size, size);
         black.fill(Qt::transparent);
         pt.begin(&black);
         pt.setRenderHint(QPainter::Antialiasing);
         pt.setPen(Qt::NoPen);
         pt.setBrush(Qt::black);
         pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        pt.drawRoundedRect(black.rect(), m_round, m_round);
+        pt.drawRoundedRect(rect, m_round, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.drawRoundedRect(black.rect().adjusted(1, 1, -1, -1), m_round-1, m_round-1);
+        pt.drawRoundedRect(rect.adjusted(1, 1, -1, -1), m_round-1, m_round-1);
         pt.end();
 
-        p.drawTiledPixmap(white.rect().translated(0, 1), white);
-        p.drawTiledPixmap(black.rect(), black);
+        p.drawPixmap(pix.rect(), white);
+        p.drawPixmap(pix.rect(), black);
         break;
     }
     case Raised:

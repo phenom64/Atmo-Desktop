@@ -37,10 +37,7 @@ public:
                               const QStyleOption *opt = 0,
                               const QWidget *w = 0);
     static Pos pos(const Sides s, const Qt::Orientation o);
-    static int maskHeight(const ShadowStyle s, const int height);
-    static int maskWidth(const ShadowStyle s, const int width);
-    static int shadowMargin(const ShadowStyle s);
-    static QRect maskRect(const ShadowStyle s, const QRect &r, const Sides sides = All);
+    static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);
     static void drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter);

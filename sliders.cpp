@@ -92,7 +92,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
     }
     else if (dConf.scrollers.style >= 1)
     {
-        if (opt->SUNKEN)
+        if (isSunken(opt))
             level = Steps;
         const QPalette pal = QApplication::palette();
         QColor bgColor(pal.color(QPalette::Window)), fgColor(pal.color(QPalette::WindowText));
@@ -156,15 +156,16 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         }
 
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
-        GFX::drawClickable(dConf.scrollers.grooveShadow, groove, painter, lg, MaxRnd, All, option, widget);
+        const quint8 sm = GFX::shadowMargin(dConf.scrollers.grooveShadow);
+        GFX::drawClickable(dConf.scrollers.grooveShadow, groove.adjusted(-sm, -sm, sm, sm), painter, lg, MaxRnd, All, option, widget);
 
         ///the slider
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
-        GFX::drawShadow(Rect, slider, painter, isEnabled(opt));
-        slider.adjust(1, 1, -1, -1);
-        GFX::drawMask(slider, painter, lg);
+        quint8 roundNess((qMin(slider.width(), slider.height()) >> 1) & ~1);
+        GFX::drawMask(slider, painter, lg, roundNess);
+        GFX::drawShadow(Rect, slider, painter, isEnabled(opt), roundNess);
     }
     return true;
 }
@@ -244,7 +245,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     default: break;
     }
 
-    QLinearGradient lga(0, 0, !hor*GFX::maskWidth(gs, groove.width()), hor*GFX::maskHeight(gs, groove.height()));
+    QLinearGradient lga(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
     lga.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
 
     QRect clip(groove);
@@ -271,7 +272,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     if (dConf.sliders.fillGroove)
     {
         painter->setClipRect(clip);
-        QLinearGradient lgh(0, 0, !hor*GFX::maskWidth(gs, groove.width()), hor*GFX::maskHeight(gs, groove.height()));
+        QLinearGradient lgh(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
         lgh.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
         GFX::drawClickable(gs, groove, painter, lgh, d, All, option, widget);
     }
@@ -319,13 +320,11 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
         }
 
         const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
-        const QRect &sliderMask = GFX::maskRect(sliderShadow, slider);
-        QLinearGradient lg(0, 0, 0, sliderMask.height());
+        QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
-        QBrush mask(lg);
 
-        GFX::drawShadow(sliderShadow, slider, painter, isEnabled(option));
-        GFX::drawMask(sliderMask, painter, mask);
+        const quint8 roundNess((qMin(slider.width(), slider.height()) >> 1) & ~1);
+        GFX::drawClickable(sliderShadow, slider, painter, lg, roundNess, All, opt, widget);
 
         if (dConf.sliders.dot)
         {

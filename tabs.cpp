@@ -123,7 +123,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     case QTabBar::TriangularNorth:
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
-        lg = QLinearGradient(0, 0, 0, GFX::maskHeight(dConf.tabs.shadow, r.height()));
+        lg = QLinearGradient(0, 0, 0, r.height());
         if (isOnly)
             break;
         if (isRtl)
@@ -133,12 +133,12 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
-        lg = QLinearGradient(0, 0, GFX::maskWidth(dConf.tabs.shadow, r.width()), 0);
+        lg = QLinearGradient(0, 0, r.width(), 0);
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
         {
-            lg = QLinearGradient(GFX::maskWidth(dConf.tabs.shadow, r.width()), 0, 0, 0);
+            lg = QLinearGradient(r.width(), 0, 0, 0);
         }
         vert = true;
         if (isOnly)
@@ -149,7 +149,8 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     }
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, bgc));
     GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, sides, opt, bar);
-    const QRect mask(GFX::maskRect(dConf.tabs.shadow, r, sides));
+    const quint8 sm = GFX::shadowMargin(dConf.tabs.shadow);
+    const QRect mask(r.sAdjusted(sm, sm, -sm, -sm));
     if (isSelected && !isOnly)
     {
         const QPen pen(painter->pen());
@@ -825,7 +826,7 @@ Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const 
     if (!last)
         sides &= ~Bottom;
 
-    QLinearGradient lg(0, 0, 0, GFX::maskRect(dConf.tabs.shadow, theRect).height());
+    QLinearGradient lg(theRect.topLeft(), theRect.bottomLeft());
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
     GFX::drawClickable(dConf.tabs.shadow, theRect, painter, lg, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), sides, option, w);
     return true;

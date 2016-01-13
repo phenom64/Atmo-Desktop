@@ -164,17 +164,14 @@ GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, co
 void
 GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
 {
-    Mask::render(rect, brush, painter, qMin(roundNess, qMin(rect.height(), rect.width())/2), sides);
+    Mask::render(rect, brush, painter, roundNess, sides);
 }
 
 void
 GFX::drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, const bool isEnabled, int roundNess, const Sides sides)
 {
-    if (!rect.isValid())
-        return;
-    const quint8 r = qBound(0, roundNess, (qMin(rect.height(), rect.width())>>1));
-    if (r >= 0 && r <= MaxRnd)
-        s_shadow[r][shadow][isEnabled]->render(rect, painter, sides);
+    if (rect.isValid() && roundNess >= 0 && roundNess <= MaxRnd)
+        s_shadow[roundNess][shadow][isEnabled]->render(rect, painter, sides);
 }
 
 void
@@ -187,7 +184,6 @@ GFX::drawClickable(ShadowStyle s,
                    const QStyleOption *opt,
                    const QWidget *w)
 {
-    rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1));
     if (s >= ShadowCount)
         return;
 
@@ -205,10 +201,11 @@ GFX::drawClickable(ShadowStyle s,
             && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
             && s != Carved && s != Yosemite && s != Rect && s != ElCapitan && !isToolBox && !isLineEdit)
     {
-        if (s == Raised)
-            r.sAdjust(1, 1+(r.width()!=r.height()), -1, -1);
         s = Sunken;   
     }
+
+    if (rnd)
+        rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1));
 
     int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
     if (w)
@@ -248,54 +245,56 @@ GFX::drawClickable(ShadowStyle s,
             pfgLum = fgLum;
         }
     }
-    const bool darkParent(pfgLum>pbgLum);
-//    const bool parentContrast(qMax(pbgLum, bgLum)-qMin(pbgLum, bgLum) > 127);
+
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
 
-    if (s==Yosemite)
+    const quint8 m = shadowMargin(s);
+
+    switch (s)
+    {
+    case Yosemite:
     {
         drawShadow(s, r, p, isEnabled, rnd, sides);
         const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
         r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
+        break;
     }
-    else if (s==Raised)
-        r.sAdjust(2, 2, -2, -2);
-    else if (s==Carved)
+    case Carved:
     {
         QLinearGradient lg(0, 0, 0, r.height());
         if (isToolBox)
             r = w->rect();
+        const bool darkParent(pfgLum>pbgLum);
         int high(darkParent?32:192), low(darkParent?170:85);
-        lg.setColorAt(0.1f, QColor(0, 0, 0, low));
-        lg.setColorAt(1.0f, QColor(255, 255, 255, high));
+        lg.setColorAt(0, QColor(0, 0, 0, low));
+        lg.setColorAt(1, QColor(255, 255, 255, high));
         drawMask(r, p, lg, rnd, sides);
-        const int m(qMin(r.height(), r.width())<9?2:3);
+        const int add(qMin(r.height(), r.width())<9?2:3);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
-        r.sAdjust((m+needHor), m, -(m+needHor), -m);
-        rnd = qMax(rnd-m, 0);
+        r.sAdjust((add+needHor), add, -(add+needHor), -add);
+        rnd = qMax(rnd-add, 0);
+        break;
     }
-    else if ((r.height() != r.width() || qobject_cast<const QToolButton *>(w)) && s != ElCapitan)
-        r.sAdjust(0, 0, 0, -1);
+    default: r.sAdjust(m, m, -m, -m); break;
+    }
 
     /// BEGIN ACTUAL PLATE PAINTING
 
-    const bool n(s == Sunken && bgLum > pbgLum);
-    drawMask(r.sAdjusted(n, n, -n, -n), p, mask, rnd, sides);
+    drawMask(r, p, mask, rnd, sides);
 
     /// END PLATE
 
-    if (s==Carved)
+    switch (s)
     {
-        drawShadow(Rect, r, p, isEnabled, rnd, sides);
-    }
-    else if (s==Sunken||s==Etched)
+    case Carved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
+    case Sunken:
+    case Etched: drawShadow(s, r.sAdjusted(-1, -1, 1, 1), p, isEnabled, rnd, sides); break;
+    case Raised:
     {
-        drawShadow(s, r.sAdjusted(0, 0, 0, 1), p, isEnabled, rnd, sides);
-    }
-    else if (s==Raised && !isToolBox)
-    {
+        if (isToolBox)
+            break;
         drawShadow(s, r.sAdjusted(-2, -2, 2, 2), p, isEnabled, rnd, sides);
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
@@ -315,9 +314,12 @@ GFX::drawClickable(ShadowStyle s,
             }
             drawMask(r, p, edges, rnd, sides);
         }
+        break;
     }
-    else if (s==Rect || s==ElCapitan)
-        drawShadow(s, r, p, isEnabled, rnd, sides);
+    case Rect:
+    case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
+    default: break;
+    }
 }
 
 Pos
@@ -347,69 +349,15 @@ GFX::pos(const Sides s, const Qt::Orientation o)
     }
 }
 
-int
-GFX::maskHeight(const ShadowStyle s, const int height)
-{
-    switch (s)
-    {
-    case Sunken:
-    case Etched:
-        return height-1;
-    case Raised:
-        return height-4;
-    case Yosemite:
-        return height-1;
-    case Carved:
-        return height-6;
-    case Rect:
-        return height;
-    default: return height;
-    }
-}
-
-int
-GFX::maskWidth(const ShadowStyle s, const int width)
-{
-    switch (s)
-    {
-    case Sunken:
-    case Etched:
-    case Yosemite:
-        return width;
-    case Raised:
-        return width-2;
-    case Carved:
-        return width-6;
-    default: return 0;
-    }
-}
-
-QRect
-GFX::maskRect(const ShadowStyle s, const QRect &r, const Sides sides)
-{
-    //sides needed for sAdjusted macro even if seemingly unused
-    switch (s)
-    {
-    case Yosemite:
-    case Sunken:
-    case Etched: return r.sAdjusted(0, 0, 0, -1);
-    case Raised: return r.sAdjusted(2, 2, -2, -(2+(r.height()!=r.width())));
-    case Carved: return r.sAdjusted(3, 3, -3, -3);
-    case Rect: return r.sAdjusted(1, 1, -1, -1);
-    default: return r;
-    }
-}
-
-int
+quint8
 GFX::shadowMargin(const ShadowStyle s)
 {
     switch (s)
     {
-    case Sunken:
-    case Etched:
-    case Raised: return 3; break;
-    case Yosemite: return 0; break;
-    case Carved: return 4; break;
+    case Sunken: return 1;
+    case Etched: return 1;
+    case Raised: return 2;
+    case Carved: return 4;
     default: return 0;
     }
 }

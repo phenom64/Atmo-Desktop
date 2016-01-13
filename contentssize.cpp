@@ -141,15 +141,15 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 sz.setWidth(bar->count() == 1 ? bar->width() : (w/bar->count())-1);
             }
             else
-            {
-                if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
-                    sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
-                sz.rwidth() += 4;
-            }
+                sz.rwidth() += 6;
+//            else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
+//            {
+//                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
+//            }
             if (!safBar)
-                sz.rheight()+=6;
+                sz.rheight() += 6;
         }
-        if (styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignCenter)
+        if ((tab->state & State_Selected) && ((bar && !bar->expanding()) || !safBar))
         {
             const QString s(tab->text);
             QFont f(bar?bar->font():qApp->font());

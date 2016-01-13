@@ -45,7 +45,7 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
             c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
         if (isInactive)
             c.setAlpha(127);
-        QLinearGradient lg(0, 0, 0, GFX::maskHeight(dConf.input.shadow, option->rect.height()));
+        QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
@@ -102,13 +102,13 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         if (dConf.pushbtn.tint.second > -1)
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
         painter->setClipRegion(QRegion(frameRect)-QRegion(arrowRect));
-        QLinearGradient lg(0, 0, 0, GFX::maskHeight(dConf.pushbtn.shadow, frameRect.height()));
+        QLinearGradient lg(frameRect.topLeft(), frameRect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
 
         GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, All, option, widget);
 
         const QColor hc(Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1));
-        QLinearGradient lga(0, 0, 0, GFX::maskHeight(dConf.pushbtn.shadow, opt->rect.height()));
+        QLinearGradient lga(opt->rect.topLeft(), opt->rect.bottomLeft());
         lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
 
         painter->setClipRect(arrowRect);
@@ -126,7 +126,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
             QColor c(brush.color());
             if (dConf.input.tint.second > -1)
                 c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
-            QLinearGradient lg(0, 0, 0, GFX::maskHeight(dConf.input.shadow, option->rect.height()));
+            QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
             lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
             brush = QBrush(lg);
         }
@@ -137,7 +137,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::ButtonText));
     QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2).translated(0, 1));
     QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0).translated(0, -1));
-    int m(qMax(2, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
+    int m(qMax<int>(2, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
     a1.moveLeft(a1.left()+(ltr?-m:m));
     a2.moveLeft(a2.left()+(ltr?-m:m));
 
@@ -182,12 +182,15 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
     if (!opt)
         return true;
 
+    const bool ltr(opt->direction == Qt::LeftToRight);
+
 //    QRect frame(subControlRect(CC_SpinBox, opt, SC_SpinBoxFrame, widget));
-    QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget).shrinked(2));
+    QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget).shrinked(2).translated(ltr?-2:2, 0));
 //    up.setBottom(up.bottom()-1);
-    QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget).shrinked(2));
+    QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget).shrinked(2).translated(ltr?-2:2, 0));
 //    down.setTop(down.top()+1);
-    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
+//    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
+    QRect edit(opt->rect);
 
     QBrush mask(option->palette.brush(QPalette::Base));
 //    QRect r = opt->rect;
@@ -199,7 +202,7 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
         QColor c(mask.color());
         if (dConf.input.tint.second > -1)
             c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
-        QLinearGradient lg(0, 0, 0, GFX::maskHeight(dConf.input.shadow, opt->rect.height()));
+        QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
@@ -210,11 +213,11 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
     QColor c = opt->palette.color(QPalette::WindowText);
     if (!enabled || (box && box->maximum() == box->value()))
         c.setAlpha(127);
-    GFX::drawArrow(painter, c, up, North, dConf.arrowSize, Qt::AlignCenter, enabled && (box && box->minimum() != box->value()));
+    GFX::drawArrow(painter, c, up, North, dConf.arrowSize, Qt::AlignBottom|(ltr?Qt::AlignLeft:Qt::AlignRight), enabled && (box && box->minimum() != box->value()));
     if (!enabled || (box && box->minimum() == box->value()))
         c.setAlpha(127);
     else
         c.setAlpha(255);
-    GFX::drawArrow(painter, c, down, South, dConf.arrowSize, Qt::AlignCenter, enabled && (box && box->minimum() != box->value()));
+    GFX::drawArrow(painter, c, down, South, dConf.arrowSize, Qt::AlignTop|(ltr?Qt::AlignLeft:Qt::AlignRight), enabled && (box && box->minimum() != box->value()));
     return true;
 }

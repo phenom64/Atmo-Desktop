@@ -50,7 +50,10 @@ Mask::render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, c
     p->setBrush(b);
     const QPen pen(p->pen());
     p->setPen(Qt::NoPen);
+//    const QPoint bo(p->brushOrigin());
+//    p->setBrushOrigin(r.topLeft());
     p->drawPath(path);
+//    p->setBrushOrigin(bo);
     p->setBrush(brush);
     p->setPen(pen);
     p->setRenderHint(QPainter::Antialiasing, hadAA);
