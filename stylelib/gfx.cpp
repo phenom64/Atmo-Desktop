@@ -89,7 +89,7 @@ GFX::initTabs()
     QPainterPath path(tab(r.adjusted(ts, 0, -ts, 0), tr));
     QPainter p(&img);
     p.setRenderHint(QPainter::Antialiasing);
-    p.setPen(QPen(Qt::black, 2.0f));
+    p.setPen(QPen(Qt::black, 3.0f));
     p.setBrush(Qt::black);
     p.drawPath(path);
     p.end();
@@ -105,7 +105,7 @@ GFX::initTabs()
     p.drawPath(path);
     p.setPen(Qt::black);
     p.drawLine(img.rect().topLeft(), img.rect().topRight());
-    drawShadow(Sunken, img.rect(), &p, 0, Top, 0.2f);
+    Shadow(Sunken, 0, 0xff).render(img.rect().translated(0, -1), &p, Top);
     p.end();
     --hsz;
     hsz/=2;
@@ -319,33 +319,6 @@ GFX::drawClickable(ShadowStyle s,
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
     default: break;
-    }
-}
-
-Pos
-GFX::pos(const Sides s, const Qt::Orientation o)
-{
-    if (o == Qt::Horizontal)
-    {
-        if (s&Left&&!(s&Right))
-            return First;
-        else if (s&Right&&!(s&Left))
-            return Last;
-        else if (s==All)
-            return Alone;
-        else
-            return Middle;
-    }
-    else
-    {
-        if (s&Top&&!(s&Bottom))
-            return First;
-        else if (s&Bottom&&!(s&Top))
-            return Last;
-        else if (s==All)
-            return Alone;
-        else
-            return Middle;
     }
 }
 

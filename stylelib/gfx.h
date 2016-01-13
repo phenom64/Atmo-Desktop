@@ -36,7 +36,6 @@ public:
                               const Sides sides = All,
                               const QStyleOption *opt = 0,
                               const QWidget *w = 0);
-    static Pos pos(const Sides s, const Qt::Orientation o);
     static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);

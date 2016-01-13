@@ -500,8 +500,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
         p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        GFX::drawShadow(Sunken, r, p, bar->isEnabled(), 0, Top);
-//        GFX::s_shadow[0][Sunken][Enabled]->render(r, p, Top);
+        GFX::drawShadow(Sunken, r.translated(0, -1), p, bar->isEnabled(), 0, Top);
         p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     else if (bar->documentMode() && bar->isVisible())

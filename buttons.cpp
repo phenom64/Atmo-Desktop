@@ -375,7 +375,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         GFX::drawClickable(shadow, rect, painter, lga, dConf.toolbtn.rnd, sides, opt, widget);
     }
 
-    if (sunken && dConf.toolbtn.shadow == Etched && GFX::pos(sides, bar->orientation()) != Alone)
+    if (sunken && dConf.toolbtn.shadow == Etched && sides != All)
     {
         QPixmap pix(rect.size());
         pix.fill(Qt::transparent);
@@ -470,14 +470,13 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         GFX::drawArrow(painter, opt->palette.color(fg), arrow, South, 7, Qt::AlignCenter, true);
     }
     QRect ir(mr);
-    const Pos rp(GFX::pos(sides, bar?bar->orientation():Qt::Horizontal));
     if (!multiTab)
     switch (opt->toolButtonStyle)
     {
     case Qt::ToolButtonTextBesideIcon:
         if (hor)
         {
-            if (rp == First || rp == Alone)
+            if ((sides & Left && !(sides & Right)) || sides == All)
                 ir.translate(6, 0);
             else
                 ir.translate(4, 0);
@@ -505,9 +504,9 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
             && opt->toolButtonStyle == Qt::ToolButtonIconOnly
             && bar && bar->orientation() == Qt::Horizontal)
     {
-        if (rp == First)
+        if ((sides & Left && !(sides & Right)))
             ir.translate(2, 0);
-        else if (rp == Last && !hasMenu)
+        else if ((sides & Right && !(sides & Left)) && !hasMenu)
             ir.translate(-2, 0);
     }
     const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
