@@ -290,12 +290,12 @@ GFX::drawClickable(ShadowStyle s,
     {
     case Carved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
     case Sunken:
-    case Etched: drawShadow(s, r.sAdjusted(-1, -1, 1, 1), p, isEnabled, rnd, sides); break;
+    case Etched: drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides); break;
     case Raised:
     {
         if (isToolBox)
             break;
-        drawShadow(s, r.sAdjusted(-2, -2, 2, 2), p, isEnabled, rnd, sides);
+        drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides);
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
             const float lumop(qMin<float>(255.0f, 1.5f*bgLum));
