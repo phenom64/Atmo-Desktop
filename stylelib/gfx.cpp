@@ -164,6 +164,8 @@ GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, co
 void
 GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
 {
+    if (roundNess)
+        roundNess = qBound(0, roundNess, (qMin(rect.height(), rect.width())>>1));
     Mask::render(rect, brush, painter, roundNess, sides);
 }
 
@@ -203,10 +205,6 @@ GFX::drawClickable(ShadowStyle s,
     {
         s = Sunken;   
     }
-
-    if (rnd)
-        rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1));
-
     int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
     if (w)
     {
@@ -249,6 +247,9 @@ GFX::drawClickable(ShadowStyle s,
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
+
+    if (rnd)
+        rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1));
 
     const quint8 m = shadowMargin(s);
 
