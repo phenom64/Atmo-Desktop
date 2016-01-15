@@ -1859,7 +1859,7 @@ Balloon::Balloon() : QWidget(), m_label(new QLabel(this))
 }
 
 static bool s_isInit(false);
-static unsigned long pix[8];
+static XHandler::XPixmap pix[8];
 
 static void clearPix()
 {
@@ -1916,13 +1916,13 @@ Balloon::genPixmaps()
 void
 Balloon::updateShadow()
 {
-    unsigned long data[12];
+    XHandler::XPixmap data[12];
     genPixmaps();
     for (int i = 0; i < 8; ++i)
         data[i] = pix[i];
     for (int i = 8; i < 12; ++i)
         data[i] = s_padding;
-    XHandler::setXProperty<unsigned long>(winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
+    XHandler::setXProperty<XHandler::XPixmap>(winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
 }
 
 void

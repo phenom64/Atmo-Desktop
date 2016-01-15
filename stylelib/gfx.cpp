@@ -263,7 +263,7 @@ GFX::drawClickable(ShadowStyle s,
     }
     case Carved:
     {
-        QLinearGradient lg(0, 0, 0, r.height());
+        QLinearGradient lg(r.topLeft(), r.bottomLeft());
         if (isToolBox)
             r = w->rect();
         const bool darkParent(pfgLum>pbgLum);
