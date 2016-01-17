@@ -399,7 +399,8 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
 //    p->save();
     const QPen pen(p->pen());
     const QBrush brush(p->brush());
-//    const bool aa(p->testRenderHint(QPainter::Antialiasing));
+    const bool aa(p->testRenderHint(QPainter::Antialiasing));
+    p->setRenderHint(QPainter::Antialiasing);
     p->setPen(Qt::NoPen);
 
     if (size < 7 || size > qMin(r.width(), r.height()))
@@ -438,7 +439,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     {
     case East:  { points[0] = rect.topLeft(); points[1] = QPoint(rect.right(), rect.center().y()); points[2] = rect.bottomLeft(); break; }
     case South: { points[0] = rect.topLeft(); points[1] = QPoint(rect.center().x(), rect.bottom()); points[2] = rect.topRight(); break; }
-    case West:  { points[0] = QPoint(rect.left(), rect.center().y()); points[1] = rect.topRight(); points[2] = rect.bottomRight(); break; }
+    case West:  { points[0] = rect.topRight(); points[1] = QPoint(rect.left(), rect.center().y());  points[2] = rect.bottomRight(); break; }
     case North: { points[0] = rect.bottomLeft(); points[1] = QPoint(rect.center().x(), rect.top()); points[2] = rect.bottomRight(); break; }
     default: break;
     }
@@ -456,7 +457,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     }
     p->setPen(pen);
     p->setBrush(brush);
-//    p->setRenderHint(QPainter::Antialiasing, aa);
+    p->setRenderHint(QPainter::Antialiasing, aa);
 }
 
 static int randInt(int low, int high)

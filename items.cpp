@@ -44,8 +44,9 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
     int leftMargin(isMenu?(opt->menuHasCheckableItems||hasCheckBox||hasRadioButton?24:6):0), rightMargin(isMenu?(hasMenu||isSeparator?24:6):0), h(opt->rect.height()), w(opt->rect.width());
 
-    QRect button(0, opt->rect.top(), h, h);
-    button.moveLeft(button.left()+qMax(0, (leftMargin/2 - h/2)));
+    QRect button(0, opt->rect.top(), 9, 9);
+    button.moveLeft(button.left()+qMax(6, (leftMargin/2 - h/2)));
+    button.moveTop(button.top()+((h/2)-(button.height()/2)));
     QRect textRect(opt->rect.adjusted(qMax(button.right()+1, leftMargin), 0, -rightMargin, 0));
     QRect arrow(textRect.right()+((rightMargin/2)-(h/2)), opt->rect.top(), h, h);
 
@@ -107,10 +108,11 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         }
     }
 
+
     if (opt->checked)
-        GFX::drawCheckMark(painter, pal.color(fg), button.shrinked(3));
+        GFX::drawCheckMark(painter, pal.color(fg), button);
     else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
-        GFX::drawCheckMark(painter, pal.color(fg), button.shrinked(3), true);
+        GFX::drawCheckMark(painter, pal.color(fg), button, true);
 
     if (isMenu && hasMenu)
         GFX::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
