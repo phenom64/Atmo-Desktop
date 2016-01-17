@@ -143,7 +143,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         painter->setPen(pen);
 
         ///the groove
-        groove.setBottom(groove.bottom()+1); //why is the groove bottom 1px too high?
+//        groove.setBottom(groove.bottom()+1); //why is the groove bottom 1px too high?
 //        groove.adjust(!hor*2, hor*2, -(!hor*2), -(hor*2));
 //        groove.adjust(1, 1, -1, -1);
         QColor bgc = pal.color(QPalette::Base);
@@ -163,7 +163,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
-        quint8 roundNess((qMin(slider.width(), slider.height()) >> 1) & ~1);
+        quint8 roundNess((qMin(slider.width(), slider.height()) >> 1));
         GFX::drawMask(slider, painter, lg, roundNess);
         GFX::drawShadow(Rect, slider, painter, isEnabled(opt), roundNess);
     }

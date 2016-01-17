@@ -43,6 +43,7 @@ public:
         Compactmenu,
         Splitterext,
         Arrowsize,
+        Simplearrows,
         Balloontips,
         Palette,
         Animatestack,
@@ -120,7 +121,7 @@ public:
         App app;
         float opacity;
         QStringList blackList;
-        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks, animateStack, animateScroll;
+        bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks, animateStack, animateScroll, simpleArrows;
         quint8 titlePos, arrowSize;
         QPalette *palette;
         struct deco

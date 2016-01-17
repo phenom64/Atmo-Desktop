@@ -165,7 +165,7 @@ void
 GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
 {
     if (roundNess)
-        roundNess = qBound(0, roundNess, (qMin(rect.height(), rect.width())>>1));
+        roundNess = qBound(0, roundNess, (qMin(rect.height(), rect.width())>>1)|1);
     Mask::render(rect, brush, painter, roundNess, sides);
 }
 
@@ -257,9 +257,11 @@ GFX::drawClickable(ShadowStyle s,
     {
     case Yosemite:
     {
-        drawShadow(s, r, p, isEnabled, rnd, sides);
-        const bool inToolBar(w&&qobject_cast<const QToolBar *>(w->parentWidget()));
-        r.sAdjust(!inToolBar, !inToolBar, -!inToolBar, -1);
+        if (w&&qobject_cast<const QToolBar *>(w->parentWidget()))
+        {
+            drawShadow(s, r, p, isEnabled, rnd, sides);
+            r.sAdjust(0, 0, 0, -1);
+        }
         break;
     }
     case Carved:
@@ -292,6 +294,7 @@ GFX::drawClickable(ShadowStyle s,
     case Carved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
     case Sunken:
     case Etched: drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides); break;
+    case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Raised:
     {
         if (isToolBox)
@@ -339,12 +342,17 @@ GFX::shadowMargin(const ShadowStyle s)
 void
 GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
 {
-    p->save();
-    p->translate(r.topLeft());
+    const int size = qMin(r.width(), r.height());
+    QRect rect(0, 0, size, size);
+    rect.moveCenter(r.center()+QPoint(bool(size|1)*1, bool(size|1)*1));
+    int x,y,w,h;
+    rect.getRect(&x, &y, &w, &h);
+    const int third = size/3+1;
+    const int points[] = { x,y+size-third, x+third-1,y+size, x+w,y };
 
-    int size = qMin(r.width(), r.height());
-    const int third = size/3, thirds = third*2, sixth=third/2;
-    const int points[] = { sixth,thirds-sixth, third,size-sixth, thirds+sixth,sixth };
+    const bool aa(p->testRenderHint(QPainter::Antialiasing));
+    const QPen sPen(p->pen());
+    const QBrush sBrush(p->brush());
 
     p->setRenderHint(QPainter::Antialiasing);
     QPen pen(c, third*(tristate?0.33f:0.66f), tristate?Qt::DashLine:Qt::SolidLine);
@@ -353,15 +361,15 @@ GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
     p->setPen(pen);
     p->setBrush(Qt::NoBrush);
 
-    QPainterPath path;
-    path.addPolygon(QPolygon(3, points));
-    p->drawPath(path);
+    p->drawPolyline(QPolygon(3, points));
 
-    p->restore();
+    p->setBrush(sBrush);
+    p->setPen(sPen);
+    p->setRenderHint(QPainter::Antialiasing, aa);
 }
 
 void
-GFX::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align)
+GFX::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, QRect r, const Direction d, int size, const Qt::Alignment align)
 {
     const QPalette::ColorRole bgRole(Ops::opposingRole(role));
     if (pal.color(role).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
@@ -380,7 +388,7 @@ GFX::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal,
 }
 
 void
-GFX::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align, const bool bevel)
+GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int size, const Qt::Alignment align, const bool bevel)
 {
     if (bevel)
     {
@@ -388,15 +396,29 @@ GFX::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, 
         const int rgb = v < 128 ? 255 : 0;
         drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), d, size);
     }
-    p->save();
+//    p->save();
+    const QPen pen(p->pen());
+    const QBrush brush(p->brush());
+//    const bool aa(p->testRenderHint(QPainter::Antialiasing));
     p->setPen(Qt::NoPen);
-    p->setRenderHint(QPainter::Antialiasing);
 
-    if (!size || size > qMax(r.width(), r.height()))
+    if (size < 7 || size > qMin(r.width(), r.height()))
         size = qMin(r.width(), r.height());
-    size &= ~1;
 
-    QRect rect(0, 0, size, size);
+    if (!dConf.simpleArrows)
+        size -= 2;
+    else
+        size += 1;
+
+    if (!(size|1))
+        size -= 1;
+
+    const bool hor(d == West || d == East);
+    QRect rect;
+    if (hor)
+        rect.setRect(0, 0, size/2+1, size);
+    else
+        rect.setRect(0, 0, size, size/2+1);
     if (align & (Qt::AlignVCenter|Qt::AlignHCenter))
         rect.moveCenter(r.center());
     if (align & Qt::AlignLeft)
@@ -408,25 +430,33 @@ GFX::drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, 
     if (align & Qt::AlignBottom)
         rect.moveBottom(r.bottom());
 
-    p->translate(rect.topLeft());
+    if (!dConf.simpleArrows)
+        rect.translate(1, 1);
 
-    const int half(size >> 1);
-    const int points[]  = { 0,0, size,half, 0,size };
-
-    if (d != East)
+    QPoint points[3];
+    switch (d)
     {
-        p->translate(half, half);
-        switch (d)
-        {
-        case South: p->rotate(90); break;
-        case West: p->rotate(180); break;
-        case North: p->rotate(-90); break;
-        }
-        p->translate(-half, -half);
+    case East:  { points[0] = rect.topLeft(); points[1] = QPoint(rect.right(), rect.center().y()); points[2] = rect.bottomLeft(); break; }
+    case South: { points[0] = rect.topLeft(); points[1] = QPoint(rect.center().x(), rect.bottom()); points[2] = rect.topRight(); break; }
+    case West:  { points[0] = QPoint(rect.left(), rect.center().y()); points[1] = rect.topRight(); points[2] = rect.bottomRight(); break; }
+    case North: { points[0] = rect.bottomLeft(); points[1] = QPoint(rect.center().x(), rect.top()); points[2] = rect.bottomRight(); break; }
+    default: break;
     }
-    p->setBrush(c);
-    p->drawPolygon(QPolygon(3, points));
-    p->restore();
+    if (dConf.simpleArrows)
+    {
+        p->setBrush(c);
+        p->setPen(Qt::NoPen);
+        p->drawPolygon(points, 3);
+    }
+    else
+    {
+        p->setBrush(Qt::NoBrush);
+        p->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        p->drawPolyline(points, 3);
+    }
+    p->setPen(pen);
+    p->setBrush(brush);
+//    p->setRenderHint(QPainter::Antialiasing, aa);
 }
 
 static int randInt(int low, int high)

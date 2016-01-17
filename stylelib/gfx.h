@@ -39,8 +39,8 @@ public:
     static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false);
-    static void drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter);
-    static void drawArrow(QPainter *p, const QColor &c, const QRect &r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
+    static void drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, QRect r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter);
+    static void drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
 
 protected:
     static void initShadows();

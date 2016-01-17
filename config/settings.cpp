@@ -23,6 +23,7 @@ static const char *s_key[] = {
     "compactmenu",
     "splitterext",
     "maxarrowsize",
+    "simplearrows",
     "balloontips",
     "palette",
     "animatestack",
@@ -112,6 +113,7 @@ static const QVariant s_default[] = {
     false,
     false,
     9,
+    true,
     false,
     QString(),
     false,
@@ -201,6 +203,7 @@ static const QString s_description[] = {
     /*"compactmenu"*/               "Hides the menubar and adds a button in the toolbar to popup the menu, if there is a toolbar to add it to",
     /*"splitterext"*/               "Splitters are small in this style (1px height/width), this adds an invisible area outside the splitter temporarily when you hover a splitter",
     /*"maxarrowsize"*/              "Maximum allowed size in pixels for any arrows thats drawn",
+    /*"simpleArrows"*/              "Use, simple triangles as arrows.",
     /*"balloontips"*/               "Draw tooltips as comic a like balloons",
     /*"palette"*/                   "Palette to be used (filename, no suffix), this should only be used in presets, not directly in dsp.conf",
     /*"animatestack"*/              "Animate when the topmost widget in a stack changes, ie: when the active tab changes",
@@ -627,6 +630,7 @@ Settings::read()
     conf.splitterExt            = readBool(Splitterext);
     conf.balloonTips            = readBool(Balloontips);
     conf.arrowSize              = readInt(Arrowsize);
+    conf.simpleArrows           = readBool(Simplearrows);
     conf.animateStack           = readBool(Animatestack);
     conf.animateScroll          = readBool(Animatescroll);
     conf.lockDocks              = readBool(Lockdocks);
