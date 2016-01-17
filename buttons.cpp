@@ -101,7 +101,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
     QPalette::ColorRole bg(QPalette::Button), fg(QPalette::WindowText);
     QRect realCheckRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
     const bool smallTick(dConf.pushbtn.shadow == Yosemite||dConf.pushbtn.shadow == ElCapitan);
-    QRect checkRect(realCheckRect.shrinked(smallTick?2:3));
+    QRect checkRect(realCheckRect.shrinked((smallTick?2:3)));
     if (widget)
     {
         if (qobject_cast<const QCheckBox *>(widget))
@@ -136,9 +136,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
 
     GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, 3, All, option, widget);
 
-    if (!smallTick)
-        realCheckRect.translate(1, 0);
-    realCheckRect.shrink((smallTick?5:3));
+    realCheckRect.shrink((smallTick?5:4));
 
     if (opt->state & (State_On|State_NoChange))
         GFX::drawCheckMark(painter, opt->palette.color(smallTick?QPalette::HighlightedText:fg), realCheckRect, opt->state & State_NoChange);
@@ -164,7 +162,7 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
 
     const QRect realCheckRect(subElementRect(SE_RadioButtonIndicator, opt, widget));
     const bool smallTick(dConf.pushbtn.shadow == Yosemite||dConf.pushbtn.shadow == ElCapitan);
-    QRect checkRect(realCheckRect.shrinked(smallTick?2:3));
+    QRect checkRect(realCheckRect.shrinked((smallTick?2:3)));
     if (widget)
     {
         bg = widget->backgroundRole();
@@ -204,7 +202,7 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
         painter->setBrush(opt->palette.color(fg));
         painter->setPen(Qt::NoPen);
         painter->setRenderHint(QPainter::Antialiasing);
-        const int s(checkRect.width()/3);
+        const int s((checkRect.width()+GFX::shadowMargin(dConf.pushbtn.shadow))/3);
         painter->drawEllipse(checkRect.adjusted(s, s, -s, -s));
         painter->restore();
     }

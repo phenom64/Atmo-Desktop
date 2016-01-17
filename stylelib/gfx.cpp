@@ -344,7 +344,7 @@ GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
 {
     const int size = qMin(r.width(), r.height());
     QRect rect(0, 0, size, size);
-    rect.moveCenter(r.center()+QPoint(bool(size|1)*1, bool(size|1)*1));
+    rect.moveCenter(r.center()/*+QPoint(bool(size|1)*1, bool(size|1)*1)*/);
     int x,y,w,h;
     rect.getRect(&x, &y, &w, &h);
     const int third = size/3+1;
