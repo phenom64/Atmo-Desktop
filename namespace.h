@@ -26,6 +26,7 @@ enum ShadowType { Sunken = 0,
                   Carved,   //rhino like
                   Rect,     //simple rounded rectangle, no honky-ponky
                   ElCapitan,
+                  SemiCarved,
                   ShadowCount };
 enum TabPos { BeforeSelected = 0, Selected = 1, AfterSelected = 2 };
 enum Effect { Noeffect =0, Inset, Outset };

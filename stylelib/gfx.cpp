@@ -200,8 +200,8 @@ GFX::drawClickable(ShadowStyle s,
 //                        &&qobject_cast<const QToolBar *>(w->parentWidget()));
     const bool isEnabled(!opt || (qstyleoption_cast<const QStyleOptionToolButton *>(opt) || (opt->state & QStyle::State_Enabled)));
     if (opt
-            && (opt->state & (QStyle::State_Sunken | QStyle::State_On) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
-            && s != Carved && s != Yosemite && s != Rect && s != ElCapitan && !isToolBox && !isLineEdit)
+            && (opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
+            && (s == Etched || s == Raised) && !isToolBox && !isLineEdit)
     {
         s = Sunken;   
     }
@@ -265,6 +265,7 @@ GFX::drawClickable(ShadowStyle s,
         break;
     }
     case Carved:
+    case SemiCarved:
     {
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         if (isToolBox)
@@ -274,8 +275,10 @@ GFX::drawClickable(ShadowStyle s,
         lg.setColorAt(0, QColor(0, 0, 0, low));
         lg.setColorAt(1, QColor(255, 255, 255, high));
         drawMask(r, p, lg, rnd, sides);
-        const int add(qMin(r.height(), r.width())<9?2:3);
-        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()>r.height());
+        int add(m);
+        const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()!=r.height()&&s==Carved);
+        if (!needHor && s==Carved)
+            add = 1;
         r.sAdjust((add+needHor), add, -(add+needHor), -add);
         rnd = qMax(rnd-add, 0);
         break;
@@ -291,7 +294,8 @@ GFX::drawClickable(ShadowStyle s,
 
     switch (s)
     {
-    case Carved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
+    case Carved:
+    case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
     case Sunken:
     case Etched: drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides); break;
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
@@ -334,7 +338,8 @@ GFX::shadowMargin(const ShadowStyle s)
     case Sunken: return 1;
     case Etched: return 1;
     case Raised: return 2;
-    case Carved: return 4;
+    case Carved: return 2;
+    case SemiCarved: return 1;
     default: return 0;
     }
 }
@@ -342,49 +347,36 @@ GFX::shadowMargin(const ShadowStyle s)
 void
 GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
 {
-    const int size = qMin(r.width(), r.height());
-    QRect rect(0, 0, size, size);
-    rect.moveCenter(r.center()/*+QPoint(bool(size|1)*1, bool(size|1)*1)*/);
-    int x,y,w,h;
-    rect.getRect(&x, &y, &w, &h);
-    const int third = size/3+1;
-    const int points[] = { x,y+size-third, x+third-1,y+size, x+w,y };
-
     const bool aa(p->testRenderHint(QPainter::Antialiasing));
     const QPen sPen(p->pen());
     const QBrush sBrush(p->brush());
 
-    p->setRenderHint(QPainter::Antialiasing);
-    QPen pen(c, third*(tristate?0.33f:0.66f), tristate?Qt::DashLine:Qt::SolidLine);
-    pen.setDashPattern(QVector<qreal>() << 0.05f << 1.5f);
-    pen.setStyle(tristate?Qt::CustomDashLine:Qt::SolidLine);
+    QPen pen(c, 2.0f, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
     p->setPen(pen);
-    p->setBrush(Qt::NoBrush);
+    p->setRenderHint(QPainter::Antialiasing, false);
 
-    p->drawPolyline(QPolygon(3, points));
+    if (tristate)
+    {
+        p->drawLine(QPoint(r.left()+3, r.center().y()), QPoint(r.right()-2, r.center().y()));
+    }
+    else
+    {
+        int size = qMin(r.width(), r.height());
+        while (size % 3)
+            --size;
 
+        QRect rect(0, 0, size, size);
+        rect.moveCenter(r.center()+QPoint(0, -2));
+        int x,y,w,h;
+        rect.getRect(&x, &y, &w, &h);
+        int third = size/3;
+        const int points[] = { x,y+size-third, x+third,y+size, x+size,y+third };
+        p->setBrush(Qt::NoBrush);
+        p->drawPolyline(QPolygon(3, points));
+    }
     p->setBrush(sBrush);
     p->setPen(sPen);
     p->setRenderHint(QPainter::Antialiasing, aa);
-}
-
-void
-GFX::drawArrow(QPainter *p, const QPalette::ColorRole role, const QPalette &pal, const bool enabled, QRect r, const Direction d, int size, const Qt::Alignment align)
-{
-    const QPalette::ColorRole bgRole(Ops::opposingRole(role));
-    if (pal.color(role).alpha() == 0xff && pal.color(bgRole).alpha() == 0xff)
-    if (role != QPalette::NoRole)
-    {
-        if (bgRole != QPalette::NoRole && enabled)
-        {
-            const bool isDark(Color::luminosity(pal.color(role)) > Color::luminosity(pal.color(bgRole)));
-            const int rgb(isDark?0:255);
-            const QColor bevel(rgb, rgb, rgb, 127);
-            drawArrow(p, bevel, r.translated(0, 1), d, size, align);
-        }
-        const QColor c(pal.color(enabled ? QPalette::Active : QPalette::Disabled, role));
-        drawArrow(p, c, r, d, size, align);
-    }
 }
 
 void
@@ -396,22 +388,14 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
         const int rgb = v < 128 ? 255 : 0;
         drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), d, size);
     }
-//    p->save();
-    const QPen pen(p->pen());
-    const QBrush brush(p->brush());
-    const bool aa(p->testRenderHint(QPainter::Antialiasing));
-    p->setRenderHint(QPainter::Antialiasing);
-    p->setPen(Qt::NoPen);
 
     if (size < 7 || size > qMin(r.width(), r.height()))
         size = qMin(r.width(), r.height());
 
     if (!dConf.simpleArrows)
         size -= 2;
-    else
-        size += 1;
 
-    if (!(size|1))
+    if (!(size & 1))
         size -= 1;
 
     const bool hor(d == West || d == East);
@@ -431,8 +415,10 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     if (align & Qt::AlignBottom)
         rect.moveBottom(r.bottom());
 
+#if QT_VERSION >= 0x050000
     if (!dConf.simpleArrows)
         rect.translate(1, 1);
+#endif
 
     QPoint points[3];
     switch (d)
@@ -443,16 +429,21 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     case North: { points[0] = rect.bottomLeft(); points[1] = QPoint(rect.center().x(), rect.top()); points[2] = rect.bottomRight(); break; }
     default: break;
     }
+
+    const QPen pen(p->pen());
+    const QBrush brush(p->brush());
+    const bool aa(p->testRenderHint(QPainter::Antialiasing));
+    p->setRenderHint(QPainter::Antialiasing, false);
     if (dConf.simpleArrows)
     {
         p->setBrush(c);
-        p->setPen(Qt::NoPen);
+        p->setPen(c);
         p->drawPolygon(points, 3);
     }
     else
     {
         p->setBrush(Qt::NoBrush);
-        p->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        p->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
         p->drawPolyline(points, 3);
     }
     p->setPen(pen);

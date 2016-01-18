@@ -236,6 +236,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         const QStyleOptionSpinBox *box = qstyleoption_cast<const QStyleOptionSpinBox *>(opt);
 //        const QSpinBox *spinBox = qobject_cast<const QSpinBox *>(widget);
         QSize sz(contentsSize);
+        sz.rwidth()+=7;
         sz.rwidth()+=(GFX::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
         sz.setHeight(qMax(23, sz.height()));
         if (box && box->frame)

@@ -88,8 +88,6 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         }
     }
 
-
-
     if (!opt->editable)
     {
         QColor bgc(opt->palette.color(bg));
@@ -101,19 +99,33 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         }
         if (dConf.pushbtn.tint.second > -1)
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
-        painter->setClipRegion(QRegion(frameRect)-QRegion(arrowRect));
         QLinearGradient lg(frameRect.topLeft(), frameRect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
 
-        GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, All, option, widget);
+        QRect main(opt->rect);
+        if (ltr)
+            main.setRight(arrowRect.left()-1);
+        else
+            main.setLeft(arrowRect.right()+1);
+        GFX::drawClickable(dConf.pushbtn.shadow, main, painter, lg, dConf.pushbtn.rnd, All & ~(ltr?Right:Left), option, widget);
 
-        const QColor hc(Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1));
+        QColor hc;
+        if (dConf.pushbtn.shadow == Yosemite || dConf.pushbtn.shadow == ElCapitan)
+            hc = opt->palette.color(QPalette::Highlight);
+        else
+            hc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
         QLinearGradient lga(opt->rect.topLeft(), opt->rect.bottomLeft());
         lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
 
-        painter->setClipRect(arrowRect);
-        GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lga, dConf.pushbtn.rnd, All & ~(ltr?Left:Right), option, widget);
-        painter->setClipping(false);
+        GFX::drawClickable(dConf.pushbtn.shadow, arrowRect, painter, lga, dConf.pushbtn.rnd, All & ~(ltr?Left:Right), option, widget);
+        const quint8 m(GFX::shadowMargin(dConf.pushbtn.shadow));
+        if (ltr)
+        {
+            const QPen pen(painter->pen());
+            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity>>(!isEnabled(opt))));
+            painter->drawLine(arrowRect.topLeft()+QPoint(0, m), arrowRect.bottomLeft()-QPoint(0, m));
+            painter->setPen(pen);
+        }
     }
     else
     {
@@ -135,6 +147,8 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
     QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::ButtonText));
+    if (dConf.pushbtn.shadow == Yosemite || dConf.pushbtn.shadow == ElCapitan)
+        ac = opt->palette.color(QPalette::HighlightedText);
     QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2).translated(0, 1));
     QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0).translated(0, -1));
     int m(qMax<int>(2, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
@@ -186,17 +200,11 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
 
 //    QRect frame(subControlRect(CC_SpinBox, opt, SC_SpinBoxFrame, widget));
     QRect up(subControlRect(CC_SpinBox, opt, SC_SpinBoxUp, widget).shrinked(2).translated(ltr?-2:2, 0));
-//    up.setBottom(up.bottom()-1);
     QRect down(subControlRect(CC_SpinBox, opt, SC_SpinBoxDown, widget).shrinked(2).translated(ltr?-2:2, 0));
-//    down.setTop(down.top()+1);
 //    QRect edit(subControlRect(CC_SpinBox, opt, SC_SpinBoxEditField, widget));
     QRect edit(opt->rect);
 
     QBrush mask(option->palette.brush(QPalette::Base));
-//    QRect r = opt->rect;
-//    r.setLeft(edit.right());
-//    Render::drawClickable(dConf.input.shadow, r, painter, dConf.input.rnd, dConf.shadows.opacity, widget, option, &mask, 0, All&~Left);
-//    mask = option->palette.brush(QPalette::Base);
     if (mask.style() < 2)
     {
         QColor c(mask.color());

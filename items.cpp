@@ -108,14 +108,18 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         }
     }
 
-
+    QColor fgc(pal.color(fg));
     if (opt->checked)
-        GFX::drawCheckMark(painter, pal.color(fg), button);
+        GFX::drawCheckMark(painter, fgc, button);
     else if (opt->state & (State_Selected | State_Sunken) && (hasCheckBox || hasRadioButton))
-        GFX::drawCheckMark(painter, pal.color(fg), button, true);
+    {
+        fgc.setAlpha(127);
+        GFX::drawCheckMark(painter, fgc, button);
+    }
 
     if (isMenu && hasMenu)
-        GFX::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
+//        GFX::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
+        GFX::drawArrow(painter, pal.color(fg), arrow.shrinked(6), East, dConf.arrowSize);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
@@ -326,7 +330,7 @@ Style::drawHeader(const QStyleOption *option, QPainter *painter, const QWidget *
 bool
 Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Header, opt, option);
+    const QStyleOptionHeader *opt = qstyleoption_cast<const QStyleOptionHeader *>(option);
     if (!opt)
         return true;
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
@@ -356,7 +360,7 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
 bool
 Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    castOpt(Header, opt, option);
+    const QStyleOptionHeader *opt = qstyleoption_cast<const QStyleOptionHeader *>(option);
     if (!opt)
         return true;
 
@@ -369,8 +373,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
         BOLD;
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
-//        Render::drawArrow(painter, opt->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?Ops::Up:Ops::Down, Qt::AlignCenter, 7);
-        GFX::drawArrow(painter, fg, option->palette, option->ENABLED, ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, pixelMetric(PM_HeaderMarkSize));
+        GFX::drawArrow(painter, option->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, dConf.arrowSize);
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));
