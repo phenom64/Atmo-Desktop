@@ -99,7 +99,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
         return true;
 
     QPalette::ColorRole bg(QPalette::Button), fg(QPalette::WindowText);
-    QRect realCheckRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
+    const QRect realCheckRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
     const bool smallTick(dConf.pushbtn.shadow == Yosemite||dConf.pushbtn.shadow == ElCapitan);
     QRect checkRect(realCheckRect.shrinked((smallTick?2:3)));
     if (widget)
@@ -136,10 +136,13 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
 
     GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, 3, All, option, widget);
 
-    realCheckRect.shrink((smallTick?5:4));
+    if (smallTick)
+        checkRect.shrink(3);
+    else
+        checkRect.translate(2, -1);
 
     if (opt->state & (State_On|State_NoChange))
-        GFX::drawCheckMark(painter, opt->palette.color(smallTick?QPalette::HighlightedText:fg), realCheckRect, opt->state & State_NoChange);
+        GFX::drawCheckMark(painter, opt->palette.color(smallTick?QPalette::HighlightedText:fg), checkRect, opt->state & State_NoChange, isEnabled(opt));
     return true;
 }
 
@@ -198,13 +201,8 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
 
     if (isOn(opt))
     {
-        painter->save();
-        painter->setBrush(opt->palette.color(fg));
-        painter->setPen(Qt::NoPen);
-        painter->setRenderHint(QPainter::Antialiasing);
         const int s((checkRect.width()+GFX::shadowMargin(dConf.pushbtn.shadow))/3);
-        painter->drawEllipse(checkRect.adjusted(s, s, -s, -s));
-        painter->restore();
+        GFX::drawRadioMark(painter, opt->palette.color(fg), checkRect.adjusted(s, s, -s, -s), isEnabled(opt));
     }
     return true;
 }
@@ -375,8 +373,8 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         }
 
         painter->setClipRect(arrow);
-        QLinearGradient lga(rect.topLeft(), hor?rect.topRight():rect.bottomLeft());
-        lga.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bca));
+        QLinearGradient lga(rect.topLeft(), hor?rect.bottomLeft():rect.topRight());
+        lga.setStops(Settings::gradientStops(dConf.toolbtn.gradient, bca));
         GFX::drawClickable(shadow, rect, painter, lga, dConf.toolbtn.rnd, sides, opt, widget);
     }
 
@@ -409,7 +407,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
             nextSelected = next->isChecked();
 
     const int nextSide=hor?Right:Bottom;
-    if (!(sides&nextSide) && !nextSelected)
+    if (!(sides&nextSide) && !(nextSelected&&dConf.toolbtn.invAct))
     {
         const QPen &pen(painter->pen());
         painter->setPen(QColor(0, 0, 0, 32));

@@ -226,7 +226,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     case FollowToolBtn:
     {
         r.adjust(2, 2, -2, -2);
-        QLinearGradient lg(0, 0, 0, r.height()-GFX::shadowMargin(dConf.toolbtn.shadow));
+        QLinearGradient lg(r.topLeft(), r.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, c));
         const bool hasDark(dConf.shadows.darkRaisedEdges);
         dConf.shadows.darkRaisedEdges = false;

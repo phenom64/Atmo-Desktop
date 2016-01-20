@@ -163,9 +163,11 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
+        slider.adjust(1, 1, -1, -1);
         quint8 roundNess((qMin(slider.width(), slider.height()) >> 1));
         GFX::drawMask(slider, painter, lg, roundNess);
-        GFX::drawShadow(Rect, slider, painter, isEnabled(opt), roundNess);
+        const quint8 rm = GFX::shadowMargin(Raised);
+        GFX::drawShadow(Raised, slider.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), roundNess+rm);
     }
     return true;
 }

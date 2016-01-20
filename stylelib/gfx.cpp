@@ -244,7 +244,6 @@ GFX::drawClickable(ShadowStyle s,
         }
     }
 
-
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
 
@@ -270,6 +269,7 @@ GFX::drawClickable(ShadowStyle s,
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         if (isToolBox)
             r = w->rect();
+
         const bool darkParent(pfgLum>pbgLum);
         int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0, QColor(0, 0, 0, low));
@@ -345,8 +345,15 @@ GFX::shadowMargin(const ShadowStyle s)
 }
 
 void
-GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate)
+GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate, const bool bevel)
 {
+    if (bevel)
+    {
+        const int v = Color::luminosity(c);
+        const int rgb = v < 128 ? 255 : 0;
+        drawCheckMark(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), tristate);
+    }
+
     const bool aa(p->testRenderHint(QPainter::Antialiasing));
     const QPen sPen(p->pen());
     const QBrush sBrush(p->brush());
@@ -370,10 +377,34 @@ GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
         int x,y,w,h;
         rect.getRect(&x, &y, &w, &h);
         int third = size/3;
-        const int points[] = { x,y+size-third, x+third,y+size, x+size,y+third };
+        const int points[] = { x,y+size-(third-1), x+third-1,y+size, x+size,y+third-1 };
         p->setBrush(Qt::NoBrush);
         p->drawPolyline(QPolygon(3, points));
     }
+    p->setBrush(sBrush);
+    p->setPen(sPen);
+    p->setRenderHint(QPainter::Antialiasing, aa);
+}
+
+void
+GFX::drawRadioMark(QPainter *p, const QColor &c, const QRect &r, const bool bevel)
+{
+    if (bevel)
+    {
+        const int v = Color::luminosity(c);
+        const int rgb = v < 128 ? 255 : 0;
+        drawRadioMark(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1));
+    }
+
+    const bool aa(p->testRenderHint(QPainter::Antialiasing));
+    const QPen sPen(p->pen());
+    const QBrush sBrush(p->brush());
+
+    p->setBrush(c);
+    p->setPen(Qt::NoPen);
+    p->setRenderHint(QPainter::Antialiasing);
+    p->drawEllipse(r);
+
     p->setBrush(sBrush);
     p->setPen(sPen);
     p->setRenderHint(QPainter::Antialiasing, aa);
