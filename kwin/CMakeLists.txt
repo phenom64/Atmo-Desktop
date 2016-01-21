@@ -12,7 +12,11 @@ if (QT5BUILD)
     execute_process(COMMAND kf5-config --install module OUTPUT_VARIABLE MODULEPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     find_path(EFFECTS_H kwineffects.h PATH_SUFFIXES kf5)
-    include_directories(${EFFECTS_H})
+    
+    if (EFFECTS_H)
+        include_directories(${EFFECTS_H})
+    endif (EFFECTS_H)
+    
     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
     find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
     find_library(OPENGL NAMES GL)
@@ -29,7 +33,7 @@ if (QT5BUILD)
         message(STATUS "didnt find opengl, not building effects")
     endif (NOT OPENGL)
 
-    if (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
+    if (EFFECTS_H AND KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
         add_subdirectory(effects)
     endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
 
