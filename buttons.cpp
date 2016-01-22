@@ -177,19 +177,23 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
     drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
-//    Render::renderShadow(Raised, checkRect, painter);
 
-    if (isOn(opt))
+    if (isOn(opt) && smallTick)
     {
         fg = QPalette::HighlightedText;
         bg = QPalette::Highlight;
     }
 
     QColor bgc(opt->palette.color(bg));
+
     if (dConf.pushbtn.tint.second > -1)
         bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
+
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-    if (isEnabled(opt) && !isOn(opt))
+
+    if (isOn(opt))
+        bgc = smallTick?opt->palette.color(QPalette::Highlight):sc;
+    else if (isEnabled(opt))
     {
         int hl(Anim::Basic::level(widget));
         bgc = Color::mid(bgc, sc, Steps-hl, hl);
@@ -202,7 +206,7 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
     if (isOn(opt))
     {
         const int s((checkRect.width()+GFX::shadowMargin(dConf.pushbtn.shadow))/3);
-        GFX::drawRadioMark(painter, opt->palette.color(fg), checkRect.adjusted(s, s, -s, -s), isEnabled(opt));
+        GFX::drawRadioMark(painter, opt->palette.color(smallTick?QPalette::HighlightedText:fg), checkRect.adjusted(s, s, -s, -s), isEnabled(opt));
     }
     return true;
 }
