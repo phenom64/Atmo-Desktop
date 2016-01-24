@@ -17,6 +17,7 @@
 #include <QProgressBar>
 #include <QStyleOptionToolButton>
 #include <QStyleOptionViewItemV4>
+#include <QComboBox>
 
 #include "dsp.h"
 #include "stylelib/progresshandler.h"
@@ -296,12 +297,23 @@ Style::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget
     const QStyleOptionComboBox *cb = qstyleoption_cast<const QStyleOptionComboBox *>(opt);
     if (!cb)
         return ret;
+    ret = cb->rect;
     const int arrowSize(20);
     const int m(cb->editable?GFX::shadowMargin(dConf.input.shadow):0);
     switch (sc)
     {
-    case SC_ComboBoxListBoxPopup: //what kinda rect should be returned here? seems only topleft needed...
-    case SC_ComboBoxFrame: ret = cb->rect; break;
+    case SC_ComboBoxListBoxPopup:
+    {
+        if (const QComboBox *box = qobject_cast<const QComboBox *>(w))
+            if (const QAbstractItemView *v = box->view())
+            {
+                const int adjust = -(v->visualRect(v->currentIndex()).top() + ret.height()/2+v->visualRect(v->currentIndex()).height()/2);
+                if (qAbs(adjust) < box->mapToGlobal(QPoint()).y())
+                    ret.moveTopLeft(QPoint(v->visualRect(v->currentIndex()).x(), adjust));
+            }
+        break;
+    }
+    case SC_ComboBoxFrame: break;
     case SC_ComboBoxArrow: ret = cb->rect.adjusted((cb->rect.width()-m)-arrowSize, 0, -m, 0); break;
     case SC_ComboBoxEditField: ret = cb->rect.adjusted(0, 0, -arrowSize, 0); break;
     default: ret = QRect(); break;

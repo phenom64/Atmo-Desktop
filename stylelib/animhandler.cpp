@@ -512,9 +512,9 @@ ScrollAnimator::manage(QAbstractScrollArea *area)
     if (sa && sa->parent() == area)
         return;
 
-    if (QAbstractItemView *v = qobject_cast<QAbstractItemView *>(area))
-        if (v->verticalScrollMode() == QAbstractItemView::ScrollPerItem)
-            v->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+//    if (QAbstractItemView *v = qobject_cast<QAbstractItemView *>(area))
+//        if (v->verticalScrollMode() == QAbstractItemView::ScrollPerItem)
+//            v->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     new ScrollAnimator(area);
 }
 
@@ -555,7 +555,7 @@ ScrollAnimator::processWheelEvent(QWheelEvent *e)
     m_step=qMax(1, m_delta/10);
     if (!m_timer->isActive())
         m_timer->start(20);
-    return true;
+    return false;
 }
 
 bool

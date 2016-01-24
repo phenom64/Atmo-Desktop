@@ -99,7 +99,6 @@ class Q_DECL_EXPORT ScrollAnimator : public QObject
     Q_OBJECT
 public:
     static void manage(QAbstractScrollArea *area);
-    static ScrollAnimator *instance();
 
 protected:
     ScrollAnimator(QObject *parent = 0);

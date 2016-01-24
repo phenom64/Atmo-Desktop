@@ -35,7 +35,7 @@ if (QT5BUILD)
 
     if (EFFECTS_H AND KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
         add_subdirectory(effects)
-    endif (KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
+    endif (EFFECTS_H AND KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
 
     set(SRCS
         kwinclient2.cpp

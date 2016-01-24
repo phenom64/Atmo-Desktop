@@ -269,7 +269,7 @@ bool
 Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
-    if (!opt)
+    if (!opt || (widget && widget->inherits("QToolBarExtension")))
         return true;
 
     const bool sunken(opt->state & (State_Sunken | State_Selected | State_On));

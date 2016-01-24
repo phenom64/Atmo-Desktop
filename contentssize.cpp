@@ -10,6 +10,7 @@
 #include <QLineEdit>
 #include <QApplication>
 #include <QSpinBox>
+#include <QAbstractItemView>
 
 #include "dsp.h"
 #include "stylelib/ops.h"
@@ -334,34 +335,30 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     }
     case CT_ItemViewItem:
     {
-        QFontMetrics metrics = qApp->fontMetrics();
-        if (widget)
-            metrics = widget->fontMetrics();
-
-        QSize commonSize = QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget);
-        if (commonSize.isValid())
-            return commonSize;
         QSize sz(contentsSize);
-        if (const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt))
+        const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
+        if (item && !item->text.isEmpty())
         {
-            const bool hor(item->decorationPosition < QStyleOptionViewItemV4::Top);
+            const bool hor(item->decorationPosition < QStyleOptionViewItem::Top);
             static const int m(2);
 
             if (hor)
             {
                 sz.setHeight(qMax(item->decorationSize.height()*!item->icon.isNull(), item->fontMetrics.height()) + m);
-                sz.setWidth(item->decorationSize.width() + item->fontMetrics.width(item->text) + m);
+                sz.rwidth() += (item->decorationSize.width() + m + item->fontMetrics.width(item->text));
             }
             else
             {
                 sz.setHeight(item->decorationSize.height() + item->fontMetrics.height() + m);
-                sz.setWidth(item->fontMetrics.width(item->text) + m);
+                sz.rwidth() += m;
             }
-            return sz;
         }
-        if (sz.width()<128)
-            sz.setWidth(128);
-        return contentsSize;
+        else
+        {
+            sz.setHeight(qMax(16, sz.height()));
+            sz.setWidth(qMax(128, sz.width()));
+        }
+        return sz;
     }
     case CT_ProgressBar:
     {
