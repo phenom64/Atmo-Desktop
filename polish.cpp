@@ -235,6 +235,11 @@ Style::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(widget->window()))
             Handlers::ScrollWatcher::watch(area);
 
+#if QT_VERSION >= 0x050000
+        if (pixelMetric(PM_ScrollView_ScrollBarOverlap, 0, area))
+            installFilter(area->viewport());
+#endif
+
         if (QAbstractItemView *view = qobject_cast<QAbstractItemView *>(area))
         {
             view->viewport()->setAttribute(Qt::WA_Hover);

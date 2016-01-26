@@ -34,7 +34,8 @@ enum Control { Input, ProgressBar, PushBtn, Scroller, Slider, Tab, ToolBtn, Cont
 enum { Disabled = 0, Enabled = 1 };
 enum { Round = 0, Square =1 };
 
-typedef quint8 Sides, ShadowStyle, Part, Direction;
+typedef quint8 Sides, Part, Direction;
+typedef qint8 ShadowStyle;
 }
 
 #endif //NAMESPACE_H

@@ -3,8 +3,41 @@
 #include <QPainter>
 #include <QBrush>
 #include <QRect>
+#include <math.h>
 
 using namespace DSP;
+
+static void addRoundedRect(const QRectF &rect, const qreal radius, const Sides s, QPainterPath &path)
+{
+    QRectF r = rect.normalized();
+    if (r.isNull())
+        return;
+
+    const qreal x = r.x();
+    const qreal y = r.y();
+    const qreal w = r.width();
+    const qreal h = r.height();
+    const qreal rad = radius*2;
+    const bool tl((s & (Top|Left)) == (Top|Left));
+    const bool tr((s & (Top|Right)) == (Top|Right));
+    const bool bl((s & (Bottom|Left)) == (Bottom|Left));
+    const bool br((s & (Bottom|Right)) == (Bottom|Right));
+
+    path.moveTo(x+w, y+(rad*tr));
+    if (tr)
+        path.arcTo(x+w-rad, y, rad, rad, 0.0, 90.0); //topright
+    path.lineTo(x+(rad*tl), y);
+    if (tl)
+        path.arcTo(x, y, rad, rad, 90.0, 90.0); //topleft
+    path.lineTo(x, y+h-(rad*bl));
+    if (bl)
+        path.arcTo(x, y+h-rad, rad, rad, 180.0, 90.0); //bottomleft
+    path.lineTo(x+w-(rad*br), y+h);
+    if (br)
+        path.arcTo(x+w-rad, y+h-rad, rad, rad, 270.0, 90.0); //bottomright
+    path.closeSubpath();
+}
+
 
 void
 Mask::render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s)
@@ -15,46 +48,9 @@ Mask::render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, c
     r.getCoords(&x, &y, &x2, &y2);
     ++x2; ++y2; //que?
     QPainterPath path;
-    if ((s & (Top|Left)) == (Top|Left))
-    {
-        path.moveTo(x, y+round);
-        path.quadTo(x, y, x+round, y);
-    }
-    else
-        path.moveTo(r.topLeft());
-    if ((s & (Top|Right)) == (Top|Right))
-    {
-        path.lineTo(x2-round, y);
-        path.quadTo(x2, y, x2, y+round);
-    }
-    else
-        path.lineTo(x2, y);
-    if ((s & (Bottom|Right)) == (Bottom|Right))
-    {
-        path.lineTo(x2, y2-round);
-        path.quadTo(x2, y2, x2-round, y2);
-    }
-    else
-        path.lineTo(x2, y2);
-    if ((s & (Bottom|Left)) == (Bottom|Left))
-    {
-        path.lineTo(x+round, y2);
-        path.quadTo(x, y2, x, y2-round);
-    }
-    else
-        path.lineTo(x, y2);
-
+    addRoundedRect(r, round, s, path);
     const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
     p->setRenderHint(QPainter::Antialiasing);
-    const QBrush brush(p->brush());
-    p->setBrush(b);
-    const QPen pen(p->pen());
-    p->setPen(Qt::NoPen);
-//    const QPoint bo(p->brushOrigin());
-//    p->setBrushOrigin(r.topLeft());
-    p->drawPath(path);
-//    p->setBrushOrigin(bo);
-    p->setBrush(brush);
-    p->setPen(pen);
+    p->fillPath(path, b);
     p->setRenderHint(QPainter::Antialiasing, hadAA);
 }

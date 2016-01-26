@@ -232,7 +232,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
         int l, t, r, b, y(opt->rect.center().y());
         opt->rect.getRect(&l, &t, &r, &b);
         painter->drawLine(l, y, r, y);
-        painter->setPen(QColor(255, 255, 255, (dConf.shadows.opacity)/2));
+        painter->setPen(QColor(255, 255, 255, dConf.shadows.opacity/2));
         painter->drawLine(l, y+1, r, y+1);
         RESTOREPEN;
         return true;
@@ -244,8 +244,6 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
         int l, t, r, b, x(opt->rect.center().x());
         opt->rect.getRect(&l, &t, &r, &b);
         painter->drawLine(x, t, x, b);
-//        painter->setPen(QColor(255, 255, 255, (dConf.shadows.opacity)/2));
-//        painter->drawLine(l, y+1, r, y+1);
         RESTOREPEN;
         return true;
     }
@@ -263,21 +261,10 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
         o/=2;
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-    {
         GFX::drawShadow(Sunken, r, painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All);
-    }
     else if (opt->state & State_Raised)
-    {
-        QPixmap pix(frame->rect().size());
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        GFX::drawShadow(Raised, pix.rect(), &p, 8, All, o);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        GFX::drawMask(pix.rect().adjusted(2, 2, -2, -2), &p, Qt::black, 6);
-        p.end();
-        painter->drawTiledPixmap(frame->rect(), pix);
-    }
+        GFX::drawShadow(Raised, r, painter, isEnabled(opt), 8);
     else if (frame && frame->frameShadow() == QFrame::Plain)
-        GFX::drawShadow(Etched, r, painter, 6, All, o);
+        GFX::drawShadow(Etched, r, painter, isEnabled(opt), 8);
     return true;
 }

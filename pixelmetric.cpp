@@ -188,6 +188,15 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_ScrollBarSliderMin: return 32;
     case PM_ToolTipLabelFrameWidth:
         return 8;
+#if QT_VERSION >= 0x050000
+    case PM_ScrollView_ScrollBarOverlap:
+    {
+//        const QAbstractScrollArea *area = qobject_cast<const QAbstractScrollArea *>(widget&&widget->parent()?widget->parent()->parent():0);
+//        if (!area || !area->cornerWidget())
+//            return (bool)(dConf.scrollers.style == 0)*dConf.scrollers.size;
+        return 0;
+    }
+#endif
     default: break;
     }
     return QCommonStyle::pixelMetric(metric, option, widget);

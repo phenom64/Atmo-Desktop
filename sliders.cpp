@@ -48,7 +48,6 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         slider.adjust(m, m, -m, -m);
 
         QColor bgc(opt->palette.color(bg));
-
         if (widget && (widget->inherits("QWebView") || (area && area->inherits("KHTMLView"))))
         {
             painter->fillRect(groove, option->palette.color(QPalette::Base));
@@ -62,7 +61,14 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             bar->window()->render(painter, geo.topLeft(), geo, QWidget::DrawWindowBackground);
         }
         else
-            painter->fillRect(groove, bgc);
+        {
+            bool isTransparent(false);
+#if QT_VERSION >= 0x050000
+            isTransparent = pixelMetric(PM_ScrollView_ScrollBarOverlap, option, widget);
+#endif
+            if (!isTransparent)
+                painter->fillRect(groove, bgc);
+        }
 
         QColor fgc(opt->palette.color(fg));
 
@@ -228,15 +234,16 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
     const bool hor(opt->orientation==Qt::Horizontal);
     const ShadowStyle gs(dConf.sliders.grooveShadow);
-    int d(/*gs==Carved?12:*/dConf.sliders.size/2); //shadow size for slider and groove 'extent'
+    const int d(/*gs==Carved?12:*/dConf.sliders.grooveStyle==3?dConf.sliders.size-2:dConf.sliders.size/2); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
         groove.setHeight(d);
     else
         groove.setWidth(d);
     groove.moveCenter(c);
-    d/=2;
-    groove.adjust(hor*d, !hor*d, -(hor*d), -(!hor*d)); //set the proper inset for the groove in order to account for the slider shadow
+
+    static const int m(1/*GFX::shadowMargin(Raised)*/);
+    groove.adjust(hor*m, !hor*m, -(hor*m), -(!hor*m)); //set the proper inset for the groove in order to account for the slider shadow
 
     QColor gbgc = opt->palette.color(bg);
     switch (dConf.sliders.grooveStyle)
@@ -244,41 +251,61 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     case 0: break;
     case 1: gbgc = Color::mid(gbgc, opt->palette.color(fg)); break;
     case 2: gbgc = opt->palette.color(fg); break;
+    case 3: gbgc = Color::mid(gbgc, opt->palette.color(fg)); break;
     default: break;
     }
 
     QLinearGradient lga(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
     lga.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
 
-    QRect clip(groove);
+    QRect fill(groove), unfill(groove);
+    Sides sides = All, fillSides = All;
     if (dConf.sliders.fillGroove)
     {
-        if (opt->orientation == Qt::Horizontal)
+        if (hor)
         {
+            const int x(slider.center().x());
             if (opt->upsideDown)
-                clip.setLeft(slider.center().x());
+            {
+                sides &= ~Right;
+                fillSides &= ~Left;
+                fill.setLeft(x);
+                unfill.setRight(x);
+            }
             else
-                clip.setRight(slider.center().x());
+            {
+                sides &= ~Left;
+                fillSides &= ~Right;
+                fill.setRight(x);
+                unfill.setLeft(x);
+            }
         }
         else
         {
+            const int y(slider.center().y());
             if (opt->upsideDown)
-                clip.setTop(slider.center().y());
+            {
+                sides &= ~Bottom;
+                fillSides &= ~Top;
+                fill.setTop(y);
+                unfill.setBottom(y);
+            }
             else
-                clip.setBottom(slider.center().y());
+            {
+                sides &= ~Top;
+                fillSides &= ~Bottom;
+                fill.setBottom(y);
+                unfill.setTop(y);
+            }
         }
     }
-    if (dConf.sliders.fillGroove)
-        painter->setClipRegion(QRegion(groove)-QRegion(clip));
-    GFX::drawClickable(gs, groove, painter, lga, d, All, option, widget);
+    GFX::drawClickable(gs, unfill, painter, lga, d, sides, option, widget);
     if (dConf.sliders.fillGroove)
     {
-        painter->setClipRect(clip);
         QLinearGradient lgh(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
         lgh.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
-        GFX::drawClickable(gs, groove, painter, lgh, d, All, option, widget);
+        GFX::drawClickable(gs, fill, painter, lgh, d, fillSides, option, widget);
     }
-    painter->setClipping(false);
 
     if (opt->tickPosition)
     {
@@ -311,38 +338,35 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
         }
     }
-//    if (opt->state & State_MouseOver)
-//    {
-        QColor bgc(opt->palette.color(bg));
-        QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-        if (isEnabled(option))
-        {
-            int hl(Anim::Basic::level(widget));
-            bgc = Color::mid(bgc, sc, Steps-hl, hl);
-        }
+    QColor bgc(opt->palette.color(bg));
+    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    if (isEnabled(option))
+    {
+        int hl(Anim::Basic::level(widget));
+        bgc = Color::mid(bgc, sc, Steps-hl, hl);
+    }
 
-        const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
-        QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+    const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
+    QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
+    lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
 
-        const quint8 roundNess((qMin(slider.width(), slider.height()) >> 1) & ~1);
-        GFX::drawClickable(sliderShadow, slider, painter, lg, roundNess, All, opt, widget);
+    const quint8 roundNess((qMin(slider.width(), slider.height()) >> 1) & ~1);
+    GFX::drawClickable(sliderShadow, slider, painter, lg, roundNess, All, 0, widget);
 
-        if (dConf.sliders.dot)
-        {
-            const int ds(slider.height()/3);
-            const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
-            QLinearGradient dg(dot.topLeft(), dot.bottomLeft());
-            dg.setColorAt(0.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
-            dg.setColorAt(1.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
-            painter->save();
-            painter->setRenderHint(QPainter::Antialiasing);
-            painter->setBrush(dg);
-            painter->setPen(Qt::NoPen);
-            painter->drawEllipse(dot);
-            painter->restore();
-        }
-//    }
+    if (dConf.sliders.dot)
+    {
+        const int ds(slider.height()/3);
+        const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
+        QLinearGradient dg(dot.topLeft(), dot.bottomLeft());
+        dg.setColorAt(0.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
+        dg.setColorAt(1.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setBrush(dg);
+        painter->setPen(Qt::NoPen);
+        painter->drawEllipse(dot);
+        painter->restore();
+    }
     return true;
 }
 

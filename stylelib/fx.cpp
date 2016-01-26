@@ -1,5 +1,5 @@
 #include "fx.h"
-#include "math.h"
+#include <math.h>
 #include "color.h"
 #include <QImage>
 #include <QPixmap>

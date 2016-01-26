@@ -88,12 +88,14 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
     {
         fg = QPalette::HighlightedText;
         bg = QPalette::Highlight;
-        painter->setBrush(pal.color(bg));
-        painter->setPen(Qt::NoPen);
-        const int rnd(isMenuBar*(qMin<int>(qMin<int>(h, opt->rect.width())/2, dConf.pushbtn.rnd)));
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->drawRoundedRect(opt->rect, rnd, rnd);
-        painter->setRenderHint(QPainter::Antialiasing, false);
+
+        QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+        lg.setStops(DSP::Settings::gradientStops(dConf.menues.itemGradient, pal.color(bg)));
+
+        Sides sides(All);
+        if (!isMenuBar)
+            sides &= ~(Left|Right);
+        GFX::drawClickable(dConf.menues.itemShadow, opt->rect, painter, lg, dConf.pushbtn.rnd, sides);
     }
 
     if (dConf.menues.icons && isMenu)
@@ -182,16 +184,15 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (!multiSelection)
     {
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, h));
+        lg.setStops(DSP::Settings::gradientStops(dConf.views.itemGradient, h));
         brush = lg;
     }
 
     const int rnd(qMin<int>(6, dConf.input.rnd)); //too much roundness just looks silly
+    const quint8 m = GFX::shadowMargin(dConf.views.itemShadow);
     if (listView && listView->viewMode() == QListView::IconMode)
     {
-        painter->setPen(Qt::NoPen);
-        painter->setBrush(brush);
-        painter->drawRoundedRect(opt->rect, rnd, rnd);
+        GFX::drawMask(opt->rect.adjusted(m, m, -m, -m), painter, brush, rnd);
     }
     else
     {
@@ -201,16 +202,11 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
             GFX::drawMask(opt->rect, painter, brush, rnd, All & ~Left);
         else
         {
-            painter->fillRect(opt->rect, brush);
-            if (opt->SUNKEN && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
-            {
-                painter->save();
-                painter->setPen(QColor(0, 0, 0, 64));
-                painter->translate(0.0f, 0.5f);
-                painter->drawLine(opt->rect.topLeft(), opt->rect.topRight());
-                painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
-                painter->restore();
-            }
+//            painter->fillRect(opt->rect, brush);
+            const bool sunken((opt->SUNKEN));
+//            if (sunken && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
+//                GFX::drawShadow(dConf.views.itemShadow, opt->rect, painter, isEnabled(opt), rnd, All & ~(Right|Left));
+            GFX::drawClickable(sunken?dConf.views.itemShadow:-1, opt->rect, painter, brush, rnd, All & ~(Right|Left));
         }
     }
     painter->restore();
@@ -339,7 +335,7 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
 
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(bg));
-    lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, b));
+    lg.setStops(DSP::Settings::gradientStops(dConf.views.headerGradient, b));
     painter->fillRect(opt->rect, lg);
 
     const QPen pen(painter->pen());

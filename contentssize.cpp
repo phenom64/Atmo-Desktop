@@ -333,33 +333,31 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     {
         return contentsSize;
     }
-    case CT_ItemViewItem:
-    {
-        QSize sz(contentsSize);
-        const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
-        if (item && !item->text.isEmpty())
-        {
-            const bool hor(item->decorationPosition < QStyleOptionViewItem::Top);
-            static const int m(2);
-
-            if (hor)
-            {
-                sz.setHeight(qMax(item->decorationSize.height()*!item->icon.isNull(), item->fontMetrics.height()) + m);
-                sz.rwidth() += (item->decorationSize.width() + m + item->fontMetrics.width(item->text));
-            }
-            else
-            {
-                sz.setHeight(item->decorationSize.height() + item->fontMetrics.height() + m);
-                sz.rwidth() += m;
-            }
-        }
-        else
-        {
-            sz.setHeight(qMax(16, sz.height()));
-            sz.setWidth(qMax(128, sz.width()));
-        }
-        return sz;
-    }
+//    case CT_ItemViewItem:
+//    {
+//        QSize sz(contentsSize);
+//        const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
+//        if (item && !item->text.isEmpty())
+//        {
+//            static const int m(2);
+//            if (item->decorationPosition < QStyleOptionViewItem::Top) //horizontal item layout
+//            {
+//                sz.setHeight(item->icon.isNull()?item->fontMetrics.height():item->decorationSize.height() + m);
+//                sz.setWidth(item->decorationSize.width() + m + item->fontMetrics.width(item->text));
+//            }
+//            else
+//            {
+//                sz.setHeight(item->decorationSize.height() + item->fontMetrics.height() + m);
+//                sz.setWidth(qMax(item->decorationSize.height(), item->fontMetrics.height())+ m);
+//            }
+//        }
+//        else
+//        {
+//            sz.setHeight(qMax(16, sz.height()));
+//            sz.setWidth(qMax(128, sz.width()));
+//        }
+//        return sz;
+//    }
     case CT_ProgressBar:
     {
         return contentsSize;

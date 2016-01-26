@@ -136,11 +136,9 @@ Shadow::genShadow()
     }
     case Yosemite:
     {
-        p.setPen(Qt::NoPen);
-        p.setBrush(Qt::black);
-        p.drawRoundedRect(pix.rect(), m_round, m_round);
+        Mask::render(pix.rect(), Qt::black, &p, m_round);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), m_round-1, m_round-1);
+        Mask::render(pix.rect().adjusted(1, 1, -1, -1), Qt::black, &p, m_round-1);
         break;
     }
     case Rect:

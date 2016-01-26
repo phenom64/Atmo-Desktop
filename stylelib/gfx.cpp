@@ -165,7 +165,7 @@ void
 GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
 {
     if (roundNess)
-        roundNess = qBound(0, roundNess, (qMin(rect.height(), rect.width())>>1)|1);
+        roundNess = maxRnd(rect, sides, roundNess);
     Mask::render(rect, brush, painter, roundNess, sides);
 }
 
@@ -248,7 +248,7 @@ GFX::drawClickable(ShadowStyle s,
         r = w->rect();
 
     if (rnd)
-        rnd = qBound(0, rnd, (qMin(r.height(), r.width())>>1));
+        rnd = maxRnd(r, sides, rnd);
 
     const quint8 m = shadowMargin(s);
 
@@ -306,9 +306,8 @@ GFX::drawClickable(ShadowStyle s,
         drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides);
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {
-            const float lumop(qMin<float>(255.0f, 1.5f*bgLum));
-            QLinearGradient edges(0, 0, r.width(), 0);
-            const QColor edge(QColor(0, 0, 0, lumop));
+            QLinearGradient edges(r.topLeft(), r.topRight());
+            const QColor edge(QColor(0, 0, 0, 31));
             const float position(5.0f/r.width());
             if (sides & Left)
             {
@@ -320,7 +319,7 @@ GFX::drawClickable(ShadowStyle s,
                 edges.setColorAt(1.0f-position, Qt::transparent);
                 edges.setColorAt(1.0f, edge);
             }
-            drawMask(r, p, edges, rnd, sides);
+            drawMask(r, p, edges, rnd-m, sides);
         }
         break;
     }
@@ -328,6 +327,17 @@ GFX::drawClickable(ShadowStyle s,
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
     default: break;
     }
+}
+
+quint8
+GFX::maxRnd(const QRect &r, const Sides s, const quint8 rnd)
+{
+    int w = r.width(), h = r.height();
+    if (s&Left && s&Right)
+        w /= 2;
+    if (s&Top && s&Bottom)
+        h /= 2;
+    return qMin<uint>(rnd, qMin(w, h));
 }
 
 quint8

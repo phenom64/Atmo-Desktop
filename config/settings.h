@@ -87,6 +87,8 @@ public:
         Unoopacity,
         Unocontblur,
         Menuicons,
+        Menuitemgrad,
+        Menuitemshadow,
         Slidersize,
         Sliderdot,
         Slidergrad,
@@ -101,6 +103,9 @@ public:
         Scrollerinvert,
         Scrollergshadow,
         Viewtreelines,
+        Viewitemgrad,
+        Viewitemshadow,
+        Viewheadergrad,
         Progshadow,
         Progrnd,
         Wingrad,
@@ -194,10 +199,14 @@ public:
         struct menues
         {
             bool icons;
+            Gradient itemGradient;
+            quint8 itemShadow;
         } menues;
         struct views
         {
             bool treelines;
+            Gradient itemGradient, headerGradient;
+            quint8 itemShadow;
         } views;
     } Conf;
     static Conf conf;

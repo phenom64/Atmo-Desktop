@@ -74,6 +74,8 @@ static const char *s_key[] = {
     "uno.contentblurradius",
 
     "menues.icons",
+    "menues.itemgradient",
+    "menues.itemshadow",
 
     "sliders.size",
     "sliders.dot",
@@ -91,6 +93,9 @@ static const char *s_key[] = {
     "scrollers.grooveshadow",
 
     "views.treelines",
+    "views.itemgradient",
+    "views.itemshadow",
+    "views.headergradient",
 
     "progressbars.shadow",
     "progressbars.rnd",
@@ -164,6 +169,8 @@ static const QVariant s_default[] = {
     2,
 
     false,
+    "0.0:5, 1.0:-5",
+    0,
 
     16,
     true,
@@ -181,6 +188,9 @@ static const QVariant s_default[] = {
     0,
 
     true,
+    "0:5, 1:-5",
+    0,
+    "0:5, 1:-5",
 
     3,
     4,
@@ -254,6 +264,8 @@ static const QString s_description[] = {
     /*"uno.contentblurradius"*/     "Amount of blur applied to the content in the toolbar",
 
     /*"menues.icons"*/              "Show icons in menues",
+    /*"menues.itemgradient"*/       "Gradient on menuitems",
+    /*"menues.itemshadow"*/         "Shadow on menuitems",
 
     /*"sliders.size"*/              "Size of sliders",
     /*"sliders.dot"*/               "Paint a dot in the middle of the slider handles, like Mac Os pre Yosemite",
@@ -271,6 +283,9 @@ static const QString s_description[] = {
     /*"scrollers.grooveshadow"*/    "Shadow for the groove in scrollbars to be used, only read if style of scrollbars set to 1 (Pre Yosemite alike)",
 
     /*"views.treelines"*/           "Draw the branches in the treeviews",
+    /*"views.itemgradient"*/        "Gradient on viewitems",
+    /*"views.itemshadow"*/          "Shadow on viewitems",
+    /*"views.headergradient"*/      "Gradient on headers in views",
 
     /*"progressbars.shadow"*/       "Shadows for progressbars",
     /*"progressbars.rnd"*/          "Roundness for progressbars",
@@ -684,6 +699,8 @@ Settings::read()
     conf.windows.hor            = readBool(Winhor);
     //menues
     conf.menues.icons           = readBool(Menuicons);
+    conf.menues.itemGradient    = stringToGrad(readString(Menuitemgrad));
+    conf.menues.itemShadow      = readInt(Menuitemshadow);
     //sliders
     conf.sliders.size           = readInt(Slidersize);
     conf.sliders.dot            = readBool(Sliderdot);
@@ -702,12 +719,15 @@ Settings::read()
     conf.scrollers.grooveShadow = readInt(Scrollergshadow);
     //views
     conf.views.treelines        = readBool(Viewtreelines);
+    conf.views.itemGradient     = stringToGrad(readString(Viewitemgrad));
+    conf.views.itemShadow       = readInt(Viewitemshadow);
+    conf.views.headerGradient   = stringToGrad(readString(Viewheadergrad));
     //progressbars
     conf.progressbars.shadow    = readInt(Progshadow);
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));
     //shadows
     conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;
-    conf.shadows.darkRaisedEdges = readBool(Shadowdarkraised);
+    conf.shadows.darkRaisedEdges= readBool(Shadowdarkraised);
     readPalette();
 }
 

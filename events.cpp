@@ -17,6 +17,7 @@
 #include <QStatusBar>
 #include <QPushButton>
 #include <QDebug>
+#include <QScrollBar>
 
 #include "dsp.h"
 #include "stylelib/xhandler.h"
@@ -171,6 +172,12 @@ Style::paintEvent(QObject *o, QEvent *e)
         QCoreApplication::sendEvent(o, e);
         w->installEventFilter(this);
         return true;
+    }
+    else if (QAbstractScrollArea *area = qobject_cast<QAbstractScrollArea *>(w->parent()))
+    {
+        area->verticalScrollBar()->update();
+        area->horizontalScrollBar()->update();
+        return false;
     }
 #if 0
     else if (QTabBar *bar = qobject_cast<QTabBar *>(w))

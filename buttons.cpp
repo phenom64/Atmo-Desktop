@@ -352,7 +352,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     }
 
     static QMap<quint64, QPixmap> s_map;
-    const quint64 check(bc.rgba() | (hor?rect.height():rect.width())<<32 | bar->orientation()<<40);
+    const quint64 check(bc.rgba() | (quint64)(hor?rect.height():rect.width())<<32 | (quint64)bar->orientation()<<40);
     if (!s_map.contains(check))
     {
         QPixmap pix(!hor?rect.width():1, hor?rect.height():1);
