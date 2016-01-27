@@ -158,34 +158,33 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 bool
 Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    if (!option)
+        return true;
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
     if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
         return true;
-    if (opt && opt->backgroundBrush != Qt::NoBrush)
-        painter->fillRect(opt->rect, opt->backgroundBrush);
-
-    bool sunken(option->SUNKEN);
-    bool hover(isMouseOver(option));
-//    if ((opt->state & State_Item)) //that triangle... item
-//        return true;
+    bool sunken(isSelected(option));
     if (!sunken && !isMouseOver(option))
         return true;
 
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
 //    const QTreeView *treeView = qobject_cast<const QTreeView *>(widget);
-    const QListView *listView = qobject_cast<const QListView *>(widget);
-    const QWidget *vp(abstractView?abstractView->viewport():0);
+//    const QListView *listView = qobject_cast<const QListView *>(widget);
 //    const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
     const bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
-    const bool iconMode(listView && listView->viewMode() == QListView::IconMode);
+//    const bool iconMode(listView && listView->viewMode() == QListView::IconMode);
 
-    QColor h(abstractView?abstractView->palette().color(QPalette::Highlight):opt->palette.color(QPalette::Highlight));
+    if (!selectRows && (option->state & State_Item))
+        return true;
+
+    QColor h(option->palette.color(QPalette::Highlight));
     if (!sunken)
         h.setAlpha(64);
 
     QBrush brush(h);
-
-    if (sunken)
+    if (opt && opt->backgroundBrush != Qt::NoBrush)
+        brush = opt->backgroundBrush;
+    else if (sunken)
     {
         QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.views.itemGradient, h));
@@ -194,7 +193,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
 
     Sides sides(All);
 
-    if (selectRows && sunken && !iconMode)
+    if (sunken && selectRows)
         sides &= ~(Right|Left);
     else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Beginning)
         sides &= ~Right;
@@ -202,8 +201,6 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         sides &= ~Left;
     else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Middle)
         sides &= ~(Right|Left);
-//    else if (opt->viewItemPosition == QStyleOptionViewItemV4::Invalid)
-//        return true;
 
     GFX::drawClickable(sunken?dConf.views.itemShadow:-1, option->rect, painter, brush, dConf.views.itemRnd, sides);
     return true;
@@ -270,11 +267,14 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
 //        if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
 //            const_cast<QStyleOption *>(option)->state |= State_MouseOver;
 
-
-    drawViewItemBg(option, painter, widget);
+    const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
+    const bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
+    const bool selected(selectRows && isSelected(option));
+    if (selected)
+        drawViewItemBg(option, painter, widget);
     painter->save();
-    QPalette::ColorRole fg(option->state & State_Selected ? QPalette::HighlightedText : QPalette::Text),
-            bg(option->state & State_Selected ? QPalette::Highlight : QPalette::Base);
+    QPalette::ColorRole fg(selected ? QPalette::HighlightedText : QPalette::Text),
+            bg(selected ? QPalette::Highlight : QPalette::Base);
 
     QColor fgc(Color::mid(option->palette.color(fg), option->palette.color(bg), 1, 2));
     painter->setPen(fgc);
@@ -298,7 +298,7 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
 
     if (option->state & State_Children)
     {
-        if (option->state & State_MouseOver && !(option->state & State_Selected))
+        if ((option->state & State_MouseOver) && !selected)
             fgc = option->palette.color(QPalette::Highlight);
         else
         {
