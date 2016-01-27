@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QSpinBox>
 #include <QAbstractItemView>
+#include <QProgressBar>
 
 #include "dsp.h"
 #include "stylelib/ops.h"
@@ -360,6 +361,17 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
 //    }
     case CT_ProgressBar:
     {
+        const QStyleOptionProgressBarV2 *bar = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
+        if (bar && dConf.progressbars.textPos == 1)
+        {
+            QSize sz(contentsSize);
+            const quint16 add = bar->fontMetrics.width(bar->text);
+            if (bar->orientation==Qt::Horizontal)
+                sz.rwidth() += add;
+            else
+                sz.rheight() += add;
+            return sz;
+        }
         return contentsSize;
     }
     default: break;

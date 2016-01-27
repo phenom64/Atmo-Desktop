@@ -232,7 +232,30 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:
-    case SE_ProgressBarContents: return opt->rect;
+    case SE_ProgressBarContents:
+    {
+        const QStyleOptionProgressBarV2 *bar = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
+        if (bar && dConf.progressbars.textPos)
+        {
+            const quint16 add = bar->fontMetrics.width(bar->text);
+            int x,y,w,h;
+            bar->rect.getRect(&x, &y, &w, &h);
+            const bool l(dConf.progressbars.textPos==1);
+            if (bar->orientation==Qt::Horizontal)
+            {
+                if (r == SE_ProgressBarLabel)
+                    return visualRect(bar->direction, opt->rect, QRect(l?x:x+w-add, y, add, h));
+                return visualRect(bar->direction, opt->rect, QRect(l?x+add:x, y, w-add, h));
+            }
+            else
+            {
+                if (r == SE_ProgressBarLabel)
+                    return visualRect(bar->direction, opt->rect, QRect(x, l?y:y+h-add, w, add));
+                return visualRect(bar->direction, opt->rect, QRect(x, l?y+add:y, w, h-add));
+            }
+        }
+        return opt->rect;
+    }
     case SE_RadioButtonIndicator:
     case SE_CheckBoxIndicator:
     {

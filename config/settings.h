@@ -109,6 +109,8 @@ public:
         Viewheadergrad,
         Progshadow,
         Progrnd,
+        Progtxthover,
+        Progtxtpos,
         Wingrad,
         Winnoise,
         Winnoisestyle,
@@ -171,7 +173,8 @@ public:
         } scrollers;
         struct progressbars
         {
-            quint8 shadow, rnd;
+            quint8 shadow, rnd, textPos;
+            bool txtHover;
         } progressbars;
         struct shadows
         {

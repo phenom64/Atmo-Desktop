@@ -207,6 +207,9 @@ Style::polish(QWidget *widget)
     {
         pBar->setBackgroundRole(QPalette::Base);
         pBar->setForegroundRole(QPalette::Text);
+        QFont f(pBar->font());
+        f.setBold(true);
+        pBar->setFont(f);
         ProgressHandler::manage(pBar);
     }
     else if (QComboBox *cBox = qobject_cast<QComboBox *>(widget))

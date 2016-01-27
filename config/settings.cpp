@@ -100,6 +100,8 @@ static const char *s_key[] = {
 
     "progressbars.shadow",
     "progressbars.rnd",
+    "progressbars.textonlyonhover",
+    "progressbars.textpos",
 
     "windows.gradient",
     "windows.noisefactor",
@@ -197,6 +199,8 @@ static const QVariant s_default[] = {
 
     3,
     4,
+    false,
+    0,
 
     "0.0:-10, 0.5:10, 1.0:-10",
     0,
@@ -294,6 +298,8 @@ static const QString s_description[] = {
 
     /*"progressbars.shadow"*/       "Shadows for progressbars",
     /*"progressbars.rnd"*/          "Roundness for progressbars",
+    /*"progressbars.txtHover"*/     "Text only on hover for progressbars",
+    /*"progressbars.textPos"*/      "Text position for progressbars, 0 = Center (default), 1 = Left of progressbarcontents, 2 = Right of progressbarcontents",
 
     /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
     /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
@@ -732,6 +738,8 @@ Settings::read()
     //progressbars
     conf.progressbars.shadow    = readInt(Progshadow);
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));
+    conf.progressbars.txtHover  = readBool(Progtxthover);
+    conf.progressbars.textPos   = readInt(Progtxtpos);
     //shadows
     conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;
     conf.shadows.illumination   = readInt(Shadowillumination)*2.55f;
