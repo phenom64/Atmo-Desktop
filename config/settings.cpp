@@ -96,6 +96,7 @@ static const char *s_key[] = {
     "views.treelines",
     "views.itemgradient",
     "views.itemshadow",
+    "views.itemrnd",
     "views.headergradient",
 
     "progressbars.shadow",
@@ -195,6 +196,7 @@ static const QVariant s_default[] = {
     true,
     "0:5, 1:-5",
     0,
+    6,
     "0:5, 1:-5",
 
     3,
@@ -294,6 +296,7 @@ static const QString s_description[] = {
     /*"views.treelines"*/           "Draw the branches in the treeviews",
     /*"views.itemgradient"*/        "Gradient on viewitems",
     /*"views.itemshadow"*/          "Shadow on viewitems",
+    /*"views.itemrnd"*/             "Roundness of viewitems",
     /*"views.headergradient"*/      "Gradient on headers in views",
 
     /*"progressbars.shadow"*/       "Shadows for progressbars",
@@ -734,6 +737,7 @@ Settings::read()
     conf.views.treelines        = readBool(Viewtreelines);
     conf.views.itemGradient     = stringToGrad(readString(Viewitemgrad));
     conf.views.itemShadow       = readInt(Viewitemshadow);
+    conf.views.itemRnd          = readInt(Viewitemrnd);
     conf.views.headerGradient   = stringToGrad(readString(Viewheadergrad));
     //progressbars
     conf.progressbars.shadow    = readInt(Progshadow);

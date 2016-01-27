@@ -6,6 +6,8 @@
 
 using namespace DSP;
 
+
+//adapted from QPainterPath::addRoundedRect()
 static void addRoundedRect(const QRectF &rect, const qreal radius, const Sides s, QPainterPath &path)
 {
     QRectF r = rect.normalized();
@@ -68,6 +70,11 @@ Mask::render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, c
 {
     if (!r.isValid())
         return;
+    if (!round || !s)
+    {
+        p->fillRect(r, b);
+        return;
+    }
     QPainterPath path;
     addRoundedRect(r, round, s, path);
     const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
@@ -81,6 +88,11 @@ Mask::renderF(const QRectF &r, const QBrush &b, QPainter *p, const quint8 round,
 {
     if (!r.isValid())
         return;
+    if (!round || !s)
+    {
+        p->fillRect(r, b);
+        return;
+    }
     QPainterPath path;
     addRoundedRect(r, round, s, path);
     const bool hadAA(p->testRenderHint(QPainter::Antialiasing));

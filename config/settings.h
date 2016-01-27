@@ -106,6 +106,7 @@ public:
         Viewtreelines,
         Viewitemgrad,
         Viewitemshadow,
+        Viewitemrnd,
         Viewheadergrad,
         Progshadow,
         Progrnd,
@@ -211,7 +212,7 @@ public:
         {
             bool treelines;
             Gradient itemGradient, headerGradient;
-            quint8 itemShadow;
+            quint8 itemShadow, itemRnd;
         } views;
     } Conf;
     static Conf conf;

@@ -159,57 +159,53 @@ bool
 Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
-    if (!opt)
-        return true;
-
     if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
         return true;
-    if (opt->backgroundBrush != Qt::NoBrush)
+    if (opt && opt->backgroundBrush != Qt::NoBrush)
         painter->fillRect(opt->rect, opt->backgroundBrush);
 
-    if (!(opt->SUNKEN || opt->HOVER))
+    bool sunken(option->SUNKEN);
+    bool hover(isMouseOver(option));
+//    if ((opt->state & State_Item)) //that triangle... item
+//        return true;
+    if (!sunken && !isMouseOver(option))
         return true;
 
-    painter->save();
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
 //    const QTreeView *treeView = qobject_cast<const QTreeView *>(widget);
     const QListView *listView = qobject_cast<const QListView *>(widget);
-    const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
-    QColor h(opt->palette.color(QPalette::Highlight));
-    if (!(opt->SUNKEN))
+    const QWidget *vp(abstractView?abstractView->viewport():0);
+//    const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
+    const bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
+    const bool iconMode(listView && listView->viewMode() == QListView::IconMode);
+
+    QColor h(abstractView?abstractView->palette().color(QPalette::Highlight):opt->palette.color(QPalette::Highlight));
+    if (!sunken)
         h.setAlpha(64);
 
     QBrush brush(h);
 
-    if (!multiSelection)
+    if (sunken)
     {
-        QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+        QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.views.itemGradient, h));
         brush = lg;
     }
 
-    const int rnd(qMin<int>(6, dConf.input.rnd)); //too much roundness just looks silly
-    const quint8 m = GFX::shadowMargin(dConf.views.itemShadow);
-    if (listView && listView->viewMode() == QListView::IconMode)
-    {
-        GFX::drawMask(opt->rect.adjusted(m, m, -m, -m), painter, brush, rnd);
-    }
-    else
-    {
-        if (opt->viewItemPosition == QStyleOptionViewItemV4::Beginning && !(opt->SUNKEN))
-            GFX::drawMask(opt->rect, painter, brush, rnd, All & ~Right);
-        else if (opt->viewItemPosition == QStyleOptionViewItemV4::End && !(opt->SUNKEN))
-            GFX::drawMask(opt->rect, painter, brush, rnd, All & ~Left);
-        else
-        {
-//            painter->fillRect(opt->rect, brush);
-            const bool sunken((opt->SUNKEN));
-//            if (sunken && /*opt->viewItemPosition == QStyleOptionViewItemV4::OnlyOne && */!multiSelection)
-//                GFX::drawShadow(dConf.views.itemShadow, opt->rect, painter, isEnabled(opt), rnd, All & ~(Right|Left));
-            GFX::drawClickable(sunken?dConf.views.itemShadow:-1, opt->rect, painter, brush, rnd, All & ~(Right|Left));
-        }
-    }
-    painter->restore();
+    Sides sides(All);
+
+    if (selectRows && sunken && !iconMode)
+        sides &= ~(Right|Left);
+    else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Beginning)
+        sides &= ~Right;
+    else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::End)
+        sides &= ~Left;
+    else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Middle)
+        sides &= ~(Right|Left);
+//    else if (opt->viewItemPosition == QStyleOptionViewItemV4::Invalid)
+//        return true;
+
+    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, option->rect, painter, brush, dConf.views.itemRnd, sides);
     return true;
 }
 
@@ -220,7 +216,6 @@ Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget
     if (!opt)
         return true;
     drawViewItemBg(option, painter, widget);
-    painter->save();
 
     if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
     {
@@ -241,17 +236,20 @@ Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget
     if (!opt->text.isEmpty())
     {
         QPalette::ColorRole fg(QPalette::Text);
-        painter->setFont(opt->font);
+        const QFont font(painter->font());
+        QFont f(opt->font);
+        painter->setFont(f);
         if (opt->SUNKEN)
         {
             fg = QPalette::HighlightedText;
-            BOLD;
+            f.setBold(true);
+            painter->setFont(f);
         }
         const QFontMetrics fm(painter->fontMetrics());
         const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width()));
         drawItemText(painter, textRect, opt->displayAlignment, opt->palette, opt->ENABLED, text, fg);
+        painter->setFont(font);
     }
-    painter->restore();
     return true;
 }
 
@@ -260,17 +258,19 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
 {
     if (!option)
         return true;
-    if (qMin(option->rect.width(), option->rect.height()) < 8)
-        return true;
+//    if (qMin(option->rect.width(), option->rect.height()) < 8) //what? why? cant remember...
+//        return true;
 //    if (option->SUNKEN)
 
-    castObj(const QAbstractItemView *, view, widget);
+//    const QAbstractItemView *view = qobject_cast<const QAbstractItemView *>(widget);
 //    QPoint pos;
 //    if (view && view->viewport())
 //        pos = view->viewport()->mapFromGlobal(QCursor::pos());
 //    if (!pos.isNull())
 //        if (pos.y() >= option->rect.y() && pos.y() <= option->rect.bottom())
 //            const_cast<QStyleOption *>(option)->state |= State_MouseOver;
+
+
     drawViewItemBg(option, painter, widget);
     painter->save();
     QPalette::ColorRole fg(option->state & State_Selected ? QPalette::HighlightedText : QPalette::Text),
@@ -308,7 +308,7 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
                 fgc = Color::mid(fgc, option->palette.color(bg));
         }
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
-        GFX::drawArrow(painter, fgc, option->rect, option->state & State_Open ? South : East, dConf.views.treelines?7:dConf.arrowSize);
+        GFX::drawArrow(painter, fgc, option->rect, option->state & State_Open ? South : East, dConf.views.treelines?7:dConf.arrowSize, Qt::AlignCenter, true);
     }
 
     painter->restore();
@@ -369,7 +369,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
         BOLD;
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
-        GFX::drawArrow(painter, option->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, dConf.arrowSize);
+        GFX::drawArrow(painter, option->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, dConf.arrowSize, Qt::AlignCenter, true);
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));
