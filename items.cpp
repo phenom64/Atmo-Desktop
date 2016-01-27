@@ -68,7 +68,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
         painter->translate(0, -0.5f);
         if (hasText)
-            drawItemText(painter, opt->rect, Qt::AlignCenter, pal, opt->ENABLED, opt->text, fg);
+            drawItemText(painter, opt->rect, Qt::AlignCenter, pal, isEnabled(opt), opt->text, fg);
 
         painter->setFont(sf);
         painter->restore();
@@ -120,8 +120,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     if (isMenu && hasMenu)
-//        GFX::drawArrow(painter, pal.color(fg), arrow.adjusted(6, 6, -6, -6), East, dConf.arrowSize);
-        GFX::drawArrow(painter, pal.color(fg), arrow.shrinked(6), East, dConf.arrowSize);
+        GFX::drawArrow(painter, pal.color(fg), arrow.shrinked(6), East, dConf.arrowSize, Qt::AlignCenter, true);
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
@@ -129,6 +128,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
     for (int i = 0; i < text.count(); ++i)
     {
+        const QFont font(painter->font());
         if (isMenuBar)
         {
             const QMenuBar *bar(static_cast<const QMenuBar *>(widget));
@@ -149,7 +149,14 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
                     painter->setFont(f);
                 }
         }
+        else
+        {
+            QFont f(font);
+            f.setBold(opt->state & (State_Selected | State_Sunken));
+            painter->setFont(f);
+        }
         drawItemText(painter, isMenuBar?opt->rect:textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
+        painter->setFont(font);
     }
     painter->restore();
     return true;
@@ -168,6 +175,8 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         return true;
 
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
+    const QWidget *vp(abstractView?abstractView->viewport():0);
+    const bool full(vp && vp->rect().x() == option->rect.x() && vp->rect().right() <= option->rect.right());
 //    const QTreeView *treeView = qobject_cast<const QTreeView *>(widget);
 //    const QListView *listView = qobject_cast<const QListView *>(widget);
 //    const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
@@ -191,9 +200,9 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         brush = lg;
     }
 
+    QRect rect(option->rect);
     Sides sides(All);
-
-    if (sunken && selectRows)
+    if (full || (sunken && selectRows))
         sides &= ~(Right|Left);
     else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Beginning)
         sides &= ~Right;
@@ -201,8 +210,9 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         sides &= ~Left;
     else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Middle)
         sides &= ~(Right|Left);
-
-    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, option->rect, painter, brush, dConf.views.itemRnd, sides);
+    else if (opt)
+        rect.setRight(subElementRect(SE_ItemViewItemText, opt, widget).right());
+    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, sides);
     return true;
 }
 
