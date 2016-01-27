@@ -270,10 +270,10 @@ GFX::drawClickable(ShadowStyle s,
         if (isToolBox)
             r = w->rect();
 
-        const bool darkParent(pfgLum>pbgLum);
-        int high(darkParent?32:192), low(darkParent?170:85);
-        lg.setColorAt(0, QColor(0, 0, 0, low));
-        lg.setColorAt(1, QColor(255, 255, 255, high));
+//        const bool darkParent(pfgLum>pbgLum);
+//        int high(darkParent?32:192), low(darkParent?170:85);
+        lg.setColorAt(0, QColor(0, 0, 0, dConf.shadows.opacity));
+        lg.setColorAt(1, QColor(255, 255, 255, dConf.shadows.illumination));
         drawMask(r, p, lg, rnd, sides);
         int add(m);
         const bool needHor(!qobject_cast<const QRadioButton *>(w)&&!qobject_cast<const QCheckBox *>(w)&&r.width()!=r.height()&&s==Carved);

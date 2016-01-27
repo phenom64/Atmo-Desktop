@@ -87,6 +87,7 @@ public:
         Unoopacity,
         Unocontblur,
         Menuicons,
+        Menugrad,
         Menuitemgrad,
         Menuitemshadow,
         Slidersize,
@@ -200,7 +201,7 @@ public:
         struct menues
         {
             bool icons;
-            Gradient itemGradient;
+            Gradient gradient, itemGradient;
             quint8 itemShadow;
         } menues;
         struct views

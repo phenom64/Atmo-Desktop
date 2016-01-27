@@ -74,6 +74,7 @@ static const char *s_key[] = {
     "uno.contentblurradius",
 
     "menues.icons",
+    "menues.gradient",
     "menues.itemgradient",
     "menues.itemshadow",
 
@@ -170,6 +171,7 @@ static const QVariant s_default[] = {
     2,
 
     false,
+    "0:5, 1:-5",
     "0.0:5, 1.0:-5",
     0,
 
@@ -266,6 +268,7 @@ static const QString s_description[] = {
     /*"uno.contentblurradius"*/     "Amount of blur applied to the content in the toolbar",
 
     /*"menues.icons"*/              "Show icons in menues",
+    /*"menues.gradient"*/           "Gradient on menues",
     /*"menues.itemgradient"*/       "Gradient on menuitems",
     /*"menues.itemshadow"*/         "Shadow on menuitems",
 
@@ -702,6 +705,7 @@ Settings::read()
     conf.windows.hor            = readBool(Winhor);
     //menues
     conf.menues.icons           = readBool(Menuicons);
+    conf.menues.gradient        = stringToGrad(readString(Menugrad));
     conf.menues.itemGradient    = stringToGrad(readString(Menuitemgrad));
     conf.menues.itemShadow      = readInt(Menuitemshadow);
     //sliders

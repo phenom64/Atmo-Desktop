@@ -112,7 +112,11 @@ Style::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *wi
     Sides sides(All);
     if (widget && widget->property("DSP_SHAPETOP").toBool())
         sides &= ~Top;
-    GFX::drawMask(option->rect, painter, bgc, 4, sides);
+
+    QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
+    lg.setStops(Settings::gradientStops(dConf.menues.gradient, bgc));
+
+    GFX::drawMask(option->rect, painter, lg, 4, sides);
 //    painter->drawRoundedRect(option->rect, 4, 4);
 //    painter->restore();
     return true;
