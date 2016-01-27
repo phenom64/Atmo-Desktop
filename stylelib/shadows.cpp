@@ -6,12 +6,14 @@
 #include <QtGlobal>
 #include <QDebug>
 #include "masks.h"
+#include "macros.h"
 
 using namespace DSP;
 
-Shadow::Shadow(const ShadowStyle t, const quint8 r, const quint8 o)
+Shadow::Shadow(const ShadowStyle t, const quint8 r, const quint8 o, const quint8 i)
     : m_type(t)
     , m_opacity(o)
+    , m_illumination(i)
     , m_round(r)
     , m_pix(0)
 {
@@ -32,46 +34,59 @@ Shadow::genShadow()
     {
         QRect rect(pix.rect());
         rect.adjust(1, 1, -1, 0);
-        p.setPen(Qt::NoPen);
-        p.setBrush(QColor(255, 255, 255, 255));
-        p.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
-        p.drawRoundedRect(rect, m_round, m_round);
-        p.setClipping(false);
+
+        //illumination
+        QPixmap light(pix.size());
+        light.fill(Qt::transparent);
+        QPainter lightp(&light);
+        lightp.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
+        Mask::render(rect, QColor(255, 255, 255, m_illumination), &lightp, m_round);
+        lightp.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+
         rect.setBottom(rect.bottom()-1);
-        p.setBrush(Qt::black);
-        p.drawRoundedRect(rect, m_round, m_round);
-        QImage img(pix.size(), QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QPainter pt(&img);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(Qt::NoPen);
-        pt.setBrush(Qt::black);
+
+        lightp.setClipping(false);
+        Mask::render(rect, Qt::black, &lightp, m_round);
+        lightp.end();
+
+        //the blur
+        QImage blurredImage(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        blurredImage.fill(Qt::transparent);
+        QPainter pt(&blurredImage);
         QRectF rt(rect);
         rt.adjust(1.0f, 1.5f, -1.0f, -0.75f);
         int rnd(m_round);
         if (rnd)
             --rnd;
-        pt.drawRoundedRect(rt, rnd, rnd);
+        Mask::renderF(rt, Qt::black, &pt, rnd);
         pt.end();
+        FX::expblur(blurredImage, 1);
 
-        FX::expblur(img, 1);
-
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        p.fillRect(pix.rect(), img);
-
-        QImage r(pix.size(), QImage::Format_ARGB32_Premultiplied);
-        r.fill(Qt::transparent);
-        pt.begin(&r);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(Qt::NoPen);
-        pt.setBrush(Qt::black);
-        pt.drawRoundedRect(rect, m_round, m_round);
+        //the outline
+        QImage outlineImage(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        outlineImage.fill(Qt::transparent);
+        pt.begin(&outlineImage);
+        Mask::render(rect, Qt::black, &pt, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.drawRoundedRect(rect.adjusted(1, 1, -1, -1), rnd, rnd);
+        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, rnd);
         pt.end();
 
-        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        p.fillRect(pix.rect(), r);
+        //actual shadow
+        QImage dark(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        dark.fill(Qt::transparent);
+        pt.begin(&dark);
+        Mask::render(rect, Qt::black, &pt, m_round);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        pt.fillRect(dark.rect(), blurredImage);
+        pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        pt.fillRect(dark.rect(), outlineImage);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        pt.fillRect(dark.rect(), QColor(0, 0, 0, 255-m_opacity));
+        pt.end();
+
+        //finally dump it on the resulting pixmap
+        p.fillRect(pix.rect(), light);
+        p.fillRect(pix.rect(), dark);
         break;
     }
     case Etched:
@@ -80,13 +95,11 @@ Shadow::genShadow()
         white.fill(Qt::transparent);
         QRect rect(pix.rect().adjusted(1, 1, -1, 0));
         QPainter pt(&white);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setBrush(Qt::white);
-        pt.setPen(Qt::NoPen);
-        pt.drawRoundedRect(rect, m_round, m_round);
+        Mask::render(rect, Qt::white, &pt, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.setBrush(Qt::black);
-        pt.drawRoundedRect(rect.adjusted(1, 1, -1, -1), m_round-1, m_round-1);
+        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round-1);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        pt.fillRect(rect, QColor(0, 0, 0, 255-m_illumination));
         pt.end();
 
         rect.setBottom(rect.bottom()-1);
@@ -94,13 +107,12 @@ Shadow::genShadow()
         QPixmap black(size, size);
         black.fill(Qt::transparent);
         pt.begin(&black);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(Qt::NoPen);
-        pt.setBrush(Qt::black);
         pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        pt.drawRoundedRect(rect, m_round, m_round);
+        Mask::render(rect, Qt::black, &pt, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.drawRoundedRect(rect.adjusted(1, 1, -1, -1), m_round-1, m_round-1);
+        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round-1);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        pt.fillRect(rect, QColor(0, 0, 0, 255-m_opacity));
         pt.end();
 
         p.drawPixmap(pix.rect(), white);
@@ -109,29 +121,44 @@ Shadow::genShadow()
     }
     case Raised:
     {
-        QImage img(pix.size(), QImage::Format_ARGB32);
-        img.fill(Qt::transparent);
-        QPainter pt(&img);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setPen(Qt::NoPen);
-        pt.setBrush(QColor(0, 0, 0, 185));
-        pt.drawRoundedRect(QRectF(img.rect()).adjusted(0.75f, 1.0f, -0.75f, -0.5f), m_round+3, m_round+3);
+        QRectF rect(QRectF(pix.rect())); //ummmmm, need to figure this out at some point...
+        QImage blurred(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        blurred.fill(Qt::transparent);
+        QPainter pt(&blurred);
+        Mask::renderF(rect.adjusted(0.75f, 1.0f, -0.75f, -0.5f), QColor(0, 0, 0, 185), &pt, m_round+2);
         pt.end();
-        FX::expblur(img, 1);
-        p.drawImage(QPoint(0, 0), img);
-        p.setPen(Qt::NoPen);
-        p.setBrush(Qt::black);
-        p.drawRoundedRect(pix.rect().adjusted(1, 1, -1, -1), m_round+2, m_round+2);
-        p.setBrush(Qt::white);
-        p.drawRoundedRect(pix.rect().adjusted(2, 2, -2, -2), m_round+1, m_round+1);
-        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        QLinearGradient lg(pix.rect().adjusted(2, 2, -2, -2).topLeft(), pix.rect().adjusted(2, 2, -2, -2).bottomLeft());
+        FX::expblur(blurred, 1);
+
+        QImage dark(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        dark.fill(Qt::transparent);
+        pt.begin(&dark);
+        pt.fillRect(dark.rect(), blurred);
+        rect.shrink(1);
+        Mask::renderF(rect, Qt::black, &pt, m_round+1);
+
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        rect.shrink(1);
+        Mask::renderF(rect, Qt::black, &pt, m_round);
+        pt.fillRect(dark.rect(), QColor(0, 0, 0, 255-m_opacity));
+        pt.end();
+
+        QImage light(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        light.fill(Qt::transparent);
+        pt.begin(&light);
+        Mask::renderF(rect, Qt::white, &pt, m_round);
+
+        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
         lg.setColorAt(0, Qt::transparent);
         lg.setColorAt(1, QColor(0, 0, 0, 127));
-        p.setBrush(lg);
-        p.drawRoundedRect(pix.rect().adjusted(2, 2, -2, -2), m_round+1, m_round+1);
-        p.setBrush(Qt::black);
-        p.drawRoundedRect(pix.rect().adjusted(3, 3, -3, -3), m_round, m_round);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        Mask::renderF(rect, lg, &pt, m_round);
+        rect.shrink(1);
+        Mask::renderF(rect, Qt::black, &pt, m_round-1);
+        pt.fillRect(light.rect(), QColor(0, 0, 0, 255-m_illumination));
+        pt.end();
+
+        p.fillRect(pix.rect(), dark);
+        p.fillRect(pix.rect(), light);
         break;
     }
     case Yosemite:
@@ -139,6 +166,8 @@ Shadow::genShadow()
         Mask::render(pix.rect(), Qt::black, &p, m_round);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(pix.rect().adjusted(1, 1, -1, -1), Qt::black, &p, m_round-1);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.fillRect(pix.rect(), QColor(0, 0, 0, 255-m_opacity));
         break;
     }
     case Rect:
@@ -148,6 +177,8 @@ Shadow::genShadow()
         Mask::render(rt, Qt::black, &p, m_round);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(rt.adjusted(w, w, -w, -w), Qt::black, &p, m_round-w);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.fillRect(pix.rect(), QColor(0, 0, 0, 255-m_opacity));
         break;
     }
     case ElCapitan:
@@ -156,12 +187,12 @@ Shadow::genShadow()
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(pix.rect().adjusted(1, 1, -1, -1), Qt::black, &p, m_round-1);
         Mask::render(pix.rect().translated(0, -1), QColor(0, 0, 0, 63), &p, m_round);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.fillRect(pix.rect(), QColor(0, 0, 0, 255-m_opacity));
         break;
     }
     default: break;
     }
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p.fillRect(pix.rect(), QColor(0, 0, 0, 255-m_opacity));
     p.end();
 
     split(pix, size, cornerSize);

@@ -14,6 +14,7 @@ class Q_DECL_EXPORT Mask
 {
 public:
     static void render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s = All);
+    static void renderF(const QRectF &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s = All);
 };
 
 }

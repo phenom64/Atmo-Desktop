@@ -47,8 +47,8 @@ GFX::initShadows()
     for (int r = 0; r < MaxRnd+1; ++r)
     for (ShadowStyle s = 0; s < ShadowCount; ++s)
     {
-        s_shadow[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity);
-        s_shadow[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*0.5f);
+        s_shadow[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity, dConf.shadows.illumination);
+        s_shadow[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*0.5f, dConf.shadows.illumination*0.5f);
     }
 }
 
@@ -105,7 +105,7 @@ GFX::initTabs()
     p.drawPath(path);
     p.setPen(Qt::black);
     p.drawLine(img.rect().topLeft(), img.rect().topRight());
-    Shadow(Sunken, 0, 0xff).render(img.rect().translated(0, -1), &p, Top);
+    Shadow(Sunken, 0, 0xff, 0).render(img.rect().translated(0, -1), &p, Top);
     p.end();
     --hsz;
     hsz/=2;
@@ -594,7 +594,7 @@ GFX::makeNoise()
     const QColor bg = qApp->palette().color(QPalette::Window);
     const QPixmap wNoise = noisePix(dConf.windows.noiseStyle);
 
-    s_noise[1] = FX::mid(wNoise, bg, dConf.uno.noise, 100-dConf.uno.noise);
+    s_noise[1] = FX::mid(wNoise, bg, dConf.windows.noise, 100-dConf.windows.noise);
 //    s_noise[1] = QPixmap(wNoise.size());
 //    s_noise[1].fill(bg);
 //    QPainter pt(&s_noise[1]);

@@ -113,6 +113,7 @@ public:
         Winnoisestyle,
         Winhor,
         Shadowopacity,
+        Shadowillumination,
         Shadowdarkraised,
         Keycount,
         Invalid
@@ -173,7 +174,7 @@ public:
         } progressbars;
         struct shadows
         {
-            quint8 opacity;
+            quint8 opacity, illumination;
             bool darkRaisedEdges;
         } shadows;
         struct tabs

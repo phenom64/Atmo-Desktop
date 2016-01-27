@@ -16,7 +16,7 @@
 #define shrink(_S_) adjust(_S_, _S_, -_S_, -_S_)
 #define sGrow(_S_) sAdjust(-_S_, -_S_, _S_, _S_)
 #define sGrowed(_S_) sAdjusted(-_S_, -_S_, _S_, _S_)
-#define growed(_S_) adjust(-_S_, -_S_, _S_, _S_)
+#define growed(_S_) adjusted(-_S_, -_S_, _S_, _S_)
 #define grow(_S_) adjust(-_S_, -_S_, _S_, _S_)
 
 #define ISURLBTN inherits("KDEPrivate::KUrlNavigatorButton")

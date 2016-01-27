@@ -5,6 +5,7 @@
 #include "../stylelib/xhandler.h"
 #include "../stylelib/shadowhandler.h"
 #include "../stylelib/gfx.h"
+#include "../stylelib/fx.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/DecorationButtonGroup>
@@ -398,7 +399,7 @@ Deco::activeChanged(const bool active)
         qDebug() << active << client().data()->isActive() << client().data()->windowId();
     }
     if (m_grip)
-        m_grip->setColor(Color::mid(fgColor(), bgColor(), 2, 1));;
+        m_grip->setColor(Color::mid(fgColor(), bgColor(), 1, 2));;
     ShadowHandler::installShadows(client().data()->windowId(), active);
 }
 
@@ -719,6 +720,13 @@ Deco::hoverLeave()
 
 //----------------------------------------------------------------------------------
 
+QPolygon
+Grip::shape()
+{
+    static const QPolygon &p = QPolygon() << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size); //topright, bottomright, bottomleft
+    return p;
+}
+
 Grip::Grip(Deco *d)
     : QWidget(0)
     , m_deco(d)
@@ -736,10 +744,7 @@ Grip::Grip(Deco *d)
     setFocusPolicy(Qt::NoFocus);
     setFixedSize(Size, Size);
     setCursor(Qt::SizeFDiagCursor);
-
-    static const QPolygon &p = QPolygon() << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size); //topright, bottomright, bottomleft
-    setMask(p);
-
+    setMask(shape());
     KDecoration2::DecoratedClient *c = m_deco->client().data();
     connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
     connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
@@ -754,7 +759,7 @@ Grip::setColor(const QColor &c)
     QPalette p = m_deco->client().data()->palette();
     p.setColor(backgroundRole(), c);
     setPalette(p);
-    setAutoFillBackground(true);
+    regenPix();
 }
 
 void
@@ -778,6 +783,27 @@ Grip::mousePressEvent(QMouseEvent *e)
 {
     QWidget::mousePressEvent(e);
     XHandler::mwRes(e->pos(), e->globalPos(), winId(), true, m_deco->client().data()->windowId());
+}
+
+void
+Grip::regenPix()
+{
+    QImage img(size(), QImage::Format_ARGB32);
+    QPainter p(&img);
+    p.setPen(QPen(QColor(0, 0, 0, 255), 2.0f));
+    p.setBrush(palette().color(backgroundRole()));
+    p.setRenderHint(QPainter::Antialiasing);
+    p.drawPolygon(shape());
+    p.end();
+    FX::expblur(img, 2);
+    m_pix = QPixmap::fromImage(img);
+}
+
+void
+Grip::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    p.drawPixmap(rect(), m_pix);
 }
 
 } //DSP

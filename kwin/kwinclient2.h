@@ -208,18 +208,22 @@ class Grip : public QWidget
     Q_OBJECT
 public:
     Grip(Deco *d);
-    enum Data { Margin = 4, Size = 12 };
+    enum Data { Margin = -1, Size = 13 };
 
 protected:
+    void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *e);
     void restack();
     void setColor(const QColor &c);
+    void regenPix();
+    static QPolygon shape();
 
 protected slots:
     void updatePosition();
 
 private:
     Deco *m_deco;
+    QPixmap m_pix;
 };
 
 } //DSP

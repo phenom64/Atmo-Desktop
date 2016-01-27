@@ -18,7 +18,7 @@ namespace DSP
 class Q_DECL_EXPORT Shadow
 {
 public:
-    Shadow(const ShadowStyle t, const quint8 r, const quint8 o);
+    Shadow(const ShadowStyle t, const quint8 r, const quint8 o, const quint8 i);
     void render(const QRect &r, QPainter *p, const Sides s = All);
     inline ShadowStyle type() const {return m_type;}
     inline quint8 round() const { return m_round; }
@@ -30,7 +30,7 @@ protected:
 
 private:
     ShadowStyle m_type;
-    quint8 m_round, m_opacity;
+    quint8 m_round, m_opacity, m_illumination;
     QPixmap *m_pix;
 };
 

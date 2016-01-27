@@ -106,6 +106,7 @@ static const char *s_key[] = {
     "windows.horizontal",
 
     "shadows.opacity",
+    "shadows.illuminationopacity",
     "shadows.darkraisededges"
 };
 
@@ -200,6 +201,7 @@ static const QVariant s_default[] = {
     0,
     true,
 
+    33,
     33,
     false
 };
@@ -296,6 +298,7 @@ static const QString s_description[] = {
     /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical, not used atm",
 
     /*"shadows.opacity"*/           "Opacity of the shadows painted on widgets",
+    /*"shadows.illumination"*/      "Opacity of the illuminated(light) parts of the shadows",
     /*"shadows.darkraisededges"*/   "Whether widgets w/ a raised shadow should be darker around the left/right edges"
 };
 
@@ -727,6 +730,7 @@ Settings::read()
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));
     //shadows
     conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;
+    conf.shadows.illumination   = readInt(Shadowillumination)*2.55f;
     conf.shadows.darkRaisedEdges= readBool(Shadowdarkraised);
     readPalette();
 }
