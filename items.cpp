@@ -210,7 +210,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         sides &= ~Left;
     else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Middle)
         sides &= ~(Right|Left);
-    else if (opt)
+    else if (opt && opt->decorationPosition == QStyleOptionViewItemV4::Left)
         rect.setRight(subElementRect(SE_ItemViewItemText, opt, widget).right());
     GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, sides);
     return true;

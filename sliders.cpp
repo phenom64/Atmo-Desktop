@@ -427,12 +427,22 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
         return true;
 
-    painter->save();
+    const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
+    const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
-    const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
-    const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
+
+    if (dConf.progressbars.textPos)
+    {
+        const int sz(hor?cont.height()/3:cont.width()/3);
+        QRect c(cont.adjusted(!hor*sz, hor*sz, -(!hor*sz), -(hor*sz)));
+        GFX::drawMask(c, painter, h, dConf.progressbars.rnd);
+        return true;
+    }
+
+    painter->save();
+
 //    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, All));
     const quint64 s((hor?groove.height():groove.width())+2);
     const QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
@@ -501,9 +511,19 @@ Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, cons
         return true;
 
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
+    const bool hor(opt->orientation == Qt::Horizontal);
+    if (dConf.progressbars.textPos)
+    {
+        const int sz(hor?groove.height()/3:groove.width()/3);
+        QRect g(groove.adjusted(!hor*sz, hor*sz, -(!hor*sz), -(hor*sz)));
+        QColor c(opt->palette.color(widget?widget->foregroundRole():QPalette::WindowText));
+        c.setAlpha(63);
+        GFX::drawMask(g, painter, c, dConf.progressbars.rnd);
+        return true;
+    }
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
-    const bool hor(opt->orientation == Qt::Horizontal);
+
     QLinearGradient lg(0, 0, !hor*groove.width(), hor*cont.height());
     lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
     GFX::drawClickable(dConf.progressbars.shadow, groove, painter, lg, dConf.progressbars.rnd, All, option, widget);
