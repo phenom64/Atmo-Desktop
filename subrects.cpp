@@ -77,12 +77,12 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             case QStyleOptionViewItem::Left:
                 iconRect.setWidth(iconSize.width());
                 textRect.setLeft(iconRect.right()+m);
-                if (item->widget)
-                {
-                    QFont f(item->widget->font());
-                    f.setBold(isSelected(opt));
-                    textRect.setRight(textRect.left()+QFontMetrics(f).width(item->text)+4);
-                }
+//                if (item->widget)
+//                {
+//                    QFont f(item->widget->font());
+//                    f.setBold(isSelected(opt));
+//                    textRect.setRight(textRect.left()+QFontMetrics(f).width(item->text)+4);
+//                }
                 break;
             case QStyleOptionViewItem::Right:
                 iconRect.setWidth(iconSize.width()+m);

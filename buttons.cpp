@@ -46,27 +46,36 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
-    if (!(opt->features & QStyleOptionButton::Flat))
+    int hl(0);
+    if (isEnabled(opt))
+        hl = Anim::Basic::level(widget);
+    const bool sunken = isSunken(opt);
+    if (opt->features & QStyleOptionButton::Flat)
     {
-        QColor bc(option->palette.color(bg));
-        const bool sunken = isSunken(opt);
-        if (sunken)
-            bc = bc.darker(110);
-        if (dConf.pushbtn.tint.second > -1)
-            bc = Color::mid(bc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
-        QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
-
-        if (sunken || opt->features & QStyleOptionButton::DefaultButton)
-            bc = sc;
-        else if (isEnabled(opt))
+        const bool selected = isSelected(option);
+        if (hl || sunken || selected)
         {
-            int hl(Anim::Basic::level(widget));
-            bc = Color::mid(bc, sc, Steps-hl, hl);
+            QColor h(opt->palette.color(QPalette::Highlight));
+            h.setAlpha(63/Steps*hl);
+            GFX::drawClickable(sunken||selected?Sunken:-1, option->rect, painter, h, dConf.pushbtn.rnd);
         }
-        QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bc));
-        GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, All, option, widget);
+        return true;
     }
+    QColor bc(option->palette.color(bg));
+
+    if (sunken)
+        bc = bc.darker(110);
+    if (dConf.pushbtn.tint.second > -1)
+        bc = Color::mid(bc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
+    QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+
+    if (sunken || opt->features & QStyleOptionButton::DefaultButton)
+        bc = sc;
+    else if (isEnabled(opt))
+        bc = Color::mid(bc, sc, Steps-hl, hl);
+    QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
+    lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bc));
+    GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, All, option, widget);
     return true;
 }
 
@@ -287,14 +296,12 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
     if (dConf.toolbtn.flat || !bar)
     {
-        if (hover)
+        if (hover || sunken)
         {
             QColor h(opt->palette.color(QPalette::Highlight));
             h.setAlpha(63/Steps*hover);
-            GFX::drawMask(option->rect.adjusted(0, 0, -0, -1), painter, h, dConf.toolbtn.rnd);
+            GFX::drawClickable(sunken?Sunken:-1, option->rect, painter, h, dConf.toolbtn.rnd);
         }
-        if (sunken)
-            GFX::drawShadow(Sunken, option->rect, painter, isEnabled(opt), dConf.toolbtn.rnd);
         return true;
     }
 

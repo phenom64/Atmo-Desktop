@@ -205,44 +205,44 @@ GFX::drawClickable(ShadowStyle s,
     {
         s = Sunken;   
     }
-    int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
-    if (w)
-    {
-        int count(0);
-        QColor bgc(Qt::white);
-        int bgl(255);
-        if (mask.gradient())
-        {
-            const QGradientStops stops(mask.gradient()->stops());
-            count = stops.count();
-            for (int i = 0; i < count; ++i)
-            {
-                const QColor nbgc(stops.at(i).second);
-                const int nbgl(Color::luminosity(nbgc));
-                if (nbgl < bgl)
-                {
-                    bgl = nbgl;
-                    bgc = nbgc;
-                }
-            }
-        }
-        //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
-        const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
-        QPalette::ColorRole bg(sunken&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
-        QPalette::ColorRole fg(sunken&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
-        bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
-        fgLum = Color::luminosity(w->palette().color(QPalette::Active, fg));
-        if (QWidget *parent = w->parentWidget())
-        {
-            pbgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->backgroundRole()));
-            pfgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->foregroundRole()));
-        }
-        else
-        {
-            pbgLum = bgLum;
-            pfgLum = fgLum;
-        }
-    }
+//    int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
+//    if (w)
+//    {
+//        int count(0);
+//        QColor bgc(Qt::white);
+//        int bgl(255);
+//        if (mask.gradient())
+//        {
+//            const QGradientStops stops(mask.gradient()->stops());
+//            count = stops.count();
+//            for (int i = 0; i < count; ++i)
+//            {
+//                const QColor nbgc(stops.at(i).second);
+//                const int nbgl(Color::luminosity(nbgc));
+//                if (nbgl < bgl)
+//                {
+//                    bgl = nbgl;
+//                    bgc = nbgc;
+//                }
+//            }
+//        }
+//        //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
+//        const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
+//        QPalette::ColorRole bg(sunken&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
+//        QPalette::ColorRole fg(sunken&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
+//        bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
+//        fgLum = Color::luminosity(w->palette().color(QPalette::Active, fg));
+//        if (QWidget *parent = w->parentWidget())
+//        {
+//            pbgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->backgroundRole()));
+//            pfgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->foregroundRole()));
+//        }
+//        else
+//        {
+//            pbgLum = bgLum;
+//            pfgLum = fgLum;
+//        }
+//    }
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();

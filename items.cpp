@@ -172,16 +172,16 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         return true;
     bool sunken(isSelected(option));
     if (!sunken && !isMouseOver(option))
+    {
+        if (opt->backgroundBrush != Qt::NoBrush)
+            painter->fillRect(option->rect, opt->backgroundBrush);
         return true;
+    }
 
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
     const QWidget *vp(abstractView?abstractView->viewport():0);
     const bool full(vp && vp->rect().x() == option->rect.x() && vp->rect().right() <= option->rect.right());
-//    const QTreeView *treeView = qobject_cast<const QTreeView *>(widget);
-//    const QListView *listView = qobject_cast<const QListView *>(widget);
-//    const bool multiSelection(abstractView&&abstractView->selectionMode()>QAbstractItemView::SingleSelection);
     const bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
-//    const bool iconMode(listView && listView->viewMode() == QListView::IconMode);
 
     if (!selectRows && (option->state & State_Item))
         return true;
@@ -210,8 +210,6 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         sides &= ~Left;
     else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Middle)
         sides &= ~(Right|Left);
-    else if (opt && opt->decorationPosition == QStyleOptionViewItemV4::Left)
-        rect.setRight(subElementRect(SE_ItemViewItemText, opt, widget).right());
     GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, sides);
     return true;
 }

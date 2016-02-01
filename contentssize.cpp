@@ -365,18 +365,23 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     }
     case CT_ProgressBar:
     {
+        QSize sz(contentsSize);
         const QStyleOptionProgressBarV2 *bar = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
+        const bool hor(!bar || bar->orientation==Qt::Horizontal);
         if (bar && dConf.progressbars.textPos == 1)
         {
-            QSize sz(contentsSize);
             const quint16 add = bar->fontMetrics.width(bar->text);
-            if (bar->orientation==Qt::Horizontal)
+            if (hor)
                 sz.rwidth() += add;
             else
                 sz.rheight() += add;
             return sz;
         }
-        return contentsSize;
+        if (hor && sz.height() > 23)
+            sz.setHeight(23);
+        else if (!hor && sz.width() > 23)
+            sz.setWidth(23);
+        return sz;
     }
     default: break;
     }
