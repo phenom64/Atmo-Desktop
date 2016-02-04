@@ -4,13 +4,15 @@
 #include <QWidget>
 #include <QSplitterHandle>
 #include <QMap>
+#include "namespace.h"
+#include "config/settings.h"
 
 namespace DSP
 {
 class Q_DECL_EXPORT ButtonBase
 {
 public:
-    enum Style { NoStyle = -1, Yosemite = 0, Lion, Sunken, Carved, FollowToolBtn, MagPie, StyleCount };
+    enum Style { NoStyle = -1, Yosemite = 0, Lion = 1, Sunken = 2, Carved = 3, FollowToolBtn = 4, MagPie = 5, NeoDesk = 6, StyleCount };
     typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid, Highlight };
     enum Type
@@ -44,6 +46,15 @@ public:
 
     inline void setShadowOpacity(const int o) { m_shadowOpacity = o; m_bgPix.clear(); }
     inline const int shadowOpacity() const { return m_shadowOpacity; }
+
+    //if style is followtoolbtn...
+    inline void setShadowStyle(const ShadowStyle s) { m_shadowStyle = s; m_bgPix.clear(); }
+    inline const ShadowStyle shadowStyle() { return m_shadowStyle; }
+
+    inline void setCustomColor(const QColor &c) { if (!c.isValid()) return; m_color = c; m_bgPix.clear(); }
+    inline const QColor customColor() { return m_color; }
+
+    inline void setGradient(const Gradient &g) { m_gradient = g; m_bgPix.clear(); }
 
 protected:
     void drawBase(QColor c, QPainter &p, QRect &r) const;
@@ -80,6 +91,9 @@ private:
     ButtonStyle m_buttonStyle;
     QMap<quint64, QPixmap> m_bgPix;
     int m_shadowOpacity;
+    ShadowStyle m_shadowStyle;
+    QColor m_color;
+    Gradient m_gradient;
 };
 
 class Q_DECL_EXPORT WidgetButton : public ButtonBase, public QWidget

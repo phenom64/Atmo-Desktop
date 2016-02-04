@@ -329,6 +329,18 @@ Style::polish(QWidget *widget)
             connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
         }
     }
+    else if (QGroupBox *gb = qobject_cast<QGroupBox *>(widget))
+    {
+        const quint8 mg(pixelMetric(PM_DefaultFrameWidth, 0, widget));
+        const QMargins m(mg, mg, mg, mg);
+        if (QLayout *l = gb->layout())
+        {
+            if (l->contentsMargins() != m)
+                l->setContentsMargins(m);
+        }
+        else if (gb->contentsMargins() != m)
+            gb->setContentsMargins(m);
+    }
     else if (widget->inherits("KTitleWidget"))
     {
         installFilter(widget);

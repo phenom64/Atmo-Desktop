@@ -288,21 +288,47 @@ EmbeddedWidget::wheelEvent(QWheelEvent *e)
     e->accept();
 }
 
+#define BUTTON buttons.at(i)
+#define BUTTONS(...) \
+{ QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>()); \
+    for (int i = 0; i < buttons.count(); ++i) { __VA_ARGS__ } }
+
 void
 EmbeddedWidget::setButtonShadowOpacity(const int o)
 {
-    QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>());
-    for (int i = 0; i < buttons.count(); ++i)
-        buttons.at(i)->setShadowOpacity(o);
+    BUTTONS(BUTTON->setShadowOpacity(o);)
 }
 
 void
 EmbeddedWidget::setButtonStyle(ButtonBase::ButtonStyle style)
 {
-    QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>());
-    for (int i = 0; i < buttons.count(); ++i)
-        buttons.at(i)->setButtonStyle(style);
+    BUTTONS(BUTTON->setButtonStyle(style);)
 }
+
+void
+EmbeddedWidget::setButtonShadow(const ShadowStyle ss)
+{
+    BUTTONS(BUTTON->setShadowStyle(ss);)
+}
+
+void
+EmbeddedWidget::setGradient(const Gradient &g)
+{
+    BUTTONS(BUTTON->setGradient(g);)
+}
+
+#define SETCOLOR(_ENUM_, _FUNC_) void \
+EmbeddedWidget::set##_FUNC_##Color(const QColor &c) \
+{ \
+    QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>()); \
+    for (int i = 0; i < buttons.count(); ++i) \
+        if (buttons.at(i)->type() == Button::_ENUM_) \
+            buttons.at(i)->setCustomColor(c); \
+}
+
+SETCOLOR(Close, Close)
+SETCOLOR(Minimize, Min)
+SETCOLOR(Maximize, Max)
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -321,40 +347,53 @@ EmbedHandler::EmbedHandler(Deco *d) : m_deco(d)
 
 }
 
+#define EW m_embedded[i]
+#define RUN(...) \
+for (int i = 0; i < 2; ++i) \
+    if (EW) { __VA_ARGS__ }
+
 EmbedHandler::~EmbedHandler()
 {
-    for (int i = 0; i < 2; ++i)
-        if (m_embedded[i])
-        {
-            m_embedded[i]->cleanUp();
-            m_embedded[i]->deleteLater();
-            m_embedded[i] = 0;
-        }
+    RUN(EW->cleanUp(); EW->deleteLater(); EW=0;)
 }
 
 void
 EmbedHandler::repaint()
 {
-    for (int i = 0; i < 2; ++i)
-        if (m_embedded[i])
-            m_embedded[i]->repaint();
+    RUN(EW->repaint();)
 }
 
 void
 EmbedHandler::setButtonShadowOpacity(const int o)
 {
-    for (int i = 0; i < 2; ++i)
-        if (m_embedded[i])
-            m_embedded[i]->setButtonShadowOpacity(o);
+    RUN(EW->setButtonShadowOpacity(o);)
 }
 
 void
 EmbedHandler::setButtonStyle(ButtonBase::ButtonStyle style)
 {
-    for (int i = 0; i < 2; ++i)
-        if (m_embedded[i])
-            m_embedded[i]->setButtonStyle(style);
+    RUN(EW->setButtonStyle(style);)
 }
+
+void
+EmbedHandler::setButtonShadow(const ShadowStyle ss)
+{
+    RUN(EW->setButtonShadow(ss);)
+}
+
+void
+EmbedHandler::setGradient(const Gradient g)
+{
+    RUN(EW->setGradient(g);)
+}
+
+#define SETBUTTONCOLOR(_FUNC_) \
+void EmbedHandler::set##_FUNC_##Color(const QColor &c) \
+{ RUN(EW->set##_FUNC_##Color(c);) }
+
+SETBUTTONCOLOR(Close)
+SETBUTTONCOLOR(Min)
+SETBUTTONCOLOR(Max)
 
 //--------------------------------------------------------------------------------------------------------
 

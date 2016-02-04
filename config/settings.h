@@ -56,6 +56,9 @@ public:
         Decoshadowsize,
         Decoframe,
         Decoembedded,
+        Decomincolor,
+        Decomaxcolor,
+        Decoclosecolor,
         Pushbtnrnd,
         Pushbtnshadow,
         Pushbtngrad,
@@ -138,6 +141,7 @@ public:
         {
             quint8 buttons, shadowSize, frameSize;
             bool icon, embed;
+            uint min, max, close;
         } deco;
 
         struct pushbtn

@@ -181,13 +181,15 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
     const QWidget *vp(abstractView?abstractView->viewport():0);
     const bool full(vp && vp->rect().x() == option->rect.x() && vp->rect().right() <= option->rect.right());
-    const bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
+    bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
+    if (selectRows)
+        selectRows = opt && opt->decorationPosition == QStyleOptionViewItem::Left;
 
     if (!selectRows && (option->state & State_Item))
         return true;
 
     QColor h(option->palette.color(QPalette::Highlight));
-    if (!sunken)
+    if (!sunken && h.alpha() == 0xff)
         h.setAlpha(64);
 
     QBrush brush(h);

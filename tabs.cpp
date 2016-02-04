@@ -65,12 +65,11 @@ Style::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBa
     r.setRight(r.right()+rightMargin);
 
     QPainterPath p;
-    GFX::drawTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p, dConf.shadows.opacity);
+    GFX::drawTab(r, painter, isLeftOf ? BeforeSelected : isSelected ? Selected : AfterSelected, &p);
     if (isSelected)
     {
-        painter->save();
+        const bool hadAA(painter->testRenderHint(QPainter::Antialiasing));
         painter->setRenderHint(QPainter::Antialiasing);
-        painter->setPen(Qt::NoPen);
         QPixmap pix(r.size());
         pix.fill(Qt::transparent);
         QPainter pt(&pix);
@@ -78,15 +77,14 @@ Style::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBa
         pt.end();
         if (XHandler::opacity() < 1.0f)
         {
+            const QPainter::CompositionMode mode(painter->compositionMode());
             painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            painter->setBrush(Qt::black);
-            painter->drawPath(p);
-            painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+            painter->fillPath(p, Qt::black);
+            painter->setCompositionMode(mode);
         }
         painter->setBrushOrigin(r.topLeft());
-        painter->setBrush(pix);
-        painter->drawPath(p);
-        painter->restore();
+        painter->fillPath(p, pix);
+        painter->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     return true;
 }
@@ -240,84 +238,6 @@ Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget
     const bool afterSelected(index>bar->currentIndex());
     static const int ext(16);
 
-//    QSize sz(opt->rect.size()+QSize(ext, 1));
-#if 0
-    static QMap<int, QVector<QPixmap> > s_shadows;
-    enum TabShadowPart { LeftBeforeSelected = 0, RightBeforeSelected, LeftSelected, RightSelected, LeftAfterSelected, RightAfterSelected };
-    if (!s_shadows.contains(sz.height()))
-    {
-        static const int round(8);
-        QImage img(round*2+1, sz.height(), QImage::Format_ARGB32_Premultiplied);
-        img.fill(Qt::transparent);
-        const int br(2);
-        QPainterPath path(tabPath(img.rect().adjusted(0, br, 0, 0)));
-        QPainter pt(&img);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.fillPath(path, Qt::black);
-        pt.end();
-
-        Render::expblur(img, br);
-
-        pt.begin(&img);
-        pt.setRenderHint(QPainter::Antialiasing);
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.fillPath(path, Qt::black);
-        pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        pt.setRenderHint(QPainter::Antialiasing, false);
-
-        QPoint offset = afterSelected ? img.rect().topLeft()-QPoint(img.width()-(ext), 0) : img.rect().topRight()-QPoint(ext, 0);
-        if (!isSelected && !isOnly)
-        {
-            pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            pt.fillPath(path.translated(offset), Qt::black); //erase the side
-            const QRect winBgRect(img.rect().adjusted(0, img.height()-s_tabBarShadow.height(), 0, 0));
-            pt.drawTiledPixmap(winBgRect, s_tabBarShadow);
-        }
-        pt.end();
-    }
-#elseif 0  //a more chrome-like approach
-
-    QImage img(sz, QImage::Format_ARGB32_Premultiplied);
-    img.fill(Qt::transparent);
-    const int br(2);
-    QPainterPath path(tabPath(img.rect().adjusted(0, br, 0, 0)));
-    QPainter pt(&img);
-    pt.setRenderHint(QPainter::Antialiasing);
-    pt.fillPath(path, Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), STEPS-level, level));
-    pt.end();
-    Render::expblur(img, br);
-    pt.begin(&img);
-
-    const QRect geo(bar->mapTo(widget->window(), opt->rect.topLeft()-QPoint(ext/2, 0)), img.size());
-    QPixmap winBg(img.size());
-    widget->window()->render(&winBg, QPoint(), geo, QWidget::DrawWindowBackground);
-
-    if (s_tabBarShadow.isNull())
-        s_tabBarShadow = QPixmap::fromImage(img.copy(img.width()/2, 0, 1, 2));
-
-    pt.setRenderHint(QPainter::Antialiasing);
-    if (isSelected)
-        pt.fillPath(path, winBg);
-    else
-    {
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.fillPath(path, Qt::black);
-        pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    }
-    pt.setRenderHint(QPainter::Antialiasing, false);
-
-    QPoint offset = afterSelected ? img.rect().topLeft()-QPoint(img.width()-(ext), 0) : img.rect().topRight()-QPoint(ext, 0);
-    if (!isSelected && !isOnly)
-    {
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        pt.fillPath(path.translated(offset), Qt::black); //erase the side
-        const QRect winBgRect(img.rect().adjusted(0, img.height()-s_tabBarShadow.height(), 0, 0));
-        pt.drawTiledPixmap(winBgRect, s_tabBarShadow);
-    }
-
-    pt.end();
-    painter->drawImage(opt->rect.topLeft()-QPoint(ext/2, 0), img);
-#endif
     QColor c(opt->palette.color(widget?widget->backgroundRole():QPalette::Window));
 //    if (!isSelected)
 //        c = Color::mid(c, opt->palette.color(widget?widget->foregroundRole():QPalette::WindowText), 5, 1);
@@ -498,15 +418,14 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::
         const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
         p->setRenderHint(QPainter::Antialiasing, false);
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
+        p->fillRect(r, QColor(0, 0, 0, 15));
         p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         p->drawLine(r.bottomLeft(), r.bottomRight());
-        GFX::drawShadow(Sunken, r.translated(0, -1), p, bar->isEnabled(), 0, Top);
+        GFX::drawTabBarShadow(p, r);
         p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
     else if (bar->documentMode() && bar->isVisible())
     {
-//        if (!s_tabBarShadow.isNull())
-//            p->drawTiledPixmap(rect.adjusted(0, rect.height()-s_tabBarShadow.height(), 0, 0), s_tabBarShadow);
         bool aboveStatusBar(false);
         QLine l, s, bl;
         QRect orgRect(r);

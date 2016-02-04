@@ -26,7 +26,8 @@ public:
     static void generateData();
     static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All);
     static void drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, const bool isEnabled = true, int roundNess = MaxRnd, const Sides sides = All);
-    static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0, const quint8 o = 0xff);
+    static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0);
+    static void drawTabBarShadow(QPainter *p, QRect r);
     static inline QPixmap noise(const bool bg = false) { return s_noise[bg]; }
     static void drawClickable(ShadowStyle s,
                               QRect r,

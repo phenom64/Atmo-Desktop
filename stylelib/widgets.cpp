@@ -14,6 +14,7 @@
 #include "macros.h"
 #include "windowdata.h"
 #include "fx.h"
+#include "masks.h"
 
 #define ISIZE 4
 
@@ -26,6 +27,8 @@ ButtonBase::ButtonBase(Type type)
     , m_hoverLock(false)
     , m_buttonStyle(dConf.deco.buttons)
     , m_shadowOpacity(dConf.shadows.opacity)
+    , m_shadowStyle(dConf.toolbtn.shadow)
+    , m_gradient(dConf.toolbtn.gradient)
 {
     for (int i = 0; i < Custom; ++i)
         m_paintMethod[i] = 0;
@@ -40,6 +43,21 @@ ButtonBase::ButtonBase(Type type)
     m_paintMethod[Shade] = &ButtonBase::paintShadeButton;
     m_paintMethod[ContextHelp] = &ButtonBase::paintQuickHelpButton;
     m_paintMethod[ApplicationMenu] = &ButtonBase::paintApplicationMenuButton;
+
+
+    //0 0 0 min max close
+    //static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFF8C96C, 0xFF8AC96B, 0xFFFE8D88 };
+    //static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFBE46, 0xFF05C850, 0xFFFB615F };
+    //static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFD580, 0xFF74B435, 0xFFFF8B80 };
+//    static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFC05E, 0xFF88EB51, 0xFFF98862 };
+
+    switch (m_type)
+    {
+    case Close: m_color = 0xFFF98862; break;
+    case Minimize: m_color = 0xFFFFC05E; break;
+    case Maximize: m_color = 0xFF88EB51; break;
+    default: break;
+    }
 }
 
 ButtonBase::~ButtonBase()
@@ -118,7 +136,7 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
-    if (buttonStyle())
+    if (buttonStyle() && buttonStyle() != FollowToolBtn)
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
     switch (buttonStyle())
     {
@@ -225,14 +243,14 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case FollowToolBtn:
     {
-        r.adjust(2, 2, -2, -2);
+        r.shrink((4-GFX::shadowMargin(m_shadowStyle)));
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, c));
+        lg.setStops(DSP::Settings::gradientStops(m_gradient, c));
         const bool hasDark(dConf.shadows.darkRaisedEdges);
         dConf.shadows.darkRaisedEdges = false;
-        GFX::drawClickable(dConf.toolbtn.shadow, r, &p, lg, MaxRnd);
+        GFX::drawClickable(m_shadowStyle, r, &p, lg, MaxRnd);
         dConf.shadows.darkRaisedEdges = hasDark;
-        r.adjust(4, 4, -4, -4);
+        r.shrink(4);
         break;
     }
     case MagPie:
@@ -254,13 +272,32 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         p.setCompositionMode(QPainter::CompositionMode_SourceOver);
         break;
     }
+    case NeoDesk:
+    {
+        r.shrink(3);
+        r.translate(1, 0);
+        Mask::render(r.translated(0, 1), QColor(255, 255, 255, dConf.shadows.illumination), &p, MaxRnd);
+        QColor color = c.darker(160);
+        color.setHsv(color.hue(), 255, color.value());
+        Mask::render(r, color, &p, MaxRnd);
+        r.shrink(1);
+        Mask::render(r, c, &p, MaxRnd);
+
+        QImage img(r.size(), QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter pt(&img);
+        Mask::render(img.rect().shrinked(1), Qt::white, &pt, MaxRnd);
+        pt.end();
+        FX::expblur(img, 1);
+        p.setCompositionMode(QPainter::CompositionMode_SoftLight);
+        p.drawImage(r.topLeft(), img);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        r.shrink(2);
+        break;
+    }
     default: break;
     }
 }
-//0 0 0 min max close
-//static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFF8C96C, 0xFF8AC96B, 0xFFFE8D88 };
-//static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFBE46, 0xFF05C850, 0xFFFB615F };C0FF80
-static uint fcolors[6] = { 0x0, 0x0, 0x0, 0xFFFFD580, 0xFF74B435, 0xFFFF8B80 };
 
 void
 ButtonBase::paintCloseButton(QPainter &p)
@@ -300,7 +337,7 @@ ButtonBase::paintCloseButton(QPainter &p)
             pt.setPen(Qt::NoPen);
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
-            drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
+            drawBase(isActive()?m_color:color(Bg), pt, rect);
             if (m_buttonStyle == MagPie)
             {
                 QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
@@ -364,7 +401,7 @@ ButtonBase::paintMaxButton(QPainter &p)
             pt.setPen(Qt::NoPen);
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
-            drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
+            drawBase(isActive()?m_color:color(Bg), pt, rect);
             if (m_buttonStyle == MagPie)
             {
                 QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
@@ -441,7 +478,7 @@ ButtonBase::paintMinButton(QPainter &p)
             pt.setPen(Qt::NoPen);
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
-            drawBase(isActive()?fcolors[m_type]:color(Bg), pt, rect);
+            drawBase(isActive()?m_color:color(Bg), pt, rect);
             if (m_buttonStyle == MagPie)
             {
                 QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));

@@ -12,67 +12,10 @@
 
 using namespace DSP;
 
-#if 0
-
-SharedDataAdaptorManager *SharedDataAdaptorManager::s_instance = 0;
-
-SharedDataAdaptorManager
-*SharedDataAdaptorManager::instance()
-{
-    if (!s_instance)
-        s_instance = new SharedDataAdaptorManager();
-    return s_instance;
-}
-
-SharedDataAdaptorManager::SharedDataAdaptorManager(QObject *parent)
-    : QObject(parent)
-{
-    m_adaptor = new SharedDataAdaptor(this);
-    QDBusConnection::sessionBus().registerService("org.kde.dsp.dspsharedmemory");
-    QDBusConnection::sessionBus().registerObject("/DSPSharedMemAdaptor", this);
-}
-
-SharedDataAdaptorManager::~SharedDataAdaptorManager()
-{
-    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.dspsharedmemory");
-    QDBusConnection::sessionBus().unregisterObject("/DSPSharedMemAdaptor");
-}
-
-void
-SharedDataAdaptorManager::updateData(uint win)
-{
-    qDebug() << "SharedDataAdaptorManager::updateData(uint win)";
-//    WindowData::update(win);
-}
-
-void
-SharedDataAdaptorManager::emitWindowActiveChanged(uint win, bool active)
-{
-    emit m_adaptor->windowActiveChanged(win, active);
-}
-void
-SharedDataAdaptorManager::emitDataChanged(uint win)
-{
-    emit m_adaptor->dataChanged(win);
-}
-
-//----------------------------------------------------------------------------------------------------------
-
-SharedDataAdaptor::SharedDataAdaptor(SharedDataAdaptorManager *parent)
-    : QDBusAbstractAdaptor(parent),
-      m_manager(parent)
-{
-
-}
-
-#endif
-
-//----------------------------------------------------------------------------------------------------------
-
 WindowData
 *WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
 {
-    static const int s_memSize = (sizeof(unsigned int)*6)+(256*256*4);
+    static const int s_memSize = (sizeof(unsigned int)*(ImageHeight))+(256*256*4);
     if (!wid)
     {
 //        qDebug() << "DSP: cant get windowdata w/o window id";
@@ -205,6 +148,37 @@ WindowData::setFg(const QColor &c)
     }
 }
 
+#define GETCOLOR(_ENUM_, _FUNC_) const QColor \
+WindowData::_FUNC_##Color() \
+{ \
+    MemoryLocker locker(this); \
+    if (locker.lockObtained()) \
+    { \
+        const uint *d = reinterpret_cast<const uint *>(constData()); \
+        return QColor::fromRgba(d[_ENUM_##Color]); \
+    } \
+    return QColor(); \
+}
+
+GETCOLOR(Min, min)
+GETCOLOR(Max, max)
+GETCOLOR(Close, close)
+
+#define SETCOLOR(_VAR_) void \
+WindowData::set##_VAR_##Color(const QColor &c) \
+{ \
+    if (lock()) \
+    { \
+        uint *d = reinterpret_cast<uint *>(data()); \
+        d[_VAR_##Color] = c.rgba(); \
+        unlock(); \
+    } \
+}
+
+SETCOLOR(Min)
+SETCOLOR(Max)
+SETCOLOR(Close)
+
 void
 WindowData::setDecoId(const uint id)
 {
@@ -226,6 +200,41 @@ WindowData::decoId()
         return d[DecoID];
     }
     return 0;
+}
+
+void
+WindowData::setGradient(const Gradient g)
+{
+    if (lock())
+    {
+        uint *d = reinterpret_cast<uint *>(data());
+        d[ToolBtnGradientSize] = qMin(32, g.count());
+        d = &d[ToolBtnGradient];
+        for (int i = 0; i < g.count(); ++i)
+        {
+            GradientStop stop(g.at(i));
+            d[i] = (d[i] & ~0xffff0000) | (((int)(stop.first*10000) << 16) & 0xffff0000);
+            d[i] = (d[i] & ~0x0000ffff) | ((stop.second+100) & 0x0000ffff);
+        }
+        unlock();
+    }
+}
+
+const Gradient
+WindowData::gradient()
+{
+    MemoryLocker locker(this);
+    if (locker.lockObtained())
+    {
+        const uint *d = reinterpret_cast<const uint *>(constData());
+        const int stops = d[ToolBtnGradientSize];
+        const uint *data = &d[ToolBtnGradient];
+        Gradient g;
+        for (int i = 0; i < stops; ++i)
+            g << GradientStop((float)((data[i]&0xffff0000)>>16)/10000.0f, (int)(data[i]&0x0000ffff)-100);
+        return g;
+    }
+    return Gradient();
 }
 
 bool
@@ -252,18 +261,6 @@ WindowData::sync()
     return false;
 }
 
-//void
-//WindowData::update(uint win)
-//{
-//    qDebug() << "WindowData::update(uint win)" << win << instances().count();
-//    for (int i = 0; i < instances().count(); ++i)
-//        if (instances().at(i)->m_winId == win)
-//        {
-//            qDebug() << "updateing data for" << win;
-//            emit instances().at(i)->dataChanged();
-//        }
-//}
-
 //----------------------------------------------------------------------------------------------------------
 
 WindowData::MemoryLocker::MemoryLocker(QSharedMemory *m)
@@ -279,71 +276,3 @@ WindowData::MemoryLocker::~MemoryLocker()
     if (m_mem && m_lock)
         m_mem->unlock();
 }
-
-#if 0
-
-//----------------------------------------------------------------------------------------------------------
-
-ClientData::ClientData(const QString &key, QObject *parent, uint id)
-    : WindowData(key, parent, id)
-{
-#if HASDBUS
-    static const QString service("org.kde.dsp.dspsharedmemory"),
-            interface("org.kde.dsp.sharedmemory"),
-            path("/DSPSharedMemAdaptor");
-    QDBusInterface *iface = new QDBusInterface(service, path, interface);
-//    iface->connection().connect(service, path, interface, "windowActiveChanged", this, SLOT(decoActiveChanged(QDBusMessage)));
-    iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChangedSlot(QDBusMessage)));
-#endif
-}
-
-void
-ClientData::dataChangedSlot(QDBusMessage)
-{
-    emit dataChanged();
-}
-
-bool
-ClientData::sync(uint win)
-{
-#if HASDBUS
-    QDBusMessage msg = QDBusMessage::createMethodCall("org.kde.dsp.dspsharedmemory", "/DSPSharedMemAdaptor", "org.kde.dsp.sharedmemory", "updateData");
-    if (win)
-        msg << win;
-    else
-        msg << m_winId;
-    QDBusConnection::sessionBus().send(msg);
-    return true;
-#endif
-    return false;
-}
-
-//----------------------------------------------------------------------------------------------------------
-
-//static QList<DecoData *> s_ddList;
-
-DecoData::DecoData(const QString &key, QObject *parent, uint id)
-    : WindowData(key, parent, id)
-{
-//    s_ddList << this;
-//    SharedDataAdaptorManager::instance();
-}
-
-DecoData::~DecoData()
-{
-//    s_ddList.removeOne(this);
-}
-
-bool
-DecoData::sync(uint win)
-{
-//    emit SharedDataAdaptorManager::instance()->dataC
-#if HASDBUS
-    SharedDataAdaptorManager::instance()->emitDataChanged(win);
-    return true;
-#else
-    qDebug() << "sync failed! requires dbus!";
-    return false;
-#endif
-}
-#endif

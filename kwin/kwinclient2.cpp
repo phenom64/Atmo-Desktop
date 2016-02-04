@@ -232,9 +232,6 @@ Deco::init()
     }
     else
         updateBgPixmap();
-    //for whatever reason if I use these convenience constructs it segfaults.
-//    m_leftButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Left, this, &Button::create);
-//    m_rightButtons = new KDecoration2::DecorationButtonGroup(KDecoration2::DecorationButtonGroup::Position::Right, this, &Button::create);
     m_leftButtons = new KDecoration2::DecorationButtonGroup(this);
     m_leftButtons->setSpacing(4);
     QVector<KDecoration2::DecorationButtonType> lb = settings()->decorationButtonsLeft();
@@ -311,15 +308,22 @@ Deco::updateData()
         const bool buttonShouldBeVisible(titleHeight()>6);
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
-
+        const Gradient g = m_wd->gradient();
         if (m_embedder)
         {
             m_embedder->setButtonStyle(buttonStyle);
             m_embedder->setButtonShadowOpacity(shadowOpacity);
             m_embedder->repaint();
+            m_embedder->setButtonShadow(m_wd->value<int>(WindowData::FollowDecoShadow));
+            m_embedder->setCloseColor(m_wd->closeColor());
+            m_embedder->setMaxColor(m_wd->maxColor());
+            m_embedder->setMinColor(m_wd->minColor());
+            m_embedder->setGradient(g);
         }
 
+
         if (m_leftButtons)
+        {
             for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
             {
                 QPointer<KDecoration2::DecorationButton> button = m_leftButtons->buttons().at(i);
@@ -328,11 +332,20 @@ Deco::updateData()
                     if (Button *b = qobject_cast<Button *>(button.data()))
                     {
                         b->setButtonStyle(buttonStyle);
+                        b->setShadowStyle(m_wd->value<int>(WindowData::FollowDecoShadow));
                         b->setShadowOpacity(shadowOpacity);
                         b->setVisible(buttonShouldBeVisible);
+                        b->setGradient(g);
+                        switch (b->ButtonBase::type())
+                        {
+                        case ButtonBase::Close: b->setCustomColor(m_wd->closeColor()); break;
+                        case ButtonBase::Maximize: b->setCustomColor(m_wd->maxColor()); break;
+                        case ButtonBase::Minimize: b->setCustomColor(m_wd->minColor()); break;
+                        }
                     }
                 }
             }
+        }
         if (m_rightButtons)
             for (int i = 0; i < m_rightButtons->buttons().count(); ++i)
             {
@@ -342,8 +355,16 @@ Deco::updateData()
                     if (Button *b = qobject_cast<Button *>(button.data()))
                     {
                         b->setButtonStyle(buttonStyle);
+                        b->setShadowStyle(m_wd?m_wd->value<int>(WindowData::FollowDecoShadow):dConf.toolbtn.shadow);
                         b->setShadowOpacity(shadowOpacity);
                         b->setVisible(buttonShouldBeVisible);
+                        b->setGradient(g);
+                        switch (b->ButtonBase::type())
+                        {
+                        case ButtonBase::Close: b->setCustomColor(m_wd->closeColor()); break;
+                        case ButtonBase::Maximize: b->setCustomColor(m_wd->maxColor()); break;
+                        case ButtonBase::Minimize: b->setCustomColor(m_wd->minColor()); break;
+                        }
                     }
                 }
             }

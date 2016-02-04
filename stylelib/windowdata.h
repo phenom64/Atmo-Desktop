@@ -82,26 +82,51 @@ class Q_DECL_EXPORT WindowData : public QSharedMemory
     };
 
 public:
-    enum ValueType {     //data is a 32 bit integer
-        Separator =     1<<0,       //first 8 bits reserved for booleans...
-        ContAware =     1<<1,
-        Uno =           1<<2,
-        Horizontal =    1<<3,
-        WindowIcon =    1<<4,
-        EmbeddedButtons=1<<5,
-        IsActiveWindow =1<<6,
-        Opacity =       0x0000f00,
-        UnoHeight =     0x00ff0000, //the height of the head is never more then 255 right? ..right?
-        Buttons =       0x0f000000, //enough long as we dont have more then 15 buttons styles
-        Frame =         0xf0000000,  //same here... long as we dont set framesize over 15, unsure if this is enough....
-        TitleHeight =   0x000000ff,
-        ShadowOpacity = 0x0000fe00,
-        LeftEmbedSize = 0x00fe0000,
-        RightEmbedSize= 0xff000000
+    enum ValueMask {     //data is a 32 bit integer
+        SeparatorMask =                 1<<0,       //first 8 bits reserved for booleans...
+        ContAwareMask =                 1<<1,
+        UnoMask =                       1<<2,
+        HorizontalMask =                1<<3,
+        WindowIconMask =                1<<4,
+        EmbeddedButtonsMask=            1<<5,
+        IsActiveWindowMask =            1<<6,
+        OpacityMask =                   0x0000f000,
+        UnoHeightMask =                 0x00ff0000, //the height of the head is never more then 255 right? ..right?
+        ButtonsMask =                   0x0f000000, //enough long as we dont have more then 15 buttons styles
+        FrameMask =                     0xf0000000,  //same here... long as we dont set framesize over 15, unsure if this is enough....
+        TitleHeightMask =               0x000000ff,
+        ShadowOpacityMask =             0x0000fe00,
+        LeftEmbedSizeMask =             0x00fe0000,
+        RightEmbedSizeMask=             0xff000000,
+        FollowDecoShadowMask=           0x0000000f
+    };
+    enum ValueType {
+        Separator = 0,
+        ContAware,
+        Uno,
+        Horizontal,
+        WindowIcon,
+        EmbeddedButtons,
+        IsActiveWindow,
+        Opacity,
+        UnoHeight,
+        Buttons,
+        Frame,
+        TitleHeight,
+        ShadowOpacity,
+        LeftEmbedSize,
+        RightEmbedSize,
+        FollowDecoShadow
     };
     enum SharedValue { //when data cast to unsigned int ptr
-        BgColor = 2,
+        BgColor = 3, //first ones reserved for data
         FgColor,
+        MinColor,
+        MaxColor,
+        CloseColor,
+        ToolBtnGradientSize,
+        ToolBtnGradient,
+        ToolBtnGradientEnd = ToolBtnGradient+32,
         DecoID,
         ImageWidth,
         ImageHeight,
@@ -122,15 +147,16 @@ public:
             case Horizontal:
             case WindowIcon:
             case EmbeddedButtons:
-            case IsActiveWindow:    d[0] ^= (-value ^ d[0]) & type; break; //just boolean vals...
-            case Opacity:           d[0] = (d[0] & ~Opacity) | ((value << 8) & Opacity); break;
-            case UnoHeight:         d[0] = (d[0] & ~UnoHeight) | ((value << 16) & UnoHeight); break;
-            case Buttons:           d[0] = (d[0] & ~Buttons) | (((value + 1) << 24) & Buttons); break;
-            case Frame:             d[0] = (d[0] & ~Frame) | ((value << 28) & Frame); break;
-            case TitleHeight:       d[1] = (d[1] & ~TitleHeight) | (value & TitleHeight); break;
-            case ShadowOpacity:     d[1] = (d[1] & ~ShadowOpacity) | ((value << 8) & ShadowOpacity); break;
-            case LeftEmbedSize:     d[1] = (d[1] & ~LeftEmbedSize) | ((value << 16) & LeftEmbedSize); break;
-            case RightEmbedSize:    d[1] = (d[1] & ~RightEmbedSize) | ((value << 24) & RightEmbedSize); break;
+            case IsActiveWindow:    d[0] ^= (-value ^ d[0]) & (1 << type); break; //just boolean vals...
+            case Opacity:           d[0] = (d[0] & ~OpacityMask) | ((value << 8) & OpacityMask); break;
+            case UnoHeight:         d[0] = (d[0] & ~UnoHeightMask) | ((value << 16) & UnoHeightMask); break;
+            case Buttons:           d[0] = (d[0] & ~ButtonsMask) | (((value + 1) << 24) & ButtonsMask); break;
+            case Frame:             d[0] = (d[0] & ~FrameMask) | ((value << 28) & FrameMask); break;
+            case TitleHeight:       d[1] = (d[1] & ~TitleHeightMask) | (value & TitleHeightMask); break;
+            case ShadowOpacity:     d[1] = (d[1] & ~ShadowOpacityMask) | ((value << 8) & ShadowOpacityMask); break;
+            case LeftEmbedSize:     d[1] = (d[1] & ~LeftEmbedSizeMask) | ((value << 16) & LeftEmbedSizeMask); break;
+            case RightEmbedSize:    d[1] = (d[1] & ~RightEmbedSizeMask) | ((value << 24) & RightEmbedSizeMask); break;
+            case FollowDecoShadow:  d[2] = (d[2] & ~FollowDecoShadowMask) | (value & FollowDecoShadowMask);
             default: break;
             }
             unlock();
@@ -151,15 +177,16 @@ public:
             case Horizontal:
             case WindowIcon:
             case EmbeddedButtons:
-            case IsActiveWindow:    return T(d[0] & type);
-            case Opacity:           return T((d[0] & Opacity) >> 8);
-            case UnoHeight:         return T((d[0] & UnoHeight) >> 16);
-            case Buttons:           return T(((d[0] & Buttons) >> 24) - 1);
-            case Frame:             return T((d[0] & Frame) >> 28);
-            case TitleHeight:       return T(d[1] & TitleHeight);
-            case ShadowOpacity:     return T((d[1] & ShadowOpacity) >> 8);
-            case LeftEmbedSize:     return T((d[1] & LeftEmbedSize) >> 16);
-            case RightEmbedSize:    return T((d[1] & RightEmbedSize) >> 24);
+            case IsActiveWindow:    return (T)(d[0] & (1 << type));
+            case Opacity:           return (T)((d[0] & OpacityMask) >> 8);
+            case UnoHeight:         return (T)((d[0] & UnoHeightMask) >> 16);
+            case Buttons:           return (T)(((d[0] & ButtonsMask) >> 24) - 1);
+            case Frame:             return (T)((d[0] & FrameMask) >> 28);
+            case TitleHeight:       return (T)(d[1] & TitleHeightMask);
+            case ShadowOpacity:     return (T)((d[1] & ShadowOpacityMask) >> 8);
+            case LeftEmbedSize:     return (T)((d[1] & LeftEmbedSizeMask) >> 16);
+            case RightEmbedSize:    return (T)((d[1] & RightEmbedSizeMask) >> 24);
+            case FollowDecoShadow:  return (T)(d[2] & FollowDecoShadowMask);
             default:                return T();
             }
         }
@@ -176,8 +203,20 @@ public:
     const QColor fg();
     void setFg(const QColor &c);
 
+    const QColor minColor();
+    void setMinColor(const QColor &c);
+
+    const QColor maxColor();
+    void setMaxColor(const QColor &c);
+
+    const QColor closeColor();
+    void setCloseColor(const QColor &c);
+
     const uint decoId();
     void setDecoId(const uint id);
+
+    const Gradient gradient();
+    void setGradient(const Gradient g);
 
     const QImage image() const;
 
@@ -197,36 +236,6 @@ protected:
 private:
     unsigned int m_winId;
 };
-
-#if 0
-class ClientData : public WindowData
-{
-    Q_OBJECT
-    friend class WindowData;
-public:
-    bool sync(uint win = 0);
-//    void update(uint win = 0);
-
-protected:
-    ClientData(const QString &key, QObject *parent, uint id = 0);
-
-protected slots:
-//    void decoActiveChanged(QDBusMessage);
-    void dataChangedSlot(QDBusMessage);
-};
-
-class DecoData : public WindowData
-{
-    friend class WindowData;
-public:
-    ~DecoData();
-    bool sync(uint win = 0);
-//    static void update(uint win);
-
-protected:
-    DecoData(const QString &key, QObject *parent, uint id = 0);
-};
-#endif
 
 } //namespace
 

@@ -100,12 +100,18 @@ GFX::initTabs()
     p.setPen(QPen(Qt::black, 2.0f));
     p.setBrush(Qt::black);
     p.drawPath(path);
-    p.setCompositionMode(QPainter::CompositionMode_DestinationOut); //erase the tabbar shadow... otherwise double.
-    p.setPen(Qt::NoPen);
-    p.drawPath(path);
-    p.setPen(Qt::black);
-    p.drawLine(img.rect().topLeft(), img.rect().topRight());
-    Shadow(Sunken, 0, 0xff, 0).render(img.rect().translated(0, -1), &p, Top);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.fillPath(path, Qt::black);
+    p.end();
+    s_tab[CenterPart] = QPixmap::fromImage(img.copy(ts, 0, 1, img.height()));
+    p.begin(&img);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.fillRect(img.rect(), QColor(0, 0, 0, 0xff-(dConf.shadows.opacity)));
+    drawTabBarShadow(&p, img.rect());
+    p.end();
+    p.begin(&s_tab[CenterPart]);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    p.fillRect(s_tab[CenterPart].rect(), QColor(0, 0, 0, 0xff-(dConf.shadows.opacity)));
     p.end();
     --hsz;
     hsz/=2;
@@ -115,50 +121,47 @@ GFX::initTabs()
     s_tab[TopMidPart] = QPixmap::fromImage(img.copy(hsz, 0, 1, vsz));
     s_tab[TopRightPart] = QPixmap::fromImage(img.copy(hsz+1, 0, hsz, vsz));
     s_tab[LeftPart] = QPixmap::fromImage(img.copy(0, vsz, hsz, 1));
-    s_tab[CenterPart] = QPixmap::fromImage(img.copy(hsz, vsz, 1, 1));
     s_tab[RightPart] = QPixmap::fromImage(img.copy(hsz+1, vsz, hsz, 1));
     s_tab[BottomLeftPart] = QPixmap::fromImage(img.copy(0, vsz+1, hsz, vsz));
     s_tab[BottomMidPart] = QPixmap::fromImage(img.copy(hsz, vsz+1, 1, vsz));
     s_tab[BottomRightPart] = QPixmap::fromImage(img.copy(hsz+1, vsz+1, hsz, vsz));
+
 }
 
 void
-GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path, const quint8 o)
+GFX::drawTabBarShadow(QPainter *p, QRect r)
+{
+    r.setHeight(s_tab[CenterPart].height());
+    p->drawTiledPixmap(r, s_tab[CenterPart]);
+}
+
+void
+GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path)
 {
     const QSize sz(s_tab[TopLeftPart].size());
     if (r.width()*2+1 < sz.width()*2+1)
         return;
 
-    QPixmap pix(r.size());
-    pix.fill(Qt::transparent);
-    QPainter pt(&pix);
-
     int x1, y1, x2, y2;
-    pix.rect().getCoords(&x1, &y1, &x2, &y2);
+    r.getCoords(&x1, &y1, &x2, &y2);
     int halfH(r.width()-(sz.width()*2)), halfV(r.height()-(sz.height()*2));
 
     if (t > BeforeSelected)
     {
-        pt.drawTiledPixmap(QRect(x1+sz.width()+halfH, y1, sz.width(), sz.height()), s_tab[TopRightPart]);
-        pt.drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), s_tab[RightPart]);
-        pt.drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), s_tab[BottomRightPart]);
+        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1, sz.width(), sz.height()), s_tab[TopRightPart]);
+        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height(), sz.width(), halfV), s_tab[RightPart]);
+        p->drawTiledPixmap(QRect(x1+sz.width()+halfH, y1+sz.height()+halfV, sz.width(), sz.height()), s_tab[BottomRightPart]);
     }
     if (t < AfterSelected)
     {
-        pt.drawTiledPixmap(QRect(x1, y1, sz.width(), sz.height()), s_tab[TopLeftPart]);
-        pt.drawTiledPixmap(QRect(x1, y1+sz.height(), sz.width(), halfV), s_tab[LeftPart]);
-        pt.drawTiledPixmap(QRect(x1, y1+sz.height()+halfV, sz.width(), sz.height()), s_tab[BottomLeftPart]);
+        p->drawTiledPixmap(QRect(x1, y1, sz.width(), sz.height()), s_tab[TopLeftPart]);
+        p->drawTiledPixmap(QRect(x1, y1+sz.height(), sz.width(), halfV), s_tab[LeftPart]);
+        p->drawTiledPixmap(QRect(x1, y1+sz.height()+halfV, sz.width(), sz.height()), s_tab[BottomLeftPart]);
     }
-    pt.drawTiledPixmap(QRect(x1+sz.width(), y1, halfH, sz.height()), s_tab[TopMidPart]);
-    pt.drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height(), halfH, halfV), s_tab[CenterPart]);
-    pt.drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), s_tab[BottomMidPart]);
-    pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    pt.fillRect(pix.rect(), QColor(0, 0, 0, o));
-    pt.end();
+    p->drawTiledPixmap(QRect(x1+sz.width(), y1+sz.height()+halfV, halfH, sz.height()), s_tab[BottomMidPart]);
 
     if (path)
         *path = tab(r.adjusted(ts, 0, -ts, 0), dConf.tabs.safrnd);
-    p->drawPixmap(r, pix);
 }
 
 void
@@ -191,7 +194,9 @@ GFX::drawClickable(ShadowStyle s,
 
     const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
-    const bool sunken(opt && opt->state & (QStyle::State_Selected|QStyle::State_On|QStyle::State_NoChange));
+    bool sunken(opt && opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange));
+    if (isLineEdit)
+        sunken = static_cast<const QLineEdit *>(w)->hasFocus();
 //    const bool inActive(dConf.differentInactive
 //                        &&!Handlers::Window::isActiveWindow(w)
 //                        &&!sunken
@@ -200,8 +205,8 @@ GFX::drawClickable(ShadowStyle s,
 //                        &&qobject_cast<const QToolBar *>(w->parentWidget()));
     const bool isEnabled(!opt || (qstyleoption_cast<const QStyleOptionToolButton *>(opt) || (opt->state & QStyle::State_Enabled)));
     if (opt
-            && (opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange) || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
-            && (s == Etched || s == Raised) && !isToolBox && !isLineEdit)
+            && (sunken || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
+            && (s == Etched || s == Raised) && !isToolBox)
     {
         s = Sunken;   
     }
@@ -440,11 +445,13 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
         size -= 1;
 
     const bool hor(d == West || d == East);
+
     QRect rect;
     if (hor)
         rect.setRect(0, 0, size/2+1, size);
     else
         rect.setRect(0, 0, size, size/2+1);
+
     if (align & (Qt::AlignVCenter|Qt::AlignHCenter))
         rect.moveCenter(r.center());
     if (align & Qt::AlignLeft)
@@ -474,11 +481,13 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     const QPen pen(p->pen());
     const QBrush brush(p->brush());
     const bool aa(p->testRenderHint(QPainter::Antialiasing));
+
     p->setRenderHint(QPainter::Antialiasing, false);
+
     if (dConf.simpleArrows)
     {
         p->setBrush(c);
-        p->setPen(c);
+        p->setPen(Qt::NoPen);
         p->drawPolygon(points, 3);
     }
     else
@@ -487,6 +496,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
         p->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
         p->drawPolyline(points, 3);
     }
+
     p->setPen(pen);
     p->setBrush(brush);
     p->setRenderHint(QPainter::Antialiasing, aa);

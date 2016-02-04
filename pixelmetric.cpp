@@ -74,10 +74,10 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
 {
     switch (metric)
     {
+    case PM_LayoutHorizontalSpacing:
+    case PM_LayoutVerticalSpacing:
     case PM_DefaultTopLevelMargin:
-        return 4;
     case PM_DefaultChildMargin:
-        return 4;
     case PM_DefaultLayoutSpacing:
         return 4;
     case PM_LayoutLeftMargin:
@@ -85,9 +85,6 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_LayoutRightMargin:
     case PM_LayoutBottomMargin:
         return layoutSpacingAndMargins(widget);
-    case PM_LayoutHorizontalSpacing:
-    case PM_LayoutVerticalSpacing:
-        return 4;
     case PM_HeaderMarkSize:
         return 9;
     case PM_ButtonMargin:

@@ -37,6 +37,9 @@ static const char *s_key[] = {
     "deco.shadowsize",
     "deco.framesize",
     "deco.embedded",
+    "deco.mincolor",
+    "deco.maxcolor",
+    "deco.closecolor",
 
     "pushbtn.rnd",
     "pushbtn.shadow",
@@ -137,6 +140,9 @@ static const QVariant s_default[] = {
     32,
     0,
     false,
+    "0xFFFFC05E",
+    "0xFF88EB51",
+    "0xFFF98862",
 
     8,
     3,
@@ -237,6 +243,9 @@ static const QString s_description[] = {
     /*"deco.shadowsize"*/           "Size of the windowshadow for active window, inactive windows will have a smaller",
     /*"deco.framesize"*/            "Size of borders for the decoration, not yet implemented in the kde5 deco",
     /*"deco.embedded"*/             "CSD-a-like bullshit that embeds crap in the title area, will cause trouble, do not use",
+    /*"deco.mincolor"*/             "Color of minimize button 0xAARRGGBB",
+    /*"deco.maxcolor"*/             "Color of maximize button 0xAARRGGBB",
+    /*"deco.closecolor"*/           "Color of close button 0xAARRGGBB",
 
     /*"pushbtn.rnd"*/               "Roundness of normal pushbuttons",
     /*"pushbtn.shadow"*/            "Shadow of normal pushbuttons",
@@ -672,6 +681,9 @@ Settings::read()
     conf.deco.shadowSize        = readInt(Decoshadowsize);
     conf.deco.frameSize         = readInt(Decoframe);
     conf.deco.embed             = readBool(Decoembedded);
+    conf.deco.min               = readString(Decomincolor).toUInt(0, 16);
+    conf.deco.max               = readString(Decomaxcolor).toUInt(0, 16);
+    conf.deco.close             = readString(Decoclosecolor).toUInt(0, 16);
     //pushbuttons
     conf.pushbtn.rnd            = qMin<quint8>(MaxRnd, readInt(Pushbtnrnd));
     conf.pushbtn.shadow         = readInt(Pushbtnshadow);

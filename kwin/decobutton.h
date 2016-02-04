@@ -52,6 +52,11 @@ public:
     const QPoint topLeft() const;
     void setButtonShadowOpacity(const int o);
     void setButtonStyle(ButtonBase::ButtonStyle style);
+    void setButtonShadow(const ShadowStyle ss);
+    void setCloseColor(const QColor &c);
+    void setMinColor(const QColor &c);
+    void setMaxColor(const QColor &c);
+    void setGradient(const Gradient &g);
     void cleanUp();
 
 protected:
@@ -80,6 +85,11 @@ public:
     void repaint();
     void setButtonShadowOpacity(const int o);
     void setButtonStyle(ButtonBase::ButtonStyle style);
+    void setButtonShadow(const ShadowStyle ss);
+    void setCloseColor(const QColor &c);
+    void setMinColor(const QColor &c);
+    void setMaxColor(const QColor &c);
+    void setGradient(const Gradient g);
 
 private:
     Deco *m_deco;

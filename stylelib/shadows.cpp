@@ -54,7 +54,8 @@ Shadow::genShadow()
         blurredImage.fill(Qt::transparent);
         QPainter pt(&blurredImage);
         QRectF rt(rect);
-        rt.adjust(1.0f, 1.5f, -1.0f, -0.75f);
+        float rad(0.5f);
+        rt.adjust(1.0f*rad, 1.5f*rad, -1.0f*rad, -0.75f*rad);
         int rnd(m_round);
         if (rnd)
             --rnd;
@@ -81,6 +82,12 @@ Shadow::genShadow()
         pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
         pt.fillRect(dark.rect(), outlineImage);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+
+        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+        lg.setColorAt(0, Qt::transparent);
+        lg.setColorAt(1, QColor(0, 0, 0, 63));
+        pt.fillRect(dark.rect(), lg);
+
         pt.fillRect(dark.rect(), QColor(0, 0, 0, 255-m_opacity));
         pt.end();
 
@@ -110,6 +117,12 @@ Shadow::genShadow()
         pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
         Mask::render(rect, Qt::black, &pt, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+
+        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+        lg.setColorAt(0, Qt::transparent);
+        lg.setColorAt(1, QColor(0, 0, 0, 63));
+        pt.fillRect(rect, lg);
+
         Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round-1);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         pt.fillRect(rect, QColor(0, 0, 0, 255-m_opacity));

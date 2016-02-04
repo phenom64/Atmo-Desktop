@@ -337,7 +337,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     case CT_ItemViewItem:
     {
         QSize sz(QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget));
-        static const int sm = GFX::shadowMargin(dConf.views.itemShadow)*2;
+        static const int sm = GFX::shadowMargin(dConf.views.itemShadow)*2 + dConf.views.itemRnd;
         sz.rheight() += sm;
 #if 0
         const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
@@ -381,6 +381,11 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             sz.setHeight(23);
         else if (!hor && sz.width() > 23)
             sz.setWidth(23);
+
+        if (hor)
+            sz.rwidth() += dConf.progressbars.rnd;
+        else
+            sz.rheight() += dConf.progressbars.rnd;
         return sz;
     }
     default: break;

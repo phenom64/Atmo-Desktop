@@ -1476,8 +1476,13 @@ Window::updateWindowData(qulonglong window)
     data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
     data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity);
+    data->setValue<int>(WindowData::FollowDecoShadow, dConf.toolbtn.shadow);
+    data->setCloseColor(QColor::fromRgba(dConf.deco.close));
+    data->setMaxColor(QColor::fromRgba(dConf.deco.max));
+    data->setMinColor(QColor::fromRgba(dConf.deco.min));
     data->setFg(pal.color(win->foregroundRole()));
     data->setBg(pal.color(win->backgroundRole()));
+    data->setGradient(dConf.toolbtn.gradient);
     win->update();
     if (TitleWidget *w = win->findChild<TitleWidget *>())
         w->update();
