@@ -173,7 +173,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     bool sunken(isSelected(option));
     if (!sunken && !isMouseOver(option))
     {
-        if (opt->backgroundBrush != Qt::NoBrush)
+        if (opt && opt->backgroundBrush != Qt::NoBrush)
             painter->fillRect(option->rect, opt->backgroundBrush);
         return true;
     }
@@ -183,7 +183,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     const bool full(vp && vp->rect().x() == option->rect.x() && vp->rect().right() <= option->rect.right());
     bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
     if (selectRows)
-        selectRows = opt && opt->decorationPosition == QStyleOptionViewItem::Left;
+        selectRows = !opt || opt->decorationPosition == QStyleOptionViewItem::Left;
 
     if (!selectRows && (option->state & State_Item))
         return true;
@@ -219,10 +219,10 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
 bool
 Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    drawViewItemBg(option, painter, widget);
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
     if (!opt)
         return true;
-    drawViewItemBg(option, painter, widget);
 
     if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
     {
@@ -254,7 +254,7 @@ Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget
         }
         const QFontMetrics fm(painter->fontMetrics());
         const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width()));
-        drawItemText(painter, textRect, opt->displayAlignment, opt->palette, opt->ENABLED, text, fg);
+        drawItemText(painter, textRect, opt->displayAlignment, opt->palette, isEnabled(opt), text, fg);
         painter->setFont(font);
     }
     return true;
