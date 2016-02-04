@@ -30,7 +30,6 @@ static const char *s_key[] = {
     "animatescroll",
     "lockdocks",
     "differentinactive",
-    "dfmhacks",
 
     "deco.buttons",
     "deco.icon",
@@ -129,7 +128,6 @@ static const QVariant s_default[] = {
     true,
     false,
     QString(),
-    false,
     false,
     false,
     false,
@@ -236,7 +234,6 @@ static const QString s_description[] = {
     /*"animatescroll"*/             "Smooth scrolling globally, known to cause trouble in certain cases, mainly dolphin",
     /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles w/ Ctrl+Alt+D",
     /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
-    /*dfmhacks*/                    "Internal, silly hacks regarding dfm, might be removed anytime",
 
     /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
     /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
@@ -674,7 +671,6 @@ Settings::read()
     conf.animateScroll          = readBool(Animatescroll);
     conf.lockDocks              = readBool(Lockdocks);
     conf.differentInactive      = readBool(Differentinactive);
-    conf.dfmHacks               = readBool(Dfmhacks);
     //deco
     conf.deco.buttons           = readInt(Decobuttons);
     conf.deco.icon              = readBool(Decoicon);

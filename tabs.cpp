@@ -35,7 +35,6 @@ static QPixmap s_tabBarShadow;
 bool
 Style::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-//    return false;
     drawTabShape(option, painter, widget);
     drawTabLabel(option, painter, widget);
     return true;
@@ -167,49 +166,6 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
         painter->setPen(pen);
     }
     return true;
-}
-
-static QPainterPath tabPath(QRect rect, int r = 8)
-{
-//    r = qMin(r, rect.height()/2);
-//    int x1, y1, x2, y2;
-//    rect.getCoords(&x1, &y1, &x2, &y2);
-//    QPainterPath path;
-//    path.moveTo(x1, y2);
-//    path.quadTo(x1+r, y2, x1+r, y2-r);
-//    path.lineTo(x1+r, y1+r);
-//    path.quadTo(x1+r, y1, x1+(r*2), y1);
-//    path.lineTo(x2-(r*2), y1);
-//    path.quadTo(x2-r, y1, x2-r, y1+r);
-//    path.lineTo(x2-r, y2-r);
-//    path.quadTo(x2-r, y2, x2, y2);
-//    path.closeSubpath();
-
-    int x = rect.x(), y = rect.y(), w = x+(rect.width()-1), h = y+(rect.height()-1);
-    QPainterPath path;
-//    if (shape == Standard)
-//    {
-//        path.moveTo(x, h);
-//        path.quadTo(x+(round), h, x+round, h-round);
-//        path.lineTo(x+round, y+round);
-//        path.quadTo(x+round, y, x+(round*2), y);
-//        path.lineTo(w-(round*2), y);
-//        path.quadTo(w-round, y, w-round, y+round);
-//        path.lineTo(w-round, h-round);
-//        path.quadTo(w-round, h, w, h);
-//    }
-//    else if (shape == Chrome)
-//    {
-        int half = h/2, hf = r/2;
-        path.moveTo(x, h);
-        path.quadTo(x+hf, h, x+r, half);
-        path.quadTo(x+r+hf, y, x+(r*2), y);
-        path.lineTo(w-(r*2), y);
-        path.quadTo(w-(r+hf), y, w-r, half);
-        path.quadTo(w-hf, h, w, h);
-//    }
-
-    return path;
 }
 
 bool

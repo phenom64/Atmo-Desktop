@@ -157,7 +157,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             return QRect();
 
         const bool safBar(Ops::isSafariTabBar(bar));
-        int o(safBar?dConf.tabs.safrnd:4);
+        int o(/*safBar?qBound<int>(2, dConf.tabs.safrnd, 4):*/4);
         int ladd((safBar && (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab))*o);
         int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
         QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));

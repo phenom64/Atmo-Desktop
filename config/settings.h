@@ -50,7 +50,6 @@ public:
         Animatescroll,
         Lockdocks,
         Differentinactive,
-        Dfmhacks,
         Decobuttons,
         Decoicon,
         Decoshadowsize,

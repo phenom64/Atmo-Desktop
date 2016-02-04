@@ -311,13 +311,6 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     Sides sides(Handlers::ToolBar::sides(btn));
     QRect rect(opt->rect);
 
-    if (dConf.dfmHacks && dConf.app == DSP::Settings::DFM && btn && (btn->toolTip() == "Go Back" || btn->toolTip() == "Go Forward"))
-    {
-        if (sides & Right)
-            rect.translate(-1, 0);
-        sides = All;
-    }
-
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     const bool hasMenu(Ops::hasMenu(btn, opt));
     const bool arrowPress(Handlers::ToolBar::isArrowPressed(btn));
@@ -403,6 +396,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         GFX::drawShadow(Sunken, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, All-sides);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         GFX::drawShadow(Sunken, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, sides);
+        pt.fillRect(pix.rect(), QColor(0, 0, 0, 0xff-dConf.shadows.opacity));
         pt.end();
         painter->drawTiledPixmap(rect, pix);
     }
@@ -450,14 +444,6 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     const bool multiTab(widget && widget->inherits("KMultiTabBarTab"));
     Sides sides(Handlers::ToolBar::sides(btn));
     QRect rect(opt->rect);
-
-    if (dConf.dfmHacks && dConf.app == DSP::Settings::DFM && btn && (btn->toolTip() == "Go Back" || btn->toolTip() == "Go Forward"))
-    {
-        if (sides & Left)
-            rect.translate(-1, 0);
-        sides = All;
-    }
-
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
     const quint8 sm = GFX::shadowMargin(dConf.toolbtn.shadow);
     QRect mr(multiTab?rect:rect.sAdjusted(sm, sm, -sm, -sm));

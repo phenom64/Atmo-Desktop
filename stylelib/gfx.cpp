@@ -66,12 +66,13 @@ static QPainterPath tab(const QRect &r, int rnd)
     path.quadTo(x1+rnd, y2, x1+rnd, y2-rnd);
     path.lineTo(x1+rnd, y1+rnd);
     path.quadTo(x1+rnd, y1, x1, y1);
-    path.lineTo(x2, y1);
     path.closeSubpath();
     return path;
 }
 
 static const int ts(4); //tab shadow...
+
+static QPixmap s_tbs;
 
 void
 GFX::initTabs()
@@ -93,8 +94,7 @@ GFX::initTabs()
     p.setBrush(Qt::black);
     p.drawPath(path);
     p.end();
-//    img = FX::blurred(img, img.rect(), ts);
-    FX::expblur(img, 1);
+    FX::expblur(img, 2);
     p.begin(&img);
     p.setRenderHint(QPainter::Antialiasing);
     p.setPen(QPen(Qt::black, 2.0f));
@@ -104,15 +104,31 @@ GFX::initTabs()
     p.fillPath(path, Qt::black);
     p.end();
     s_tab[CenterPart] = QPixmap::fromImage(img.copy(ts, 0, 1, img.height()));
+
+    QImage tbs(1, 8, QImage::Format_ARGB32_Premultiplied);
+    tbs.fill(Qt::transparent);
+    p.begin(&tbs);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(Qt::black, 3.0f));
+    p.drawLine(0, 0, 1, 0);
+    p.end();
+    FX::expblur(tbs, 2);
+    p.begin(&tbs);
+    p.setPen(QPen(Qt::black, 2.0f));
+    p.drawLine(0, 0, 1, 0);
+    p.end();
+
     p.begin(&img);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.fillRect(img.rect(), QColor(0, 0, 0, 0xff-(dConf.shadows.opacity)));
-    drawTabBarShadow(&p, img.rect());
+    p.fillRect(0, 0, img.width(), 8, tbs);
+//    drawTabBarShadow(&p, img.rect());
     p.end();
-    p.begin(&s_tab[CenterPart]);
+    p.begin(&tbs);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    p.fillRect(s_tab[CenterPart].rect(), QColor(0, 0, 0, 0xff-(dConf.shadows.opacity)));
+    p.fillRect(tbs.rect(), QColor(0, 0, 0, 0xff-(dConf.shadows.opacity)));
     p.end();
+    s_tbs = QPixmap::fromImage(tbs);
     --hsz;
     hsz/=2;
     --vsz;
@@ -131,8 +147,8 @@ GFX::initTabs()
 void
 GFX::drawTabBarShadow(QPainter *p, QRect r)
 {
-    r.setHeight(s_tab[CenterPart].height());
-    p->drawTiledPixmap(r, s_tab[CenterPart]);
+    r.setHeight(s_tbs.height());
+    p->drawTiledPixmap(r, s_tbs);
 }
 
 void

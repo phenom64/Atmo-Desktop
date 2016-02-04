@@ -87,7 +87,6 @@ Style::Style() : QCommonStyle()
     if (XHandler::opacity() < 1.0f)
         qApp->installEventFilter(&t);
 #endif
-    qDebug() << sizeof(float) << sizeof(double) << sizeof(qreal);
 }
 
 Style::~Style()
