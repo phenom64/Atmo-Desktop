@@ -92,7 +92,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         QSize sz(contentsSize);
         if (sz.height() < opt->fontMetrics.height())
             sz.rheight() = opt->fontMetrics.height();
-        sz.rheight()+=2;
+        sz.rheight()+=4;
         return sz;
     }
     case CT_PushButton:

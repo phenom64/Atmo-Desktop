@@ -379,6 +379,8 @@ Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
     const QStyleOptionProgressBarV2 *barv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
     if (!bar)
         return QRect();
+    if (bar->minimum == 0 && bar->maximum == 0)
+        return bar->rect;
     const QRect optrect(subElementRect(SE_ProgressBarGroove, opt, widget));
     const bool hor(!barv2 || barv2->orientation == Qt::Horizontal);
     qreal d((qreal)(hor?optrect.width():optrect.height())/(qreal)bar->maximum);
@@ -394,17 +396,17 @@ Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
         else
             r.moveTop(optrect.top());
     }
-    if (bar->minimum == bar->maximum)
-        if (const QProgressBar *pBar = qobject_cast<const QProgressBar *>(widget))
-        {
-            int s(qMin(optrect.height(), optrect.width()));
-            r.setSize(QSize(s, s));
+//    if (bar->minimum == bar->maximum)
+//        if (const QProgressBar *pBar = qobject_cast<const QProgressBar *>(widget))
+//        {
+//            int s(qMin(optrect.height(), optrect.width()));
+//            r.setSize(QSize(s, s));
 
-            if (hor)
-                r.moveLeft(ProgressHandler::busyValue(pBar));
-            else
-                r.moveBottom(pBar->height()-ProgressHandler::busyValue(pBar));
-        }
+//            if (hor)
+//                r.moveLeft(ProgressHandler::busyValue(pBar));
+//            else
+//                r.moveBottom(pBar->height()-ProgressHandler::busyValue(pBar));
+//        }
     return visualRect(opt->direction, optrect, r);
 }
 
@@ -491,9 +493,18 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
         }
         s_pixMap.insert(thing, pix);
     }
+
+    static QMap<quint64, int> s_busyMap;
+    const bool busy(opt&&opt->minimum==0&&opt->maximum==0);
+    int offset = qMax<int>(dConf.progressbars.stripeSize, 8u);
+    if (s_busyMap.contains((quint64)widget))
+        offset = s_busyMap.value((quint64)widget);
+
     painter->setClipRect(cont);
-    GFX::drawClickable(dConf.progressbars.shadow, groove, painter, s_pixMap.value(thing), dConf.progressbars.rnd, All, option, widget);
+    GFX::drawClickable(dConf.progressbars.shadow, groove, painter, s_pixMap.value(thing), dConf.progressbars.rnd, All, option, widget, QPoint(busy*offset, 0));
     painter->setClipping(false);
+
+    s_busyMap.insert((quint64)widget, offset?offset-1:qMax<int>(dConf.progressbars.stripeSize, 8u));
     return true;
 }
 

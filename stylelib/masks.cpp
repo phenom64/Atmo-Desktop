@@ -66,7 +66,7 @@ static void addRoundedRect(const QRectF &rect, const qreal radius, const Sides s
 }
 
 void
-Mask::render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s)
+Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s, const QPoint &offset)
 {
     if (!r.isValid())
         return;
@@ -79,24 +79,9 @@ Mask::render(const QRect &r, const QBrush &b, QPainter *p, const quint8 round, c
     addRoundedRect(r, round, s, path);
     const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
     p->setRenderHint(QPainter::Antialiasing);
+    const QPoint origin(p->brushOrigin());
+    p->setBrushOrigin(offset);
     p->fillPath(path, b);
-    p->setRenderHint(QPainter::Antialiasing, hadAA);
-}
-
-void
-Mask::renderF(const QRectF &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s)
-{
-    if (!r.isValid())
-        return;
-    if (!round || !s)
-    {
-        p->fillRect(r, b);
-        return;
-    }
-    QPainterPath path;
-    addRoundedRect(r, round, s, path);
-    const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
-    p->setRenderHint(QPainter::Antialiasing);
-    p->fillPath(path, b);
+    p->setBrushOrigin(origin);
     p->setRenderHint(QPainter::Antialiasing, hadAA);
 }

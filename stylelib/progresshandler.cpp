@@ -3,6 +3,7 @@
 #include <QEvent>
 #include <QTimerEvent>
 #include <QMap>
+#include <QTimer>
 
 #include "progresshandler.h"
 
@@ -10,8 +11,8 @@ using namespace DSP;
 
 Q_DECL_EXPORT ProgressHandler *ProgressHandler::s_instance;
 
-ProgressHandler::ProgressHandler(QObject *parent) :
-    QObject(parent)
+ProgressHandler::ProgressHandler(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -45,7 +46,7 @@ ProgressHandler::checkBar(QProgressBar *bar)
     if (m_bars.contains(bar))
         return;
     m_bars << bar;
-    bar->setAttribute(Qt::WA_Hover);
+    bar->setAttribute(Qt::WA_Hover, false);
     bar->installEventFilter(this);
     connect(bar, SIGNAL(valueChanged(int)), this, SLOT(valueChanged()));
     if (bar->isVisible())
@@ -55,7 +56,7 @@ ProgressHandler::checkBar(QProgressBar *bar)
 void
 ProgressHandler::initBar(QProgressBar *bar)
 {
-    if ((bar->minimum() == 0 && bar->maximum() == 0) || (bar->value() > 0 && bar->underMouse()))
+    if (bar->minimum() == 0 && bar->maximum() == 0)
     {
         TimerData *d = m_data.value(bar, 0);
         if (!d)
@@ -92,38 +93,18 @@ ProgressHandler::eventFilter(QObject *o, QEvent *e)
         return false;
 
     QProgressBar *bar = static_cast<QProgressBar *>(o);
-    if (e->type() == QEvent::Show || e->type() == QEvent::HoverEnter || e->type() == QEvent::HoverLeave)
+    if (e->type() == QEvent::Show)
     {
         initBar(bar);
         return false;
     }
 
     QTimerEvent *te = static_cast<QTimerEvent *>(e);
-    TimerData *d;
+    TimerData *d(0);
     if (m_data.contains(bar))
         d = m_data.value(bar);
     if (!d || te->timerId() != d->timerId)
         return false;
-
-    if (d->goingBack)
-        --d->busyValue;
-    else
-        ++d->busyValue;
-    int r(qMax(bar->width(), bar->height())-qMin(bar->width(), bar->height()));
-    if (d->busyValue > r)
-        d->goingBack = true;
-
-    if (d->busyValue < 1)
-        d->goingBack = false;
-
     bar->update();
     return true;
-}
-
-int
-ProgressHandler::busyValue(const QProgressBar *bar)
-{
-    if (instance()->m_data.contains(const_cast<QProgressBar *>(bar)))
-        return instance()->m_data.value(const_cast<QProgressBar *>(bar))->busyValue;
-    return 0;
 }

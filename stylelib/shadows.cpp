@@ -59,7 +59,7 @@ Shadow::genShadow()
         int rnd(m_round);
         if (rnd)
             --rnd;
-        Mask::renderF(rt, Qt::black, &pt, rnd);
+        Mask::render(rt, Qt::black, &pt, rnd);
         pt.end();
         FX::expblur(blurredImage, 1);
 
@@ -138,7 +138,7 @@ Shadow::genShadow()
         QImage blurred(pix.size(), QImage::Format_ARGB32_Premultiplied);
         blurred.fill(Qt::transparent);
         QPainter pt(&blurred);
-        Mask::renderF(rect.adjusted(0.75f, 1.0f, -0.75f, -0.5f), QColor(0, 0, 0, 185), &pt, m_round+2);
+        Mask::render(rect.adjusted(0.75f, 1.0f, -0.75f, -0.5f), QColor(0, 0, 0, 185), &pt, m_round+2);
         pt.end();
         FX::expblur(blurred, 1);
 
@@ -147,26 +147,26 @@ Shadow::genShadow()
         pt.begin(&dark);
         pt.fillRect(dark.rect(), blurred);
         rect.shrink(1);
-        Mask::renderF(rect, Qt::black, &pt, m_round+1);
+        Mask::render(rect, Qt::black, &pt, m_round+1);
 
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         rect.shrink(1);
-        Mask::renderF(rect, Qt::black, &pt, m_round);
+        Mask::render(rect, Qt::black, &pt, m_round);
         pt.fillRect(dark.rect(), QColor(0, 0, 0, 255-m_opacity));
         pt.end();
 
         QImage light(pix.size(), QImage::Format_ARGB32_Premultiplied);
         light.fill(Qt::transparent);
         pt.begin(&light);
-        Mask::renderF(rect, Qt::white, &pt, m_round);
+        Mask::render(rect, Qt::white, &pt, m_round);
 
         QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
         lg.setColorAt(0, Qt::transparent);
         lg.setColorAt(1, QColor(0, 0, 0, 127));
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        Mask::renderF(rect, lg, &pt, m_round);
+        Mask::render(rect, lg, &pt, m_round);
         rect.shrink(1);
-        Mask::renderF(rect, Qt::black, &pt, m_round-1);
+        Mask::render(rect, Qt::black, &pt, m_round-1);
         pt.fillRect(light.rect(), QColor(0, 0, 0, 255-m_illumination));
         pt.end();
 

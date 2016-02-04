@@ -24,7 +24,7 @@ class Q_DECL_EXPORT GFX
 {
 public:
     static void generateData();
-    static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All);
+    static void drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess = MaxRnd, const Sides sides = All, const QPoint &offset = QPoint());
     static void drawShadow(const ShadowStyle shadow, const QRect &rect, QPainter *painter, const bool isEnabled = true, int roundNess = MaxRnd, const Sides sides = All);
     static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0);
     static void drawTabBarShadow(QPainter *p, QRect r);
@@ -36,7 +36,8 @@ public:
                               int rnd,
                               const Sides sides = All,
                               const QStyleOption *opt = 0,
-                              const QWidget *w = 0);
+                              const QWidget *w = 0,
+                              const QPoint &offset = QPoint());
     static quint8 maxRnd(const QRect &r, const Sides s, const quint8 rnd = MaxRnd);
     static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();

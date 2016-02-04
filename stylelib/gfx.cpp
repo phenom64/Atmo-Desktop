@@ -182,11 +182,11 @@ GFX::drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path)
 }
 
 void
-GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides)
+GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offset)
 {
     if (roundNess)
         roundNess = maxRnd(rect, sides, roundNess);
-    Mask::render(rect, brush, painter, roundNess, sides);
+    Mask::render(rect, brush, painter, roundNess, sides, offset);
 }
 
 void
@@ -204,7 +204,8 @@ GFX::drawClickable(ShadowStyle s,
                    int rnd,
                    const Sides sides,
                    const QStyleOption *opt,
-                   const QWidget *w)
+                   const QWidget *w,
+                   const QPoint &offset)
 {
     if (s >= ShadowCount)
         return;
@@ -286,7 +287,7 @@ GFX::drawClickable(ShadowStyle s,
         p.end();
         mask = pix;
     }
-    drawMask(r, p, mask, rnd, sides);
+    drawMask(r, p, mask, rnd, sides, offset);
 
     /// END PLATE
 

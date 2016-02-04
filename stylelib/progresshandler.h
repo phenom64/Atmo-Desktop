@@ -5,6 +5,7 @@
 #include <QMap>
 
 class QProgressBar;
+class QTimer;
 namespace DSP
 {
 struct TimerData
@@ -21,7 +22,6 @@ public:
     static ProgressHandler *instance();
     static void manage(QProgressBar *bar);
     static void release(QProgressBar *bar);
-    static int busyValue(const QProgressBar *bar);
 
 protected slots:
     void valueChanged();
