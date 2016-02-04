@@ -104,28 +104,41 @@ void
 Style::drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (!(m_ce[element] && (this->*m_ce[element])(option, painter, widget)))
+    {
+#if DEBUG
+        qDebug() << "drawControl: unsupported element" << element << option << widget;
+#endif
         QCommonStyle::drawControl(element, option, painter, widget);
+    }
 }
 
 void
 Style::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     if (!(m_cc[control] && (this->*m_cc[control])(option, painter, widget)))
+    {
+#if DEBUG
+        qDebug() << "drawComplexControl: unsupported control" << control << option << widget;
+#endif
         QCommonStyle::drawComplexControl(control, option, painter, widget);
+    }
 }
 
 void
 Style::drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     if (!(m_pe[element] && (this->*m_pe[element])(option, painter, widget)))
+    {
+#if DEBUG
+        qDebug() << "drawPrimitive: unsupported element" << element << option << widget;
+#endif
         QCommonStyle::drawPrimitive(element, option, painter, widget);
+    }
 }
 
 void
 Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
 {
-//    QCommonStyle::drawItemText(painter, rect, flags, pal, enabled, text, textRole);
-//    return;
     if (text.isEmpty())
         return;
 
@@ -134,59 +147,26 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
     flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
 //    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
 //        flags &= ~Qt::AlignHCenter;
-#if 0
-    if (true)
-    {
-        QPixmap pix(rect.size());
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        QFont f(painter->font());
-        f.setPointSize(painter->fontInfo().pointSize());
-        p.setFont(f);
-        const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
-        if (enabled
-                && pal.brush(bgRole).style() == Qt::SolidPattern
-                && !pal.brush(bgRole).gradient()
-                && pal.color(textRole).alpha() == 0xff
-                && textRole != QPalette::NoRole
-                && bgRole != QPalette::NoRole)
-        {
-            const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
-            const int rgb(isDark?0:255);
-            const QColor bevel(rgb, rgb, rgb, 127);
-            p.setPen(bevel);
-            p.drawText(pix.rect().translated(0, 1), flags, text);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-            p.setPen(Qt::black);
-            p.drawText(rect, flags, text);
-        }
-        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        p.setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
-        p.drawText(pix.rect(), flags, text);
-        p.end();
-        painter->drawPixmap(rect, pix);
-        return;
-    }
-#endif
-    painter->save();
+
+    const QPen pen(painter->pen());
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
     if (enabled
+            && dConf.shadows.onTextOpacity
             && pal.brush(bgRole).style() == Qt::SolidPattern
             && !pal.brush(bgRole).gradient()
             && pal.color(textRole).alpha() == 0xff
             && textRole != QPalette::NoRole
             && bgRole != QPalette::NoRole)
     {
-        const bool isDark(Color::luminosity(pal.color(textRole)) > Color::luminosity(pal.color(bgRole)));
+        const bool isDark(Color::lum(pal.color(textRole)) > Color::lum(pal.color(bgRole)));
         const int rgb(isDark?0:255);
-        const QColor bevel(rgb, rgb, rgb, 127);
+        const QColor bevel(rgb, rgb, rgb, dConf.shadows.onTextOpacity);
         painter->setPen(bevel);
         painter->drawText(rect.translated(0, 1), flags, text);
     }
-
     painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
     painter->drawText(rect, flags, text);
-    painter->restore();
+    painter->setPen(pen);
 }
 
 void

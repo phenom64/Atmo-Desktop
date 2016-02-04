@@ -105,7 +105,7 @@ Button::shade() const
 const bool
 Button::isDark() const
 {
-    return Color::luminosity(color(ButtonBase::Fg)) > Color::luminosity(color(ButtonBase::Bg));
+    return Color::lum(color(ButtonBase::Fg)) > Color::lum(color(ButtonBase::Bg));
 }
 
 const QColor
@@ -115,7 +115,7 @@ Button::color(const ColorRole &c) const
     {
         const QColor &fg = static_cast<Deco *>(decoration().data())->fgColor();
         const QColor &bg = static_cast<Deco *>(decoration().data())->bgColor();
-        const bool dark(Color::luminosity(fg) > Color::luminosity(bg));
+        const bool dark(Color::lum(fg) > Color::lum(bg));
         return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
     }
     if (c == ButtonBase::Highlight)
@@ -460,7 +460,7 @@ EmbeddedButton::shade() const
 const bool
 EmbeddedButton::isDark() const
 {
-    return Color::luminosity(color(ButtonBase::Fg)) > Color::luminosity(color(ButtonBase::Bg));
+    return Color::lum(color(ButtonBase::Fg)) > Color::lum(color(ButtonBase::Bg));
 }
 
 const QColor
@@ -471,7 +471,7 @@ EmbeddedButton::color(const ColorRole &c) const
     {
         const QColor &fg = d->fgColor();
         const QColor &bg = d->bgColor();
-        const bool dark(Color::luminosity(fg) > Color::luminosity(bg));
+        const bool dark(Color::lum(fg) > Color::lum(bg));
         return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
     }
     if (c == ButtonBase::Highlight)

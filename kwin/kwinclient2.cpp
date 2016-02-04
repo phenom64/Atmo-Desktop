@@ -451,8 +451,8 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             painter->fillRect(titleBar(), client().data()->palette().color(QPalette::Window));
     }
 
-    const int bgLum(Color::luminosity(bgColor()));
-    const bool isDark(Color::luminosity(fgColor()) > bgLum);
+    const int bgLum(Color::lum(bgColor()));
+    const bool isDark(Color::lum(fgColor()) > bgLum);
 
     if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal())
         paintBevel(painter, bgLum);

@@ -105,6 +105,8 @@ static const char *s_key[] = {
     "progressbars.rnd",
     "progressbars.textonlyonhover",
     "progressbars.textpos",
+    "progressbars.gradient",
+    "progressbars.stripesize",
 
     "windows.gradient",
     "windows.noisefactor",
@@ -113,7 +115,8 @@ static const char *s_key[] = {
 
     "shadows.opacity",
     "shadows.illuminationopacity",
-    "shadows.darkraisededges"
+    "shadows.darkraisededges",
+    "shadows.ontextopacity"
 };
 
 static const QVariant s_default[] = {
@@ -207,6 +210,8 @@ static const QVariant s_default[] = {
     4,
     false,
     0,
+    "0:5, 1:-5",
+    32,
 
     "0.0:-10, 0.5:10, 1.0:-10",
     0,
@@ -215,7 +220,8 @@ static const QVariant s_default[] = {
 
     33,
     33,
-    false
+    false,
+    50
 };
 
 static const QString s_description[] = {
@@ -309,6 +315,8 @@ static const QString s_description[] = {
     /*"progressbars.rnd"*/          "Roundness for progressbars",
     /*"progressbars.txtHover"*/     "Text only on hover for progressbars",
     /*"progressbars.textPos"*/      "Text position for progressbars, 0 = Center (default), 1 = Left of progressbarcontents, 2 = Right of progressbarcontents",
+    /*"progressbars.gradient"*/     "Gradient on progressbars",
+    /*"progressbars.stripesize"*/   "Size of stripes on progressbars",
 
     /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
     /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
@@ -317,7 +325,8 @@ static const QString s_description[] = {
 
     /*"shadows.opacity"*/           "Opacity of the shadows painted on widgets",
     /*"shadows.illumination"*/      "Opacity of the illuminated(light) parts of the shadows",
-    /*"shadows.darkraisededges"*/   "Whether widgets w/ a raised shadow should be darker around the left/right edges"
+    /*"shadows.darkraisededges"*/   "Whether widgets w/ a raised shadow should be darker around the left/right edges",
+    /*"shadows.ontextopacity"*/     "Opacity of the textshadow/textbevel, 0 to disable (faster)"
 };
 
 Settings::Key
@@ -733,7 +742,6 @@ Settings::read()
     conf.sliders.sliderGrad     = stringToGrad(readString(Slidergrad));
     conf.sliders.fillGroove     = readBool(Sliderfillgroove);
     conf.sliders.grooveStyle    = readInt(Sliderinvert);
-
     //scrollers
     conf.scrollers.size         = readInt(Scrollersize);
     conf.scrollers.style        = readInt(Scrollerstyle);
@@ -752,10 +760,13 @@ Settings::read()
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));
     conf.progressbars.txtHover  = readBool(Progtxthover);
     conf.progressbars.textPos   = readInt(Progtxtpos);
+    conf.progressbars.gradient  = stringToGrad(readString(Proggrad));
+    conf.progressbars.stripeSize= readInt(Progstripe);
     //shadows
     conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;
     conf.shadows.illumination   = readInt(Shadowillumination)*2.55f;
     conf.shadows.darkRaisedEdges= readBool(Shadowdarkraised);
+    conf.shadows.onTextOpacity  = readInt(Shadowontextopacity)*2.55f;
     readPalette();
 }
 

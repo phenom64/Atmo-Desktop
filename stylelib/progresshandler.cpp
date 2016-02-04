@@ -8,7 +8,7 @@
 
 using namespace DSP;
 
-Q_DECL_EXPORT ProgressHandler ProgressHandler::m_instance;
+Q_DECL_EXPORT ProgressHandler *ProgressHandler::s_instance;
 
 ProgressHandler::ProgressHandler(QObject *parent) :
     QObject(parent)
@@ -18,7 +18,9 @@ ProgressHandler::ProgressHandler(QObject *parent) :
 ProgressHandler
 *ProgressHandler::instance()
 {
-    return &m_instance;
+    if (!s_instance)
+        s_instance = new ProgressHandler();
+    return s_instance;
 }
 
 void
@@ -86,7 +88,7 @@ ProgressHandler::eventFilter(QObject *o, QEvent *e)
           || e->type() == QEvent::Show
           || e->type() == QEvent::HoverEnter
           || e->type() == QEvent::HoverLeave)
-            || !qobject_cast<QProgressBar *>(o))
+          || !qobject_cast<QProgressBar *>(o))
         return false;
 
     QProgressBar *bar = static_cast<QProgressBar *>(o);

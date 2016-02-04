@@ -251,7 +251,7 @@ Style::polish(QWidget *widget)
 
             //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example...)
             QPalette pal(widget->palette());
-            const bool dark(Color::luminosity(pal.color(QPalette::Base)) < Color::luminosity(pal.color(QPalette::Text)));
+            const bool dark(Color::lum(pal.color(QPalette::Base)) < Color::lum(pal.color(QPalette::Text)));
             QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
             pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
             pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));

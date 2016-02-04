@@ -32,7 +32,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 private:
-    static ProgressHandler m_instance;
+    static ProgressHandler *s_instance;
     QList<QProgressBar *> m_bars;
     QMap<QProgressBar *, TimerData *> m_data;
 };

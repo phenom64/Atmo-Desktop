@@ -171,12 +171,14 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
         return true;
     bool sunken(isSelected(option));
-    if (!sunken && !isMouseOver(option))
+    bool hover(isMouseOver(option));
+    if (opt && !sunken && !isMouseOver(option) && opt->backgroundBrush != Qt::NoBrush)
     {
-        if (opt && opt->backgroundBrush != Qt::NoBrush)
-            painter->fillRect(option->rect, opt->backgroundBrush);
+        painter->fillRect(option->rect, opt->backgroundBrush);
         return true;
     }
+    if (!sunken && !hover)
+        return true;
 
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
     const QWidget *vp(abstractView?abstractView->viewport():0);
@@ -185,17 +187,14 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (selectRows)
         selectRows = !opt || opt->decorationPosition == QStyleOptionViewItem::Left;
 
-    if (!selectRows && (option->state & State_Item))
-        return true;
-
     QColor h(option->palette.color(QPalette::Highlight));
     if (!sunken && h.alpha() == 0xff)
         h.setAlpha(64);
 
     QBrush brush(h);
-    if (opt && opt->backgroundBrush != Qt::NoBrush)
-        brush = opt->backgroundBrush;
-    else if (sunken)
+//    if (opt && opt->backgroundBrush != Qt::NoBrush)
+//        brush = opt->backgroundBrush;
+    /*else */if (sunken)
     {
         QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.views.itemGradient, h));

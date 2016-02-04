@@ -114,6 +114,8 @@ public:
         Progrnd,
         Progtxthover,
         Progtxtpos,
+        Proggrad,
+        Progstripe,
         Wingrad,
         Winnoise,
         Winnoisestyle,
@@ -121,6 +123,7 @@ public:
         Shadowopacity,
         Shadowillumination,
         Shadowdarkraised,
+        Shadowontextopacity,
         Keycount,
         Invalid
     };
@@ -177,12 +180,13 @@ public:
         } scrollers;
         struct progressbars
         {
-            quint8 shadow, rnd, textPos;
+            quint8 shadow, rnd, textPos, stripeSize;
             bool txtHover;
+            Gradient gradient;
         } progressbars;
         struct shadows
         {
-            quint8 opacity, illumination;
+            quint8 opacity, illumination, onTextOpacity;
             bool darkRaisedEdges;
         } shadows;
         struct tabs

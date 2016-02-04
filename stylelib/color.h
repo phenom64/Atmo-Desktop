@@ -11,7 +11,7 @@ public:
     static bool contrast(const QColor &c1, const QColor &c2);
     static void ensureContrast(QColor &c1, QColor &c2);
     static void setValue(const int value, QColor &c);
-    static int luminosity(const QColor &c);
+    static int lum(const QColor &c);
     static void shiftHue(QColor &c, int amount);
     static QColor complementary(QColor c);
     static QColor (&titleBarColors())[2];

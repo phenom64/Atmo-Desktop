@@ -342,7 +342,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     }
     else if (isEnabled(opt))
         bc = Color::mid(bc, sc, Steps-hover, hover);
-    if (Color::luminosity(bc) < Color::luminosity(bar->palette().color(bar->backgroundRole()))*0.8f)
+    if (Color::lum(bc) < Color::lum(bar->palette().color(bar->backgroundRole()))*0.8f)
         ns = true;
 
     if (dConf.differentInactive && shadow == Yosemite && !Handlers::Window::isActiveWindow(bar->window()))
@@ -548,7 +548,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         {
             if (dConf.toolbtn.folCol && bar)
             {
-                const bool isDark(Color::luminosity(opt->palette.color(textRole)) > Color::luminosity(opt->palette.color(bg)));
+                const bool isDark(Color::lum(opt->palette.color(textRole)) > Color::lum(opt->palette.color(bg)));
                 pix = opt->icon.pixmap(opt->iconSize, QIcon::Normal);
                 static QList<IconCheck> s_list;
                 static QList<QPixmap> s_pix;

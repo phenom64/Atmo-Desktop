@@ -406,7 +406,7 @@ FX::stretched(QImage img, const QColor &c)
         {
             ENSUREALPHA;
             const QColor c(QColor::fromRgba(pixels[0][i]));
-            if (Color::luminosity(c) < 128)
+            if (Color::lum(c) < 128)
                 ++l;
             else
                 ++h;

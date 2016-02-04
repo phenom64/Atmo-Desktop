@@ -19,7 +19,7 @@ Color::mid(const QColor &c1, const QColor c2, int i1, int i2)
 }
 
 int
-Color::luminosity(const QColor &c)
+Color::lum(const QColor &c)
 {
     int r, g, b, a;
     c.getRgb(&r, &g, &b, &a);
@@ -29,7 +29,7 @@ Color::luminosity(const QColor &c)
 bool
 Color::contrast(const QColor &c1, const QColor &c2)
 {
-    int lum1 = luminosity(c1), lum2 = luminosity(c2);
+    int lum1 = lum(c1), lum2 = lum(c2);
     if (qAbs(lum2-lum1)<125)
         return false;
 
@@ -53,7 +53,7 @@ Color::ensureContrast(QColor &c1, QColor &c2)
     QColor dark = c1;
     QColor light = c2;
     bool inv(false);
-    if (luminosity(c2)<luminosity(c1))
+    if (lum(c2)<lum(c1))
     {
         dark = c2;
         light = c1;

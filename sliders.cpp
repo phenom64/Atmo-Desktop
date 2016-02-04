@@ -11,6 +11,7 @@
 #include <QStyleOptionProgressBarV2>
 #include <QTextBrowser>
 #include <QApplication>
+#include <QPolygon>
 
 #include "dsp.h"
 #include "stylelib/gfx.h"
@@ -20,6 +21,7 @@
 #include "stylelib/animhandler.h"
 #include "config/settings.h"
 #include "overlay.h"
+#include "stylelib/fx.h"
 
 using namespace DSP;
 
@@ -429,7 +431,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
 
     const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
-    QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
+    const QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
 
@@ -441,65 +443,57 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
         return true;
     }
 
-    painter->save();
-
-//    const QRect mask(Render::maskRect(dConf.progressbars.shadow, cont, All));
     const quint64 s((hor?groove.height():groove.width())+2);
-    const QPalette::ColorRole /*fg(Ops::fgRole(widget, QPalette::Text)),*/ bg(Ops::bgRole(widget, QPalette::Base));
-
     quint64 thing(h.rgba());
     thing |= (s << 32);
+    if (optv2)
+        thing |= ((quint64)optv2->orientation << 48);
     static QMap<quint64, QPixmap> s_pixMap;
     if (!s_pixMap.contains(thing))
     {
-        QPixmap pix(32, s);
+        QPixmap pix(qMax<int>(8, dConf.progressbars.stripeSize), s);
         pix.fill(Qt::transparent);
         QPainter p(&pix);
         QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Highlight)));
-//        lg.setColorAt(0.0f, Color::mid(opt->palette.color(QPalette::Highlight), Qt::white, 5, 1));
-//        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
+        lg.setStops(Settings::gradientStops(dConf.progressbars.gradient, h));
         p.fillRect(pix.rect(), lg);
-        const int penWidth(12);
-        lg.setColorAt(0.0f, Color::mid(opt->palette.color(bg), opt->palette.color(QPalette::Highlight)));
-        lg.setColorAt(1.0f, opt->palette.color(QPalette::Highlight)/*Color::mid(bc, Qt::black, 7, 1)*/);
-        p.setPen(QPen(lg, penWidth));
-        p.setRenderHint(QPainter::Antialiasing);
-        QRect penRect(pix.rect().adjusted(penWidth/2, -1, -(penWidth/2), 1));
-        p.drawLine(penRect.topLeft(), penRect.bottomRight());
-        p.end();
+        if (dConf.progressbars.stripeSize)
+        {
+            QColor stripe(opt->palette.color(QPalette::Base));
+            const int fourthW(pix.width()/4);
+            const int fourthH(pix.height()/4);
+            const int w(pix.width());
+            const int h(pix.height());
+            static const int topRight[] = { w-fourthW,0, w,0, w,fourthH };
+            static const int main[] = { 0,0, fourthW,0, w,h-fourthH, w,h, w-fourthW,h, 0,fourthH };
+            static const int bottomLeft[] = { 0,h-fourthH, fourthW,h, 0,h };
+            p.setPen(Qt::NoPen);
+
+            QLinearGradient grad(pix.rect().topLeft(), pix.rect().bottomLeft());
+            grad.setStops(Settings::gradientStops(dConf.progressbars.gradient, stripe));
+
+            p.setBrush(grad);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.setCompositionMode(QPainter::CompositionMode_HardLight);
+            p.drawPolygon(QPolygon(3, topRight));
+            p.drawPolygon(QPolygon(6, main));
+            p.drawPolygon(QPolygon(3, bottomLeft));
+            p.end();
+        }
+        if (!hor)
+        {
+            QTransform t;
+            int d(s/2);
+            t.translate(d, d);
+            t.rotate(90);
+            t.translate(-d, -d);
+            pix = pix.transformed(t);
+        }
         s_pixMap.insert(thing, pix);
     }
-    QPixmap pixmap = s_pixMap.value(thing);
-    if (!hor)
-    {
-        QTransform t;
-        int d(s/2);
-        t.translate(d, d);
-        t.rotate(90);
-        t.translate(-d, -d);
-        pixmap = pixmap.transformed(t);
-    }
-    int a(0);
-    if (opt->maximum != 0)
-    {
-        static QMap<const QWidget *, int> anim;
-        if (widget && anim.contains(widget))
-            a = anim.value(widget);
-        ++a;
-        if (a > 32)
-            a = 0;
-        if (widget)
-            anim.insert(widget, a);
-    }
-    bool inv(false);
-    if (optv2)
-        inv = hor?optv2->invertedAppearance:!optv2->bottomToTop;
-    QPoint offSet(hor?inv?a:-a:0, !hor?inv?a:-a:0);
-//    offSet += Render::maskRect(dConf.progressbars.shadow, groove).topLeft();
     painter->setClipRect(cont);
-    GFX::drawClickable(dConf.progressbars.shadow, groove, painter, pixmap, dConf.progressbars.rnd, All, option, widget);
-    painter->restore();
+    GFX::drawClickable(dConf.progressbars.shadow, groove, painter, s_pixMap.value(thing), dConf.progressbars.rnd, All, option, widget);
+    painter->setClipping(false);
     return true;
 }
 
@@ -574,7 +568,20 @@ Style::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const
     TRANSLATE(!btt);
     painter->setClipRegion(QRegion(cont));
     TRANSLATE(btt);
-    drawItemText(painter, label, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, QPalette::HighlightedText);
+    if (!dConf.progressbars.textPos && dConf.progressbars.stripeSize)
+    {
+        QImage img(label.size(), QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter p(&img);
+        p.setFont(painter->font());
+        p.setPen(Color::lum(opt->palette.color(QPalette::Highlight))>Color::lum(opt->palette.color(QPalette::HighlightedText))?Qt::white:Qt::black);
+        p.drawText(img.rect(), Qt::AlignCenter|Qt::TextHideMnemonic, opt->text);
+        p.end();
+        FX::expblur(img, 3);
+        painter->drawImage(label.topLeft(), img);
+    }
+//    else
+        drawItemText(painter, label, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, QPalette::HighlightedText);
     TRANSLATE(!btt);
 #undef TRANSLATE
     painter->restore();

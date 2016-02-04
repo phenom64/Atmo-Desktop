@@ -12,6 +12,7 @@
 #include <QToolButton>
 #include <QPainter>
 #include <QBrush>
+#include <QMainWindow>
 
 #include "fx.h"
 #include "gfx.h"
@@ -199,7 +200,7 @@ void
 GFX::drawClickable(ShadowStyle s,
                    QRect r,
                    QPainter *p,
-                   const QBrush &mask,
+                   QBrush mask,
                    int rnd,
                    const Sides sides,
                    const QStyleOption *opt,
@@ -213,57 +214,25 @@ GFX::drawClickable(ShadowStyle s,
     bool sunken(opt && opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange));
     if (isLineEdit)
         sunken = static_cast<const QLineEdit *>(w)->hasFocus();
-//    const bool inActive(dConf.differentInactive
-//                        &&!Handlers::Window::isActiveWindow(w)
-//                        &&!sunken
-//                        &&!(s==Raised||s==Carved)
-//                        &&qobject_cast<const QToolButton *>(w)
-//                        &&qobject_cast<const QToolBar *>(w->parentWidget()));
-    const bool isEnabled(!opt || (qstyleoption_cast<const QStyleOptionToolButton *>(opt) || (opt->state & QStyle::State_Enabled)));
+    bool inActive(false);
+    if (dConf.differentInactive
+            && !Handlers::Window::isActiveWindow(w)
+            && !sunken
+            && !(s==Raised||s==Carved)
+            && qobject_cast<const QToolBar *>(w->parentWidget()))
+    {
+        QToolBar *bar = static_cast<QToolBar *>(w->parentWidget());
+        const QMainWindow *win = qobject_cast<QMainWindow *>(bar->window());
+        inActive = win && win->toolBarArea(bar) == Qt::TopToolBarArea;
+    }
+
+    bool isEnabled(!opt || (qstyleoption_cast<const QStyleOptionToolButton *>(opt) || (opt->state & QStyle::State_Enabled)));
+    if (inActive)
+        isEnabled = false;
     if (opt
             && (sunken || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
             && (s == Etched || s == Raised) && !isToolBox)
-    {
-        s = Sunken;   
-    }
-//    int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
-//    if (w)
-//    {
-//        int count(0);
-//        QColor bgc(Qt::white);
-//        int bgl(255);
-//        if (mask.gradient())
-//        {
-//            const QGradientStops stops(mask.gradient()->stops());
-//            count = stops.count();
-//            for (int i = 0; i < count; ++i)
-//            {
-//                const QColor nbgc(stops.at(i).second);
-//                const int nbgl(Color::luminosity(nbgc));
-//                if (nbgl < bgl)
-//                {
-//                    bgl = nbgl;
-//                    bgc = nbgc;
-//                }
-//            }
-//        }
-//        //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
-//        const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
-//        QPalette::ColorRole bg(sunken&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
-//        QPalette::ColorRole fg(sunken&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
-//        bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
-//        fgLum = Color::luminosity(w->palette().color(QPalette::Active, fg));
-//        if (QWidget *parent = w->parentWidget())
-//        {
-//            pbgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->backgroundRole()));
-//            pfgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->foregroundRole()));
-//        }
-//        else
-//        {
-//            pbgLum = bgLum;
-//            pfgLum = fgLum;
-//        }
-//    }
+        s = Sunken;
 
     if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
         r = w->rect();
@@ -290,9 +259,6 @@ GFX::drawClickable(ShadowStyle s,
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
         if (isToolBox)
             r = w->rect();
-
-//        const bool darkParent(pfgLum>pbgLum);
-//        int high(darkParent?32:192), low(darkParent?170:85);
         lg.setColorAt(0, QColor(0, 0, 0, dConf.shadows.opacity));
         lg.setColorAt(1, QColor(255, 255, 255, dConf.shadows.illumination));
         drawMask(r, p, lg, rnd, sides);
@@ -309,6 +275,17 @@ GFX::drawClickable(ShadowStyle s,
 
     /// BEGIN ACTUAL PLATE PAINTING
 
+    if (!isEnabled) //this is a tad bit expensive but.... the window is usually active when heavy painting occurs
+    {
+        QPixmap pix(r.size());
+        pix.fill(Qt::transparent);
+        QPainter p(&pix);
+        p.fillRect(pix.rect(), mask);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.fillRect(pix.rect(), QColor(0, 0, 0, 127));
+        p.end();
+        mask = pix;
+    }
     drawMask(r, p, mask, rnd, sides);
 
     /// END PLATE
@@ -350,6 +327,48 @@ GFX::drawClickable(ShadowStyle s,
     }
 }
 
+//void something()
+//{
+//    int bgLum(127), fgLum(127), pbgLum(127), pfgLum(127);
+//    if (w)
+//    {
+//        int count(0);
+//        QColor bgc(Qt::white);
+//        int bgl(255);
+//        if (mask.gradient())
+//        {
+//            const QGradientStops stops(mask.gradient()->stops());
+//            count = stops.count();
+//            for (int i = 0; i < count; ++i)
+//            {
+//                const QColor nbgc(stops.at(i).second);
+//                const int nbgl(Color::luminosity(nbgc));
+//                if (nbgl < bgl)
+//                {
+//                    bgl = nbgl;
+//                    bgc = nbgc;
+//                }
+//            }
+//        }
+//        //checkboxes have windowtext as fg, and button(bg) as bg... so we just simply check the bg from opposingrole...
+//        const bool isCheckRadio(qobject_cast<const QCheckBox *>(w)||qobject_cast<const QRadioButton *>(w));
+//        QPalette::ColorRole bg(sunken&&isCheckRadio?QPalette::Highlight:w->backgroundRole());
+//        QPalette::ColorRole fg(sunken&&isCheckRadio?QPalette::HighlightedText:Ops::opposingRole(bg));
+//        bgLum = count?bgl:Color::luminosity(w->palette().color(QPalette::Active, bg));
+//        fgLum = Color::luminosity(w->palette().color(QPalette::Active, fg));
+//        if (QWidget *parent = w->parentWidget())
+//        {
+//            pbgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->backgroundRole()));
+//            pfgLum = Color::luminosity(parent->palette().color(QPalette::Active, parent->foregroundRole()));
+//        }
+//        else
+//        {
+//            pbgLum = bgLum;
+//            pfgLum = fgLum;
+//        }
+//    }
+//}
+
 quint8
 GFX::maxRnd(const QRect &r, const Sides s, const quint8 rnd)
 {
@@ -380,7 +399,7 @@ GFX::drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tris
 {
     if (bevel)
     {
-        const int v = Color::luminosity(c);
+        const int v = Color::lum(c);
         const int rgb = v < 128 ? 255 : 0;
         drawCheckMark(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), tristate);
     }
@@ -422,7 +441,7 @@ GFX::drawRadioMark(QPainter *p, const QColor &c, const QRect &r, const bool beve
 {
     if (bevel)
     {
-        const int v = Color::luminosity(c);
+        const int v = Color::lum(c);
         const int rgb = v < 128 ? 255 : 0;
         drawRadioMark(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1));
     }
@@ -446,7 +465,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
 {
     if (bevel)
     {
-        const int v = Color::luminosity(c);
+        const int v = Color::lum(c);
         const int rgb = v < 128 ? 255 : 0;
         drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), d, size);
     }

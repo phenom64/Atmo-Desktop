@@ -134,7 +134,7 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
 void
 ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 {
-    const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::luminosity(color(Bg)));
+    const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::lum(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
     if (buttonStyle() && buttonStyle() != FollowToolBtn)
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
@@ -256,8 +256,8 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     case MagPie:
     {
         r.adjust(2, 2, -2, -2);
-        const int bgLum = Color::luminosity(color(Bg));
-        const int fgLum = Color::luminosity(color(Fg));
+        const int bgLum = Color::lum(color(Bg));
+        const int fgLum = Color::lum(color(Fg));
         p.setBrush(QColor(255, 255, 255, bgLum));
         p.drawEllipse(r.translated(0, 1));
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -726,7 +726,7 @@ const bool
 WidgetButton::isDark() const
 {
     const QWidget *w(parentWidget()?parentWidget():this);
-    return Color::luminosity(w->palette().color(w->foregroundRole())) > Color::luminosity(w->palette().color(w->backgroundRole()));
+    return Color::lum(w->palette().color(w->foregroundRole())) > Color::lum(w->palette().color(w->backgroundRole()));
 }
 
 void

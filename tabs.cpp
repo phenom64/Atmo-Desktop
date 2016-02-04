@@ -607,11 +607,11 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
         {
             QWidget *d(widget->window());
             const QPalette pal(d->palette());
-            isDark = Color::luminosity(pal.color(d->foregroundRole())) > Color::luminosity(pal.color(d->backgroundRole()));
+            isDark = Color::lum(pal.color(d->foregroundRole())) > Color::lum(pal.color(d->backgroundRole()));
         }
         else
         {
-            isDark = Color::luminosity(option->palette.color(bar->foregroundRole())) > Color::luminosity(option->palette.color(bar->backgroundRole()));
+            isDark = Color::lum(option->palette.color(bar->foregroundRole())) > Color::lum(option->palette.color(bar->backgroundRole()));
             if (isSelected)
                 isDark = !isDark;
         }
