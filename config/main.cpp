@@ -5,6 +5,7 @@
 #include <QImageReader>
 #include "styleconfig.h"
 #include "settings.h"
+#include <iostream>
 
 enum Task { WriteDefaults = 0, Edit, PrintInfo, ListVars, GenHighlight, Invalid };
 
@@ -45,25 +46,25 @@ static const char *stylishedTypeName(const char *typeName)
 template<typename T>
 static void printInfo(DSP::Settings::Key k, const char *typeName)
 {
-    qDebug() << "Description: "     << DSP::Settings::description(k)
-             << "\nValue:       "   << DSP::Settings::readVal(k).value<T>()
-             << "\nDefault:     "   << DSP::Settings::defaultValue(k).value<T>()
-             << "\nType:        "   << stylishedTypeName(typeName);
+    qDebug()  << "Description: "     << DSP::Settings::description(k)
+              << "\nValue:       "   << DSP::Settings::readVal(k).value<T>()
+              << "\nDefault:     "   << DSP::Settings::defaultValue(k).value<T>()
+              << "\nType:        "   << stylishedTypeName(typeName);
 }
 
 static void printHelp()
 {
-    qDebug() << "Options:\n"
-             << "--writedefaults                 Write default values to dsp.conf\n"
-             << "--edit                          Open dsp.conf for editing in your default text editor\n"
-             << "--printinfo <var>               Print information about <var>\n"
-             << "--listvars                      List available variables";
+    qDebug()  << "Options:\n"
+              << "--writedefaults                 Write default values to dsp.conf\n"
+              << "--edit                          Open dsp.conf for editing in your default text editor\n"
+              << "--printinfo <var>               Print information about <var>\n"
+              << "--listvars                      List available variables";
 }
 
 static void printVars()
 {
     for (int i = 0; i < DSP::Settings::Keycount; ++i)
-        qDebug() << DSP::Settings::key((DSP::Settings::Key)i);
+        std::cout << DSP::Settings::key((DSP::Settings::Key)i) << "\n";
 }
 
 static void genHighlight(const QString &file)
@@ -71,7 +72,7 @@ static void genHighlight(const QString &file)
     QImageReader ir(file);
     if (!ir.canRead())
     {
-        qDebug() << "image" << file << "is null or doesnt exist, exiting...";
+        std::cout << "image" << file.toLocal8Bit().data() << "is null or doesnt exist, exiting...";
         return;
     }
 //    static const int sz(256);
@@ -127,7 +128,8 @@ static void genHighlight(const QString &file)
         }
 
     QColor c = QColor::fromHsv(activeHue, sat, val);
-    qDebug() << QString("#%1").arg(QString::number(c.rgba(), 16).mid(2));
+    const QString color = QString("#%1").arg(QString::number(c.rgba(), 16).mid(2));
+    std::cout << color.toLocal8Bit().data();
 }
 
 int main(int argc, char *argv[])
@@ -155,7 +157,7 @@ int main(int argc, char *argv[])
             else if (!qstrcmp(typeName, "bool"))
                 printInfo<bool>(k, typeName);
             else
-                qDebug() << "cant print info for type:" << typeName;
+                std::cout << "cant print info for type:" << typeName;
         }
         break;
     }

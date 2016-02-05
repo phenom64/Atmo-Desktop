@@ -241,7 +241,7 @@ public:
     static void writeDefaults();
     static void writeVal(const Key k, const QVariant v);
     static QVariant readVal(const Key k);
-    static const QString description(const Key k);
+    static const char *description(const Key k);
     static Key key(const QString k);
     static const char *key(const Key k);
     static const QVariant defaultValue(const Key k);

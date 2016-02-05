@@ -224,7 +224,7 @@ static const QVariant s_default[] = {
     50
 };
 
-static const QString s_description[] = {
+static const char *s_description[] = {
     /*"opacity"*/                   "Opacity for UNO parts, *NOT* enabled atm due to problems w/ Qt5",
     /*"blacklist"*/                 "Blacklist of apps that should not get opacity if set, mostly media players should be here",
     /*"removetitlebars"*/           "Hack for removing titlebars from windows in order to get the look of Mac Os Yosemite",
@@ -648,7 +648,7 @@ Settings::readVal(const Key k)
     return settings()->value(s_key[k], s_default[k]);
 }
 
-const QString
+const char *
 Settings::description(const Key k)
 {
     return s_description[k];
