@@ -6,6 +6,7 @@
 #include "dsp.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
+#include "defines.h"
 
 using namespace DSP;
 
@@ -36,8 +37,12 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
     case SH_ItemView_PaintAlternatingRowColorsForEmptyArea: return true;
     case SH_DockWidget_ButtonsHaveFrame: return false;
     case SH_ToolBox_SelectedPageTitleBold: return true;
+    case (QStyle::StyleHint)0xff000001: if (w && w->objectName() == "CE_CapacityBar") return CE_ProgressBar; //KCapacityBar
     default: break;
     }
+#if DEBUG
+    qDebug() << "currently unhandled stylehint:" << sh << opt << w << shret;
+#endif
     return QCommonStyle::styleHint(sh, opt, w, shret);
 }
 
