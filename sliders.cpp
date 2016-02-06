@@ -445,7 +445,8 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
         return true;
     }
 
-    const quint64 s((hor?groove.height():groove.width())+2);
+    static quint8 sm = GFX::shadowMargin(dConf.progressbars.shadow);
+    const quint64 s((hor?groove.height():groove.width())-sm*2);
     quint64 thing(h.rgba());
     thing |= (s << 32);
     if (optv2)
@@ -501,7 +502,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
         offset = s_busyMap.value((quint64)widget);
 
     painter->setClipRect(cont);
-    GFX::drawClickable(dConf.progressbars.shadow, groove, painter, s_pixMap.value(thing), dConf.progressbars.rnd, All, option, widget, QPoint(busy*offset, 0));
+    GFX::drawClickable(dConf.progressbars.shadow, groove, painter, s_pixMap.value(thing), dConf.progressbars.rnd, All, option, widget, QPoint((groove.x()+sm)+busy*offset, groove.y()+sm));
     painter->setClipping(false);
 
     s_busyMap.insert((quint64)widget, offset?offset-1:qMax<int>(dConf.progressbars.stripeSize, 8u));
@@ -529,7 +530,7 @@ Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, cons
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
 
-    QLinearGradient lg(0, 0, !hor*groove.width(), hor*cont.height());
+    QLinearGradient lg(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
     lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
     GFX::drawClickable(dConf.progressbars.shadow, groove, painter, lg, dConf.progressbars.rnd, All, option, widget);
     painter->setClipping(false);

@@ -80,7 +80,8 @@ Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const quint8 round, 
     const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
     p->setRenderHint(QPainter::Antialiasing);
     const QPoint origin(p->brushOrigin());
-    p->setBrushOrigin(offset);
+    if (!offset.isNull())
+        p->setBrushOrigin(offset);
     p->fillPath(path, b);
     p->setBrushOrigin(origin);
     p->setRenderHint(QPainter::Antialiasing, hadAA);
