@@ -34,6 +34,11 @@ private:
     QPixmap *m_pix;
 };
 
+class Q_DECL_EXPORT Focus
+{
+    Focus(const quint8 r, const QColor &c);
+};
+
 }
 
 #endif //SHADOWS_H

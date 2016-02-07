@@ -358,16 +358,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     if (dConf.sliders.dot)
     {
         const int ds(slider.height()/3);
-        const QRect dot(slider.adjusted(ds, ds, -ds, -ds));
-        QLinearGradient dg(dot.topLeft(), dot.bottomLeft());
-        dg.setColorAt(0.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1));
-        dg.setColorAt(1.0f, Color::mid(opt->palette.color(fg), opt->palette.color(bg)));
-        painter->save();
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->setBrush(dg);
-        painter->setPen(Qt::NoPen);
-        painter->drawEllipse(dot);
-        painter->restore();
+        GFX::drawRadioMark(painter, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1), slider.shrinked(ds), true);
     }
     return true;
 }
@@ -379,7 +370,7 @@ Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
     const QStyleOptionProgressBarV2 *barv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
     if (!bar)
         return QRect();
-    if (bar->minimum == 0 && bar->maximum == 0)
+    if (bar->minimum == 0 && bar->maximum == 0) //busy
         return bar->rect;
     const QRect optrect(subElementRect(SE_ProgressBarGroove, opt, widget));
     const bool hor(!barv2 || barv2->orientation == Qt::Horizontal);
@@ -396,17 +387,6 @@ Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
         else
             r.moveTop(optrect.top());
     }
-//    if (bar->minimum == bar->maximum)
-//        if (const QProgressBar *pBar = qobject_cast<const QProgressBar *>(widget))
-//        {
-//            int s(qMin(optrect.height(), optrect.width()));
-//            r.setSize(QSize(s, s));
-
-//            if (hor)
-//                r.moveLeft(ProgressHandler::busyValue(pBar));
-//            else
-//                r.moveBottom(pBar->height()-ProgressHandler::busyValue(pBar));
-//        }
     return visualRect(opt->direction, optrect, r);
 }
 
@@ -445,12 +425,11 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
         return true;
     }
 
-    static quint8 sm = GFX::shadowMargin(dConf.progressbars.shadow);
+    static const quint8 sm = GFX::shadowMargin(dConf.progressbars.shadow);
     const quint64 s((hor?groove.height():groove.width())-sm*2);
-    quint64 thing(h.rgba());
-    thing |= (s << 32);
+    quint64 thing((quint64)h.rgba()|(s << 32));
     if (optv2)
-        thing |= ((quint64)optv2->orientation << 48);
+        thing |= (quint64(optv2->orientation) << 48);
     static QMap<quint64, QPixmap> s_pixMap;
     if (!s_pixMap.contains(thing))
     {
@@ -467,9 +446,9 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
             const int fourthH(pix.height()/4);
             const int w(pix.width());
             const int h(pix.height());
-            static const int topRight[] = { w-fourthW,0, w,0, w,fourthH };
-            static const int main[] = { 0,0, fourthW,0, w,h-fourthH, w,h, w-fourthW,h, 0,fourthH };
-            static const int bottomLeft[] = { 0,h-fourthH, fourthW,h, 0,h };
+            const int topRight[] = { w-fourthW,0, w,0, w,fourthH };
+            const int main[] = { 0,0, fourthW,0, w,h-fourthH, w,h, w-fourthW,h, 0,fourthH };
+            const int bottomLeft[] = { 0,h-fourthH, fourthW,h, 0,h };
             p.setPen(Qt::NoPen);
 
             QLinearGradient grad(pix.rect().topLeft(), pix.rect().bottomLeft());

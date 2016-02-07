@@ -572,10 +572,8 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
 Sides
 ToolBar::sides(const QToolButton *btn)
 {
-    if (btn)
-    if (QToolBar *bar = qobject_cast<QToolBar *>(btn->parentWidget()))
-        if (isDirty(bar))
-                queryToolBarLater(bar, true);
+    if (btn && qobject_cast<QToolBar *>(btn->parentWidget()) && isDirty(static_cast<QToolBar *>(btn->parentWidget())))
+        queryToolBarLater(static_cast<QToolBar *>(btn->parentWidget()), true);
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
@@ -1441,19 +1439,6 @@ Window::updateWindowData(qulonglong window)
         }
 //        win->setPalette(pal);
     }
-
-
-//    static bool shown(false);
-//    if (!shown)
-//    {
-//        if (uint deco = data->decoId())
-//        {
-//            static Red2Widget *l = 0;
-//            if (!l)
-//                l = new Red2Widget(deco, win);
-//        }
-//    }
-
 
     if (dConf.uno.enabled && height)
     {

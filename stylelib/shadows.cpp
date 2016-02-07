@@ -278,3 +278,10 @@ Shadow::split(const QPixmap &pix, const quint8 size, const quint8 cornerSize)
     m_pix[BottomMidPart] = pix.copy(cornerSize, size-cornerSize, size-cornerSize*2, cornerSize);
     m_pix[BottomRightPart] = pix.copy(size-cornerSize, size-cornerSize, cornerSize, cornerSize);
 }
+
+//---------------------------------------------------------------------------------------------------
+
+Focus::Focus(const quint8 r, const QColor &c)
+{
+
+}
