@@ -307,7 +307,7 @@ GFX::drawClickable(ShadowStyle s,
         {
             QLinearGradient edges(r.topLeft(), r.topRight());
             const QColor edge(QColor(0, 0, 0, 31));
-            const float position(5.0f/r.width());
+            const float position(((float)rnd/*-1.0f*/)/r.width());
             if (sides & Left)
             {
                 edges.setColorAt(0.0f, edge);
@@ -318,7 +318,10 @@ GFX::drawClickable(ShadowStyle s,
                 edges.setColorAt(1.0f-position, Qt::transparent);
                 edges.setColorAt(1.0f, edge);
             }
+//            const QPainter::CompositionMode mode(p->compositionMode());
+//            p->setCompositionMode(QPainter::CompositionMode_ColorBurn);
             drawMask(r, p, edges, rnd-m, sides);
+//            p->setCompositionMode(mode);
         }
         break;
     }

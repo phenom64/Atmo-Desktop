@@ -360,7 +360,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     return true;
 }
 
-static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, QTabBar::Shape shape = QTabBar::RoundedNorth)
+static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
 {
     QRect r(rect.isValid()?rect:bar->rect());
     if (Ops::isSafariTabBar(bar))

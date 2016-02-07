@@ -168,8 +168,8 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (!option)
         return true;
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
-    if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
-        return true;
+//    if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
+//        return true;
     bool sunken(isSelected(option));
     bool hover(isMouseOver(option));
     if (opt && !sunken && !isMouseOver(option) && opt->backgroundBrush != Qt::NoBrush)
@@ -188,13 +188,11 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
         selectRows = !opt || opt->decorationPosition == QStyleOptionViewItem::Left;
 
     QColor h(option->palette.color(QPalette::Highlight));
-    if (!sunken && h.alpha() == 0xff)
+    if (!sunken)
         h.setAlpha(64);
 
     QBrush brush(h);
-//    if (opt && opt->backgroundBrush != Qt::NoBrush)
-//        brush = opt->backgroundBrush;
-    /*else */if (sunken)
+    if (sunken)
     {
         QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
         lg.setStops(DSP::Settings::gradientStops(dConf.views.itemGradient, h));
@@ -205,12 +203,15 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     Sides sides(All);
     if (full || (sunken && selectRows))
         sides &= ~(Right|Left);
-    else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Beginning)
-        sides &= ~Right;
-    else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::End)
-        sides &= ~Left;
-    else if (opt&&opt->viewItemPosition == QStyleOptionViewItemV4::Middle)
-        sides &= ~(Right|Left);
+
+    if (opt)
+    switch (opt->viewItemPosition)
+    {
+    case QStyleOptionViewItemV4::Beginning:     sides &= ~Right;        break;
+    case QStyleOptionViewItemV4::End:           sides &= ~Left;         break;
+    case QStyleOptionViewItemV4::Middle:        sides &= ~(Right|Left); break;
+    default: break;
+    }
     GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, sides);
     return true;
 }

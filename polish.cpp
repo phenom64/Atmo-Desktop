@@ -360,6 +360,10 @@ Style::polish(QWidget *widget)
             }
         }
     }
+    else if (QTabWidget *qtw = qobject_cast<QTabWidget *>(widget))
+    {
+        installFilter(qtw);
+    }
     else if (widget->inherits("KUrlNavigator"))
     {
         if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())

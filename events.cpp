@@ -120,15 +120,31 @@ Style::paintEvent(QObject *o, QEvent *e)
      * anyway.
      */
     QWidget *w(static_cast<QWidget *>(o));
-    if (o->inherits("KTabWidget"))
+
+    if (qobject_cast<QTabWidget *>(w))
     {
-        QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
-        QPainter p(tabWidget);
-        QStyleOptionTabWidgetFrameV2 opt;
-        opt.initFrom(tabWidget);
-        drawTabWidget(&opt, &p, tabWidget);
-        p.end();
-        return true;
+        QTabBar *tb = w->findChild<QTabBar *>();
+        if (!tb)
+            return false;
+        QStyleOptionTabBarBaseV2 opt;
+        opt.rect = tb->geometry();
+        opt.rect.setLeft(w->rect().left());
+        opt.rect.setRight(w->rect().right());
+        opt.fontMetrics = w->fontMetrics();
+        opt.documentMode = true;
+        QPainter p(w);
+        drawTabBar(&opt, &p, tb);
+        if (o->inherits("KTabWidget"))
+        {
+            QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
+            QPainter p(tabWidget);
+            QStyleOptionTabWidgetFrameV2 opt;
+            opt.initFrom(tabWidget);
+            drawTabWidget(&opt, &p, tabWidget);
+            p.end();
+            return true;
+        }
+        return false;
     }
     else if (o->objectName() == "konsole_tabbar_parent")
     {

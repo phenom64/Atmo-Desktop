@@ -72,9 +72,12 @@ StackAnimator::widgetRemoved(int i)
 void
 StackAnimator::currentChanged(int i)
 {
+    if (m_stack->parentWidget()->isHidden())
+        return;
     if (m_timer->isActive())
     {
-        m_stack->currentWidget()->hide(); //sometimes this gets called while timer is active (mainly systemsettings does this)
+        if (m_stack->currentWidget())
+            m_stack->currentWidget()->hide(); //sometimes this gets called while timer is active (mainly systemsettings does this)
         return;
     }
     if (m_stack->parentWidget()->isHidden() || QCoreApplication::closingDown())
