@@ -663,6 +663,7 @@ QSettings
 void
 Settings::read()
 {
+    conf.baseSize               = 23;
     //globals
     conf.opacity                = 1.0f/*readFloat(Opacity)/100.0f*/;
     conf.blackList              = readStringList(Blacklist);

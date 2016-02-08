@@ -99,8 +99,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     {
         QSize sz(contentsSize);
         sz+=QSize(8, pixelMetric(PM_ButtonMargin, opt, widget));
-        if (sz.height() < 23)
-            sz.setHeight(23);
+        if (sz.height() < dConf.baseSize)
+            sz.setHeight(dConf.baseSize);
         const QStyleOptionButton *btn = qstyleoption_cast<const QStyleOptionButton *>(opt);
         if (btn && !btn->text.isEmpty())
             if (sz.width() < 75)
@@ -214,7 +214,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 if (btn && btn->isCheckable() && !isFull)
                     *hvsz += 2;
             }
-            static const int minSz(23);
+            static const int minSz(dConf.baseSize);
             if (hor && sz.height() < minSz)
                 sz.setHeight(minSz);
             else if (!hor && sz.width() < minSz)
@@ -229,8 +229,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     {
         QSize sz(contentsSize);
         sz+=QSize(GFX::shadowMargin(dConf.input.shadow)*2, pixelMetric(PM_DefaultFrameWidth, opt, widget));
-        if (sz.height() < 23)
-            sz.setHeight(23);
+        if (sz.height() < dConf.baseSize)
+            sz.setHeight(dConf.baseSize);
         return sz;
     }
     case CT_SpinBox:
@@ -240,7 +240,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         QSize sz(contentsSize);
         sz.rwidth()+=7;
         sz.rwidth()+=(GFX::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
-        sz.setHeight(qMax(23, sz.height()));
+        sz.setHeight(qMax<int>(dConf.baseSize, sz.height()));
         if (box && box->frame)
             sz.rwidth()+=pixelMetric(PM_SpinBoxFrameWidth)*2;
         return sz;
@@ -312,8 +312,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             QSize sz(contentsSize);
             int add(dConf.input.rnd?dConf.input.rnd/2:0);
             sz+=QSize(add*2+40, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
-            if (sz.height() < 23)
-                sz.setHeight(23);
+            if (sz.height() < dConf.baseSize)
+                sz.setHeight(dConf.baseSize);
             return sz;
         }
 
@@ -327,7 +327,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
 
         w+=12; //margins left/right for text...
         w+=h;
-        h = qMax(23, h);
+        h = qMax<int>(dConf.baseSize, h);
         return QSize(w, h);
     }
     case CT_ScrollBar:
@@ -377,10 +377,10 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 sz.rheight() += add;
             return sz;
         }
-        if (hor && sz.height() > 23)
-            sz.setHeight(23);
-        else if (!hor && sz.width() > 23)
-            sz.setWidth(23);
+        if (hor && sz.height() > dConf.baseSize)
+            sz.setHeight(dConf.baseSize);
+        else if (!hor && sz.width() > dConf.baseSize)
+            sz.setWidth(dConf.baseSize);
 
         if (hor)
             sz.rwidth() += dConf.progressbars.rnd;

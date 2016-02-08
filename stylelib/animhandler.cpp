@@ -113,7 +113,7 @@ Basic::animate()
             mouse = r.contains(slider->mapFromGlobal(QCursor::pos()));
         }
         const int val(it.value()&0xff);
-        if (slider && dConf.scrollers.style == 3)
+        if (qobject_cast<QScrollBar *>(slider) && dConf.scrollers.style == 3) //cloudy scrollbars... special case
         {
             if (mouse && slider->isSliderDown())
                 mouse = false;
@@ -121,13 +121,14 @@ Basic::animate()
             const int steps = qMin(r.width(), r.height());
             int value = ((it.value()&0xff00) >> 8);
             int v = val;
+            //v is the hoverlevel
             if (v >= steps)
                 v = 0;
             else if (!mouse)
                 v += (value&1);
             else
                 ++v;
-
+            //value is the internal hoverlevel
             if (mouse && value < Steps)
                 ++value;
             else if (!mouse && value > 0)

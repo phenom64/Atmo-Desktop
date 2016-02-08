@@ -137,7 +137,7 @@ public:
         float opacity;
         QStringList blackList;
         bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks, animateStack, animateScroll, simpleArrows;
-        quint8 titlePos, arrowSize;
+        quint8 titlePos, arrowSize, baseSize;
         QPalette *palette;
         struct deco
         {

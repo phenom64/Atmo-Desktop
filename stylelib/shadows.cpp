@@ -151,6 +151,12 @@ Shadow::genShadow()
 
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         rect.shrink(1);
+
+        QLinearGradient gradient(dark.rect().topLeft(), dark.rect().bottomLeft());
+        gradient.setColorAt(0, QColor(0, 0, 0, 127));
+        gradient.setColorAt(0.9, Qt::transparent);
+        pt.fillRect(dark.rect(), gradient);
+
         Mask::render(rect, Qt::black, &pt, m_round);
         pt.fillRect(dark.rect(), QColor(0, 0, 0, 255-m_opacity));
         pt.end();
