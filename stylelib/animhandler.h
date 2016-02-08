@@ -36,7 +36,7 @@ protected slots:
     void animate();
 
 private:
-    static Basic s_instance;
+    static Basic *s_instance;
     QMap<QWidget *, int> m_vals;
     QTimer *m_timer;
 };
@@ -62,7 +62,7 @@ protected slots:
     void animate();
 
 private:
-    static Tabs s_instance;
+    static Tabs *s_instance;
     QMap<QTabBar *, QMap<Tab, Level> > m_vals;
     QTimer *m_timer;
 };
@@ -88,7 +88,7 @@ protected slots:
     void animate();
 
 private:
-    static ToolBtns s_instance;
+    static ToolBtns *s_instance;
     QToolButton *m_hovered;
     QMap<QToolButton *, QPair<Level, ArrowLevel> > m_vals;
     QTimer *m_timer;

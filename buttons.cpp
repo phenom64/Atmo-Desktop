@@ -260,6 +260,33 @@ Style::drawMultiTabBarTab(const QStyleOption *opt, QPainter *p, const QWidget *m
     return true;
 }
 
+bool
+Style::drawToolButtonArrow(const QStyleOptionToolButton *opt, QPainter *p, const QWidget *w) const
+{
+    switch (opt->arrowType)
+    {
+    case Qt::UpArrow: return drawArrowNorth(opt, p, w);
+    case Qt::DownArrow: return drawArrowSouth(opt, p, w);
+    case Qt::LeftArrow: return drawArrowWest(opt, p, w);
+    case Qt::RightArrow: return drawArrowEast(opt, p, w);
+    default: break;
+    }
+    return true;
+}
+
+static bool drawExtensionArrow(const QStyleOptionToolButton *opt, QPainter *p, const QWidget *w)
+{
+    const bool simple = dConf.simpleArrows;
+    dConf.simpleArrows = false;
+    QRect first(opt->rect);
+    first.setRight(first.center().x());
+    QRect second(opt->rect);
+    second.setLeft(first.right());
+    GFX::drawArrow(p, opt->palette.color(QPalette::WindowText), first.translated(-1, 0), East, dConf.arrowSize, Qt::AlignVCenter|Qt::AlignRight, true);
+    GFX::drawArrow(p, opt->palette.color(QPalette::WindowText), second.translated(1, 0), East, dConf.arrowSize, Qt::AlignVCenter|Qt::AlignLeft, true);
+    dConf.simpleArrows = simple;
+    return true;
+}
 
 bool
 Style::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -267,7 +294,10 @@ Style::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, cons
     const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
     if (!opt)
         return true;
-
+    if (opt->features & QStyleOptionToolButton::Arrow && opt->arrowType)
+        return drawToolButtonArrow(opt, painter, widget);
+    if (widget && widget->inherits("QToolBarExtension"))
+        return drawExtensionArrow(opt, painter, widget);
     drawToolButtonBevel(option, painter, widget);
     if (!(opt->icon.isNull() && opt->text.isEmpty()))
         drawToolButtonLabel(option, painter, widget);
@@ -278,8 +308,10 @@ bool
 Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
-    if (!opt || (widget && widget->inherits("QToolBarExtension")))
+    if (!opt)
         return true;
+    if (widget && widget->inherits("KMultiTabBarTab"))
+        return drawMultiTabBarTab(opt, painter, widget);
 
     const bool sunken(opt->state & (State_Sunken | State_Selected | State_On));
     if (!widget || (dConf.toolbtn.flat && sunken))
@@ -287,8 +319,6 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         GFX::drawShadow(sunken?Sunken:Etched, option->rect, painter, isEnabled(opt), dConf.toolbtn.rnd);
         return true;
     }
-    if (widget->inherits("KMultiTabBarTab"))
-        return drawMultiTabBarTab(opt, painter, widget);
 
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
     const QToolBar *bar = widget?qobject_cast<const QToolBar *>(widget->parentWidget()):0;

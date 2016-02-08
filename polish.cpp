@@ -303,6 +303,7 @@ Style::polish(QWidget *widget)
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
         const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
+        tabBar->setUsesScrollButtons(true);
         if (safari || tabBar->documentMode())
         {
             tabBar->setBackgroundRole(QPalette::Window);

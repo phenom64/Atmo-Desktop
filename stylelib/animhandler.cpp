@@ -12,18 +12,21 @@
 #include <QHoverEvent>
 #include <QAbstractScrollArea>
 #include <QAbstractItemView>
+#include "../config/settings.h"
 
 using namespace DSP;
 using namespace Anim;
 
 static bool s_block(false);
 
-Basic Basic::s_instance;
+Basic *Basic::s_instance(0);
 
 Basic
 *Basic::instance()
 {
-    return &s_instance;
+    if (!s_instance)
+        s_instance = new Basic();
+    return s_instance;
 }
 
 void
@@ -74,7 +77,7 @@ Basic::removeSender()
 int
 Basic::hoverLevel(const QWidget *widget)
 {
-    return m_vals.value(const_cast<QWidget *>(widget), 0);
+    return m_vals.value(const_cast<QWidget *>(widget), 0)&0xff;
 }
 
 void
@@ -91,25 +94,52 @@ Basic::animate()
             continue;
         }
         bool mouse(w->underMouse());
-        if (mouse)
-            if (QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(w))
-            {
-                QStyleOptionSlider sopt;
-                sopt.initFrom(slider);
-                sopt.sliderPosition = slider->sliderPosition();
-                sopt.sliderValue = slider->value();
-                sopt.minimum = slider->minimum();
-                sopt.maximum = slider->maximum();
-                sopt.orientation = slider->orientation();
-                sopt.pageStep = slider->pageStep();
-                sopt.singleStep = slider->singleStep();
-                sopt.upsideDown = slider->invertedAppearance();
-                QStyle::ComplexControl cc(qobject_cast<QSlider *>(w)?QStyle::CC_Slider:QStyle::CC_ScrollBar);
-                QStyle::SubControl sc(qobject_cast<QSlider *>(w)?QStyle::SC_SliderHandle:QStyle::SC_ScrollBarSlider);
-                QRect r = slider->style()->subControlRect(cc, &sopt, sc, slider);
-                mouse = r.contains(slider->mapFromGlobal(QCursor::pos()));
-            }
-        const int val(it.value());
+        QAbstractSlider *slider = qobject_cast<QAbstractSlider *>(w);
+        QStyleOptionSlider sopt;
+        if (slider)
+        {
+            sopt.initFrom(slider);
+            sopt.sliderPosition = slider->sliderPosition();
+            sopt.sliderValue = slider->value();
+            sopt.minimum = slider->minimum();
+            sopt.maximum = slider->maximum();
+            sopt.orientation = slider->orientation();
+            sopt.pageStep = slider->pageStep();
+            sopt.singleStep = slider->singleStep();
+            sopt.upsideDown = slider->invertedAppearance();
+            QStyle::ComplexControl cc(qobject_cast<QSlider *>(w)?QStyle::CC_Slider:QStyle::CC_ScrollBar);
+            QStyle::SubControl sc(qobject_cast<QSlider *>(w)?QStyle::SC_SliderHandle:QStyle::SC_ScrollBarSlider);
+            QRect r = slider->style()->subControlRect(cc, &sopt, sc, slider);
+            mouse = r.contains(slider->mapFromGlobal(QCursor::pos()));
+        }
+        const int val(it.value()&0xff);
+        if (slider && dConf.scrollers.style == 3)
+        {
+            if (mouse && slider->isSliderDown())
+                mouse = false;
+            const QRect r = slider->style()->subControlRect(QStyle::CC_ScrollBar, &sopt, QStyle::SC_ScrollBarSlider, w).adjusted(1, 1, -1, -1);
+            const int steps = qMin(r.width(), r.height());
+            int value = ((it.value()&0xff00) >> 8);
+            int v = val;
+            if (v >= steps)
+                v = 0;
+            else if (!mouse)
+                v += (value&1);
+            else
+                ++v;
+
+            if (mouse && value < Steps)
+                ++value;
+            else if (!mouse && value > 0)
+                --value;
+
+            m_vals.insert(w, v | (value<<8));
+            needRunning = value;
+            if (!m_timer->isActive() && needRunning)
+                m_timer->start(25);
+            w->update();
+            continue;
+        }
         if (mouse && val < Steps) //hovering...
         {
             needRunning = true;
@@ -142,12 +172,15 @@ Basic::eventFilter(QObject *o, QEvent *e)
     if (want)
     {
         if (e->type() == QEvent::Enter || e->type() == QEvent::HoverEnter)
-            m_vals.insert(static_cast<QWidget *>(o), 0);
-        m_timer->start(25);
+            if (!m_vals.contains(static_cast<QWidget *>(o)))
+                m_vals.insert(static_cast<QWidget *>(o), 0);
+        if (!m_timer->isActive())
+            m_timer->start(25);
         return false;
     }
     if (qobject_cast<QAbstractSlider *>(o))
-        if (e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()))
+        if ((e->type() == QEvent::HoverMove && !(s_block && m_timer->isActive()))
+             || e->type() == QEvent::MouseButtonRelease)
         {
             if (!m_vals.contains(static_cast<QWidget *>(o)))
                 m_vals.insert(static_cast<QWidget *>(o), 0);
@@ -161,12 +194,14 @@ Basic::eventFilter(QObject *o, QEvent *e)
 
 //------------------------------------------------------------------------------------
 
-Tabs Tabs::s_instance;
+Tabs *Tabs::s_instance(0);
 
 Tabs
 *Tabs::instance()
 {
-    return &s_instance;
+    if (!s_instance)
+        s_instance = new Tabs();
+    return s_instance;
 }
 
 void
@@ -298,12 +333,14 @@ Tabs::eventFilter(QObject *o, QEvent *e)
 
 //------------------------------------------------------------------------------------
 
-ToolBtns ToolBtns::s_instance;
+ToolBtns *ToolBtns::s_instance(0);
 
 ToolBtns
 *ToolBtns::instance()
 {
-    return &s_instance;
+    if (!s_instance)
+        s_instance = new ToolBtns();
+    return s_instance;
 }
 
 void

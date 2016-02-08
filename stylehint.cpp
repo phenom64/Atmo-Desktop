@@ -15,6 +15,7 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
 {
     switch (sh)
     {
+    case SH_TabBar_PreferNoArrows: return false;
     case SH_TabBar_Alignment:
     {
         const QTabBar *tabBar = qobject_cast<const QTabBar *>(w);

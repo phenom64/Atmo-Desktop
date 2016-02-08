@@ -12,6 +12,7 @@
 #include <QTextBrowser>
 #include <QApplication>
 #include <QPolygon>
+#include <QMap>
 
 #include "dsp.h"
 #include "stylelib/gfx.h"
@@ -151,9 +152,6 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         painter->setPen(pen);
 
         ///the groove
-//        groove.setBottom(groove.bottom()+1); //why is the groove bottom 1px too high?
-//        groove.adjust(!hor*2, hor*2, -(!hor*2), -(hor*2));
-//        groove.adjust(1, 1, -1, -1);
         QColor bgc = pal.color(QPalette::Base);
         switch (dConf.scrollers.grooveStyle)
         {
@@ -173,7 +171,37 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
         slider.adjust(1, 1, -1, -1);
         quint8 roundNess((qMin(slider.width(), slider.height()) >> 1));
-        GFX::drawMask(slider, painter, lg, roundNess);
+        QBrush brush(lg);
+        QPoint offset(slider.topLeft()+QPoint(sm, sm));
+        if (dConf.scrollers.style == 3)
+        {
+            int sz(qMin(slider.width(), slider.height()));
+            quint64 check((quint64)pal.color(QPalette::Highlight).rgba()|(quint64)sz << 32);
+            QMap<quint64, QPixmap> pixMap;
+            if (!pixMap.contains(check))
+            {
+                QPixmap pix(sz, sz);
+                pix.fill(Qt::transparent);
+                QPainter p(&pix);
+                QLinearGradient gradient(pix.rect().topLeft(), hor?pix.rect().bottomLeft():pix.rect().topRight());
+                gradient.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, pal.color(QPalette::Highlight)));
+                p.fillRect(pix.rect(), gradient);
+                QRadialGradient rad(pix.rect().center()+QPoint(1, 1), pix.rect().width());
+                rad.setColorAt(0, QColor(255, 255, 255, 170));
+                rad.setColorAt(1, Qt::transparent);
+                rad.setSpread(QGradient::ReflectSpread);
+                p.setCompositionMode(QPainter::CompositionMode_Overlay);
+                p.fillRect(pix.rect(), rad);
+                p.end();
+                pixMap.insert(check, pix);
+            }
+            brush = pixMap.value(check);
+            const int sPos = opt->sliderPosition;
+            const int hLev = Anim::Basic::level(widget);
+            offset = QPoint((slider.x()+sm)+(hor*hLev+(hor*sPos)), slider.y()+sm+(!hor*hLev)+(!hor*sPos));
+        }
+
+        GFX::drawMask(slider, painter, brush, roundNess, All, offset);
         const quint8 rm = GFX::shadowMargin(Raised);
         GFX::drawShadow(Raised, slider.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), roundNess+rm);
     }

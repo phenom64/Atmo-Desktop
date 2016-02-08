@@ -166,6 +166,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         return !(inMainWin&&dConf.uno.enabled)*2;
     }
     case PM_ComboBoxFrameWidth: return 0;
+    case PM_ToolBarExtensionExtent: return dConf.arrowSize*2;
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
     case PM_ToolBarFrameWidth: return 2;

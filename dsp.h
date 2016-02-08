@@ -133,6 +133,7 @@ public:
     DRAWARROW(South)
 #undef DRAWARROW
 
+    bool drawToolButtonArrow(const QStyleOptionToolButton *opt, QPainter *p, const QWidget *w) const;
     bool drawMultiTabBarTab(const QStyleOption *opt, QPainter *p, const QWidget *mt) const;
 
     /* events */

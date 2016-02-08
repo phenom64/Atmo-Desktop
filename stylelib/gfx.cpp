@@ -471,7 +471,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     {
         const int v = Color::lum(c);
         const int rgb = v < 128 ? 255 : 0;
-        drawArrow(p, QColor(rgb, rgb, rgb, dConf.shadows.opacity), r.translated(0, 1), d, size);
+        drawArrow(p, QColor(rgb, rgb, rgb, rgb?dConf.shadows.illumination:dConf.shadows.opacity), r.translated(0, 1), d, size, align);
     }
 
     if (size < 7 || size > qMin(r.width(), r.height()))
@@ -526,7 +526,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     if (dConf.simpleArrows)
     {
         p->setBrush(c);
-        p->setPen(Qt::NoPen);
+        p->setPen(c);
         p->drawPolygon(points, 3);
     }
     else
