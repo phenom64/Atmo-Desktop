@@ -176,6 +176,8 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         if (dConf.scrollers.style == 3)
         {
             int sz(qMin(slider.width(), slider.height()));
+            if (!sz)
+                return true;
             quint64 check((quint64)pal.color(QPalette::Highlight).rgba()|(quint64)sz << 32);
             QMap<quint64, QPixmap> pixMap;
             if (!pixMap.contains(check))
@@ -196,7 +198,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
                 pixMap.insert(check, pix);
             }
             brush = pixMap.value(check);
-            const int sPos = opt->sliderPosition;
+            const int sPos = opt->maximum-(opt->minimum+opt->sliderPosition);
             const int hLev = Anim::Basic::level(widget);
             offset = QPoint((slider.x()+sm)+(hor*hLev+(hor*sPos)), slider.y()+sm+(!hor*hLev)+(!hor*sPos));
         }

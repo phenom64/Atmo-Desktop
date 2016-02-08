@@ -134,9 +134,8 @@ Basic::animate()
                 --value;
 
             m_vals.insert(w, v | (value<<8));
-            needRunning = value;
-            if (!m_timer->isActive() && needRunning)
-                m_timer->start(25);
+            if (value)
+                needRunning = true;
             w->update();
             continue;
         }
