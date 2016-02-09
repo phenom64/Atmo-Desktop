@@ -52,11 +52,11 @@ public:
         t2 = tmp;
     }
 
-    template<typename T> static inline bool isOrInsideA(QWidget *widget)
+    template<typename T> static inline bool isOrInsideA(const QWidget *widget)
     {
         if (!widget)
             return false;
-        QWidget *w = widget;
+        QWidget *w = const_cast<QWidget *>(widget);
         while (w->parentWidget())
         {
             if (qobject_cast<T>(w))

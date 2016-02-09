@@ -383,15 +383,15 @@ Style::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidge
     {
     case SC_ScrollBarAddLine:
         if (hor)
-            ret = slider->rect.adjusted(slider->rect.width()-buttonSize, 0, 0, 0);
+            ret = slider->rect.adjusted((slider->rect.x()+slider->rect.width())-buttonSize, 0, 0, 0);
         else
-            ret = slider->rect.adjusted(0, slider->rect.height()-buttonSize, 0, 0);
+            ret = slider->rect.adjusted(0, (slider->rect.y()+slider->rect.height())-buttonSize, 0, 0);
         break;
     case SC_ScrollBarSubLine:
         if (hor)
-            ret = slider->rect.adjusted(0, 0, -(slider->rect.width()-buttonSize), 0);
+            ret = slider->rect.adjusted(0, 0, -((slider->rect.x()+slider->rect.width())-buttonSize), 0);
         else
-            ret = slider->rect.adjusted(0, 0, 0, -(slider->rect.height()-buttonSize));
+            ret = slider->rect.adjusted(0, 0, 0, -((slider->rect.y()+slider->rect.height())-buttonSize));
         break;
     case SC_ScrollBarGroove: ret = r; break;
     case SC_ScrollBarSlider:

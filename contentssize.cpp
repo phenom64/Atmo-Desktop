@@ -187,7 +187,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             sz.setWidth(bar->iconSize().width());
             sz.rheight()+=16;
         }
-        sz+=QSize(hor?9:4, hor?4:9);
+        static const int add(qFloor(dConf.baseSize*0.4f)), hAdd(qFloor(add*0.5f));
+        sz+=QSize(hor?add:hAdd, hor?hAdd:add);
 
         if (!dConf.toolbtn.flat)
         {
@@ -205,14 +206,15 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
 
             if (bar && optbtn->toolButtonStyle == Qt::ToolButtonIconOnly)
             {
+                static quint8 m = qMax<quint8>(2, GFX::shadowMargin(dConf.toolbtn.shadow));
                 if (isFull)
-                    *hvsz += 16;
+                    *hvsz += qCeil(dConf.baseSize*0.66f);
                 else if (sides & ends)
-                    *hvsz += (2+(dConf.toolbtn.shadow==Carved)*2);
-                if (btn && btn->group())
-                    *hvsz += 8;
-                if (btn && btn->isCheckable() && !isFull)
-                    *hvsz += 2;
+                    *hvsz += m;
+//                if (btn && btn->group())
+//                    *hvsz += 8;
+//                if (btn && btn->isCheckable() && !isFull)
+//                    *hvsz += 2;
             }
             static const int minSz(dConf.baseSize);
             if (hor && sz.height() < minSz)

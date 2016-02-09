@@ -387,8 +387,10 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
     if (dConf.sliders.dot)
     {
-        const int ds(slider.height()/3);
-        GFX::drawRadioMark(painter, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1), slider.shrinked(ds), true);
+        const int ds(4/*slider.height()/3*/);
+        QRect dot(0, 0, ds, ds);
+        dot.moveCenter(slider.center());
+        GFX::drawRadioMark(painter, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1), dot, true);
     }
     return true;
 }

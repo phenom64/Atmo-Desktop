@@ -205,7 +205,7 @@ GFX::drawClickable(ShadowStyle s,
                    const Sides sides,
                    const QStyleOption *opt,
                    const QWidget *w,
-                   const QPoint &offset)
+                   QPoint offset)
 {
     if (s >= ShadowCount)
         return;
@@ -219,7 +219,7 @@ GFX::drawClickable(ShadowStyle s,
     if (dConf.differentInactive
             && !Handlers::Window::isActiveWindow(w)
             && !sunken
-            && !(s==Raised||s==Carved)
+            && s!=Carved&&s!=SemiCarved
             && qobject_cast<const QToolBar *>(w->parentWidget()))
     {
         QToolBar *bar = static_cast<QToolBar *>(w->parentWidget());
@@ -286,6 +286,7 @@ GFX::drawClickable(ShadowStyle s,
         p.fillRect(pix.rect(), QColor(0, 0, 0, 127));
         p.end();
         mask = pix;
+        offset = r.topLeft();
     }
     drawMask(r, p, mask, rnd, sides, offset);
 
@@ -474,22 +475,19 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
         drawArrow(p, QColor(rgb, rgb, rgb, rgb?dConf.shadows.illumination:dConf.shadows.opacity), r.translated(0, 1), d, size, align);
     }
 
-    if (size < 7 || size > qMin(r.width(), r.height()))
-        size = qMin(r.width(), r.height());
+    size = qBound(7, size, qMin(r.width(), r.height()));
+    if (!(size%2))
+        --size;
 
     if (!dConf.simpleArrows)
         size -= 2;
 
-    if (!(size & 1))
-        size -= 1;
-
     const bool hor(d == West || d == East);
-
     QRect rect;
     if (hor)
-        rect.setRect(0, 0, size/2+1, size);
+        rect.setRect(0, 0, (size>>1)+1, size);
     else
-        rect.setRect(0, 0, size, size/2+1);
+        rect.setRect(0, 0, size, (size>>1)+1);
 
     if (align & (Qt::AlignVCenter|Qt::AlignHCenter))
         rect.moveCenter(r.center());
@@ -502,40 +500,62 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     if (align & Qt::AlignBottom)
         rect.moveBottom(r.bottom());
 
-#if QT_VERSION >= 0x050000
-    if (!dConf.simpleArrows)
-        rect.translate(1, 1);
-#endif
+    QPointF points[3];
 
-    QPoint points[3];
+    if (dConf.simpleArrows)
+    {
+        int x = rect.x(), y = rect.y();
+        switch (d)
+        {
+        case East: { for (int i = 0; i < rect.width(); ++i) p->fillRect(QRect(x+i, y+i, 1, rect.height()-i*2), c); return; }
+        case South:{ for (int i = 0; i < rect.height(); ++i) p->fillRect(QRect(x+i, y+i, rect.width()-i*2, 1), c); return; }
+        case West: { for (int i = rect.width()-1; i >= 0; --i) p->fillRect(QRect(x+(rect.width()-i), y+i, 1, rect.height()-i*2), c); return; }
+        case North:{ for (int i = rect.height()-1; i >= 0; --i)p->fillRect(QRect(x+i, y+(rect.height()-i), rect.width()-i*2, 1), c); return; }
+        default: return;
+        }
+        return;
+    }
+    rect.translate(1, 1);
     switch (d)
     {
-    case East:  { points[0] = rect.topLeft(); points[1] = QPoint(rect.right(), rect.center().y()); points[2] = rect.bottomLeft(); break; }
-    case South: { points[0] = rect.topLeft(); points[1] = QPoint(rect.center().x(), rect.bottom()); points[2] = rect.topRight(); break; }
-    case West:  { points[0] = rect.topRight(); points[1] = QPoint(rect.left(), rect.center().y());  points[2] = rect.bottomRight(); break; }
-    case North: { points[0] = rect.bottomLeft(); points[1] = QPoint(rect.center().x(), rect.top()); points[2] = rect.bottomRight(); break; }
+    case East:
+    {
+        points[0] = rect.topLeft();
+        points[1] = QPoint(rect.right(), rect.center().y());
+        points[2] = rect.bottomLeft();
+        break;
+    }
+    case South:
+    {
+        points[0] = rect.topLeft();
+        points[1] = QPoint(rect.center().x(), rect.bottom());
+        points[2] = rect.topRight();
+        break;
+    }
+    case West:
+    {
+        points[0] = rect.topRight();
+        points[1] = QPoint(rect.x(), rect.center().y());
+        points[2] = rect.bottomRight();
+        break;
+    }
+    case North:
+    {
+        points[0] = rect.bottomLeft();
+        points[1] = QPoint(rect.center().x(), rect.y());
+        points[2] = rect.bottomRight();
+        break;
+    }
     default: break;
     }
 
     const QPen pen(p->pen());
     const QBrush brush(p->brush());
     const bool aa(p->testRenderHint(QPainter::Antialiasing));
-
-    p->setRenderHint(QPainter::Antialiasing, false);
-
-    if (dConf.simpleArrows)
-    {
-        p->setBrush(c);
-        p->setPen(c);
-        p->drawPolygon(points, 3);
-    }
-    else
-    {
-        p->setBrush(Qt::NoBrush);
-        p->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-        p->drawPolyline(points, 3);
-    }
-
+    p->setRenderHint(QPainter::Antialiasing, true);
+    p->setBrush(Qt::NoBrush);
+    p->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    p->drawPolyline(points, 3);
     p->setPen(pen);
     p->setBrush(brush);
     p->setRenderHint(QPainter::Antialiasing, aa);

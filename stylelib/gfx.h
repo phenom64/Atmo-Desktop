@@ -37,7 +37,7 @@ public:
                               const Sides sides = All,
                               const QStyleOption *opt = 0,
                               const QWidget *w = 0,
-                              const QPoint &offset = QPoint());
+                              QPoint offset = QPoint());
     static quint8 maxRnd(const QRect &r, const Sides s, const quint8 rnd = MaxRnd);
     static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();

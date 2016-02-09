@@ -178,7 +178,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
     }
 //    case PM_SliderThickness: return 12;
-    case PM_ScrollBarExtent: return dConf.scrollers.size;
+    case PM_ScrollBarExtent: if (dConf.scrollers.style) return dConf.scrollers.size; return Ops::isOrInsideA<const QDockWidget *>(widget)?(int)(dConf.scrollers.size*0.8f)|1:dConf.scrollers.size;
     case PM_SliderThickness:
     case PM_SliderLength:
     case PM_SliderControlThickness: return dConf.sliders.size/*qMin(option->rect.height(), option->rect.width())*/;
