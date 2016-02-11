@@ -52,7 +52,8 @@
 //    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
 //)
 
-
+class DSPDecoFactory;
+static DSPDecoFactory *s_factory(0);
 class DSPDecoFactory : public KPluginFactory
 {
     Q_OBJECT
@@ -70,8 +71,10 @@ public:
         DSP::XHandler::init();
         DSP::ShadowHandler::removeDelete();
         DSP::GFX::generateData();
+        if (!s_factory)
+            s_factory = this;
     }
-    ~DSPDecoFactory() {}
+    ~DSPDecoFactory() { if (s_factory == this) s_factory = 0; }
 
 //protected:
 //    QObject *create(const char *iface, QWidget *parentWidget, QObject *parent, const QVariantList &args, const QString &keyword)
@@ -200,6 +203,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_isHovered(false)
     , m_embedder(0)
 {
+
 }
 
 Deco::~Deco()

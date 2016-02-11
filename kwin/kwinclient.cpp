@@ -185,7 +185,7 @@ AdaptorManager
 AdaptorManager::AdaptorManager()
 {
     Settings::read();
-    Render::makeNoise();
+    GFX::makeNoise();
     readWindowData();
     new DecoAdaptor(this);
     QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
@@ -688,8 +688,8 @@ KwinClient::paint(QPainter &p)
         p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
         p.setClipping(false);
     }
-    else if (!isModal() && m_compositingActive)
-        Render::shapeCorners(&p, DSP::All);
+//    else if (!isModal() && m_compositingActive)
+//        GFX::shapeCorners(&p, DSP::All);
 
     for (int i = 0; i < m_buttons.count(); ++i)
         m_buttons.at(i)->paint(p);
@@ -808,16 +808,16 @@ KwinClient::updateBgPixmap()
     else
         lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
 
-    QPixmap p(Render::noise().size().width(), r.height());
+    QPixmap p(GFX::noise().size().width(), r.height());
     p.fill(Qt::transparent);
     QPainter pt(&p);
     pt.fillRect(p.rect(), lg);
     if (m_noise)
     {
-        QPixmap noise(Render::noise().size());
+        QPixmap noise(GFX::noise().size());
         noise.fill(Qt::transparent);
         QPainter ptt(&noise);
-        ptt.drawTiledPixmap(noise.rect(), Render::noise());
+        ptt.drawTiledPixmap(noise.rect(), GFX::noise());
         ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
         ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_noise*2.55f));
         ptt.end();
