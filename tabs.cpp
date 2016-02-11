@@ -311,19 +311,13 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     switch (opt->shape)
     {
     case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest:
-        west = true;
-        trans = -90;
-        break;
+    case QTabBar::TriangularWest: west = true; trans = -90; break;
     case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast:
-        east = true;
-        trans = 90;
-        break;
+    case QTabBar::TriangularEast: east = true; trans = 90; break;
     default: break;
     }
 
-    if (qAbs(trans))
+    if (trans)
     {
         painter->translate(tr.center());
         painter->rotate(trans);
@@ -343,9 +337,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     }
     QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
     const bool safari(Ops::isSafariTabBar(bar));
-    if (safari || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
-        fg = QPalette::WindowText;
-    else if (isSelected)
+    if (isSelected && !safari && !(bar && bar->documentMode()))
         fg = Ops::opposingRole(fg);
 
     const QFontMetrics fm(painter->fontMetrics());

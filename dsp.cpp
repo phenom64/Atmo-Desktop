@@ -28,6 +28,7 @@
 #include <QDialog>
 #include <QPainter>
 #include <QToolBox>
+#include <QStyleFactory>
 
 using namespace DSP;
 
@@ -172,15 +173,8 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
 void
 Style::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const QPixmap &pixmap) const
 {
-//    QRect r(itemPixmapRect(rect, alignment, pixmap));
-//    painter->drawTiledPixmap(r, pixmap);
-    QCommonStyle::drawItemPixmap(painter, rect, alignment, pixmap);
-}
-
-QPixmap
-Style::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const
-{
-    return QCommonStyle::generatedIconPixmap(iconMode, pixmap, opt);
+    painter->drawPixmap(itemPixmapRect(rect, alignment, pixmap), pixmap);
+//    QCommonStyle::drawItemPixmap(painter, rect, alignment, pixmap);
 }
 
 QPixmap
@@ -238,7 +232,12 @@ Style::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget 
         p.end();
         break;
     }
-    default: p.end(); pix = QCommonStyle::standardPixmap(sp, opt, widget); break;
+    default:
+    {
+        p.end();
+        pix = QCommonStyle::standardPixmap(sp, opt, widget);
+        break;
+    }
     }
     return pix;
 }
@@ -246,9 +245,13 @@ Style::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget 
 QRect
 Style::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
 {
-    QRect ret(pixmap.rect());
-    if (flags & (Qt::AlignHCenter|Qt::AlignVCenter))
-        ret.moveCenter(r.center());
+    QRect ret(r.topLeft(), pixmap.size());
+    if (ret == r)
+        return ret;
+    if (flags & Qt::AlignHCenter)
+        ret.moveLeft(ret.left()+((r.width()>>1)-(ret.width()>>1)));
+    if (flags & Qt::AlignVCenter)
+        ret.moveTop(ret.top()+((r.height()>>1)-(ret.height()>>1)));
     if (flags & Qt::AlignLeft)
         ret.moveLeft(r.left());
     else if (flags & Qt::AlignRight)

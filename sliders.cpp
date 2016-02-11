@@ -266,7 +266,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
     const bool hor(opt->orientation==Qt::Horizontal);
     const ShadowStyle gs(dConf.sliders.grooveShadow);
-    const int d(/*gs==Carved?12:*/dConf.sliders.grooveStyle==3?dConf.sliders.size-2:dConf.sliders.size/2); //shadow size for slider and groove 'extent'
+    const int d(/*gs==Carved?12:*/dConf.sliders.grooveStyle==3?dConf.sliders.size-2:dConf.sliders.size*0.66f); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
         groove.setHeight(d);
@@ -274,7 +274,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
         groove.setWidth(d);
     groove.moveCenter(c);
 
-    static const int m(1/*GFX::shadowMargin(Raised)*/);
+    static const int m(GFX::shadowMargin(gs));
     groove.adjust(hor*m, !hor*m, -(hor*m), -(!hor*m)); //set the proper inset for the groove in order to account for the slider shadow
 
     QColor gbgc = opt->palette.color(bg);
@@ -387,7 +387,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
     if (dConf.sliders.dot)
     {
-        const int ds(4/*slider.height()/3*/);
+        const int ds(4+(dConf.sliders.size&1)/*slider.height()/3*/);
         QRect dot(0, 0, ds, ds);
         dot.moveCenter(slider.center());
         GFX::drawRadioMark(painter, Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1), dot, true);

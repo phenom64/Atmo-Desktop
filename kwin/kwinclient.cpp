@@ -12,7 +12,7 @@
 #include "kwinclient.h"
 #include "../stylelib/ops.h"
 #include "../stylelib/shadowhandler.h"
-#include "../stylelib/render.h"
+#include "../stylelib/gfx.h"
 #include "../stylelib/color.h"
 #include "../config/settings.h"
 #include "../stylelib/xhandler.h"
@@ -49,7 +49,7 @@ DButton::isDark() const
 {
     QColor fgc(m_client->fgColor());
     QColor bgc(m_client->bgColor());
-    return Color::luminosity(fgc) > Color::luminosity(bgc);
+    return Color::lum(fgc) > Color::lum(bgc);
 }
 
 const QColor
@@ -567,8 +567,8 @@ KwinClient::paint(QPainter &p)
         else
             p.fillRect(tr, bgColor());
     }
-    const int bgLum(Color::luminosity(bgColor()));
-    const bool isDark(Color::luminosity(fgColor()) > bgLum);
+    const int bgLum(Color::lum(bgColor()));
+    const bool isDark(Color::lum(fgColor()) > bgLum);
 
     //bevel
     if ((!dConf.deco.frameSize || maximizeMode() == MaximizeFull) && !isModal())

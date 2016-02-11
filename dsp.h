@@ -52,7 +52,6 @@ public:
     QRect subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w = 0) const;
     QRect subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget = 0) const;
     QRect itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const;
-    QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap, const QStyleOption *opt) const;
     QPixmap standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const;
 
     inline const QStyle *proxy() const { return this; }

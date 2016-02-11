@@ -303,16 +303,14 @@ Style::polish(QWidget *widget)
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
         const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
-        tabBar->setUsesScrollButtons(true);
+        tabBar->setBackgroundRole(QPalette::Button);
+        tabBar->setForegroundRole(QPalette::ButtonText);
         if (safari || tabBar->documentMode())
         {
-            tabBar->setBackgroundRole(QPalette::Window);
-            tabBar->setForegroundRole(QPalette::WindowText);
-        }
-        else
-        {
-            tabBar->setBackgroundRole(QPalette::Button);
-            tabBar->setForegroundRole(QPalette::ButtonText);
+            QPalette pal(tabBar->palette());
+            pal.setColor(QPalette::Button, pal.color(QPalette::Window));
+            pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
+            tabBar->setPalette(pal);
         }
         Anim::Tabs::manage(tabBar);
         tabBar->setAttribute(Qt::WA_Hover);

@@ -211,10 +211,10 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                     *hvsz += qCeil(dConf.baseSize*0.66f);
                 else if (sides & ends)
                     *hvsz += m;
-//                if (btn && btn->group())
-//                    *hvsz += 8;
-//                if (btn && btn->isCheckable() && !isFull)
-//                    *hvsz += 2;
+                if (btn && btn->group())
+                    *hvsz += 8;
+                if (btn && btn->isCheckable() && !isFull)
+                    *hvsz += 2;
             }
             static const int minSz(dConf.baseSize);
             if (hor && sz.height() < minSz)
@@ -222,7 +222,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             else if (!hor && sz.width() < minSz)
                 sz.setWidth(minSz);
 
-            if (Ops::hasMenu(btn, optbtn))
+            if (Ops::hasMenu(btn, optbtn) || ((optbtn->features & QStyleOptionToolButton::Arrow) && optbtn->arrowType && optbtn->toolButtonStyle != Qt::ToolButtonIconOnly))
                 *hvsz+=16;
         }
         return sz;

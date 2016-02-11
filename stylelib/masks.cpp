@@ -66,7 +66,7 @@ static void addRoundedRect(const QRectF &rect, const qreal radius, const Sides s
 }
 
 void
-Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const quint8 round, const Sides s, const QPoint &offset)
+Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const float round, const Sides s, const QPoint &offset)
 {
     if (!r.isValid())
         return;

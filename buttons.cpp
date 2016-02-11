@@ -293,14 +293,11 @@ Style::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, cons
 {
     const QStyleOptionToolButton *opt = qstyleoption_cast<const QStyleOptionToolButton *>(option);
     if (!opt)
-        return true;
-    if (opt->features & QStyleOptionToolButton::Arrow && opt->arrowType)
-        return drawToolButtonArrow(opt, painter, widget);
+        return true; 
     if (widget && widget->inherits("QToolBarExtension"))
         return drawExtensionArrow(opt, painter, widget);
     drawToolButtonBevel(option, painter, widget);
-    if (!(opt->icon.isNull() && opt->text.isEmpty()))
-        drawToolButtonLabel(option, painter, widget);
+    drawToolButtonLabel(option, painter, widget);
     return true;
 }
 
@@ -390,7 +387,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
             pix.fill(Qt::transparent);
         QPainter p(&pix);
         QLinearGradient lg(pix.rect().topLeft(), hor?pix.rect().bottomLeft():pix.rect().topRight());
-        lg.setStops(DSP::Settings::gradientStops(dConf.toolbtn.gradient, bc));
+        lg.setStops(DSP::Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bc));
         p.fillRect(pix.rect(), lg);
         s_map.insert(check, pix);
     }
@@ -408,7 +405,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
         painter->setClipRect(arrow);
         QLinearGradient lga(rect.topLeft(), hor?rect.bottomLeft():rect.topRight());
-        lga.setStops(Settings::gradientStops(dConf.toolbtn.gradient, bca));
+        lga.setStops(Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bca));
         GFX::drawClickable(shadow, rect, painter, lga, dConf.toolbtn.rnd, sides, opt, widget);
     }
 
@@ -463,22 +460,21 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
 
+    const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
+    const QToolBar *bar(widget?qobject_cast<const QToolBar *>(widget->parentWidget()):0);
+    const bool hor(!bar||bar->orientation() == Qt::Horizontal);
     const bool sunken(opt->state & (State_Sunken | State_Selected | State_On));
 
     painter->save();
 
-    const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
-    const QToolBar *bar(widget?qobject_cast<const QToolBar *>(widget->parentWidget()):0);
-
-    const bool hor(!bar||bar->orientation() == Qt::Horizontal);
     const bool multiTab(widget && widget->inherits("KMultiTabBarTab"));
     Sides sides(Handlers::ToolBar::sides(btn));
     QRect rect(opt->rect);
     QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
-    const quint8 sm = GFX::shadowMargin(dConf.toolbtn.shadow);
+    static const quint8 sm = GFX::shadowMargin(dConf.toolbtn.shadow);
     QRect mr(multiTab?rect:rect.sAdjusted(sm, sm, -sm, -sm));
     const bool hasMenu(Ops::hasMenu(btn, opt));
-    const bool isFlat(dConf.toolbtn.flat);
+    static const bool isFlat(dConf.toolbtn.flat);
     QPalette::ColorRole bg(Ops::bgRole(isFlat?bar:widget, isFlat?QPalette::Window:QPalette::Button)),
             fg(Ops::fgRole(isFlat?bar:widget, isFlat?QPalette::WindowText:QPalette::ButtonText));
 
@@ -491,17 +487,16 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         else
             mr.setBottom(arrow.top());
         if (!dConf.toolbtn.flat && bar)
-        {
-            painter->setPen(QColor(0, 0, 0, 32));
-            QPoint first(hor?mr.topRight():mr.bottomLeft());
-            QPoint second(hor?mr.bottomRight():mr.bottomRight());
-            painter->drawLine(first, second);
-        }
-        GFX::drawArrow(painter, opt->palette.color(fg), arrow, South, 7, Qt::AlignCenter, true);
+            GFX::drawShadow(Rect, mr, painter, false, MaxRnd, hor?Right:Bottom);
+        GFX::drawArrow(painter, opt->palette.color(fg), arrow, South, 7, Qt::AlignCenter, isEnabled(opt));
     }
     QRect ir(mr);
+    const bool hasIndicator((opt->features & QStyleOptionToolButton::Arrow) && opt->arrowType);
+    Qt::ToolButtonStyle tbStyle(opt->toolButtonStyle);
+    if (hasIndicator && tbStyle == Qt::ToolButtonTextOnly)
+        tbStyle = Qt::ToolButtonTextBesideIcon;
     if (!multiTab)
-    switch (opt->toolButtonStyle)
+    switch (tbStyle)
     {
     case Qt::ToolButtonTextBesideIcon:
         if (hor)
@@ -532,7 +527,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     if (!dConf.toolbtn.flat
             && dConf.toolbtn.shadow == Carved
             && opt->toolButtonStyle == Qt::ToolButtonIconOnly
-            && bar && bar->orientation() == Qt::Horizontal)
+            && hor)
     {
         if ((sides & Left && !(sides & Right)))
             ir.translate(2, 0);
@@ -570,8 +565,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         fg = textRole = widget->parentWidget()->foregroundRole();
         bg = widget->parentWidget()->backgroundRole();
     }
-
-    if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
+    if (opt->toolButtonStyle != Qt::ToolButtonTextOnly || hasIndicator)
     {
         QPixmap pix = opt->icon.pixmap(opt->iconSize, isEnabled(opt) ? QIcon::Normal : QIcon::Disabled);
         if (!pix.isNull())
@@ -593,6 +587,12 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
                 }
             }
             drawItemPixmap(painter, inDock?widget->rect():ir, Qt::AlignCenter, pix);
+        }
+        if (hasIndicator)
+        {
+            QStyleOptionToolButton copy(*opt);
+            copy.rect = ir;
+            drawToolButtonArrow(&copy, painter, widget);
         }
     }
     if (opt->toolButtonStyle)

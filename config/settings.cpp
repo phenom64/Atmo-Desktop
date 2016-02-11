@@ -48,6 +48,7 @@ static const char *s_key[] = {
     "toolbtn.rnd",
     "toolbtn.shadow",
     "toolbtn.gradient",
+    "toolbtn.activegradient",
     "toolbtn.tinthue",
     "toolbtn.followcolors",
     "toolbtn.invertactive",
@@ -153,6 +154,7 @@ static const QVariant s_default[] = {
     8,
     3,
     "0.0:5, 1.0:-5",
+    "0.0:-5, 1.0:5",
     "-1:0",
     false,
     false,
@@ -258,6 +260,7 @@ static const char *s_description[] = {
     /*"toolbtn.rnd"*/               "Roundness of toolbuttons",
     /*"toolbtn.shadow"*/            "Shadow of toolbuttons",
     /*"toolbtn.gradient"*/          "Gradient of toolbuttons",
+    /*"toolbtn.activegradient"*/    "Gradient on active/selected toolbuttons",
     /*"toolbtn.tinthue"*/           "Hue to tint toolbuttons w/",
     /*"toolbtn.followcolors"*/      "If the icons on toolbuttons should be manipulated to be monochromatic and follow the palette (highly experimental and does not always produce nice results)",
     /*"toolbtn.invertactive"*/      "Whether the active/checked toolbuttons should have inverted foreground/background colors a'la Mac Os",
@@ -699,6 +702,7 @@ Settings::read()
     conf.toolbtn.rnd            = qMin<quint8>(MaxRnd, readInt(Toolbtnrnd));
     conf.toolbtn.shadow         = readInt(Toolbtnshadow);
     conf.toolbtn.gradient       = stringToGrad(readString(Toolbtngrad));
+    conf.toolbtn.activeGradient = stringToGrad(readString(Toolbtnactivegrad));
     conf.toolbtn.tint           = tintColor(readString(Toolbtntint));
     conf.toolbtn.folCol         = readBool(Toolbtnfolcol);
     conf.toolbtn.invAct         = readBool(Toolbtninvact);
