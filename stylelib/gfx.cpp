@@ -185,7 +185,7 @@ void
 GFX::drawMask(const QRect &rect, QPainter *painter, const QBrush &brush, int roundNess, const Sides sides, const QPoint &offset)
 {
     if (roundNess)
-        roundNess = maxRnd(rect, sides, roundNess);
+        roundNess = Mask::maxRnd(rect, sides, roundNess);
     Mask::render(rect, brush, painter, roundNess, sides, offset);
 }
 
@@ -239,7 +239,7 @@ GFX::drawClickable(ShadowStyle s,
         r = w->rect();
 
     if (rnd)
-        rnd = maxRnd(r, sides, rnd);
+        rnd = Mask::maxRnd(r, sides, rnd);
 
     const quint8 m = shadowMargin(s);
 
@@ -375,17 +375,6 @@ GFX::drawClickable(ShadowStyle s,
 //}
 
 quint8
-GFX::maxRnd(const QRect &r, const Sides s, const quint8 rnd)
-{
-    int w = r.width(), h = r.height();
-    if (s&Left && s&Right)
-        w /= 2;
-    if (s&Top && s&Bottom)
-        h /= 2;
-    return qMin<uint>(rnd, qMin(w, h));
-}
-
-quint8
 GFX::shadowMargin(const ShadowStyle s)
 {
     switch (s)
@@ -489,16 +478,7 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     else
         rect.setRect(0, 0, size, (size>>1)+1);
 
-    if (align & (Qt::AlignVCenter|Qt::AlignHCenter))
-        rect.moveCenter(r.center());
-    if (align & Qt::AlignLeft)
-        rect.moveLeft(r.left());
-    if (align & Qt::AlignRight)
-        rect.moveRight(r.right());
-    if (align & Qt::AlignTop)
-        rect.moveTop(r.top());
-    if (align & Qt::AlignBottom)
-        rect.moveBottom(r.bottom());
+    rect = subRect(r, align, rect);
 
     QPointF points[3];
 
@@ -680,3 +660,24 @@ GFX::makeNoise()
 //    pt.end();
 }
 
+QRect
+GFX::subRect(const QRect &r, const int flags, const QRect &sr)
+{
+    int x,y,w,h;
+    QRect(r.topLeft(), sr.size()).getRect(&x, &y, &w, &h);
+    if (sr == r)
+        return sr;
+    if (flags & Qt::AlignHCenter)
+        x += ((r.size().width()>>1)-(w>>1));
+    if (flags & Qt::AlignVCenter)
+        y += ((r.size().height()>>1)-(h>>1));
+    if (flags & Qt::AlignLeft)
+        x = r.x();
+    else if (flags & Qt::AlignRight)
+        x += r.width()-w;
+    if (flags & Qt::AlignTop)
+        y = r.y();
+    else if (flags & Qt::AlignBottom)
+        y += r.height()-h;
+    return QRect(x, y, w, h);
+}

@@ -206,6 +206,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         GFX::drawMask(slider, painter, brush, roundNess, All, offset);
         const quint8 rm = GFX::shadowMargin(Raised);
         GFX::drawShadow(Raised, slider.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), roundNess+rm);
+//        GFX::drawClickable(Raised, slider, painter, brush, roundNess, All);
     }
     return true;
 }
@@ -382,8 +383,8 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
     lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
 
-    const quint8 roundNess((qMin(slider.width(), slider.height()) >> 1) & ~1);
-    GFX::drawClickable(sliderShadow, slider, painter, lg, roundNess, All, 0, widget);
+//    const quint8 roundNess(qMin(slider.width(), slider.height()) >> 1);
+    GFX::drawClickable(sliderShadow, slider, painter, lg, MaxRnd, All, 0, widget);
 
     if (dConf.sliders.dot)
     {

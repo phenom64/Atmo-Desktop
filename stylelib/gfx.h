@@ -37,13 +37,13 @@ public:
                               const Sides sides = All,
                               const QStyleOption *opt = 0,
                               const QWidget *w = 0,
-                              QPoint offset = QPoint());
-    static quint8 maxRnd(const QRect &r, const Sides s, const quint8 rnd = MaxRnd);
+                              QPoint offset = QPoint());    
     static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false, const bool bevel = false);
     static void drawRadioMark(QPainter *p, const QColor &c, const QRect &r, const bool bevel = false);
     static void drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
+    static QRect subRect(const QRect &r, const int flags, const QRect &sr);
 
 protected:
     static void initShadows();

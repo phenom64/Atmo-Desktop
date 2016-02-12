@@ -379,13 +379,13 @@ ToolBar::checkForArrowPress(QToolButton *tb, const QPoint pos)
     {
         option.subControls |= QStyle::SC_ToolButtonMenu;
         option.features |= QStyleOptionToolButton::MenuButtonPopup;
+        option.features |= QStyleOptionToolButton::HasMenu;
     }
     if (tb->arrowType() != Qt::NoArrow)
         option.features |= QStyleOptionToolButton::Arrow;
     if (tb->popupMode() == QToolButton::DelayedPopup)
         option.features |= QStyleOptionToolButton::PopupDelay;
-    if (tb->menu())
-        option.features |= QStyleOptionToolButton::HasMenu;
+
     QRect r = tb->style()->subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
     if (r.contains(pos))
         tb->setProperty(MENUPRESS, true);
@@ -577,19 +577,6 @@ ToolBar::sides(const QToolButton *btn)
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
-class RedWidget : public QWidget
-{
-public:
-    RedWidget(QWidget *parent) : QWidget(parent) {}
-protected:
-    void paintEvent(QPaintEvent *e)
-    {
-        QPainter p(this);
-        p.fillRect(rect(), Qt::red);
-        p.end();
-    }
-};
-
 //static QList<QPair<qulonglong, int> > s_spacerQueue;
 
 void
@@ -724,7 +711,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     case QEvent::MouseButtonPress:
     {
         QToolButton *tbn = qobject_cast<QToolButton *>(o);
-        if (tbn && Ops::hasMenu(tbn))
+        if (tbn && tbn->popupMode() == QToolButton::MenuButtonPopup)
             checkForArrowPress(tbn, static_cast<QMouseEvent *>(e)->pos());
         return false;
     }

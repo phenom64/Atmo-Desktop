@@ -27,27 +27,6 @@
 
 using namespace DSP;
 
-Q_DECL_EXPORT Ops *Ops::s_instance = 0;
-Q_DECL_EXPORT QQueue<QueueItem> Ops::m_laterQueue;
-
-Ops
-*Ops::instance()
-{
-    if (!s_instance)
-        s_instance = new Ops();
-    return s_instance;
-}
-
-void
-Ops::deleteInstance()
-{
-    if (s_instance)
-    {
-        delete s_instance;
-        s_instance = 0;
-    }
-}
-
 QWidget
 *Ops::window(QWidget *w)
 {
@@ -92,13 +71,13 @@ Ops::opposingRole(const QPalette::ColorRole &role)
     }
 }
 
-void
-Ops::updateGeoFromSender()
-{
-    QWidget *w = static_cast<QWidget *>(sender());
-    QResizeEvent e(w->size(), w->size());
-    qApp->sendEvent(w, &e);
-}
+//void
+//Ops::updateGeoFromSender()
+//{
+//    QWidget *w = static_cast<QWidget *>(sender());
+//    QResizeEvent e(w->size(), w->size());
+//    qApp->sendEvent(w, &e);
+//}
 
 QPalette::ColorRole
 Ops::bgRole(const QWidget *w, const QPalette::ColorRole fallBack)
@@ -120,37 +99,6 @@ Ops::fgRole(const QWidget *w, const QPalette::ColorRole fallBack)
         if (area->viewport()->autoFillBackground() && area->viewport()->palette().color(area->viewport()->foregroundRole()).alpha() == 0xff)
             return area->viewport()->foregroundRole();
     return w->foregroundRole();
-}
-
-void
-Ops::callLater(QWidget *w, Function func, int time)
-{
-    QueueItem i;
-    i.w = w;
-    i.func = func;
-    m_laterQueue.enqueue(i);
-    QTimer::singleShot(time, instance(), SLOT(later()));
-}
-
-void
-Ops::later()
-{
-    QueueItem i = m_laterQueue.dequeue();
-    QWidget *w = i.w;
-    Function func = i.func;
-    (w->*func)();
-}
-
-bool
-Ops::hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb)
-{
-#define QSTB QStyleOptionToolButton
-    if (stb && stb->features & (/*QSTB::Menu|QSTB::HasMenu*/QSTB::MenuButtonPopup))
-        return true;
-#undef QSTB
-    if (tb && (/*tb->menu()||*/tb->popupMode()==QToolButton::MenuButtonPopup))
-        return true;
-    return false;
 }
 
 void

@@ -50,7 +50,7 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
         mask = QBrush(lg);
     }
 
-    GFX::drawClickable(shadow, option->rect, painter, mask, dConf.input.rnd, All, option, widget);
+    GFX::drawClickable(shadow, option->rect, painter, mask, inUno(qobject_cast<QToolBar *>(widget?widget->parentWidget():0))?dConf.input.unoRnd:dConf.input.rnd, All, option, widget);
     return true;
 }
 

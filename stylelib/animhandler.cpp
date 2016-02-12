@@ -351,7 +351,7 @@ ToolBtns::manage(QToolButton *tb)
     tb->removeEventFilter(instance());
     tb->installEventFilter(instance());
     tb->setAttribute(Qt::WA_Hover);
-    if (Ops::hasMenu(tb))
+    if (tb->popupMode() == QToolButton::MenuButtonPopup)
         tb->setAttribute(Qt::WA_MouseTracking);
     if (QToolBar *bar = qobject_cast<QToolBar *>(tb->parentWidget()))
     {
@@ -428,7 +428,7 @@ ToolBtns::animate()
         QPair<Level, ArrowLevel> levels(it.value());
         bool arrowMouse(false);
         bool btnMouse(false);
-        if (Ops::hasMenu(tb))
+        if (tb->popupMode() == QToolButton::MenuButtonPopup)
         {
             QStyleOptionToolButton option;
             option.initFrom(tb);
@@ -436,16 +436,15 @@ ToolBtns::animate()
             if (tb->popupMode() == QToolButton::MenuButtonPopup) {
                 option.subControls |= QStyle::SC_ToolButtonMenu;
                 option.features |= QStyleOptionToolButton::MenuButtonPopup;
+                option.features |= QStyleOptionToolButton::HasMenu;
             }
             if (tb->arrowType() != Qt::NoArrow)
                 option.features |= QStyleOptionToolButton::Arrow;
             if (tb->popupMode() == QToolButton::DelayedPopup)
                 option.features |= QStyleOptionToolButton::PopupDelay;
-            if (tb->menu())
-                option.features |= QStyleOptionToolButton::HasMenu;
             QRect r = tb->style()->subControlRect(QStyle::CC_ToolButton, &option, QStyle::SC_ToolButtonMenu, tb);
             QPoint pos(tb->mapFromGlobal(QCursor::pos()));
-            arrowMouse = bool(Ops::hasMenu(tb, &option) && r.contains(pos));
+            arrowMouse = r.contains(pos);
             btnMouse = bool(tb->underMouse() && tb == m_hovered && !arrowMouse);
         }
         else
@@ -507,7 +506,7 @@ ToolBtns::eventFilter(QObject *o, QEvent *e)
     }
     if (qobject_cast<QToolButton *>(o))
     if (e->type() == QEvent::Enter || e->type() == QEvent::HoverEnter
-            || (e->type() == QEvent::HoverMove && !m_timer->isActive() && Ops::hasMenu(static_cast<const QToolButton *>(o))))
+            || (e->type() == QEvent::HoverMove && !m_timer->isActive() && static_cast<const QToolButton *>(o)->popupMode() == QToolButton::MenuButtonPopup))
     {
         QToolButton *tb = static_cast<QToolButton *>(o);
         if (!tb->isEnabled())

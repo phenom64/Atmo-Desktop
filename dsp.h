@@ -160,6 +160,7 @@ public:
 protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
     static int layoutSpacingAndMargins(const QWidget *w);
+    static bool inUno(QToolBar *bar, bool *activeWindow = 0);
     void installFilter(QWidget *w);
 #define TESTOPT(_STATE_) static inline bool is##_STATE_(const QStyleOption *opt) { return opt->state & State_##_STATE_; }
     TESTOPT(Sunken) TESTOPT(MouseOver) TESTOPT(Selected) TESTOPT(Active) TESTOPT(Enabled) TESTOPT(HasFocus) TESTOPT(On)

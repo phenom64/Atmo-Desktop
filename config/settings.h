@@ -71,6 +71,7 @@ public:
         Toolbtninvact,
         Toolbtnflat,
         Inputrnd,
+        Inputunornd,
         Inputshadow,
         Inputgrad,
         Inputtint,
@@ -162,7 +163,7 @@ public:
         } toolbtn;
         struct input
         {
-            quint8 rnd, shadow;
+            quint8 rnd, shadow, unoRnd;
             Gradient gradient;
             Tint tint;
         } input;

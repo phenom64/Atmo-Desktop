@@ -222,7 +222,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             else if (!hor && sz.width() < minSz)
                 sz.setWidth(minSz);
 
-            if (Ops::hasMenu(btn, optbtn) || ((optbtn->features & QStyleOptionToolButton::Arrow) && optbtn->arrowType && optbtn->toolButtonStyle != Qt::ToolButtonIconOnly))
+            if ((optbtn->features & QStyleOptionToolButton::MenuButtonPopup) || ((optbtn->features & QStyleOptionToolButton::Arrow) && optbtn->arrowType && optbtn->toolButtonStyle != Qt::ToolButtonIconOnly))
                 *hvsz+=16;
         }
         return sz;

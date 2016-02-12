@@ -24,26 +24,14 @@ class QStyleOptionToolButton;
 namespace DSP
 {
 
-typedef void (QWidget::*Function)();
-class QueueItem
+class Q_DECL_EXPORT Ops
 {
 public:
-    QWidget *w;
-    Function func;
-};
-
-class Q_DECL_EXPORT Ops : public QObject
-{
-    Q_OBJECT
-public:
-    static Ops *instance();
-    static void deleteInstance();
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
-    static bool hasMenu(const QToolButton *tb, const QStyleOptionToolButton *stb = 0);
     static void swap(int &t1, int &t2);
     template<typename T>static void swap(T &t1, T &t2)
     {
@@ -78,16 +66,6 @@ public:
         }
         return 0;
     }
-    //convenience delayer... you can call other functions then slots later....
-    static void callLater(QWidget *w, Function func, int time = 500);
-
-public slots:
-    void updateGeoFromSender();
-    void later();
-
-private:
-    static Ops *s_instance;
-    static QQueue<QueueItem> m_laterQueue;
 };
 } //namespace
 

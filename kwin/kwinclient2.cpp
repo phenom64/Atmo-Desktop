@@ -203,7 +203,8 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_isHovered(false)
     , m_embedder(0)
 {
-
+    if (s_factory)
+        setParent(s_factory);
 }
 
 Deco::~Deco()

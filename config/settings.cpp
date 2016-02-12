@@ -55,6 +55,7 @@ static const char *s_key[] = {
     "toolbtn.flat",
 
     "input.rnd",
+    "input.inunornd",
     "input.shadow",
     "input.gradient",
     "input.tinthue",
@@ -160,6 +161,7 @@ static const QVariant s_default[] = {
     false,
     false,
 
+    8,
     8,
     3,
     "0.0:-5, 1.0:5",
@@ -267,6 +269,7 @@ static const char *s_description[] = {
     /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
 
     /*"input.rnd"*/                 "Roundness of input boxes, lineedits and spinboxes and such",
+    /*"input.inunornd"*/            "Roundness of inputs inside UNO",
     /*"input.shadow"*/              "Shadow of input boxes, lineedits and spinboxes and such",
     /*"input.gradient"*/            "Gradient of input boxes, lineedits and spinboxes and such",
     /*"input.tinthue"*/             "Hue to tint input boxes, lineedits and spinboxes and such w/",
@@ -666,7 +669,7 @@ QSettings
 void
 Settings::read()
 {
-    conf.baseSize               = 23;
+    conf.baseSize               = 24;
     //globals
     conf.opacity                = 1.0f/*readFloat(Opacity)/100.0f*/;
     conf.blackList              = readStringList(Blacklist);
@@ -709,6 +712,7 @@ Settings::read()
     conf.toolbtn.flat           = readBool(Toolbtnflat);
     //inputs
     conf.input.rnd              = qMin<quint8>(MaxRnd, readInt(Inputrnd));
+    conf.input.unoRnd           = qMin<quint8>(MaxRnd, readInt(Inputunornd));
     conf.input.shadow           = readInt(Inputshadow);
     conf.input.gradient         = stringToGrad(readString(Inputgrad));
     conf.input.tint             = tintColor(readString(Inputtint));

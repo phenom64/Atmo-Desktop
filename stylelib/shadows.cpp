@@ -54,7 +54,7 @@ Shadow::genShadow()
         blurredImage.fill(Qt::transparent);
         QPainter pt(&blurredImage);
         QRectF rt(rect);
-        float rad(0.5f);
+        float rad(0.75f);
         rt.adjust(1.0f*rad, 1.5f*rad, -1.0f*rad, -0.75f*rad);
         int rnd(m_round);
         if (rnd)

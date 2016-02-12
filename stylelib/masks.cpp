@@ -15,34 +15,29 @@ static void addRoundedRect(const QRectF &rect, const qreal radius, const Sides s
     if (r.isNull())
         return;
 
-    qreal xRadius = radius;
-    qreal yRadius = radius;
+//    qreal xRadius = radius;
+//    qreal yRadius = radius;
 
-    qreal w = r.width() / 2;
-    qreal h = r.height() / 2;
+//    qreal w = r.width() / 2;
+//    qreal h = r.height() / 2;
 
-    if (w == 0) {
-        xRadius = 0;
-    } else {
-        xRadius = 100 * qMin(xRadius, w) / w;
-    }
-    if (h == 0) {
-        yRadius = 0;
-    } else {
-        yRadius = 100 * qMin(yRadius, h) / h;
-    }
-
-    if (xRadius <= 0 || yRadius <= 0) {             // add normal rectangle
-        path.addRect(r);
-        return;
-    }
+//    if (w == 0) {
+//        xRadius = 0;
+//    } else {
+//        xRadius = 100 * qMin(xRadius, w) / w;
+//    }
+//    if (h == 0) {
+//        yRadius = 0;
+//    } else {
+//        yRadius = 100 * qMin(yRadius, h) / h;
+//    }
 
     qreal x = r.x();
     qreal y = r.y();
-    w = r.width();
-    h = r.height();
-    qreal rxx2 = w*xRadius/100;
-    qreal ryy2 = h*yRadius/100;
+    qreal w = r.width();
+    qreal h = r.height();
+    qreal rxx2 = radius*2/*w*xRadius/100*/;
+    qreal ryy2 = radius*2/*h*yRadius/100*/;
     if ((s & (Top|Left)) == (Top|Left))
     {
         path.arcMoveTo(x, y, rxx2, ryy2, 180);
@@ -66,7 +61,7 @@ static void addRoundedRect(const QRectF &rect, const qreal radius, const Sides s
 }
 
 void
-Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const float round, const Sides s, const QPoint &offset)
+Mask::render(const QRectF &r, const QBrush &b, QPainter *p, float round, const Sides s, const QPoint &offset)
 {
     if (!r.isValid())
         return;
@@ -76,7 +71,7 @@ Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const float round, c
         return;
     }
     QPainterPath path;
-    addRoundedRect(r, round, s, path);
+    addRoundedRect(r, maxRnd(r, s, round), s, path);
     const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
     p->setRenderHint(QPainter::Antialiasing);
     const QPoint origin(p->brushOrigin());
@@ -85,4 +80,26 @@ Mask::render(const QRectF &r, const QBrush &b, QPainter *p, const float round, c
     p->fillPath(path, b);
     p->setBrushOrigin(origin);
     p->setRenderHint(QPainter::Antialiasing, hadAA);
+}
+
+float
+Mask::maxRnd(const QRectF &r, const Sides s, const float rnd)
+{
+    float w = r.width(), h = r.height();
+    if (s&Left && s&Right)
+        w /= 2.0f;
+    if (s&Top && s&Bottom)
+        h /= 2.0f;
+    return qMin(rnd, qMin(w, h));
+}
+
+quint8
+Mask::maxRnd(const QRect &r, const Sides s, const quint8 rnd)
+{
+    int w = r.width(), h = r.height();
+    if (s&Left && s&Right)
+        w >>= 1;
+    if (s&Top && s&Bottom)
+        h >>= 1;
+    return qMin<uint>(rnd, qMin(w, h));
 }

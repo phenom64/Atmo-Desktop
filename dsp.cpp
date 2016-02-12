@@ -173,8 +173,8 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
 void
 Style::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const QPixmap &pixmap) const
 {
-    painter->drawPixmap(itemPixmapRect(rect, alignment, pixmap), pixmap);
-//    QCommonStyle::drawItemPixmap(painter, rect, alignment, pixmap);
+    painter->drawPixmap(itemPixmapRect(rect, alignment, pixmap).intersected(rect), pixmap);
+//    QStyle::drawItemPixmap(painter, rect, alignment, pixmap);
 }
 
 QPixmap
@@ -245,20 +245,15 @@ Style::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget 
 QRect
 Style::itemPixmapRect(const QRect &r, int flags, const QPixmap &pixmap) const
 {
-    QRect ret(r.topLeft(), pixmap.size());
-    if (ret == r)
-        return ret;
-    if (flags & Qt::AlignHCenter)
-        ret.moveLeft(ret.left()+((r.width()>>1)-(ret.width()>>1)));
-    if (flags & Qt::AlignVCenter)
-        ret.moveTop(ret.top()+((r.height()>>1)-(ret.height()>>1)));
-    if (flags & Qt::AlignLeft)
-        ret.moveLeft(r.left());
-    else if (flags & Qt::AlignRight)
-        ret.moveRight(r.right());
-    if (flags & Qt::AlignTop)
-        ret.moveTop(r.top());
-    else if (flags & Qt::AlignBottom)
-        ret.moveBottom(r.bottom());
-    return ret;
+    return GFX::subRect(r, flags, pixmap.rect());
+}
+
+bool
+Style::inUno(QToolBar *bar, bool *activeWindow)
+{
+    const QMainWindow *win(bar?qobject_cast<const QMainWindow *>(bar->window()):0);
+    const bool inUno = win && bar && win->toolBarArea(bar) == Qt::TopToolBarArea;
+    if (activeWindow)
+        *activeWindow = Handlers::Window::isActiveWindow(win);
+    return inUno;
 }

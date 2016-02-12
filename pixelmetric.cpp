@@ -14,6 +14,7 @@
 #include <QAbstractScrollArea>
 #include <QSplitter>
 #include <QStyleOption>
+#include <QToolBar>
 //#include <QToolBar>
 
 #include "dsp.h"
@@ -169,7 +170,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_ToolBarExtensionExtent: return dConf.arrowSize*2;
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
-    case PM_ToolBarFrameWidth: return 2;
+    case PM_ToolBarFrameWidth: return inUno(qobject_cast<QToolBar *>(const_cast<QWidget *>(widget)))?2:6;
     case PM_ToolBarHandleExtent:
     {
 //        if (TitleWidget::supported(qobject_cast<const QToolBar *>(widget)))
