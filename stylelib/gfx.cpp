@@ -210,7 +210,6 @@ GFX::drawClickable(ShadowStyle s,
     if (s >= ShadowCount)
         return;
 
-    const bool isToolBox(w && qobject_cast<const QToolBox *>(w->parentWidget()));
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     bool sunken(opt && opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange));
     if (isLineEdit)
@@ -232,11 +231,8 @@ GFX::drawClickable(ShadowStyle s,
         isEnabled = false;
     if (opt
             && (sunken || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
-            && (s == Etched || s == Raised) && !isToolBox)
+            && (s == Etched || s == Raised))
         s = Sunken;
-
-    if (isToolBox && s!=Carved) //carved gets special handling, need to save that for now
-        r = w->rect();
 
     if (rnd)
         rnd = Mask::maxRnd(r, sides, rnd);
@@ -258,8 +254,6 @@ GFX::drawClickable(ShadowStyle s,
     case SemiCarved:
     {
         QLinearGradient lg(r.topLeft(), r.bottomLeft());
-        if (isToolBox)
-            r = w->rect();
         lg.setColorAt(0, QColor(0, 0, 0, dConf.shadows.opacity));
         lg.setColorAt(1, QColor(255, 255, 255, dConf.shadows.illumination));
         drawMask(r, p, lg, rnd, sides);
@@ -301,8 +295,6 @@ GFX::drawClickable(ShadowStyle s,
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Raised:
     {
-        if (isToolBox)
-            break;
         drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides);
         if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
         {

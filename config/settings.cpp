@@ -718,6 +718,7 @@ Settings::read()
     conf.input.tint             = tintColor(readString(Inputtint));
     //tabs
     conf.tabs.safari            = readBool(Tabsaf);
+    conf.tabs.regular           = false;
     conf.tabs.rnd               = qMin<quint8>(MaxRnd, readInt(Tabrnd));
     conf.tabs.shadow            = readInt(Tabshadow);
     conf.tabs.gradient          = stringToGrad(readString(Tabgrad));

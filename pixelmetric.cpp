@@ -82,9 +82,9 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_DefaultLayoutSpacing:
         return 4;
     case PM_LayoutLeftMargin:
-    case PM_LayoutTopMargin:
     case PM_LayoutRightMargin:
     case PM_LayoutBottomMargin:
+    case PM_LayoutTopMargin:
         return layoutSpacingAndMargins(widget);
     case PM_HeaderMarkSize:
         return 9;
@@ -106,9 +106,17 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
 //            if (tab && tab->position == QStyleOptionTab::Beginning)
 //                return 128;
 //        }
-        return 16;
+//        return 16;
+        return 0;
     case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
-        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?8:4;
+    {
+//        if (dConf.tabs.regular)
+//            return 2;
+        return 0;
+//        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
+//            return 8;
+//        return 4;
+    }
 //    case PM_TabBarBaseHeight:	//22	Height of the area between the tab bar and the tab pages.
 //    case PM_TabBarBaseOverlap:	//23	Number of pixels the tab bar overlaps the tab bar base.
 //    case PM_TabBarScrollButtonWidth:	//?
@@ -171,13 +179,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
     case PM_ToolBarFrameWidth: return inUno(qobject_cast<QToolBar *>(const_cast<QWidget *>(widget)))?2:6;
-    case PM_ToolBarHandleExtent:
-    {
-//        if (TitleWidget::supported(qobject_cast<const QToolBar *>(widget)))
-//            if (WindowData *d = WindowData::memory(widget->window()->winId(), widget->window()))
-//                return d->value<uint>(WindowData::LeftEmbedSize)+8;
-        return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
-    }
+    case PM_ToolBarHandleExtent: return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
 //    case PM_SliderThickness: return 12;
     case PM_ScrollBarExtent: if (dConf.scrollers.style) return dConf.scrollers.size; return Ops::isOrInsideA<const QDockWidget *>(widget)?(int)(dConf.scrollers.size*0.8f)|1:dConf.scrollers.size;
     case PM_SliderThickness:

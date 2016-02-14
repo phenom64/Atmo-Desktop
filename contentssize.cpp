@@ -114,9 +114,10 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             break;
 
         const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
-        const bool safBar(Ops::isSafariTabBar(bar));
+        const bool safBar = Ops::isSafariTabBar(bar);
+        const bool vertical = isVertical(tab, bar);
         QSize sz(contentsSize);
-        if (safBar || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
+        if (safBar)
         {
             if (bar->expanding())
             {
@@ -140,30 +141,39 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                             w-=wi->width();
                     }
                 }
-                sz.setWidth(bar->count() == 1 ? bar->width() : (w/bar->count())-1);
+                sz.setWidth(bar->count() == 1 ? w : (w/bar->count())-1);
             }
             else
-                sz.rwidth() += 6;
-//            else if (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab)
-//            {
-//                sz.rwidth() += pixelMetric(PM_TabBarTabOverlap, opt, widget);
-//            }
-            if (!safBar)
-                sz.rheight() += 6;
+            {
+                if (vertical)
+                    sz.rheight() += 20;
+                else
+                    sz.rwidth() += 20;
+            }
         }
-        if ((tab->state & State_Selected) && ((bar && !bar->expanding()) || !safBar))
+        if (!bar || !bar->expanding())
         {
             const QString s(tab->text);
-            QFont f(bar?bar->font():qApp->font());
+            QFont f(bar ? bar->font() : qApp->font());
             int nonBoldWidth(QFontMetrics(f).boundingRect(s).width());
             f.setBold(true);
             int boldWidth(QFontMetrics(f).boundingRect(s).width());
             int add(boldWidth-nonBoldWidth);
-            if (!isVertical(tab, bar))
+            if (!vertical)
                 sz.rwidth() += add;
             else
                 sz.rheight() += add;
         }
+        if (sz.height() < dConf.baseSize)
+            sz.setHeight(dConf.baseSize);
+        if (sz.width() < dConf.baseSize)
+            sz.setWidth(dConf.baseSize);
+        if (bar->expanding())
+            return sz;
+        if (vertical)
+            sz.rheight() += TabPadding;
+        else
+            sz.rwidth() += TabPadding;
         return sz;
     }
     case CT_ToolButton:

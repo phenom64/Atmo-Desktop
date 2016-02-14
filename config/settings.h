@@ -195,7 +195,7 @@ public:
         {
             quint8 rnd, safrnd, closeButtonSide, shadow;
             Gradient gradient;
-            bool safari;
+            bool safari, regular;
         } tabs;
         struct uno
         {

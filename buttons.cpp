@@ -403,7 +403,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, sides, opt, widget);
     sides |= restoreSide;
 
-    if (sunken && dConf.toolbtn.shadow == Etched && sides != All)
+    if (sunken && (dConf.toolbtn.shadow == Etched || dConf.toolbtn.shadow == Raised) && sides != All)
     {
         QPixmap pix(rect.size());
         pix.fill(Qt::transparent);
@@ -432,15 +432,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
     const int nextSide=hor?Right:Bottom;
     if (!(sides&nextSide) && !(nextSelected&&dConf.toolbtn.invAct))
-    {
-        const QPen &pen(painter->pen());
-        painter->setPen(QColor(0, 0, 0, 32));
-        const QRect mr(opt->rect.sAdjusted(m, m, -m, -m));
-        QPoint first(hor?mr.topRight():mr.bottomLeft());
-        QPoint second(hor?mr.bottomRight():mr.bottomRight());
-        painter->drawLine(first, second);
-        painter->setPen(pen);
-    }
+        GFX::drawShadow(Rect, opt->rect.sAdjusted(m, m, -m, -m), painter, false, MaxRnd, hor?Right:Bottom); //line...
     return true;
 }
 
@@ -470,6 +462,19 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
 
     QPalette::ColorRole bg = bar||multiTab ? QPalette::Button : QPalette::Window;
     QPalette::ColorRole fg = bar||multiTab ? QPalette::ButtonText : QPalette::WindowText;
+    if (widget)
+    {
+        fg = widget->foregroundRole();
+        bg = widget->backgroundRole();
+        QWidget *parent = widget->parentWidget();
+        if (parent
+                && parent->autoFillBackground()
+                && parent->backgroundRole() != QPalette::Window)
+        {
+            bg = parent->backgroundRole();
+            fg = parent->foregroundRole();
+        }
+    }
 
     if (hasMenu)
     {
@@ -487,10 +492,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         ir.setRight(hor?ir.left()+opt->iconSize.width():opt->rect.right());
         mr.setLeft(hor?ir.right():opt->rect.left());
     }
-    if (!multiTab)
-    switch (opt->toolButtonStyle)
-    {
-    case Qt::ToolButtonTextBesideIcon:
+    if (!multiTab && opt->toolButtonStyle == Qt::ToolButtonTextBesideIcon)
     {
         if (hor)
         {
@@ -507,19 +509,14 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
             ir.moveTop(ir.top()+4);
             mr.setTop(ir.bottom());
         }
-        break;
     }
-    case Qt::ToolButtonTextUnderIcon:
+    else if (opt->toolButtonStyle == Qt::ToolButtonTextUnderIcon)
     {
         ir.setBottom(ir.top()+opt->iconSize.height());
         if (!hor)
             ir.moveTop(ir.top()+4);
         mr.setTop(ir.bottom()+(!hor*4));
-        break;
     }
-    default: break;
-    }
-
     if (!dConf.toolbtn.flat
             && dConf.toolbtn.shadow == Carved
             && opt->toolButtonStyle == Qt::ToolButtonIconOnly
@@ -569,7 +566,6 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     }
     if (opt->toolButtonStyle)
     {
-        painter->save();
         if (bar && !hor)
         {
             painter->translate(mr.center());
@@ -582,7 +578,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
             mr.moveCenter(tmp.center());
         }
         drawItemText(painter, mr, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, fg);
-        painter->restore();
+        painter->resetTransform();
     }
     return true;
 }

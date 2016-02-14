@@ -13,7 +13,9 @@ enum {
     PESize = QStyle::PE_PanelMenu+1,
     EVSize = QEvent::PlatformPanel+1,
     MaxRnd = 11,
-    Steps = 16
+    Steps = 16,
+    InactiveTabOffset = 2,
+    TabPadding = 12
 };
 enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
 enum Position { West = 0, North, East, South, PosCount };

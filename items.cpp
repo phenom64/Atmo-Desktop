@@ -379,7 +379,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
         BOLD;
         const QRect ar(subElementRect(SE_HeaderArrow, opt, widget));
         fg = QPalette::HighlightedText;
-        GFX::drawArrow(painter, option->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, dConf.arrowSize, Qt::AlignCenter, true);
+        GFX::drawArrow(painter, option->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, dConf.arrowSize, Qt::AlignCenter, isEnabled(opt));
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));

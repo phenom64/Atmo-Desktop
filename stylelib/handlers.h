@@ -267,7 +267,7 @@ protected:
     void unlockDock(QDockWidget *dock);
 
 protected slots:
-    void lockWindowLater(QWidget *win);
+    void lockWindowLater(const qulonglong w);
     void lockDocks(const bool locked);
 
 private:

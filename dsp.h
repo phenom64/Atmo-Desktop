@@ -76,6 +76,9 @@ public:
     bool drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawRegularTab(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawRegularTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawRegularTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawComboBoxLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;

@@ -114,12 +114,12 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
 
         if (opt->minimum == opt->sliderValue)
             fgColor.setAlpha(127);
-        GFX::drawArrow(painter, fgColor, up, hor?West:North, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
+        GFX::drawArrow(painter, fgColor, up.translated(hor?-1:0, hor?0:-1), hor?West:North, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
         if (opt->maximum == opt->sliderValue)
             fgColor.setAlpha(127);
         else
             fgColor.setAlpha(255);
-        GFX::drawArrow(painter, fgColor, down, hor?East:South, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
+        GFX::drawArrow(painter, fgColor, down.translated(hor?1:0, hor?0:1), hor?East:South, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
 
         const QPen pen(painter->pen());
         const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
@@ -206,7 +206,6 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         GFX::drawMask(slider, painter, brush, roundNess, All, offset);
         const quint8 rm = GFX::shadowMargin(Raised);
         GFX::drawShadow(Raised, slider.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), roundNess+rm);
-//        GFX::drawClickable(Raised, slider, painter, brush, roundNess, All);
     }
     return true;
 }
@@ -237,7 +236,7 @@ Style::drawScrollAreaCorner(const QStyleOption *option, QPainter *painter, const
             return true;
         const bool inView((area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
                           || qobject_cast<const QTextEdit *>(area)
-                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
+                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView")));
         const bool bothVisible(area->verticalScrollBar()->isVisible() && area->horizontalScrollBar()->isVisible());
         if (!bothVisible || !inView)
             return true;
@@ -382,8 +381,6 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
     QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
     lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
-
-//    const quint8 roundNess(qMin(slider.width(), slider.height()) >> 1);
     GFX::drawClickable(sliderShadow, slider, painter, lg, MaxRnd, All, 0, widget);
 
     if (dConf.sliders.dot)

@@ -232,11 +232,20 @@ TitleWidget::supported(const QToolBar *toolBar)
 {
     if (!dConf.deco.embed||!dConf.uno.enabled||!toolBar)
         return false;
+
+    qDebug() << "toolbar in desktopwindow..." << (toolBar->window()->windowType() == Qt::Desktop) << toolBar << toolBar->window();
+    if (toolBar->window()->windowType() == Qt::Desktop)
+    {
+        qDebug() << "toolbar in desktopwindow..." << toolBar->window();
+        return false;
+    }
+
     bool hasMacMenu(false);
 #if HASDBUS//        if (!qobject_cast<QToolButton *>(w) && w->isVisible())
     //            return false;
         hasMacMenu = BE::MacMenu::isActive();
 #endif
+
     if (!hasMacMenu
             || dConf.app == Settings::SystemSettings
             || toolBar->isFloating()
@@ -249,14 +258,18 @@ TitleWidget::supported(const QToolBar *toolBar)
             || (toolBar->parentWidget() && toolBar->parentWidget()->parentWidget()))
         return false;
 
+#if QT_VERSION >= 0x050000
+    const QList<QWidget *> kids(toolBar->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
+#else
     const QList<QWidget *> kids(toolBar->findChildren<QWidget *>());
+#endif
     for (int i = 0; i < kids.count(); ++i)
     {
         QWidget *w(kids.at(i));
 //        qDebug() << w;
         if (/*!w->inherits("QToolBarSeparator") || w->inherits("QToolBarExtension") ||*/ qobject_cast<TitleWidget *>(w) || w->width() < 128)
             continue;
-        if (!qobject_cast<QToolButton *>(w) && w->isVisible())
+        if (w->isVisible() && !qobject_cast<QToolButton *>(w))
             return false;
     }
 
@@ -513,9 +526,11 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
         return;
     if (forceSizeUpdate)
     {
+        bar->removeEventFilter(this);
         const QSize is(bar->iconSize());
         bar->setIconSize(is - QSize(1, 1));
         bar->setIconSize(is);
+        bar->installEventFilter(this);
         s_dirty.insert(bar, true);
         return;
     }
@@ -2046,12 +2061,15 @@ Dock
 void
 Dock::manage(QWidget *win)
 {
-    QMetaObject::invokeMethod(instance(), "lockWindowLater", Qt::QueuedConnection, Q_ARG(QWidget *, win));
+    QMetaObject::invokeMethod(instance(), "lockWindowLater", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)win));
 }
 
 void
-Dock::lockWindowLater(QWidget *win)
+Dock::lockWindowLater(const qulonglong w)
 {
+    QWidget *win = getChild<QWidget *>(w);
+    if (!win)
+        return;
     QAction *a = new QAction("DSP::DockLocker", win);
     a->setObjectName("DSP::DockLocker");
     a->setShortcut(QKeySequence("Ctrl+Alt+D"));

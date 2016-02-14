@@ -166,6 +166,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
 
         const bool east(tab->shape == QTabBar::RoundedEast || tab->shape == QTabBar::TriangularEast);
         const bool west(tab->shape == QTabBar::RoundedWest || tab->shape == QTabBar::TriangularWest);
+        const bool south(tab->shape == QTabBar::RoundedSouth || tab->shape == QTabBar::TriangularSouth);
         const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide);
         const bool closable(bar && bar->tabsClosable());
 
@@ -224,6 +225,38 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         int trans(0);
         if (bar->documentMode() && !safBar && !isVertical(tab, bar))
             trans = /*opt->state & State_Selected?-4:*/-2;
+
+        if (dConf.tabs.regular && !isSelected(tab))
+        {
+            switch (tab->shape)
+            {
+            case QTabBar::RoundedNorth:
+            case QTabBar::TriangularNorth:
+                leftRect.translate(0, InactiveTabOffset);
+                rightRect.translate(0, InactiveTabOffset);
+                textRect.translate(0, InactiveTabOffset);
+                break;
+            case QTabBar::RoundedSouth:
+            case QTabBar::TriangularSouth:
+                leftRect.translate(0, -InactiveTabOffset);
+                rightRect.translate(0, -InactiveTabOffset);
+                textRect.translate(0, -InactiveTabOffset);
+                break;
+            case QTabBar::RoundedWest:
+            case QTabBar::TriangularWest:
+                leftRect.translate(InactiveTabOffset, 0);
+                rightRect.translate(InactiveTabOffset, 0);
+                textRect.translate(InactiveTabOffset, 0);
+                break;
+            case QTabBar::RoundedEast:
+            case QTabBar::TriangularEast:
+                leftRect.translate(-InactiveTabOffset, 0);
+                rightRect.translate(-InactiveTabOffset, 0);
+                textRect.translate(-InactiveTabOffset, 0);
+                break;
+            default: break;
+            }
+        }
 
         switch (r)
         {

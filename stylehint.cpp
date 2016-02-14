@@ -15,9 +15,12 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
 {
     switch (sh)
     {
+    case SH_TabBar_SelectMouseType: return QEvent::MouseButtonRelease;
     case SH_TabBar_PreferNoArrows: return false;
     case SH_TabBar_Alignment:
     {
+        if (dConf.tabs.regular)
+            return Qt::AlignLeft;
         const QTabBar *tabBar = qobject_cast<const QTabBar *>(w);
         const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
         if (Ops::isSafariTabBar(tabBar))
