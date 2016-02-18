@@ -162,14 +162,13 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
         QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));
         QRect textRect(rect);
-        QRect leftRect;
 
         const bool east(tab->shape == QTabBar::RoundedEast || tab->shape == QTabBar::TriangularEast);
         const bool west(tab->shape == QTabBar::RoundedWest || tab->shape == QTabBar::TriangularWest);
-        const bool south(tab->shape == QTabBar::RoundedSouth || tab->shape == QTabBar::TriangularSouth);
         const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide);
         const bool closable(bar && bar->tabsClosable());
 
+        QRect leftRect;
         if (tab->leftButtonSize.isValid() ||
                 ((!closable || (closable && !leftClose)) && !tab->icon.isNull()))
         {
@@ -219,53 +218,126 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
                 textRect.setRight(rightRect.left());
         }
 
-        if (tab->text.isEmpty())
-            textRect = QRect();
-
-        int trans(0);
-        if (bar->documentMode() && !safBar && !isVertical(tab, bar))
-            trans = /*opt->state & State_Selected?-4:*/-2;
-
-        if (dConf.tabs.regular && !isSelected(tab))
+        const bool needShift = dConf.tabs.regular && !tab->documentMode && !isSelected(tab);
+        const bool last = tab->position == QStyleOptionTabV3::End;
+        const bool first = tab->position == QStyleOptionTabV3::Beginning||tab->position == QStyleOptionTabV3::OnlyOneTab;
+        const bool needPadding = !safBar && tab->documentMode;
+        switch (tab->shape)
         {
-            switch (tab->shape)
+        case QTabBar::RoundedNorth:
+        case QTabBar::TriangularNorth:
+            if (dConf.tabs.regular && !tab->documentMode)
             {
-            case QTabBar::RoundedNorth:
-            case QTabBar::TriangularNorth:
+                leftRect.translate(0, -TabBarBottomSize);
+                rightRect.translate(0, -TabBarBottomSize);
+                textRect.translate(0, -TabBarBottomSize);
+            }
+            if (needShift)
+            {
                 leftRect.translate(0, InactiveTabOffset);
                 rightRect.translate(0, InactiveTabOffset);
                 textRect.translate(0, InactiveTabOffset);
-                break;
-            case QTabBar::RoundedSouth:
-            case QTabBar::TriangularSouth:
+            }
+            if (needPadding && first)
+            {
+                leftRect.translate(TabDocModePadding, 0);
+                textRect.setLeft(textRect.left() + TabDocModePadding);
+            }
+            else if (needPadding && last)
+            {
+                rightRect.translate(-TabDocModePadding, 0);
+                textRect.setRight(textRect.right() - TabDocModePadding);
+            }
+            break;
+        case QTabBar::RoundedSouth:
+        case QTabBar::TriangularSouth:
+            if (dConf.tabs.regular && !tab->documentMode)
+            {
+                leftRect.translate(0, TabBarBottomSize);
+                rightRect.translate(0, TabBarBottomSize);
+                textRect.translate(0, TabBarBottomSize);
+            }
+            if (needShift)
+            {
                 leftRect.translate(0, -InactiveTabOffset);
                 rightRect.translate(0, -InactiveTabOffset);
                 textRect.translate(0, -InactiveTabOffset);
-                break;
-            case QTabBar::RoundedWest:
-            case QTabBar::TriangularWest:
+            }
+            if (needPadding && first)
+            {
+                leftRect.translate(TabDocModePadding, 0);
+                textRect.setLeft(textRect.left() + TabDocModePadding);
+            }
+            else if (needPadding && last)
+            {
+                rightRect.translate(-TabDocModePadding, 0);
+                textRect.setRight(textRect.right() - TabDocModePadding);
+            }
+            break;
+        case QTabBar::RoundedWest:
+        case QTabBar::TriangularWest:
+            if (dConf.tabs.regular && !tab->documentMode)
+            {
+                leftRect.translate(-TabBarBottomSize, 0);
+                rightRect.translate(-TabBarBottomSize, 0);
+                textRect.translate(-TabBarBottomSize, 0);
+            }
+            if (needShift)
+            {
                 leftRect.translate(InactiveTabOffset, 0);
                 rightRect.translate(InactiveTabOffset, 0);
                 textRect.translate(InactiveTabOffset, 0);
-                break;
-            case QTabBar::RoundedEast:
-            case QTabBar::TriangularEast:
+            }
+            if (needPadding && first)
+            {
+                leftRect.translate(0, TabDocModePadding);
+                textRect.setTop(textRect.top() + TabDocModePadding);
+            }
+            else if (needPadding && last)
+            {
+                rightRect.translate(0, -TabDocModePadding);
+                textRect.setBottom(textRect.bottom() - TabDocModePadding);
+            }
+            break;
+        case QTabBar::RoundedEast:
+        case QTabBar::TriangularEast:
+            if (dConf.tabs.regular && !tab->documentMode)
+            {
+                leftRect.translate(TabBarBottomSize, 0);
+                rightRect.translate(TabBarBottomSize, 0);
+                textRect.translate(TabBarBottomSize, 0);
+            }
+            if (needShift)
+            {
                 leftRect.translate(-InactiveTabOffset, 0);
                 rightRect.translate(-InactiveTabOffset, 0);
                 textRect.translate(-InactiveTabOffset, 0);
-                break;
-            default: break;
             }
+            if (needPadding && first)
+            {
+                leftRect.translate(0, TabDocModePadding);
+                textRect.setTop(textRect.top() + TabDocModePadding);
+            }
+            else if (needPadding && last)
+            {
+                rightRect.translate(0, -TabDocModePadding);
+                textRect.setBottom(textRect.bottom() - TabDocModePadding);
+            }
+            break;
+        default: break;
         }
+
+        if (tab->text.isEmpty())
+            textRect = QRect();
 
         switch (r)
         {
         case SE_TabBarTabLeftButton:
-            return visualRect(tab->direction, tab->rect, leftRect).translated(0, trans);
+            return visualRect(tab->direction, tab->rect, leftRect);
         case SE_TabBarTabRightButton:
-            return visualRect(tab->direction, tab->rect, rightRect).translated(0, trans);
+            return visualRect(tab->direction, tab->rect, rightRect);
         case SE_TabBarTabText:
-            return visualRect(tab->direction, tab->rect, textRect).translated(0, trans);
+            return visualRect(tab->direction, tab->rect, textRect);
         default: return QCommonStyle::subElementRect(r, opt, widget);
         }
     }

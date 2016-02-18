@@ -6,6 +6,7 @@
 #include <QtGlobal>
 #include <QtGui>
 #include <QPalette>
+#include <QStyleOptionTabV3>
 #include "../namespace.h"
 
 class QStyleOption;

@@ -179,7 +179,7 @@ TitleWidget::paintEvent(QPaintEvent *)
         title.append(QString(" - "));
     title.append(qApp->applicationDisplayName());
 #endif
-    const QString &elidedTitle = p.fontMetrics().elidedText(title, Qt::ElideRight, rect().width()-20);
+    const QString &elidedTitle = p.fontMetrics().elidedText(title, Qt::ElideRight, rect().width()-20, Qt::TextShowMnemonic);
     QRect tr(p.fontMetrics().boundingRect(mappedRect, align, elidedTitle));
     if (tr.x() < 20)
         tr.moveLeft(20);
@@ -232,13 +232,6 @@ TitleWidget::supported(const QToolBar *toolBar)
 {
     if (!dConf.deco.embed||!dConf.uno.enabled||!toolBar)
         return false;
-
-    qDebug() << "toolbar in desktopwindow..." << (toolBar->window()->windowType() == Qt::Desktop) << toolBar << toolBar->window();
-    if (toolBar->window()->windowType() == Qt::Desktop)
-    {
-        qDebug() << "toolbar in desktopwindow..." << toolBar->window();
-        return false;
-    }
 
     bool hasMacMenu(false);
 #if HASDBUS//        if (!qobject_cast<QToolButton *>(w) && w->isVisible())

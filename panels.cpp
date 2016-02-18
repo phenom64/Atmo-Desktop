@@ -207,7 +207,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
     const QFont f(painter->font());
     QFont bold(f);
     bold.setBold(true);
-    const QString title(QFontMetrics(bold).elidedText(opt->title, Qt::ElideRight, tr.width()));
+    const QString title(QFontMetrics(bold).elidedText(opt->title, Qt::ElideRight, tr.width(), Qt::TextShowMnemonic));
     painter->setFont(bold);
     drawItemText(painter, tr, Qt::AlignCenter, opt->palette, opt->ENABLED, title, widget?widget->foregroundRole():QPalette::WindowText);
     painter->setFont(f);

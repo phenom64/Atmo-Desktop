@@ -75,10 +75,12 @@ public:
         Inputshadow,
         Inputgrad,
         Inputtint,
+        Tabselectors,
         Tabsaf,
         Tabrnd,
         Tabshadow,
         Tabgrad,
+        Tabbargrad,
         Saftabrnd,       //safaritabs Roundness Capped At 8 Atm, Might Change In The Future If Needed
         Tabcloser,
         Unoenabled,
@@ -194,7 +196,7 @@ public:
         struct tabs
         {
             quint8 rnd, safrnd, closeButtonSide, shadow;
-            Gradient gradient;
+            Gradient gradient, barGrad;
             bool safari, regular;
         } tabs;
         struct uno

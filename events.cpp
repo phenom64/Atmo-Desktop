@@ -128,12 +128,14 @@ Style::paintEvent(QObject *o, QEvent *e)
             return false;
         QStyleOptionTabBarBaseV2 opt;
         opt.rect = tb->geometry();
-        opt.rect.setLeft(w->rect().left());
-        opt.rect.setRight(w->rect().right());
         opt.fontMetrics = w->fontMetrics();
         opt.documentMode = true;
         QPainter p(w);
-        drawTabBar(&opt, &p, tb);
+        bool needPaint(false);
+        for (int i = 0; i < 4; ++i)
+            needPaint |= (bool)static_cast<QTabWidget *>(w)->cornerWidget((Qt::Corner)i);
+        if (needPaint)
+            drawTabBar(&opt, &p, tb);
         if (o->inherits("KTabWidget"))
         {
             QTabWidget *tabWidget = static_cast<QTabWidget *>(o);

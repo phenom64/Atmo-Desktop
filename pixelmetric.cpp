@@ -100,23 +100,22 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
         return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?dConf.tabs.safrnd+4:0;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
-//        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-//        {
-//            castOpt(TabV3, tab, option);
-//            if (tab && tab->position == QStyleOptionTab::Beginning)
-//                return 128;
-//        }
-//        return 16;
-        return 0;
-    case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
     {
-//        if (dConf.tabs.regular)
-//            return 2;
+        const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
+        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
+        if (tab && (!bar || !bar->expanding()))
+        {
+            const QString s(tab->text);
+            QFont f(bar ? bar->font() : qApp->font());
+            int nonBoldWidth(QFontMetrics(f).width(s));
+            f.setWeight(QFont::Black);
+            int boldWidth(QFontMetrics(f).width(s));
+            return (boldWidth-nonBoldWidth);
+        }
         return 0;
-//        if (Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)))
-//            return 8;
-//        return 4;
     }
+    case PM_TabBarTabVSpace:	//21	Extra space added to the tab height.
+        return 0;
 //    case PM_TabBarBaseHeight:	//22	Height of the area between the tab bar and the tab pages.
 //    case PM_TabBarBaseOverlap:	//23	Number of pixels the tab bar overlaps the tab bar base.
 //    case PM_TabBarScrollButtonWidth:	//?

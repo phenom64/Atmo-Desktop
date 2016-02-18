@@ -117,63 +117,58 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         const bool safBar = Ops::isSafariTabBar(bar);
         const bool vertical = isVertical(tab, bar);
         QSize sz(contentsSize);
-        if (safBar)
+        if (safBar && bar->expanding())
         {
-            if (bar->expanding())
+            int w(bar->width());
+            if (const QTabWidget *tw = qobject_cast<const QTabWidget *>(bar->parentWidget()))
             {
-                int w(bar->width());
-                if (const QTabWidget *tw = qobject_cast<const QTabWidget *>(bar->parentWidget()))
-                {
-                    for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
-                        if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
-                            w-=cw->width();
-                }
-                else
-                {
-                    QList<const QWidget *> children = bar->findChildren<const QWidget *>();
-                    for (int i = 0; i < bar->count(); ++i)
-                        children.removeOne(bar->tabButton(i, (QTabBar::ButtonPosition)styleHint(SH_TabBar_CloseButtonPosition, opt, widget)));
+                for (int i = Qt::TopLeftCorner; i <= Qt::TopRightCorner; ++i)
+                    if (QWidget *cw = tw->cornerWidget(Qt::Corner(i)))
+                        w-=cw->width();
+            }
+            else
+            {
+                QList<const QWidget *> children = bar->findChildren<const QWidget *>();
+                for (int i = 0; i < bar->count(); ++i)
+                    children.removeOne(bar->tabButton(i, (QTabBar::ButtonPosition)styleHint(SH_TabBar_CloseButtonPosition, opt, widget)));
 
-                    for (int i = 0; i < children.count(); ++i)
-                    {
-                        const QWidget *wi(children.at(i));
-                        if (wi->isVisible() && wi->parentWidget() == bar)
-                            w-=wi->width();
-                    }
+                for (int i = 0; i < children.count(); ++i)
+                {
+                    const QWidget *wi(children.at(i));
+                    if (wi->isVisible() && wi->parentWidget() == bar)
+                        w-=wi->width();
                 }
-                sz.setWidth(bar->count() == 1 ? w : (w/bar->count())-1);
             }
-            else
-            {
-                if (vertical)
-                    sz.rheight() += 20;
-                else
-                    sz.rwidth() += 20;
-            }
+            sz.setWidth(bar->count() == 1 ? w : (w/bar->count())-1);
         }
-        if (!bar || !bar->expanding())
-        {
-            const QString s(tab->text);
-            QFont f(bar ? bar->font() : qApp->font());
-            int nonBoldWidth(QFontMetrics(f).boundingRect(s).width());
-            f.setBold(true);
-            int boldWidth(QFontMetrics(f).boundingRect(s).width());
-            int add(boldWidth-nonBoldWidth);
-            if (!vertical)
-                sz.rwidth() += add;
-            else
-                sz.rheight() += add;
-        }
-        if (sz.height() < dConf.baseSize)
-            sz.setHeight(dConf.baseSize);
-        if (sz.width() < dConf.baseSize)
-            sz.setWidth(dConf.baseSize);
+
+        const quint8 bs = dConf.baseSize + (!safBar && (tab->documentMode || dConf.tabs.regular)) * TabBarBottomSize;
+        if (sz.height() < bs)
+            sz.setHeight(bs);
+        if (sz.width() < bs)
+            sz.setWidth(bs);
+
         if (bar->expanding())
             return sz;
+
         if (vertical)
-            sz.rheight() += TabPadding;
+            sz.rheight() += safBar ? (dConf.tabs.safrnd<<1) : TabPadding;
         else
-            sz.rwidth() += TabPadding;
+            sz.rwidth() += safBar ? (dConf.tabs.safrnd<<1) : TabPadding;
+
+        if (!safBar && tab->documentMode)
+        {
+            if (tab->position != QStyleOptionTabV3::Middle)
+            {
+                sz.rwidth() += !vertical * TabDocModePadding;
+                sz.rheight() += vertical * TabDocModePadding;
+            }
+//            static const int docTabSize = 200;
+//            if (vertical)
+//                sz.setHeight(docTabSize);
+//            else
+//                sz.setWidth(docTabSize);
+        }
         return sz;
     }
     case CT_ToolButton:

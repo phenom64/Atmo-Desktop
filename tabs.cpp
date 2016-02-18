@@ -35,8 +35,6 @@ static QPixmap s_tabBarShadow;
 bool
 Style::drawTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (dConf.tabs.regular)
-        return drawRegularTab(option, painter, widget);
     drawTabShape(option, painter, widget);
     drawTabLabel(option, painter, widget);
     return true;
@@ -173,7 +171,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
 bool
 Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
+    const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
     if (!opt)
         return true;
     if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
@@ -181,8 +179,9 @@ Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget
     const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
     if (Ops::isSafariTabBar(bar))
         return drawSafariTab(opt, painter, bar);
-    if (styleHint(SH_TabBar_Alignment, option, widget) == Qt::AlignCenter)
+    if (!opt->documentMode && !dConf.tabs.regular)
         return drawSelector(opt, painter, bar);
+    return drawDocumentTabShape(option, painter, widget);
 
     const bool isSelected(opt->state & State_Selected);
     QColor c(opt->palette.color(widget?widget->backgroundRole():QPalette::Window));
@@ -261,8 +260,6 @@ Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget
 bool
 Style::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
 {
-    if (!tab)
-        return false;
     QTabBar::Shape tabShape(bar ? bar->shape() : tab ? tab->shape : QTabBar::RoundedNorth);
     switch (tabShape)
     {
@@ -282,23 +279,23 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
     if (!opt)
         return true;
-    const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
-    painter->save();
-    const bool isSelected(opt->state & State_Selected),
-            leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
-    QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
-    QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
+
     int trans(0);
-    bool west(false), east(false);
     switch (opt->shape)
     {
     case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest: west = true; trans = -90; break;
+    case QTabBar::TriangularWest: trans = -90; break;
     case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast: east = true; trans = 90; break;
+    case QTabBar::TriangularEast: trans = 90; break;
     default: break;
     }
 
+    const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
+    const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
+    QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
+    QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
+
+    painter->save();
     if (trans)
     {
         painter->translate(tr.center());
@@ -311,22 +308,22 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
         tr.moveCenter(center);
     }
 
+    const bool selected = isSelected(opt);
     QFont f(painter->font());
-    if (isSelected)
+    if (selected)
     {
         f.setBold(true);
         painter->setFont(f);
     }
-    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::ButtonText));
+
+    QPalette::ColorRole fg = widget ? widget->foregroundRole() : QPalette::ButtonText;
     const bool safari(Ops::isSafariTabBar(bar));
-    if (isSelected && !safari && !(bar && bar->documentMode()))
+    if (selected && !safari && !(bar && bar->documentMode()) && !dConf.tabs.regular)
         fg = Ops::opposingRole(fg);
 
-    const QFontMetrics fm(painter->fontMetrics());
-    Qt::TextElideMode elide((Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget));
-    if (isVertical(opt, bar))
-        elide = Qt::ElideRight;
-    const QString text(fm.elidedText(opt->text, elide, tr.width()));
+    const QFontMetrics &fm = painter->fontMetrics();
+    const Qt::TextElideMode elide = (Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget);
+    const QString &text = fm.elidedText(opt->text, elide, tr.width(), Qt::TextShowMnemonic);
     drawItemText(painter, tr, Qt::AlignCenter, option->palette, isEnabled(opt), text, fg);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
@@ -335,128 +332,110 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
 }
 
 bool
-Style::drawRegularTab(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
-{
-    drawRegularTabShape(option, painter, widget);
-    drawRegularTabLabel(option, painter, widget);
-    return true;
-}
-
-bool
-Style::drawRegularTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
-{
-    const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
-    if (!opt)
-        return true;
-    if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
-        const_cast<QStyleOption *>(option)->state |= State_Selected;
-    const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
-    const bool selected(isSelected(opt));
-    const int level(selected?0:bar?Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())):0);
-    QColor c(opt->palette.color(widget?widget->backgroundRole():QPalette::Button));
-    QColor h(Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2));
-    c = Color::mid(c, h, Steps-level, level);
-
-    QRect r(opt->rect);
-    QLinearGradient lg;
-    Sides sides(All);
-    const quint8 margin(selected ? 0 : 2);
-    switch (opt->shape)
-    {
-    case QTabBar::RoundedNorth:
-    case QTabBar::TriangularNorth:
-        if (!selected)
-            r.setTop(r.top()+InactiveTabOffset);
-        r.setBottom(r.bottom()-margin);
-        lg = QLinearGradient(r.topLeft(), r.bottomLeft());
-        sides &= ~Bottom;
-        break;
-    case QTabBar::RoundedSouth:
-    case QTabBar::TriangularSouth:
-        if (!selected)
-            r.setBottom(r.bottom()-InactiveTabOffset);
-        r.setTop(r.top()+margin);
-        lg = QLinearGradient(r.bottomLeft(), r.topLeft());
-        sides &= ~Top;
-        break;
-    case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest:
-        if (!selected)
-            r.setLeft(r.left()+InactiveTabOffset);
-        r.setRight(r.right()-margin);
-        lg = QLinearGradient(r.topLeft(), r.topRight());
-        sides &= ~Right;
-        break;
-    case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast:
-        if (!selected)
-            r.setRight(r.right()-InactiveTabOffset);
-        r.setLeft(r.left()+margin);
-        lg = QLinearGradient(r.topRight(), r.topLeft());
-        sides &= ~Left;
-        break;
-    default: break;
-    }
-
-    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-    GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, sides);
-    return true;
-}
-
-bool
-Style::drawRegularTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
     if (!opt)
         return true;
+    if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
+        const_cast<QStyleOption *>(option)->state |= State_Selected;
+
     const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
-    painter->save();
-    const bool isSelected(opt->state & State_Selected);
-    const bool leftClose(styleHint(SH_TabBar_CloseButtonPosition, opt, widget) == QTabBar::LeftSide && bar && bar->tabsClosable());
+    const bool selected = isSelected(opt);
+    const bool first = opt->position == QStyleOptionTabV3::Beginning || opt->position == QStyleOptionTabV3::OnlyOneTab;
+    const bool last = opt->position == QStyleOptionTabV3::End;
+    const int level = selected ? 0 : (bar ? Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())) : 0);
 
-    QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
-    QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
+    QColor c = opt->palette.color(widget?widget->backgroundRole():QPalette::Button);
+    if (dConf.differentInactive && Handlers::Window::isActiveWindow(widget))
+        c = c.darker(110);
+    QColor h = Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2);
+    c = Color::mid(c, h, Steps-level, level);
 
-    int rotation(0);
+    bool beforeSelected(false);
+    const bool vertical = isVertical(opt, bar);
+    QRect r(opt->rect);
+    QLinearGradient lg;
+    Sides sides(All);
+    const quint8 margin(!selected&&!opt->documentMode * 2);
+    const bool ltr = opt->direction == Qt::LeftToRight;
     switch (opt->shape)
     {
+    case QTabBar::RoundedNorth:
+    case QTabBar::TriangularNorth:
+        lg = QLinearGradient(r.topLeft(), r.bottomLeft());
+        if (!selected && !opt->documentMode)
+            r.setTop(r.top()+InactiveTabOffset);
+        r.setBottom(r.bottom()-margin);
+        sides &= ~Bottom;
+        beforeSelected = bar && bar->tabAt(opt->rect.center()) < bar->currentIndex();
+        if (opt->documentMode && first)
+        {
+            r.setLeft(r.left() + ltr*TabDocModePadding);
+            r.setRight(r.right() - !ltr*TabDocModePadding);
+        }
+        else if (opt->documentMode && last)
+        {
+            r.setRight(r.right() - ltr*TabDocModePadding);
+            r.setLeft(r.left() + !ltr*TabDocModePadding);
+        }
+        break;
+    case QTabBar::RoundedSouth:
+    case QTabBar::TriangularSouth:
+        lg = QLinearGradient(r.bottomLeft(), r.topLeft());
+        if (!selected && !opt->documentMode)
+            r.setBottom(r.bottom()-InactiveTabOffset);
+        r.setTop(r.top()+margin);
+        sides &= ~Top;
+        beforeSelected = bar && bar->tabAt(opt->rect.center()) > bar->currentIndex();
+        if (opt->documentMode && first)
+        {
+            r.setLeft(r.left() + ltr*TabDocModePadding);
+            r.setRight(r.right() - !ltr*TabDocModePadding);
+        }
+        else if (opt->documentMode && last)
+        {
+            r.setRight(r.right() - ltr*TabDocModePadding);
+            r.setLeft(r.left() + !ltr*TabDocModePadding);
+        }
+        break;
     case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest: rotation = -90; break;
+    case QTabBar::TriangularWest:
+        lg = QLinearGradient(r.topLeft(), r.topRight());
+        if (!selected && !opt->documentMode)
+            r.setLeft(r.left()+InactiveTabOffset);
+        r.setRight(r.right()-margin);
+        sides &= ~Right;
+        beforeSelected = bar && bar->tabAt(opt->rect.center()) > bar->currentIndex();
+        if (opt->documentMode && first)
+            r.setTop(r.top() + TabDocModePadding);
+        else if (opt->documentMode && last)
+            r.setBottom(r.bottom() - TabDocModePadding);
+        break;
     case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast: rotation = 90; break;
+    case QTabBar::TriangularEast:
+        lg = QLinearGradient(r.topRight(), r.topLeft());
+        if (!selected && !opt->documentMode)
+            r.setRight(r.right()-InactiveTabOffset);
+        r.setLeft(r.left()+margin);
+        sides &= ~Left;
+        beforeSelected = bar && bar->tabAt(opt->rect.center()) < bar->currentIndex();
+        if (opt->documentMode && first)
+            r.setTop(r.top() + TabDocModePadding);
+        else if (opt->documentMode && last)
+            r.setBottom(r.bottom() - TabDocModePadding);
+        break;
     default: break;
     }
+    if (!ltr && !vertical)
+        beforeSelected = !beforeSelected && !selected;
 
-    if (rotation)
-    {
-        painter->translate(tr.center());
-        painter->rotate(rotation);
-        painter->translate(-tr.center());
-        QSize sz(tr.size());
-        const QPoint center(tr.center());
-        sz.transpose();
-        tr.setSize(sz);
-        tr.moveCenter(center);
-    }
-
-    QFont f(painter->font());
-    if (isSelected)
-    {
-        f.setBold(true);
-        painter->setFont(f);
-    }
-
-    const QPalette::ColorRole fg(widget ? widget->foregroundRole() : QPalette::ButtonText);
-    const Qt::TextElideMode elide((Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget));
-    const QString text(painter->fontMetrics().elidedText(opt->text, elide, tr.width()));
-
-    if (!text.isNull())
-        drawItemText(painter, tr, Qt::AlignCenter, option->palette, isEnabled(opt), text, fg);
-
-    if (!opt->icon.isNull())
-        drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
-
-    painter->restore();
+    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+    const TabPos pos = beforeSelected?BeforeSelected:selected?Selected:AfterSelected;
+    if (opt->documentMode)
+        Mask::Tab::drawTab(Chrome, pos, r, painter, lg, qstyleoption_cast<const QStyleOptionTabV3 *>(opt));
+    else
+        GFX::drawClickable(dConf.tabs.shadow, Mask::Tab::tabRect(r, pos, opt->shape), painter, lg, dConf.tabs.rnd, sides);
     return true;
 }
 
@@ -480,98 +459,27 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
         GFX::drawTabBarShadow(p, r);
         p->setRenderHint(QPainter::Antialiasing, hadAA);
     }
-    else if (bar->documentMode() && bar->isVisible())
+    else /*if (bar->documentMode() && bar->isVisible())*/
     {
-        bool aboveStatusBar(false);
-        QLine l, s, bl;
-        QRect orgRect(r);
-        bool isUp(false);
-        const bool hasGradient(!dConf.tabs.gradient.isEmpty());
         QLinearGradient lg;
+        Sides sides(All);
         switch (bar->shape())
         {
         case QTabBar::RoundedNorth:
-        case QTabBar::TriangularNorth:
-        {
-            isUp = true;
-            if (hasGradient)
-                lg = QLinearGradient(r.topLeft(), r.bottomLeft());
-            s.setPoints(r.topLeft(), r.topRight());
-            r.setTop(r.top()+1);
-            l.setPoints(r.topLeft(), r.topRight());
-            bl.setPoints(r.bottomLeft(), r.bottomRight());
-            break;
-        }
+        case QTabBar::TriangularNorth: lg = QLinearGradient(r.topLeft(), r.bottomLeft()); sides &= ~(Left|Right); break;
         case QTabBar::RoundedSouth:
-        case QTabBar::TriangularSouth:
-        {
-            if (hasGradient)
-                lg = QLinearGradient(r.bottomLeft(), r.topLeft());
-            if (dConf.uno.enabled)
-            {
-                const QPoint below(bar->mapTo(bar->window(), bar->rect().bottomRight()+QPoint(0, 2)));
-                if (qobject_cast<QStatusBar *>(bar->window()->childAt(below)))
-                    aboveStatusBar = true;
-            }
-            if (!aboveStatusBar)
-            {
-                s.setPoints(r.bottomLeft(), r.bottomRight());
-                r.setBottom(r.bottom()-1);
-            }
-            l.setPoints(r.bottomLeft(), r.bottomRight());
-            bl.setPoints(r.topLeft(), r.topRight());
-            break;
-        }
+        case QTabBar::TriangularSouth: lg = QLinearGradient(r.bottomLeft(), r.topLeft()); sides &= ~(Left|Right); break;
         case QTabBar::RoundedWest:
-        case QTabBar::TriangularWest:
-        {
-            if (hasGradient)
-                lg = QLinearGradient(r.topLeft(), r.topRight());
-            s.setPoints(r.topLeft(), r.bottomLeft());
-            r.setLeft(r.left()+1);
-            l.setPoints(r.topLeft(), r.bottomLeft());
-            bl.setPoints(r.topRight(), r.bottomRight());
-            break;
-        }
+        case QTabBar::TriangularWest: lg = QLinearGradient(r.topLeft(), r.topRight()); sides &= ~(Top|Bottom); break;
         case QTabBar::RoundedEast:
-        case QTabBar::TriangularEast:
-        {
-            if (hasGradient)
-                lg = QLinearGradient(r.topRight(), r.topLeft());
-            s.setPoints(r.topRight(), r.bottomRight());
-            r.setRight(r.right()-1);
-            l.setPoints(r.topRight(), r.bottomRight());
-            bl.setPoints(r.topLeft(), r.bottomLeft());
-            break;
-        }
+        case QTabBar::TriangularEast: lg = QLinearGradient(r.topRight(), r.topLeft()); sides &= ~(Top|Bottom); break;
         default: break;
         }
-        QColor c = Color::mid(bar->palette().color(bar->backgroundRole()), bar->palette().color(bar->foregroundRole()), 5, 1);
-        QBrush b(c);
-        if (hasGradient)
-        {
-            lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, c));
-            b = QBrush(lg);
-        }
-        p->fillRect(orgRect, b);
-        const QPen pen(p->pen());
-        const QBrush brush(p->brush());
-
-        p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
-        p->setBrush(Qt::NoBrush);
-//        p->drawRect(orgRect.adjusted(0, 0, -1, -!aboveStatusBar));
-        if (!s.isNull())
-            p->drawLine(s);
-        p->drawLine(bl);
-        if (isUp)
-        {
-            p->setPen(QColor(255, 255, 255, 63));
-            p->drawLine(l);
-        }
-
-
-        p->setPen(pen);
-        p->setBrush(brush);
+        QColor c = bar->palette().color(bar->backgroundRole());
+        if (dConf.differentInactive && Handlers::Window::isActiveWindow(bar))
+            c = c.darker(110);
+        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+        GFX::drawClickable(Rect, Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape()), p, lg, 2, sides);
     }
 }
 
@@ -583,25 +491,26 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     const QStyleOptionTabBarBaseV2 *opt = qstyleoption_cast<const QStyleOptionTabBarBaseV2 *>(option);
     if (!opt)
         return true;
-
-    if (dConf.tabs.regular)
+    const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget);
+    if (tabBar && tabBar->documentMode())
     {
-//        static const quint8 sm = GFX::shadowMargin(Sunken);
-//        GFX::drawClickable(Sunken, opt->tabBarRect.growed(sm), painter, option->palette.color(widget?widget->backgroundRole():QPalette::Button), 0);
-        return true;
-    }
-
-    if (const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget))
-    {
-        if (tabBar->documentMode() || styleHint(SH_TabBar_Alignment, opt, widget) == Qt::AlignLeft)
+        QRect r(tabBar->rect());
+        if (dynamic_cast<const QTabWidget *>(painter->device()))
         {
-            QRect r(tabBar->rect());
-            if (opt->rect.width() > r.width())
-                r = opt->rect;
-
-            drawDocTabBar(painter, tabBar, r);
-            return true;
+            r = tabBar->geometry();
+            if (isVertical(0, tabBar))
+            {
+                r.setTop(0);
+                r.setBottom(painter->device()->height());
+            }
+            else
+            {
+                r.setLeft(0);
+                r.setRight(painter->device()->width());
+            }
         }
+        drawDocTabBar(painter, tabBar, r);
+        return true;
     }
     return true;
 }
@@ -622,10 +531,11 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
 #else
     const QTabBar *tabBar = tabWidget->tabBar();
 #endif
+    Sides sides(All);
     if (tabBar)
     {
         QRect barRect(tabBar->geometry());
-        static const quint8 regularTabOffset = GFX::shadowMargin(Raised) + 1;
+        static const quint8 regularTabOffset = 0/*GFX::shadowMargin(Raised) + 1*/;
         const int h(dConf.tabs.regular ? regularTabOffset : (barRect.height()>>1));
         const int wh(dConf.tabs.regular ? regularTabOffset : (barRect.width()>>1));
         static const quint8 margin(1/*!dConf.tabs.regular*/);
@@ -638,39 +548,49 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
             barRect.setRight(tabWidget->rect().right());
             const int b(barRect.bottom()+margin);
             rect.setTop(b-h);
+            sides &= ~Top;
             break;
         }
         case QTabBar::RoundedSouth:
         case QTabBar::TriangularSouth:
         {
+            barRect.setLeft(tabWidget->rect().left());
+            barRect.setRight(tabWidget->rect().right());
             const int t(barRect.top()-margin);
             rect.setBottom(t+h);
+            sides &= ~Bottom;
             break;
         }
         case QTabBar::RoundedWest:
         case QTabBar::TriangularWest:
         {
+            barRect.setTop(tabWidget->rect().top());
+            barRect.setBottom(tabWidget->rect().bottom());
             const int right(barRect.right()+margin);
             rect.setLeft(right-wh);
+            sides &= ~Left;
             break;
         }
         case QTabBar::RoundedEast:
         case QTabBar::TriangularEast:
         {
+            barRect.setTop(tabWidget->rect().top());
+            barRect.setBottom(tabWidget->rect().bottom());
             const int l(barRect.left()-margin);
             rect.setRight(l+wh);
+            sides &= ~Right;
             break;
         }
         default: break;
         }
-        if (tabBar->documentMode())
-        {
+//        if (tabBar->documentMode())
+//        {
             drawDocTabBar(painter, tabBar, barRect);
-            return true;
-        }
+//            return true;
+//        }
     }
     if (dConf.tabs.regular)
-        GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3);
+        GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3, sides);
     if (!tabWidget->documentMode() && !dConf.tabs.regular)
         GFX::drawShadow(Sunken, rect, painter, isEnabled(opt), 7, All);
     return true;

@@ -60,10 +60,12 @@ static const char *s_key[] = {
     "input.gradient",
     "input.tinthue",
 
+    "tabs.selectors",
     "tabs.safari",
     "tabs.rnd",
     "tabs.shadow",
     "tabs.gradient",
+    "tabs.bargrad",
     "tabs.safrnd",          //safaritabs roundness capped at 8 atm, might change in the future if needed
     "tabs.closebuttonside",
 
@@ -168,9 +170,11 @@ static const QVariant s_default[] = {
     "-1:0",
 
     true,
+    true,
     4,
     3,
     "0.0:5, 1.0:-5",
+    "0.0:-5, 1.0:5",
     4,
     0,
 
@@ -274,10 +278,12 @@ static const char *s_description[] = {
     /*"input.gradient"*/            "Gradient of input boxes, lineedits and spinboxes and such",
     /*"input.tinthue"*/             "Hue to tint input boxes, lineedits and spinboxes and such w/",
 
+    /*"tabs.selectors"*/            "Use selectors instead of tabs on tabwidgets",
     /*"tabs.safari"*/               "Integrate the tabbars under toolbars like the Safari web browser from Mac Os does",
     /*"tabs.rnd"*/                  "Roundness of tabs",
     /*"tabs.shadow"*/               "Shadow of tabs",
     /*"tabs.gradient"*/             "Gradient of tabs",
+    /*"tabs.bargrad"*/              "Gradient on document mode tabbars",
     /*"tabs.safrnd"*/               "Roundness of tabs in a safari-like tabbar. Max roundness allowed 8",          //safaritabs roundness capped at 8 atm, might change in the future if needed
     /*"tabs.closebuttonside"*/      "Side of the tab the close button should be on, 0 = Left, 1 = Right",
 
@@ -718,10 +724,11 @@ Settings::read()
     conf.input.tint             = tintColor(readString(Inputtint));
     //tabs
     conf.tabs.safari            = readBool(Tabsaf);
-    conf.tabs.regular           = false;
+    conf.tabs.regular           = !readBool(Tabselectors);
     conf.tabs.rnd               = qMin<quint8>(MaxRnd, readInt(Tabrnd));
     conf.tabs.shadow            = readInt(Tabshadow);
     conf.tabs.gradient          = stringToGrad(readString(Tabgrad));
+    conf.tabs.barGrad           = stringToGrad(readString(Tabbargrad));
     conf.tabs.safrnd            = qMin(readInt(Saftabrnd), 8);
     conf.tabs.closeButtonSide   = readInt(Tabcloser);
     //uno

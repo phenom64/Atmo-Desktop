@@ -146,8 +146,6 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
-//    if (painter->fontMetrics().boundingRect(text).width() > rect.width()) //if we have more text then space its pointless to render the center of the text...
-//        flags &= ~Qt::AlignHCenter;
 
     const QPen pen(painter->pen());
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));

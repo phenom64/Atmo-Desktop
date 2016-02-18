@@ -302,12 +302,13 @@ Style::polish(QWidget *widget)
     }
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
+        tabBar->setDrawBase(true);
         const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
         tabBar->setBackgroundRole(QPalette::Button);
         tabBar->setForegroundRole(QPalette::ButtonText);
         if (!safari && tabBar->expanding())
             tabBar->setExpanding(false);
-        if (safari || tabBar->documentMode())
+        if (tabBar->documentMode())
         {
             QPalette pal(tabBar->palette());
             pal.setColor(QPalette::Button, pal.color(QPalette::Window));

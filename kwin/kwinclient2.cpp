@@ -510,7 +510,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             maxW = titleBar().width()-(qMax(m_leftButtons->geometry().width(), m_rightButtons->geometry().width())*2);
         if (painter->fontMetrics().width(text) > maxW)
         {
-            text = painter->fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+            text = painter->fontMetrics().elidedText(text, Qt::ElideRight, maxW, Qt::TextShowMnemonic);
             textRect = painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text);
         }
         if (client().data()->isActive())

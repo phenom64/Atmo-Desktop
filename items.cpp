@@ -253,7 +253,7 @@ Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget
             painter->setFont(f);
         }
         const QFontMetrics fm(painter->fontMetrics());
-        const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width()));
+        const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width(), Qt::TextShowMnemonic));
         drawItemText(painter, textRect, opt->displayAlignment, opt->palette, isEnabled(opt), text, fg);
         painter->setFont(font);
     }
@@ -382,7 +382,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
         GFX::drawArrow(painter, option->palette.color(fg), ar, opt->sortIndicator==QStyleOptionHeader::SortUp?North:South, dConf.arrowSize, Qt::AlignCenter, isEnabled(opt));
     }
     const QFontMetrics fm(painter->fontMetrics());
-    const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width()));
+    const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width(), Qt::TextShowMnemonic));
     drawItemText(painter, tr, opt->textAlignment, opt->palette, opt->state & State_Enabled, text, fg);
     painter->restore();
     return true;
