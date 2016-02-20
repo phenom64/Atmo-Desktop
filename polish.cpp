@@ -302,7 +302,7 @@ Style::polish(QWidget *widget)
     }
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
-        tabBar->setDrawBase(true);
+//        tabBar->setDrawBase(true);
         const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
         tabBar->setBackgroundRole(QPalette::Button);
         tabBar->setForegroundRole(QPalette::ButtonText);

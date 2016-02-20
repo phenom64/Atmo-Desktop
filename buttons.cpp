@@ -70,12 +70,15 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
     QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
     if (sunken || opt->features & QStyleOptionButton::DefaultButton)
+    {
+        hl = qMax(Steps/2, hl);
         bc = sc;
+    }
     else if (isEnabled(opt))
         bc = Color::mid(bc, sc, Steps-hl, hl);
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bc));
-    GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, All, option, widget);
+    GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, hl, All, option, widget);
     return true;
 }
 
@@ -132,18 +135,16 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
 
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
 
+    const int hl(Anim::Basic::level(widget));
     if (opt->state & (State_On|State_NoChange))
         bgc = smallTick?opt->palette.color(QPalette::Highlight):sc;
     else if (isEnabled(option))
-    {
-        const int hl(Anim::Basic::level(widget));
         bgc = Color::mid(bgc, sc, Steps-hl, hl);
-    }
 
     QLinearGradient lg(checkRect.topLeft(), checkRect.bottomLeft());
     lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
 
-    GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, 3, All, option, widget);
+    GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, 3, hl, All, option, widget);
 
     if (smallTick)
         checkRect.shrink(3);
@@ -200,17 +201,15 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
 
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
 
+    const int hl = Anim::Basic::level(widget);
     if (isOn(opt))
         bgc = smallTick?opt->palette.color(QPalette::Highlight):sc;
     else if (isEnabled(opt))
-    {
-        int hl(Anim::Basic::level(widget));
         bgc = Color::mid(bgc, sc, Steps-hl, hl);
-    }
 
     QLinearGradient lg(checkRect.topLeft(), checkRect.bottomLeft());
     lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
-    GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, MaxRnd, All, option, widget);
+    GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, MaxRnd, hl, All, option, widget);
 
     if (isOn(opt))
     {
@@ -319,13 +318,13 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
     QToolBar *bar = qobject_cast<QToolBar *>(widget->parentWidget());
-    quint8 hover(sunken?Steps:Anim::ToolBtns::level(btn));
+    quint8 hover = sunken ? Steps : Anim::ToolBtns::level(btn);
 
     if ((dConf.toolbtn.flat || !bar) && (hover || sunken))
     {
         QColor h(opt->palette.color(QPalette::Highlight));
         h.setAlpha(63/Steps*hover);
-        GFX::drawClickable(sunken?Sunken:-1, option->rect, painter, h, dConf.toolbtn.rnd);
+        GFX::drawClickable(sunken?Sunken:-1, option->rect, painter, h, dConf.toolbtn.rnd, hover);
     }
 
     if (!bar)
@@ -346,7 +345,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     QColor bca(bc);
     QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
     const ShadowStyle shadow(dConf.differentInactive && shadow == Yosemite && !inActiveWindow ? Rect : dConf.toolbtn.shadow);
-    const quint8 m = GFX::shadowMargin(shadow);
+    const quint8 m = qMax<quint8>(1, GFX::shadowMargin(shadow));;
 
     Sides sides = Handlers::ToolBar::sides(btn);
     const bool hor(bar->orientation() == Qt::Horizontal);
@@ -367,7 +366,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         }
         QLinearGradient lga(rect.topLeft(), hor?rect.bottomLeft():rect.topRight());
         lga.setStops(Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bca));
-        GFX::drawClickable(shadow, arrow, painter, lga, dConf.toolbtn.rnd, sides & ~(hor?Left:Top), opt, widget);
+        GFX::drawClickable(shadow, arrow, painter, lga, dConf.toolbtn.rnd, hover, sides & ~(hor?Left:Top), opt, widget);
         GFX::drawShadow(Rect, arrow.adjusted(!hor*m, hor*m, -(!hor*m), -(hor*m)), painter, false, MaxRnd, hor?Left:Top); //line...
         if (hor)
             rect.setRight(arrow.left()-1);
@@ -400,7 +399,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         p.fillRect(pix.rect(), lg);
         s_map.insert(check, pix);
     }
-    GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, sides, opt, widget);
+    GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, hover, sides, opt, widget);
     sides |= restoreSide;
 
     if (sunken && (dConf.toolbtn.shadow == Etched || dConf.toolbtn.shadow == Raised) && sides != All)

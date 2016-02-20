@@ -106,11 +106,9 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
 
     QColor bgc(opt->palette.color(bg));
     QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    const int hl = Anim::Tabs::level(bar, bar->tabAt(opt->rect.center()));
     if (opt->ENABLED && !(opt->state & State_On) && bar)
-    {
-        const int hl = Anim::Tabs::level(bar, bar->tabAt(opt->rect.center()));
         bgc = Color::mid(bgc, sc, Steps-hl, hl);
-    }
     QLinearGradient lg;
     QRect r(opt->rect);
     bool vert(false);
@@ -145,7 +143,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     default: break;
     }
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, bgc));
-    GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, sides, opt, bar);
+    GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, hl, sides, opt, bar);
     static const quint8 sm = GFX::shadowMargin(dConf.tabs.shadow);
     const QRect mask(r.sAdjusted(sm, sm, -sm, -sm));
     if (isSelected && !isOnly)
@@ -349,8 +347,6 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     QColor c = opt->palette.color(widget?widget->backgroundRole():QPalette::Button);
     if (dConf.differentInactive && Handlers::Window::isActiveWindow(widget))
         c = c.darker(110);
-    QColor h = Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2);
-    c = Color::mid(c, h, Steps-level, level);
 
     bool beforeSelected(false);
     const bool vertical = isVertical(opt, bar);
@@ -430,19 +426,29 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     if (!ltr && !vertical)
         beforeSelected = !beforeSelected && !selected;
 
-    lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+
     const TabPos pos = beforeSelected?BeforeSelected:selected?Selected:AfterSelected;
     if (opt->documentMode)
-        Mask::Tab::drawTab(Chrome, pos, r, painter, lg, qstyleoption_cast<const QStyleOptionTabV3 *>(opt));
+    {
+        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+        Mask::Tab::drawTab(Chrome, pos, r, painter, lg, qstyleoption_cast<const QStyleOptionTabV3 *>(opt), level);
+    }
     else
-        GFX::drawClickable(dConf.tabs.shadow, Mask::Tab::tabRect(r, pos, opt->shape), painter, lg, dConf.tabs.rnd, sides);
+    {
+        QColor h = Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2);
+        c = Color::mid(c, h, Steps-level, level);
+        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+        GFX::drawClickable(dConf.tabs.shadow, Mask::Tab::tabRect(r, pos, opt->shape), painter, lg, dConf.tabs.rnd, level, sides);
+    }
     return true;
 }
 
 static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
 {
+    if (!bar->isVisible())
+        return;
     QRect r(rect.isValid()?rect:bar->rect());
-    if (Ops::isSafariTabBar(bar))
+    if (Ops::isUnoTabBar(bar))
     {
         if (XHandler::opacity() < 1.0f)
         {
@@ -450,16 +456,22 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
             p->fillRect(r, Qt::black);
             p->setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
-        const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
-        p->setRenderHint(QPainter::Antialiasing, false);
+
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
-        p->fillRect(r, QColor(0, 0, 0, 15));
-        p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
-        p->drawLine(r.bottomLeft(), r.bottomRight());
-        GFX::drawTabBarShadow(p, r);
-        p->setRenderHint(QPainter::Antialiasing, hadAA);
+        if (Ops::isSafariTabBar(bar))
+        {
+            const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
+            p->setRenderHint(QPainter::Antialiasing, false);
+            p->fillRect(r, QColor(0, 0, 0, 15));
+            p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
+            p->drawLine(r.bottomLeft(), r.bottomRight());
+            GFX::drawTabBarShadow(p, r);
+            p->setRenderHint(QPainter::Antialiasing, hadAA);
+            return;
+        }
+
     }
-    else /*if (bar->documentMode() && bar->isVisible())*/
+    if (bar->documentMode() || dConf.tabs.regular)
     {
         QLinearGradient lg;
         Sides sides(All);
@@ -479,7 +491,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
         if (dConf.differentInactive && Handlers::Window::isActiveWindow(bar))
             c = c.darker(110);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        GFX::drawClickable(Rect, Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape()), p, lg, 2, sides);
+        GFX::drawClickable(Rect, Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape()), p, lg, 2, 0, sides);
     }
 }
 
@@ -495,19 +507,17 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     if (tabBar && tabBar->documentMode())
     {
         QRect r(tabBar->rect());
-        if (dynamic_cast<const QTabWidget *>(painter->device()))
+        QPaintDevice *d = painter->device();
+        r = tabBar->geometry();
+        if (isVertical(0, tabBar))
         {
-            r = tabBar->geometry();
-            if (isVertical(0, tabBar))
-            {
-                r.setTop(0);
-                r.setBottom(painter->device()->height());
-            }
-            else
-            {
-                r.setLeft(0);
-                r.setRight(painter->device()->width());
-            }
+            r.setTop(0);
+            r.setBottom(d->height());
+        }
+        else
+        {
+            r.setLeft(0);
+            r.setRight(d->width());
         }
         drawDocTabBar(painter, tabBar, r);
         return true;
@@ -583,11 +593,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         }
         default: break;
         }
-//        if (tabBar->documentMode())
-//        {
-            drawDocTabBar(painter, tabBar, barRect);
-//            return true;
-//        }
+        drawDocTabBar(painter, tabBar, barRect);
     }
     if (dConf.tabs.regular)
         GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3, sides);

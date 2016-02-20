@@ -32,6 +32,7 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
 
     QBrush mask(option->palette.base());
 
+    const quint8 rnd = inUno(qobject_cast<QToolBar *>(widget ? widget->parentWidget() : 0)) ? dConf.input.unoRnd : dConf.input.rnd;
     ShadowStyle shadow = dConf.input.shadow;
     const bool isInactive = dConf.differentInactive && shadow == Yosemite && widget && qobject_cast<QToolBar *>(widget->parent()) && !widget->window()->isActiveWindow();
 
@@ -50,7 +51,9 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
         mask = QBrush(lg);
     }
 
-    GFX::drawClickable(shadow, option->rect, painter, mask, inUno(qobject_cast<QToolBar *>(widget?widget->parentWidget():0))?dConf.input.unoRnd:dConf.input.rnd, All, option, widget);
+    GFX::drawClickable(shadow, option->rect, painter, mask, rnd, 0, All, option, widget);
+    if (option->state & State_HasFocus)
+        Hover::render(option->rect, option->palette.color(QPalette::Highlight), painter, rnd, All, Steps);
     return true;
 }
 
@@ -92,11 +95,9 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     {
         QColor bgc(opt->palette.color(bg));
         QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+        const int hl = Anim::Basic::level(widget);
         if (isEnabled(option) && !(option->state & State_On))
-        {
-            int hl(Anim::Basic::level(widget));
             bgc = Color::mid(bgc, sc, Steps-hl, hl);
-        }
         if (dConf.pushbtn.tint.second > -1)
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
         QLinearGradient lg(frameRect.topLeft(), frameRect.bottomLeft());
@@ -107,7 +108,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
             main.setRight(arrowRect.left()-1);
         else
             main.setLeft(arrowRect.right()+1);
-        GFX::drawClickable(dConf.pushbtn.shadow, main, painter, lg, dConf.pushbtn.rnd, All & ~(ltr?Right:Left), option, widget);
+        GFX::drawClickable(dConf.pushbtn.shadow, main, painter, lg, dConf.pushbtn.rnd, hl, All & ~(ltr?Right:Left), option, widget);
 
         QColor hc;
         if (dConf.pushbtn.shadow == Yosemite || dConf.pushbtn.shadow == ElCapitan)
@@ -117,7 +118,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         QLinearGradient lga(opt->rect.topLeft(), opt->rect.bottomLeft());
         lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
 
-        GFX::drawClickable(dConf.pushbtn.shadow, arrowRect, painter, lga, dConf.pushbtn.rnd, All & ~(ltr?Left:Right), option, widget);
+        GFX::drawClickable(dConf.pushbtn.shadow, arrowRect, painter, lga, dConf.pushbtn.rnd, hl, All & ~(ltr?Left:Right), option, widget);
         const quint8 m(GFX::shadowMargin(dConf.pushbtn.shadow));
         if (ltr)
         {
@@ -142,7 +143,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
             lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
             brush = QBrush(lg);
         }
-        GFX::drawClickable(dConf.input.shadow, opt->rect, painter, brush, dConf.input.rnd, All, option, widget);
+        GFX::drawClickable(dConf.input.shadow, opt->rect, painter, brush, dConf.input.rnd, 0, All, option, widget);
     }
 
     drawItemPixmap(painter, iconRect, Qt::AlignCenter, opt->currentIcon.pixmap(opt->iconSize));
@@ -215,7 +216,7 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
         mask = QBrush(lg);
     }
 
-    GFX::drawClickable(dConf.input.shadow, edit, painter, mask, dConf.input.rnd, All, option, widget);
+    GFX::drawClickable(dConf.input.shadow, edit, painter, mask, dConf.input.rnd, 0, All, option, widget);
     const bool enabled(isEnabled(opt));
     const QSpinBox *box = qobject_cast<const QSpinBox *>(widget);
     QColor c = opt->palette.color(QPalette::WindowText);

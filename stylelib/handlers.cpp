@@ -1249,7 +1249,7 @@ Window::getHeadHeight(QWidget *win, bool &separator)
     for (int i = 0; i < tabbars.count(); ++i)
     {
         const QTabBar *tb(tabbars.at(i));
-        if (tb && tb->isVisible() && Ops::isSafariTabBar(tb))
+        if (tb && tb->isVisible() && Ops::isUnoTabBar(tb))
         {
             possible = const_cast<QTabBar *>(tb);
             separator = false;

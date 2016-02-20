@@ -117,6 +117,11 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         const bool safBar = Ops::isSafariTabBar(bar);
         const bool vertical = isVertical(tab, bar);
         QSize sz(contentsSize);
+        const quint8 bs = dConf.baseSize + (!safBar && (tab->documentMode || dConf.tabs.regular)) * TabBarBottomSize;
+        if (sz.height() < bs)
+            sz.setHeight(bs);
+        if (sz.width() < bs)
+            sz.setWidth(bs);
         if (safBar && bar->expanding())
         {
             int w(bar->width());
@@ -140,16 +145,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 }
             }
             sz.setWidth(bar->count() == 1 ? w : (w/bar->count())-1);
-        }
-
-        const quint8 bs = dConf.baseSize + (!safBar && (tab->documentMode || dConf.tabs.regular)) * TabBarBottomSize;
-        if (sz.height() < bs)
-            sz.setHeight(bs);
-        if (sz.width() < bs)
-            sz.setWidth(bs);
-
-        if (bar->expanding())
             return sz;
+        }
 
         if (vertical)
             sz.rheight() += safBar ? (dConf.tabs.safrnd<<1) : TabPadding;
@@ -163,11 +160,14 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 sz.rwidth() += !vertical * TabDocModePadding;
                 sz.rheight() += vertical * TabDocModePadding;
             }
-//            static const int docTabSize = 200;
-//            if (vertical)
-//                sz.setHeight(docTabSize);
-//            else
-//                sz.setWidth(docTabSize);
+            if (bar && bar->expanding())
+            {
+                static const int docTabSize = 200;
+                if (vertical)
+                    sz.setHeight(docTabSize);
+                else
+                    sz.setWidth(docTabSize);
+            }
         }
         return sz;
     }

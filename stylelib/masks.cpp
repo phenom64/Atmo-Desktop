@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QBrush>
 #include <QRect>
+#include "color.h"
 
 using namespace DSP;
 
@@ -196,7 +197,7 @@ Mask::Tab::maskAdjusted(const QRect &r, const int shape)
 }
 
 void
-Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QBrush &b, const QStyleOptionTabV3 *opt)
+Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QBrush &b, const QStyleOptionTabV3 *opt, const quint8 hover)
 {
     if (!opt)
         return;
@@ -205,7 +206,8 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
     const bool vert = isVertical(opt->shape);
     r.adjust(-padding*!vert, -padding*vert, padding*!vert, padding*vert);
     drawMask(p, r, s, pos, b, opt->shape);
-    drawShadow(p, r, s, pos, opt->shape);
+    const QColor shadow = Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), Steps-hover, hover);
+    drawShadow(p, r, s, pos, shadow, opt->shape);
 }
 
 QSize
@@ -296,23 +298,23 @@ QPixmap
 }
 
 QPixmap
-*Mask::Tab::tabShadow(const TabStyle s, const TabPos pos, const int shape)
+*Mask::Tab::tabShadow(const TabStyle s, const TabPos pos, const QColor &c, const int shape)
 {
-    static QMap<quint32, QPixmap *> map;
-    const quint32 key = ((quint32)(s+1)<<24) | ((quint32)(pos+1)<<16) | ((quint32)(shape+1)<<8);
+    static QMap<quint64, QPixmap *> map;
+    const quint64 key = ((quint64)c.rgba()<<32) | ((quint64)(s+1)<<24) | ((quint64)(pos+1)<<16) | ((quint64)(shape+1)<<8);
     if (map.contains(key))
         return map.value(key);
 
     QImage img(maskSize(shape), QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
     QPainter p(&img);
-    drawMask(&p, img.rect(), s, pos, Qt::black, shape);
+    drawMask(&p, img.rect(), s, pos, c, shape);
     p.end();
 
     FX::expblur(img, 2);
 
     p.begin(&img);
-    drawMask(&p, img.rect(), s, pos, Qt::black, shape, true);
+    drawMask(&p, img.rect(), s, pos, c, shape, true);
 
 //    eraseSides(img.rect(), &p, tabPath(s, img.rect(), shape), pos, shape);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -374,9 +376,9 @@ Mask::Tab::drawMask(QPainter *p, const QRect &r, const TabStyle s, const TabPos 
 }
 
 void
-Mask::Tab::drawShadow(QPainter *p, const QRect &r, const TabStyle s, const TabPos pos, const int shape)
+Mask::Tab::drawShadow(QPainter *p, const QRect &r, const TabStyle s, const TabPos pos, const QColor &c, const int shape)
 {
-    drawTiles(p, r, tabShadow(s, pos, shape), shape);
+    drawTiles(p, r, tabShadow(s, pos, c, shape), shape);
 }
 
 void

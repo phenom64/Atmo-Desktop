@@ -29,6 +29,7 @@ class Q_DECL_EXPORT Ops
 public:
     static QWidget *window(QWidget *w);
     static bool isSafariTabBar(const QTabBar *tabBar);
+    static bool isUnoTabBar(const QTabBar *tabBar);
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);

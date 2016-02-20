@@ -48,8 +48,8 @@ GFX::initShadows()
     for (int r = 0; r < MaxRnd+1; ++r)
     for (ShadowStyle s = 0; s < ShadowCount; ++s)
     {
-        s_shadow[r][s][Enabled] = new Shadow(s, r, dConf.shadows.opacity, dConf.shadows.illumination);
-        s_shadow[r][s][Disabled] = new Shadow(s, r, dConf.shadows.opacity*0.5f, dConf.shadows.illumination*0.5f);
+        s_shadow[r][s][1] = new Shadow(s, r, dConf.shadows.opacity, dConf.shadows.illumination);
+        s_shadow[r][s][0] = new Shadow(s, r, dConf.shadows.opacity*0.5f, dConf.shadows.illumination*0.5f);
     }
 }
 
@@ -201,6 +201,7 @@ GFX::drawClickable(ShadowStyle s,
                    QPainter *p,
                    QBrush mask,
                    int rnd,
+                   int hover,
                    const Sides sides,
                    const QStyleOption *opt,
                    const QWidget *w,
@@ -208,6 +209,10 @@ GFX::drawClickable(ShadowStyle s,
 {
     if (s >= ShadowCount)
         return;
+
+    quint8 m = shadowMargin(s);
+//    if (!m && qMin(r.width(), r.height()) > 7) //the fancy hover effect needs some space...
+//        r.sShrink(1);
 
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     bool sunken(opt && opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange));
@@ -236,8 +241,6 @@ GFX::drawClickable(ShadowStyle s,
     if (rnd)
         rnd = Mask::maxRnd(r, sides, rnd);
 
-    const quint8 m = shadowMargin(s);
-
     switch (s)
     {
     case Yosemite:
@@ -264,7 +267,7 @@ GFX::drawClickable(ShadowStyle s,
         rnd = qMax(rnd-add, 0);
         break;
     }
-    default: r.sAdjust(m, m, -m, -m); break;
+    default: r.sShrink(m); break;
     }
 
     /// BEGIN ACTUAL PLATE PAINTING
@@ -281,7 +284,9 @@ GFX::drawClickable(ShadowStyle s,
         mask = pix;
         offset = r.topLeft();
     }
-    drawMask(r, p, mask, rnd, sides, offset);
+
+    const quint8 margin = m * !(s == Carved || s == SemiCarved);
+    drawMask(r, p, mask, rnd-margin, sides, offset);
 
     /// END PLATE
 
@@ -290,7 +295,7 @@ GFX::drawClickable(ShadowStyle s,
     case Carved:
     case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
     case Sunken:
-    case Etched: drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides); break;
+    case Etched: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Raised:
     {
@@ -320,6 +325,21 @@ GFX::drawClickable(ShadowStyle s,
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
     default: break;
+    }
+
+    if (hover && !sunken && s != Yosemite)
+    {
+        const QPainter::CompositionMode mode = p->compositionMode();
+        p->setCompositionMode(QPainter::CompositionMode_Screen);
+        QColor highLight = opt ? opt->palette.color(QPalette::Highlight) : qApp->palette().color(QPalette::Highlight);
+        highLight.setAlpha((255/Steps) * hover);
+        GFX::drawMask(r, p, highLight, rnd, sides);
+        p->setCompositionMode(mode);
+        if (m)
+        {
+            r.grow(m);
+            Hover::render(r, highLight, p, rnd, sides, hover);
+        }
     }
 }
 

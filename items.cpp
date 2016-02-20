@@ -95,7 +95,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         Sides sides(All);
         if (!isMenuBar)
             sides &= ~(Left|Right);
-        GFX::drawClickable(dConf.menues.itemShadow, opt->rect, painter, lg, dConf.pushbtn.rnd, sides);
+        GFX::drawClickable(dConf.menues.itemShadow, opt->rect, painter, lg, dConf.pushbtn.rnd, 0, sides);
     }
 
     if (dConf.menues.icons && isMenu)
@@ -212,7 +212,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     case QStyleOptionViewItemV4::Middle:        sides &= ~(Right|Left); break;
     default: break;
     }
-    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, sides);
+    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, 0, sides);
     return true;
 }
 

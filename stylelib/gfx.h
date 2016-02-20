@@ -35,10 +35,11 @@ public:
                               QPainter *p,
                               QBrush mask,
                               int rnd,
+                              int hover = 0,
                               const Sides sides = All,
                               const QStyleOption *opt = 0,
                               const QWidget *w = 0,
-                              QPoint offset = QPoint());    
+                              QPoint offset = QPoint());
     static quint8 shadowMargin(const ShadowStyle s);
     static void makeNoise();
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false, const bool bevel = false);

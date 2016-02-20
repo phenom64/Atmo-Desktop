@@ -214,26 +214,26 @@ Shadow::genShadow()
     }
     p.end();
 
-    split(pix, size, cornerSize);
+    m_pix = split(pix, size, cornerSize);
     m_pix[CenterPart] = QPixmap();
 }
 
 void
-Shadow::render(const QRect &r, QPainter *p, const Sides s)
+Shadow::render(QPixmap *shadow, const QRect &r, QPainter *p, const Sides s)
 {
-    if (!m_pix)
-        genShadow();
-    const qint16 x(r.x()), y(r.y()), w(r.width()), h(r.height()), x2(x+w), y2(y+h), block(m_pix[TopLeftPart].width());
+    if (!shadow)
+        return;
+    const qint16 x(r.x()), y(r.y()), w(r.width()), h(r.height()), x2(x+w), y2(y+h), block(shadow[TopLeftPart].width());
 
     //corners
     if ((s & (Top|Left)) == (Top|Left))
-        p->drawPixmap(QRect(x, y, block, block), m_pix[TopLeftPart]);
+        p->drawPixmap(QRect(x, y, block, block), shadow[TopLeftPart]);
     if ((s & (Top|Right)) == (Top|Right))
-        p->drawPixmap(QRect(x2-block, y, block, block), m_pix[TopRightPart]);
+        p->drawPixmap(QRect(x2-block, y, block, block), shadow[TopRightPart]);
     if ((s & (Bottom|Left)) == (Bottom|Left))
-        p->drawPixmap(QRect(x, y2-block, block, block), m_pix[BottomLeftPart]);
+        p->drawPixmap(QRect(x, y2-block, block, block), shadow[BottomLeftPart]);
     if ((s & (Bottom|Right)) == (Bottom|Right))
-        p->drawPixmap(QRect(x2-block, y2-block, block, block), m_pix[BottomRightPart]);
+        p->drawPixmap(QRect(x2-block, y2-block, block, block), shadow[BottomRightPart]);
 
     qint16 cx(x), cy(y), cw(w), ch(h);
 
@@ -241,48 +241,57 @@ Shadow::render(const QRect &r, QPainter *p, const Sides s)
     if (s & Top)
     {
         QRect rect(x+bool(s&Left)*block, y, w-((bool(s&Left)*block)+(bool(s&Right)*block)), block);
-        p->drawTiledPixmap(rect, m_pix[TopMidPart]);
+        p->drawTiledPixmap(rect, shadow[TopMidPart]);
         cy += block;
         ch -= block;
     }
     if (s & Right)
     {
         QRect rect(x2-block, y+bool(s&Top)*block, block, h-((bool(s&Top)*block)+(bool(s&Bottom)*block)));
-        p->drawTiledPixmap(rect, m_pix[RightPart]);
+        p->drawTiledPixmap(rect, shadow[RightPart]);
         cw -= block;
     }
     if (s & Bottom)
     {
         QRect rect(x+bool(s&Left)*block, y2-block, w-((bool(s&Left)*block)+(bool(s&Right)*block)), block);
-        p->drawTiledPixmap(rect, m_pix[BottomMidPart]);
+        p->drawTiledPixmap(rect, shadow[BottomMidPart]);
         ch -= block;
     }
     if (s & Left)
     {
         QRect rect(x, y+bool(s&Top)*block, block, h-((bool(s&Top)*block)+(bool(s&Bottom)*block)));
-        p->drawTiledPixmap(rect, m_pix[LeftPart]);
+        p->drawTiledPixmap(rect, shadow[LeftPart]);
         cx += block;
         cw -= block;
     }
 
     //center
-    if (!m_pix[CenterPart].isNull())
-        p->drawTiledPixmap(QRect(cx, cy, cw, ch), m_pix[CenterPart]);
+    if (!shadow[CenterPart].isNull())
+        p->drawTiledPixmap(QRect(cx, cy, cw, ch), shadow[CenterPart]);
 }
 
 void
-Shadow::split(const QPixmap &pix, const quint8 size, const quint8 cornerSize)
+Shadow::render(const QRect &r, QPainter *p, const Sides s)
 {
-    m_pix = new QPixmap[PartCount]();
-    m_pix[TopLeftPart] = pix.copy(0, 0, cornerSize, cornerSize);
-    m_pix[TopMidPart] = pix.copy(cornerSize, 0, size-cornerSize*2, cornerSize);
-    m_pix[TopRightPart] = pix.copy(size-cornerSize, 0, cornerSize, cornerSize);
-    m_pix[LeftPart] = pix.copy(0, cornerSize, cornerSize, size-cornerSize*2);
-    m_pix[CenterPart] = pix.copy(cornerSize, cornerSize, size-cornerSize*2, size-cornerSize*2);
-    m_pix[RightPart] = pix.copy(size-cornerSize, cornerSize, cornerSize, size-cornerSize*2);
-    m_pix[BottomLeftPart] = pix.copy(0, size-cornerSize, cornerSize, cornerSize);
-    m_pix[BottomMidPart] = pix.copy(cornerSize, size-cornerSize, size-cornerSize*2, cornerSize);
-    m_pix[BottomRightPart] = pix.copy(size-cornerSize, size-cornerSize, cornerSize, cornerSize);
+    if (!m_pix)
+        genShadow();
+    render(m_pix, r, p, s);
+}
+
+QPixmap
+*Shadow::split(const QPixmap &pix, const quint8 size, const quint8 cornerSize)
+{
+    QPixmap *ret = new QPixmap[PartCount]();
+    ret[TopLeftPart] = pix.copy(0, 0, cornerSize, cornerSize);
+    ret[TopMidPart] = pix.copy(cornerSize, 0, size-cornerSize*2, cornerSize);
+    ret[TopRightPart] = pix.copy(size-cornerSize, 0, cornerSize, cornerSize);
+    ret[LeftPart] = pix.copy(0, cornerSize, cornerSize, size-cornerSize*2);
+    ret[CenterPart] = pix.copy(cornerSize, cornerSize, size-cornerSize*2, size-cornerSize*2);
+    ret[RightPart] = pix.copy(size-cornerSize, cornerSize, cornerSize, size-cornerSize*2);
+    ret[BottomLeftPart] = pix.copy(0, size-cornerSize, cornerSize, cornerSize);
+    ret[BottomMidPart] = pix.copy(cornerSize, size-cornerSize, size-cornerSize*2, cornerSize);
+    ret[BottomRightPart] = pix.copy(size-cornerSize, size-cornerSize, cornerSize, cornerSize);
+    return ret;
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -291,3 +300,46 @@ Focus::Focus(const quint8 r, const QColor &c)
 {
 
 }
+
+//---------------------------------------------------------------------------------------------------
+
+QPixmap
+*Hover::mask(const QColor &h, const quint8 r)
+{
+    const quint64 key = ((quint64)h.rgba()) | ((quint64)r << 32);
+    static QMap<quint64, QPixmap *> map;
+    if (map.contains(key))
+        return map.value(key);
+    static const int bm = 2; //expblur doesnt blur the bottom otherwise....
+    const int sz = qMax(9, r*2+1)+bm;
+    QImage img(sz, sz, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+    QPainter p(&img);
+    static const int m = 1;
+    QRect rect = img.rect().adjusted(m, m, -(m+bm), -(m+bm));
+    Mask::render(rect, h, &p, r/*+2*/);
+    p.end();
+
+    FX::expblur(img, 1);
+    img = img.copy(0, 0, sz-bm, sz-bm);
+
+    p.begin(&img);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    Mask::render(img.rect().adjusted(2, 2, -2, -2), Qt::black, &p, r);
+    p.end();
+
+    map.insert(key, split(QPixmap::fromImage(img), img.width(), r));
+    return map.value(key);
+}
+
+void
+Hover::render(const QRect &r, const QColor &c, QPainter *p, const quint8 round, const Sides s, const quint8 level)
+{
+    if (!level)
+        return;
+
+    QPixmap *pix = mask(c, round);
+    Shadow::render(pix, r, p, s);
+}
+
+

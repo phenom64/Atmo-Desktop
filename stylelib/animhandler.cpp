@@ -88,7 +88,7 @@ Basic::animate()
     while (it.hasNext())
     {
         QWidget *w(it.next().key());
-        if (!w)
+        if (!w || !w->isEnabled())
         {
             m_vals.remove(w);
             continue;

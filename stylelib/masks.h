@@ -21,13 +21,13 @@ public:
     {
     public:
         static QPixmap *tabMask(const TabStyle s, const TabPos pos, const int shape = QTabBar::RoundedNorth, const bool outline = false);
-        static QPixmap *tabShadow(const TabStyle s, const TabPos pos, const int shape = QTabBar::RoundedNorth);
-        static void drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QBrush &b, const QStyleOptionTabV3 *opt);
+        static QPixmap *tabShadow(const TabStyle s, const TabPos pos, const QColor &c, const int shape = QTabBar::RoundedNorth);
+        static void drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QBrush &b, const QStyleOptionTabV3 *opt, const quint8 hover = 0);
         static QPainterPath tabPath(const TabStyle s, QRect r, const int shape = QTabBar::RoundedNorth);
         static QRect maskAdjusted(const QRect &r, const int shape = QTabBar::RoundedNorth);
         static QSize maskSize(const int shape = QTabBar::RoundedNorth);
         static void drawMask(QPainter *p, const QRect &r, const TabStyle s, const TabPos pos, const QBrush &b, const int shape = QTabBar::RoundedNorth, const bool outline = false);
-        static void drawShadow(QPainter *p, const QRect &r, const TabStyle s, const TabPos pos, const int shape = QTabBar::RoundedNorth);
+        static void drawShadow(QPainter *p, const QRect &r, const TabStyle s, const TabPos pos, const QColor &c, const int shape = QTabBar::RoundedNorth);
         static void drawTiles(QPainter *p, const QRect &r, const QPixmap *tiles, const int shape = QTabBar::RoundedNorth);
         static QPoint eraseOffset(const QSize &sz, const TabPos pos, const int shape = QTabBar::RoundedNorth);
         static void eraseSides(const QRect &r, QPainter *p, const QPainterPath &path, const TabPos pos, const int shape = QTabBar::RoundedNorth, const bool outline = false);
