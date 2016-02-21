@@ -229,7 +229,9 @@ public:
     } Conf;
     static Conf conf;
     static QGradientStops gradientStops(const QList<QPair<float, int> > pairs, const QColor &c);
+    static QGradientStops gradientStops(const QList<QPair<float, int> > pairs);
     static QGradientStop pairToStop(const QPair<float, int> pair, const QColor &c);
+    static QGradientStop pairToStop(const QPair<float, int> pair);
     static void edit();
 
     static void read();

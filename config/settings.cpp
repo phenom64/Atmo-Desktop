@@ -516,7 +516,17 @@ Settings::pairToStop(const GradientStop pair, const QColor &c)
     QGradientStop stop;
     stop.first = pair.first;
     const int val(qAbs(pair.second));
-    stop.second = pair.second==0?c:(pair.second>0?c.lighter(100+val):c.darker(100+val));
+    stop.second = val==0?c:(pair.second>0?c.lighter(100+val):c.darker(100+val));
+    return stop;
+}
+
+QGradientStop
+Settings::pairToStop(const GradientStop pair)
+{
+    QGradientStop stop;
+    stop.first = pair.first;
+    const int val(qAbs(pair.second));
+    stop.second = val==0?Qt::transparent:(pair.second>0?QColor(255,255,255,val*2.55f):QColor(0,0,0,val*2.55f));
     return stop;
 }
 
@@ -526,6 +536,15 @@ Settings::gradientStops(const Gradient pairs, const QColor &c)
     QGradientStops stops;
     for (int i = 0; i < pairs.count(); ++i)
         stops << pairToStop(pairs.at(i), c);
+    return stops;
+}
+
+QGradientStops
+Settings::gradientStops(const Gradient pairs)
+{
+    QGradientStops stops;
+    for (int i = 0; i < pairs.count(); ++i)
+        stops << pairToStop(pairs.at(i));
     return stops;
 }
 

@@ -1018,6 +1018,14 @@ Window::eventFilter(QObject *o, QEvent *e)
                     p.drawTiledPixmap(w->rect(), GFX::noise(true));
                 else
                     p.fillRect(w->rect(), bgColor);
+                QLinearGradient lg(w->rect().topLeft(), w->rect().bottomLeft());
+                if (dConf.windows.hor)
+                    lg = QLinearGradient(w->rect().topLeft(), w->rect().topRight());
+                lg.setStops(Settings::gradientStops(dConf.windows.gradient));
+                const QPainter::CompositionMode mode = p.compositionMode();
+                p.setCompositionMode(QPainter::CompositionMode_Overlay);
+                p.fillRect(w->rect(), lg);
+                p.setCompositionMode(mode);
             }
             else if (dConf.windows.noise)
             {
