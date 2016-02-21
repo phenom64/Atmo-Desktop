@@ -160,14 +160,14 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 sz.rwidth() += !vertical * TabDocModePadding;
                 sz.rheight() += vertical * TabDocModePadding;
             }
-            if (bar && bar->expanding())
-            {
-                static const int docTabSize = 200;
-                if (vertical)
-                    sz.setHeight(docTabSize);
-                else
-                    sz.setWidth(docTabSize);
-            }
+//            if (bar && bar->expanding())
+//            {
+//                static const int docTabSize = 200;
+//                if (vertical)
+//                    sz.setHeight(docTabSize);
+//                else
+//                    sz.setWidth(docTabSize);
+//            }
         }
         return sz;
     }

@@ -255,3 +255,37 @@ Style::inUno(QToolBar *bar, bool *activeWindow)
         *activeWindow = Handlers::Window::isActiveWindow(win);
     return inUno;
 }
+
+void
+Style::installFilter(QWidget *w)
+{
+    w->removeEventFilter(this);
+    w->installEventFilter(this);
+}
+
+void
+Style::drawText(const QRect &r,
+                QPainter *p,
+                QString text,
+                const QStyleOption *opt,
+                int flags,
+                const QPalette::ColorRole textRole,
+                const Qt::TextElideMode elide,
+                const bool bold,
+                const bool forceStretch) const
+{
+    const QFont &font = p->font();
+    QFont f = p->font();
+    text = QFontMetrics(f).elidedText(text, elide, QWIDGETSIZE_MAX, Qt::TextShowMnemonic);
+    int regularW(QFontMetrics(f).width(text));
+    f.setBold(bold);
+    int boldW(QFontMetrics(f).width(text));
+    if (bold && (forceStretch || boldW > r.width()))
+        f.setStretch(qCeil((double)regularW * 100.0f / (double)boldW));
+    if (elide != Qt::ElideNone)
+        text = QFontMetrics(f).elidedText(text, elide, r.width(), Qt::TextShowMnemonic);
+    f.setBold(bold);
+    p->setFont(f);
+    drawItemText(p, r, flags, opt->palette, isEnabled(opt), text, textRole);
+    p->setFont(font);
+}

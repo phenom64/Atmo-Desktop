@@ -246,19 +246,9 @@ Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget
     if (!opt->text.isEmpty())
     {
         QPalette::ColorRole fg(QPalette::Text);
-        const QFont font(painter->font());
-        QFont f(opt->font);
-        painter->setFont(f);
         if (opt->SUNKEN)
-        {
             fg = QPalette::HighlightedText;
-            f.setBold(true);
-            painter->setFont(f);
-        }
-        const QFontMetrics fm(painter->fontMetrics());
-        const QString text(fm.elidedText(opt->text, opt->textElideMode, textRect.width(), Qt::TextShowMnemonic));
-        drawItemText(painter, textRect, opt->displayAlignment, opt->palette, isEnabled(opt), text, fg);
-        painter->setFont(font);
+        drawText(textRect, painter, opt->text, option, opt->displayAlignment, fg, opt->textElideMode, isSelected(opt), true);
     }
     return true;
 }

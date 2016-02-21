@@ -73,13 +73,6 @@ Style::applyTranslucency(QWidget *widget)
 }
 
 void
-Style::installFilter(QWidget *w)
-{
-    w->removeEventFilter(this);
-    w->installEventFilter(this);
-}
-
-void
 Style::polish(QWidget *widget)
 {
     if (!widget)
@@ -302,11 +295,11 @@ Style::polish(QWidget *widget)
     }
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
-//        tabBar->setDrawBase(true);
-        const bool safari(Ops::isSafariTabBar(tabBar)); //hmmm
         tabBar->setBackgroundRole(QPalette::Button);
         tabBar->setForegroundRole(QPalette::ButtonText);
-        if (!safari && tabBar->expanding())
+        if (tabBar->documentMode())
+            tabBar->setDrawBase(true);
+        if (!Ops::isSafariTabBar(tabBar) && tabBar->expanding())
             tabBar->setExpanding(false);
         if (tabBar->documentMode())
         {

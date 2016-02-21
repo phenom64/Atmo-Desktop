@@ -293,7 +293,6 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     QRect ir(subElementRect(leftClose?SE_TabBarTabRightButton:SE_TabBarTabLeftButton, opt, widget));
     QRect tr(subElementRect(SE_TabBarTabText, opt, widget));
 
-    painter->save();
     if (trans)
     {
         painter->translate(tr.center());
@@ -307,25 +306,17 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     const bool selected = isSelected(opt);
-    QFont f(painter->font());
-    if (selected)
-    {
-        f.setBold(true);
-        painter->setFont(f);
-    }
-
     QPalette::ColorRole fg = widget ? widget->foregroundRole() : QPalette::ButtonText;
     const bool safari(Ops::isSafariTabBar(bar));
     if (selected && !safari && !(bar && bar->documentMode()) && !dConf.tabs.regular)
         fg = Ops::opposingRole(fg);
 
-    const QFontMetrics &fm = painter->fontMetrics();
     const Qt::TextElideMode elide = (Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget);
-    const QString &text = fm.elidedText(opt->text, elide, tr.width(), Qt::TextShowMnemonic);
-    drawItemText(painter, tr, Qt::AlignCenter, option->palette, isEnabled(opt), text, fg);
+    drawText(tr, painter, opt->text, opt, Qt::AlignCenter, fg, elide, selected);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
-    painter->restore();
+    if (trans)
+        painter->resetTransform();
     return true;
 }
 
@@ -431,7 +422,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     if (opt->documentMode)
     {
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        Mask::Tab::drawTab(Chrome, pos, r, painter, lg, qstyleoption_cast<const QStyleOptionTabV3 *>(opt), level);
+        Mask::Tab::drawTab((TabStyle)dConf.tabs.docStyle, pos, r, painter, lg, qstyleoption_cast<const QStyleOptionTabV3 *>(opt), level);
     }
     else
     {
@@ -491,7 +482,11 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
         if (dConf.differentInactive && Handlers::Window::isActiveWindow(bar))
             c = c.darker(110);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        GFX::drawClickable(Rect, Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape()), p, lg, 2, 0, sides);
+        static const int m = GFX::shadowMargin(Raised) - 1;
+        QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape());
+        if (bar->documentMode())
+            barRect.grow(m);
+        GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 2, 0, sides);
     }
 }
 
@@ -528,6 +523,7 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
 bool
 Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
+    qDebug() << "drawtabwidget" << widget;
     const QTabWidget *tabWidget = qobject_cast<const QTabWidget *>(widget);
     const QStyleOptionTabWidgetFrame *opt = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(option);
 
@@ -535,7 +531,6 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         return true;
 
     QRect rect(opt->rect);
-
 #if QT_VERSION < 0x050000
     const QTabBar *tabBar = tabWidget->findChild<const QTabBar *>(); //huh? why is the tabBar() protected??
 #else
@@ -757,7 +752,7 @@ Style::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const 
         return true;
 
     const QPalette pal(widget?widget->palette():opt->palette);
-    const bool isSelected(opt->state & State_Selected || opt->position == QStyleOptionTab::OnlyOneTab);
+    const bool isSelected((opt->state & State_Selected) || opt->position == QStyleOptionToolBoxV2::OnlyOneTab);
     QRect textRect(opt->rect.adjusted(4, 0, -4, 0));
     if (!opt->icon.isNull())
     {

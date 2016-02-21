@@ -560,12 +560,14 @@ static int randInt(int low, int high)
     return qrand() % ((high + 1) - low) + low;
 }
 
+enum Noise { RandomNoise = 0, BrushedMetal, WhiteDots, DiagonalStripes, RaisedDots, Donpo };
+
 QPixmap
 GFX::noisePix(const quint8 style)
 {
     switch (style)
     {
-    case 2:
+    case WhiteDots:
     {
         QImage img(3, 4, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
@@ -579,7 +581,7 @@ GFX::noisePix(const quint8 style)
         }
         return QPixmap::fromImage(img);
     }
-    case 3:
+    case DiagonalStripes:
     {
         QImage img(3, 3, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
@@ -593,7 +595,7 @@ GFX::noisePix(const quint8 style)
         }
         return QPixmap::fromImage(img);
     }
-    case 4:
+    case RaisedDots:
     {
         QImage img(4, 3, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
@@ -609,7 +611,7 @@ GFX::noisePix(const quint8 style)
         }
         return QPixmap::fromImage(img);
     }
-    case 5:
+    case Donpo:
     {
         QImage img(3, 3, QImage::Format_ARGB32);
         img.fill(Qt::transparent);
@@ -638,7 +640,7 @@ GFX::noisePix(const quint8 style)
             int v(randInt(0, 255));
             rgb[i] = QColor(v, v, v).rgb();
         }
-        if (style == 1)
+        if (style == BrushedMetal)
         {
             const int b(32);
             QImage small = noise.copy(0, 0, 256, 256);

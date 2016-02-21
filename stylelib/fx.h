@@ -26,6 +26,7 @@ public:
     static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static int stretch(const int v, const float n = 2.0f);
+    static int pushed(const float v, const float inlo = 0.0f, const float inup = 255.0f, const float outlo = 0.0f, const float outup = 255.0f);
     static QImage stretched(QImage img);
     static QImage stretched(QImage img, const QColor &c);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);

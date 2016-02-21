@@ -17,8 +17,7 @@ enum {
     InactiveTabOffset = 2,
     TabBarBottomSize = 4,
     TabPadding = 6,
-    TabDocModePadding = 12,
-    TabBarTabOverlap = 18
+    TabDocModePadding = 12
 };
 enum Side { Left = 0x1, Top = 0x2, Right = 0x4, Bottom = 0x8, All = 0xf };
 enum Position { West = 0, North, East, South, PosCount };
@@ -39,7 +38,7 @@ enum TabPos { BeforeSelected = 0, Selected, AfterSelected, TabPositionCount };
 enum Effect { Noeffect =0, Inset, Outset };
 enum Control { Input, ProgressBar, PushBtn, Scroller, Slider, Tab, ToolBtn, ControlCount };
 
-enum TabStyle { Chrome = 0, TabStyleCount };
+enum TabStyle { Chrome = 0, Simple, TabStyleCount };
 
 typedef quint8 Sides, Part, Direction;
 typedef qint8 ShadowStyle;

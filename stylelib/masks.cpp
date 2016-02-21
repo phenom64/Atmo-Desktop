@@ -169,13 +169,82 @@ Mask::Tab::chromePath(QRect r, const int shape)
 }
 
 QPainterPath
+Mask::Tab::simplePath(QRect r, const int shape)
+{
+    static const int round = 8;
+    const int x = r.x(), y = r.y(), w = r.width(), h = r.height(), x2 = x+w, y2 = y+h;
+    QPainterPath path;
+    switch (shape)
+    {
+    case QTabBar::RoundedNorth:
+    case QTabBar::TriangularNorth:
+    {
+        path.moveTo(x, y2);
+        path.arcTo(x, y2-round, round, round, 270, 90);
+        path.arcTo(x+round, y, round, round, 180, -90);
+        path.arcTo(x2-round*2, y, round, round, 90, -90);
+        path.arcTo(x2-round, y2-round, round, round, 180, 90);
+        break;
+    }
+    case QTabBar::RoundedSouth:
+    case QTabBar::TriangularSouth:
+    {
+        path.moveTo(x, y);
+        path.arcTo(x, y, round, round, 90, -90);
+        path.arcTo(x+round, y2-round, round, round, 180, 90);
+        path.arcTo(x2-round*2, y2-round, round, round, 270, 90);
+        path.arcTo(x2-round, y, round, round, 180, -90);
+        break;
+    }
+    case QTabBar::RoundedWest:
+    case QTabBar::TriangularWest:
+    {
+        path.moveTo(x2, y);
+        path.arcTo(x2-round, y, round, round, 0, -90);
+        path.arcTo(x, y+round, round, round, 90, 90);
+        path.arcTo(x, y2-round*2, round, round, 180, 90);
+        path.arcTo(x2-round, y2-round, round, round, 90, -90);
+        break;
+    }
+    case QTabBar::RoundedEast:
+    case QTabBar::TriangularEast:
+    {
+        path.moveTo(x, y);
+        path.arcTo(x, y, round, round, 180, 90);
+        path.arcTo(x2-round, y+round, round, round, 90, -90);
+        path.arcTo(x2-round, y2-round*2, round, round, 0, -90);
+        path.arcTo(x, y2-round, round, round, 90, 90);
+        break;
+    }
+    default: break;
+    }
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath
 Mask::Tab::tabPath(const TabStyle s, QRect r, const int shape)
 {
     switch (s)
     {
     case Chrome:
         return chromePath(r, shape);
+    case Simple:
+        return simplePath(r, shape);
     default: return QPainterPath();
+    }
+}
+
+int
+Mask::Tab::overlap(const TabStyle s)
+{
+    switch (s)
+    {
+    case Chrome:
+        return 18;
+    case Simple:
+        return 22; // 2*roundness + 4*2 - 2
+    default: return 0;
     }
 }
 
@@ -202,66 +271,83 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
     if (!opt)
         return;
 
-    static const int padding = TabBarTabOverlap/2;
+    static const int padding = overlap(s)/2;
     const bool vert = isVertical(opt->shape);
+
     r.adjust(-padding*!vert, -padding*vert, padding*!vert, padding*vert);
     drawMask(p, r, s, pos, b, opt->shape);
     const QColor shadow = Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), Steps-hover, hover);
     drawShadow(p, r, s, pos, shadow, opt->shape);
+    if (pos == Selected)
+    {
+        switch (opt->shape)
+        {
+        case QTabBar::RoundedNorth:
+        case QTabBar::TriangularNorth: r.translate(0, 1); break;
+        case QTabBar::RoundedSouth:
+        case QTabBar::TriangularSouth: r.translate(0, -1);  break;
+        case QTabBar::RoundedWest:
+        case QTabBar::TriangularWest: r.translate(1, 0); break;
+        case QTabBar::RoundedEast:
+        case QTabBar::TriangularEast: r.translate(-1, 0);  break;
+        default: break;
+        }
+        p->fillPath(tabPath(s, maskAdjusted(r, opt->shape), opt->shape), b);
+    }
 }
 
 QSize
-Mask::Tab::maskSize(const int shape)
+Mask::Tab::maskSize(const TabStyle s, const int shape)
 {
-    static const quint8 base(32);
+    const quint8 base(128/*overlap(s)*4+1*/);
     if (isVertical(shape))
         return QSize(dConf.baseSize + TabBarBottomSize, base);
     return QSize(base, dConf.baseSize + TabBarBottomSize);
 }
 
 QPoint
-Mask::Tab::eraseOffset(const QSize &sz, const TabPos pos, const int shape)
+Mask::Tab::eraseOffset(const QSize &sz, const TabPos pos, const int shape, const int overlap)
 {
     int offX(0);
     int offY(0);
     switch (shape)
     {
     case QTabBar::RoundedNorth:
-    case QTabBar::TriangularNorth: pos == BeforeSelected ? offX = sz.width()-TabBarTabOverlap : offX = -(sz.width()-TabBarTabOverlap); break;
+    case QTabBar::TriangularNorth: pos == BeforeSelected ? offX = sz.width()-overlap : offX = -(sz.width()-overlap); break;
     case QTabBar::RoundedSouth:
-    case QTabBar::TriangularSouth: pos == AfterSelected ? offX = sz.width()-TabBarTabOverlap : offX = -(sz.width()-TabBarTabOverlap); break;
+    case QTabBar::TriangularSouth: pos == AfterSelected ? offX = sz.width()-overlap : offX = -(sz.width()-overlap); break;
     case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest: pos == AfterSelected ? offY = sz.height()-TabBarTabOverlap : offY = -(sz.height()-TabBarTabOverlap); break;
+    case QTabBar::TriangularWest: pos == AfterSelected ? offY = sz.height()-overlap : offY = -(sz.height()-overlap); break;
     case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast: pos == BeforeSelected ? offY = sz.height()-TabBarTabOverlap : offY = -(sz.height()-TabBarTabOverlap);  break;
+    case QTabBar::TriangularEast: pos == BeforeSelected ? offY = sz.height()-overlap : offY = -(sz.height()-overlap);  break;
     default: break;
     }
     return QPoint(offX, offY);
 }
 
 void
-Mask::Tab::eraseSides(const QRect &r, QPainter *p, const QPainterPath &path, const TabPos pos, const int shape, const bool outline)
+Mask::Tab::eraseSides(const QRect &r, QPainter *p, const QPainterPath &path, const TabPos pos, const int shape, const int overlap)
 {
-    if (pos != Selected)
-    {
-        const QPainter::CompositionMode mode = p->compositionMode();
-        p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        const bool hadAA = p->testRenderHint(QPainter::Antialiasing);
-        p->setRenderHint(QPainter::Antialiasing);
-        QImage img(r.size(), QImage::Format_ARGB32_Premultiplied);
-        img.fill(Qt::transparent);
-        QPainter tmpp(&img);
-        tmpp.setRenderHint(QPainter::Antialiasing);
-        tmpp.setPen(QPen(Qt::black, 2.0f));
-        tmpp.setBrush(Qt::black);
-        tmpp.drawPath(path);
-        tmpp.end();
-        p->drawImage(eraseOffset(r.size(), pos, shape), img);
-        FX::expblur(img, 2);
-        p->drawImage(eraseOffset(r.size(), pos, shape), img);
-        p->setRenderHint(QPainter::Antialiasing, hadAA);
-        p->setCompositionMode(mode);
-    }
+    if (pos == Selected)
+        return;
+
+    const QPainter::CompositionMode mode = p->compositionMode();
+    p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    const bool hadAA = p->testRenderHint(QPainter::Antialiasing);
+    p->setRenderHint(QPainter::Antialiasing);
+    QImage img(r.size(), QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+    QPainter tmpp(&img);
+    tmpp.setRenderHint(QPainter::Antialiasing);
+    tmpp.setPen(QPen(Qt::black, 2.0f));
+    tmpp.setBrush(Qt::black);
+    tmpp.drawPath(path);
+    tmpp.end();
+    p->drawImage(eraseOffset(r.size(), pos, shape, overlap), img);
+    FX::expblur(img, 2);
+    p->drawImage(eraseOffset(r.size(), pos, shape, overlap), img);
+    p->setRenderHint(QPainter::Antialiasing, hadAA);
+    p->setCompositionMode(mode);
 }
 
 QPixmap
@@ -272,7 +358,7 @@ QPixmap
     if (map.contains(key))
         return map.value(key);
 
-    const QRect rect(QPoint(0, 0), maskSize(shape));
+    const QRect rect(QPoint(0, 0), maskSize(s, shape));
     const QPainterPath path = tabPath(s, maskAdjusted(rect, shape), shape);
     QImage mask(rect.size(), QImage::Format_ARGB32_Premultiplied);
     mask.fill(Qt::transparent);
@@ -287,12 +373,12 @@ QPixmap
     else
         p.fillPath(path, Qt::black);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    eraseSides(rect, &p, path, pos, shape);
+    eraseSides(rect, &p, path, pos, shape, overlap(s));
     p.fillRect(tabBarRect(mask.rect(), pos, shape), Qt::black);
     p.end();
 
     QPixmap *ret = new QPixmap[3]();
-    split(ret, mask, shape);
+    split(ret, mask, overlap(s), shape);
     map.insert(key, ret);
     return ret;
 }
@@ -305,7 +391,7 @@ QPixmap
     if (map.contains(key))
         return map.value(key);
 
-    QImage img(maskSize(shape), QImage::Format_ARGB32_Premultiplied);
+    QImage img(maskSize(s, shape), QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
     QPainter p(&img);
     drawMask(&p, img.rect(), s, pos, c, shape);
@@ -321,6 +407,27 @@ QPixmap
     drawMask(&p, img.rect(), s, pos, Qt::black, shape);
     p.fillRect(tabBarRect(img.rect(), BeforeSelected, shape), Qt::black);
     p.fillRect(img.rect(), QColor(0, 0, 0, 255-dConf.shadows.opacity));
+
+    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    drawMask(&p, img.rect(), s, pos, Qt::white, shape);
+    p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    QRect r(img.rect());
+    switch (shape)
+    {
+    case QTabBar::RoundedNorth:
+    case QTabBar::TriangularNorth: r.translate(0, 1); break;
+    case QTabBar::RoundedSouth:
+    case QTabBar::TriangularSouth: r.translate(0, -1);  break;
+    case QTabBar::RoundedWest:
+    case QTabBar::TriangularWest: r.translate(1, 0); break;
+    case QTabBar::RoundedEast:
+    case QTabBar::TriangularEast: r.translate(-1, 0);  break;
+    default: break;
+    }
+
+    drawMask(&p, r, s, pos, Qt::white, shape);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.fillPath(tabPath(s, maskAdjusted(img.rect(), shape), shape), QColor(0, 0, 0, 255-dConf.shadows.illumination));
     p.end();
 
 //    if (pos != Selected)
@@ -332,13 +439,13 @@ QPixmap
 //    }
 
     QPixmap *ret = new QPixmap[3]();
-    split(ret, img, shape);
+    split(ret, img, overlap(s), shape);
     map.insert(key, ret);
     return ret;
 }
 
 void
-Mask::Tab::split(QPixmap *p, const QImage &img, const int shape)
+Mask::Tab::split(QPixmap *p, const QImage &img, const int sideSize, const int shape)
 {
     switch (shape)
     {
@@ -346,21 +453,21 @@ Mask::Tab::split(QPixmap *p, const QImage &img, const int shape)
     case QTabBar::TriangularNorth:
     case QTabBar::RoundedSouth:
     case QTabBar::TriangularSouth:
-        p[0] = QPixmap::fromImage(img.copy(0, 0, img.width()/2, img.height()));
-        p[1] = QPixmap::fromImage(img.copy(img.width()/2-1, 0, 1, img.height()));
-        p[2] = QPixmap::fromImage(img.copy(img.width()/2, 0, img.width()/2, img.height()));
+        p[0] = QPixmap::fromImage(img.copy(0, 0, sideSize, img.height()));
+        p[1] = QPixmap::fromImage(img.copy(sideSize+1, 0, 1, img.height()));
+        p[2] = QPixmap::fromImage(img.copy(img.width()-sideSize, 0, sideSize, img.height()));
         break;
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
-        p[0] = QPixmap::fromImage(img.copy(0, img.height()/2, img.width(), img.height()/2));
-        p[1] = QPixmap::fromImage(img.copy(0, img.height()/2-1, img.width(), 1));
-        p[2] = QPixmap::fromImage(img.copy(0, 0, img.width(), img.height()/2));
+        p[0] = QPixmap::fromImage(img.copy(0, img.height()-sideSize, img.width(), sideSize));
+        p[1] = QPixmap::fromImage(img.copy(0, sideSize+1, img.width(), 1));
+        p[2] = QPixmap::fromImage(img.copy(0, 0, img.width(), sideSize));
         break;
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
-        p[0] = QPixmap::fromImage(img.copy(0, 0, img.width(), img.height()/2));
-        p[1] = QPixmap::fromImage(img.copy(0, img.height()/2-1, img.width(), 1));
-        p[2] = QPixmap::fromImage(img.copy(0, img.height()/2, img.width(), img.height()/2));
+        p[0] = QPixmap::fromImage(img.copy(0, 0, img.width(), sideSize));
+        p[1] = QPixmap::fromImage(img.copy(0, sideSize+1, img.width(), 1));
+        p[2] = QPixmap::fromImage(img.copy(0, img.height()-sideSize, img.width(), sideSize));
         break;
     default: break;
     }

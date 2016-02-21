@@ -60,6 +60,7 @@ static const char *s_key[] = {
     "input.gradient",
     "input.tinthue",
 
+    "tabs.docstyle",
     "tabs.selectors",
     "tabs.safari",
     "tabs.rnd",
@@ -169,6 +170,7 @@ static const QVariant s_default[] = {
     "0.0:-5, 1.0:5",
     "-1:0",
 
+    0,
     true,
     true,
     4,
@@ -278,6 +280,7 @@ static const char *s_description[] = {
     /*"input.gradient"*/            "Gradient of input boxes, lineedits and spinboxes and such",
     /*"input.tinthue"*/             "Hue to tint input boxes, lineedits and spinboxes and such w/",
 
+    /*"tabs.docstyle"*/             "Style / shape of document mode tabbar tabs, 0 = Chrome, 1 = Simple",
     /*"tabs.selectors"*/            "Use selectors instead of tabs on tabwidgets",
     /*"tabs.safari"*/               "Integrate the tabbars under toolbars like the Safari web browser from Mac Os does",
     /*"tabs.rnd"*/                  "Roundness of tabs",
@@ -723,6 +726,7 @@ Settings::read()
     conf.input.gradient         = stringToGrad(readString(Inputgrad));
     conf.input.tint             = tintColor(readString(Inputtint));
     //tabs
+    conf.tabs.docStyle          = readInt(Tabdocstyle);
     conf.tabs.safari            = readBool(Tabsaf);
     conf.tabs.regular           = !readBool(Tabselectors);
     conf.tabs.rnd               = qMin<quint8>(MaxRnd, readInt(Tabrnd));

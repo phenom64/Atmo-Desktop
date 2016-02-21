@@ -134,13 +134,14 @@ Shadow::genShadow()
     }
     case Raised:
     {
-        QRectF rect(QRectF(pix.rect())); //ummmmm, need to figure this out at some point...
-        QImage blurred(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        QRect rect(pix.rect());
+        QImage blurred(pix.size()+QSize(2,2), QImage::Format_ARGB32_Premultiplied);
         blurred.fill(Qt::transparent);
         QPainter pt(&blurred);
-        Mask::render(rect.adjusted(0.75f, 1.0f, -0.75f, -0.5f), QColor(0, 0, 0, 185), &pt, m_round+2);
+        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round+2);
         pt.end();
         FX::expblur(blurred, 1);
+        blurred = blurred.copy(rect);
 
         QImage dark(pix.size(), QImage::Format_ARGB32_Premultiplied);
         dark.fill(Qt::transparent);

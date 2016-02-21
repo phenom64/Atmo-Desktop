@@ -75,6 +75,7 @@ public:
         Inputshadow,
         Inputgrad,
         Inputtint,
+        Tabdocstyle,
         Tabselectors,
         Tabsaf,
         Tabrnd,
@@ -195,7 +196,7 @@ public:
         } shadows;
         struct tabs
         {
-            quint8 rnd, safrnd, closeButtonSide, shadow;
+            quint8 rnd, safrnd, closeButtonSide, shadow, docStyle;
             Gradient gradient, barGrad;
             bool safari, regular;
         } tabs;

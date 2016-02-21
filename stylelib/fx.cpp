@@ -365,6 +365,12 @@ FX::stretch(const int v, const float n)
     Upper value of 'stretch to' range
  */
 
+int
+FX::pushed(const float v, const float inlo, const float inup, const float outlo, const float outup)
+{
+    return qRound((v - inlo) * ((outup-outlo)/(inup-inlo)) + outlo);
+}
+
 QImage
 FX::stretched(QImage img)
 {
