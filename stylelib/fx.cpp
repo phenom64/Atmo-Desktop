@@ -330,7 +330,8 @@ FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const Q
     return pix;
 }
 
-static int stretch(const int v, const float n = 2.0f)
+int
+FX::stretch(const int v, const float n)
 {
     static bool isInit(false);
     static float table[256];

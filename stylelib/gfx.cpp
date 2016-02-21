@@ -210,7 +210,7 @@ GFX::drawClickable(ShadowStyle s,
     if (s >= ShadowCount)
         return;
 
-    quint8 m = shadowMargin(s);
+
 //    if (!m && qMin(r.width(), r.height()) > 7) //the fancy hover effect needs some space...
 //        r.sShrink(1);
 
@@ -237,6 +237,8 @@ GFX::drawClickable(ShadowStyle s,
             && (sunken || qstyleoption_cast<const QStyleOptionTab *>(opt) && opt->state & QStyle::State_Selected)
             && (s == Etched || s == Raised))
         s = Sunken;
+
+    const quint8 m = shadowMargin(s);
 
     if (rnd)
         rnd = Mask::maxRnd(r, sides, rnd);
@@ -602,6 +604,23 @@ GFX::noisePix(const quint8 style)
                                      127, 255, 255, 127};
         for (int i = 0; i < size; ++i)
         {
+            const int v(px[i]);
+            rgb[i] = qRgb(v, v, v);
+        }
+        return QPixmap::fromImage(img);
+    }
+    case 5:
+    {
+        QImage img(3, 3, QImage::Format_ARGB32);
+        img.fill(Qt::transparent);
+        QRgb *rgb = reinterpret_cast<QRgb *>(img.bits());
+        const int size(img.width()*img.height());
+        static const int px[3*3] = { 134, 20, 217,
+                                     83, 255, 0,
+                                     191, 134, 230 };
+        for (int i = 0; i < size; ++i)
+        {
+//            qDebug() << ((px[i] - 42.0f) * ((255.0f-0.0f)/(82.0f-42.0f)) + 0);
             const int v(px[i]);
             rgb[i] = qRgb(v, v, v);
         }

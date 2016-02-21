@@ -204,6 +204,9 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (full || (sunken && selectRows))
         sides &= ~(Right|Left);
 
+//    if (vp && option->rect.top() <= vp->rect().top())
+//        sides &= ~Top;
+
     if (opt)
     switch (opt->viewItemPosition)
     {
