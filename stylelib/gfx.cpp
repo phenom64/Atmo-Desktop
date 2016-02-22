@@ -712,3 +712,42 @@ GFX::subRect(const QRect &r, const int flags, const QRect &sr)
         y += r.height()-h;
     return QRect(x, y, w, h);
 }
+
+void
+GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QPoint &offset)
+{
+    if (!w)
+        return;
+
+    if (w->autoFillBackground())
+        return;
+    QWidget *parent = w->parentWidget();
+    while (parent)
+    {
+        if (parent->autoFillBackground())
+        {
+            p->fillRect(w->rect(), parent->palette().color(parent->backgroundRole()));
+            return;
+        }
+        parent = parent->parentWidget();
+    }
+    const QRect r = w->window()->rect();
+    if (dConf.windows.noise)
+        p->drawTiledPixmap(r, GFX::noise(true), offset);
+    else
+        p->fillRect(r, bg);
+    if (!dConf.windows.gradient.isEmpty())
+    {
+        QLinearGradient lg(r.topLeft(), r.bottomLeft());
+        if (dConf.windows.hor)
+            lg = QLinearGradient(r.topLeft(), r.topRight());
+        lg.setStops(Settings::gradientStops(dConf.windows.gradient));
+        const QPainter::CompositionMode mode = p->compositionMode();
+        p->setCompositionMode(QPainter::CompositionMode_Overlay);
+        const QPoint off = p->brushOrigin();
+        p->setBrushOrigin(-offset);
+        p->fillRect(r, lg);
+        p->setBrushOrigin(off);
+        p->setCompositionMode(mode);
+    }
+}

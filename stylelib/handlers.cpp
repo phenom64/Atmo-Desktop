@@ -1007,39 +1007,20 @@ Window::eventFilter(QObject *o, QEvent *e)
         {
             const QColor bgColor(w->palette().color(w->backgroundRole()));
             QPainter p(w);
-//            Sides sides(All);
             if (dConf.uno.enabled)
             {
                 if (XHandler::opacity() < 1.0f
                         && qobject_cast<QMainWindow *>(w))
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
-//                p.fillRect(w->rect(), bgColor);
-                if (dConf.windows.noise)
-                    p.drawTiledPixmap(w->rect(), GFX::noise(true));
-                else
-                    p.fillRect(w->rect(), bgColor);
-                QLinearGradient lg(w->rect().topLeft(), w->rect().bottomLeft());
-                if (dConf.windows.hor)
-                    lg = QLinearGradient(w->rect().topLeft(), w->rect().topRight());
-                lg.setStops(Settings::gradientStops(dConf.windows.gradient));
-                const QPainter::CompositionMode mode = p.compositionMode();
-                p.setCompositionMode(QPainter::CompositionMode_Overlay);
-                p.fillRect(w->rect(), lg);
-                p.setCompositionMode(mode);
+
             }
-            else if (dConf.windows.noise)
-            {
-                p.drawTiledPixmap(w->rect(), GFX::noise(true));
-            }
-            else
-                p.fillRect(w->rect(), bgColor);
+            GFX::drawWindowBg(&p, w, bgColor);
             if (WindowData *data = WindowData::memory(w->winId(), w))
                 if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
                 {
                     p.setPen(QColor(0, 0, 0, dConf.shadows.opacity));
                     p.drawLine(0, Handlers::unoHeight(w, ToolBars)+0.5f, w->width(), Handlers::unoHeight(w, ToolBars)+0.5f);
                 }
-
             p.end();
         }
         return false;

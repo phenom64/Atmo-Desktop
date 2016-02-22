@@ -98,7 +98,8 @@ StackAnimator::currentChanged(int i)
 //        QRect geo(m_widget->mapTo(w->window(), QPoint()), m_widget->size());
 //        w->window()->render(&m_prevPix, QPoint(), geo, QWidget::DrawWindowBackground);
         QPainter p(&m_prevPix);
-        p.drawTiledPixmap(w->rect(), GFX::noise(true), m_widget->mapTo(w->window(), QPoint()));
+//        p.drawTiledPixmap(w->rect(), GFX::noise(true), m_widget->mapTo(w->window(), QPoint()));
+        GFX::drawWindowBg(&p, w, w->palette().color(w->backgroundRole()), m_widget->mapTo(w->window(), QPoint()));
         p.end();
         w->render(&m_prevPix, w->mapTo(m_stack->parentWidget(), QPoint()), QRegion(), QWidget::DrawChildren);
         m_pix = m_prevPix;
@@ -112,7 +113,8 @@ StackAnimator::currentChanged(int i)
 //        QRect geo(m_widget->mapTo(w->window(), QPoint()), m_widget->size());
 //        w->window()->render(&m_activePix, QPoint(), geo, QWidget::DrawWindowBackground);
         QPainter p(&m_activePix);
-        p.drawTiledPixmap(w->rect(), GFX::noise(true), m_widget->mapTo(w->window(), QPoint()));
+        GFX::drawWindowBg(&p, w, w->palette().color(w->backgroundRole()), m_widget->mapTo(w->window(), QPoint()));
+//        p.drawTiledPixmap(w->rect(), GFX::noise(true), m_widget->mapTo(w->window(), QPoint()));
         p.end();
         w->render(&m_activePix, w->mapTo(m_stack->parentWidget(), QPoint()), QRegion(), QWidget::DrawChildren);
         w->setAttribute(Qt::WA_UpdatesDisabled, true);
