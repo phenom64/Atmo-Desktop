@@ -128,35 +128,23 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
     for (int i = 0; i < text.count(); ++i)
     {
-        const QFont font(painter->font());
+//        const QFont font(painter->font());
+        bool bold(false);
         if (isMenuBar)
         {
             const QMenuBar *bar(static_cast<const QMenuBar *>(widget));
             drawMenuBar(option, painter, widget);
             if (QAction *a = bar->actionAt(opt->rect.topLeft()))
                 if (a->font().bold())
-                {
-                    QFont f(widget->font());
-                    int regularW(QFontMetrics(f).width(text.at(i)));
-                    f.setBold(true);
-                    int boldW(QFontMetrics(f).width(text.at(i)));
-                    if (boldW > opt->rect.width())
-                    {
-                        int stretch(regularW*100/boldW);
-                        f.setStretch(stretch);
-                    }
-                    f.setBold(true);
-                    painter->setFont(f);
-                }
+                    bold = true;
+            if (isSelected(opt))
+                bold = true;
         }
         else
-        {
-            QFont f(font);
-            f.setBold(opt->state & (State_Selected | State_Sunken));
-            painter->setFont(f);
-        }
-        drawItemText(painter, isMenuBar?opt->rect:textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
-        painter->setFont(font);
+            bold = (opt->state & (State_Selected | State_Sunken));
+        drawText(isMenuBar?opt->rect:textRect, painter, text.at(i), option, isMenuBar?Qt::AlignCenter:align[i], fg, Qt::ElideRight, bold, bold);
+//        drawItemText(painter, isMenuBar?opt->rect:textRect, isMenuBar?Qt::AlignCenter:align[i], pal, enabled[i], text.at(i), fg);
+//        painter->setFont(font);
     }
     painter->restore();
     return true;
@@ -248,7 +236,7 @@ Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget
         QPalette::ColorRole fg(QPalette::Text);
         if (opt->SUNKEN)
             fg = QPalette::HighlightedText;
-        drawText(textRect, painter, opt->text, option, opt->displayAlignment, fg, opt->textElideMode, isSelected(opt), true);
+        drawText(textRect, painter, opt->text, option, opt->displayAlignment, fg, opt->textElideMode, isSelected(opt), isSelected(opt));
     }
     return true;
 }

@@ -331,17 +331,16 @@ GFX::drawClickable(ShadowStyle s,
 
     if (hover && !sunken && s != Yosemite)
     {
-        const QPainter::CompositionMode mode = p->compositionMode();
-        p->setCompositionMode(QPainter::CompositionMode_Screen);
         QColor highLight = opt ? opt->palette.color(QPalette::Highlight) : qApp->palette().color(QPalette::Highlight);
         highLight.setAlpha((255/Steps) * hover);
+
+        if (m)
+            Hover::render(r.growed(m), highLight, p, rnd, sides, hover);
+        highLight.setAlpha(highLight.alpha()>>1);
+        const QPainter::CompositionMode mode = p->compositionMode();
+        p->setCompositionMode(QPainter::CompositionMode_Screen);
         GFX::drawMask(r, p, highLight, rnd, sides);
         p->setCompositionMode(mode);
-        if (m)
-        {
-            r.grow(m);
-            Hover::render(r, highLight, p, rnd, sides, hover);
-        }
     }
 }
 
