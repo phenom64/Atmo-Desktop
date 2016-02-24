@@ -187,7 +187,7 @@ Style::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget 
     p.setPen(Qt::NoPen);
     const QRect r(pix.rect());
     const QColor fg(widget&&opt?opt->palette.color(widget->foregroundRole()):Qt::black);
-    const QColor bg(widget&&opt?opt->palette.color(widget->backgroundRole()):Qt::white);
+//    const QColor bg(widget&&opt?opt->palette.color(widget->backgroundRole()):Qt::white);
     const int _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     switch (sp)
     {

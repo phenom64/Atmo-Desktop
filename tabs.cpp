@@ -312,7 +312,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
         fg = Ops::opposingRole(fg);
 
     const Qt::TextElideMode elide = (Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget);
-    drawText(tr, painter, opt->text, opt, Qt::AlignCenter, fg, elide, selected);
+    drawText(tr, painter, opt->text, opt, Qt::AlignCenter, fg, elide, selected, selected);
     if (!opt->icon.isNull())
         drawItemPixmap(painter, ir, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize));
     if (trans)
@@ -434,7 +434,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     return true;
 }
 
-static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
+static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const bool full = false)
 {
     if (!bar->isVisible())
         return;
@@ -486,20 +486,18 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect)
         QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape());
         if (bar->documentMode())
             barRect.grow(m);
-        GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 2, 0, sides);
+        GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 0, 0, full?All:sides);
     }
 }
 
 bool
 Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTabWidget"))
-        return true;
     const QStyleOptionTabBarBaseV2 *opt = qstyleoption_cast<const QStyleOptionTabBarBaseV2 *>(option);
     if (!opt)
         return true;
     const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget);
-    if (tabBar && tabBar->documentMode())
+    if (tabBar && (tabBar->documentMode() || dConf.tabs.regular))
     {
         QRect r(tabBar->rect());
         QPaintDevice *d = painter->device();
@@ -523,7 +521,6 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
 bool
 Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    qDebug() << "drawtabwidget" << widget;
     const QTabWidget *tabWidget = qobject_cast<const QTabWidget *>(widget);
     const QStyleOptionTabWidgetFrame *opt = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(option);
 
@@ -588,7 +585,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         }
         default: break;
         }
-        drawDocTabBar(painter, tabBar, barRect);
+        drawDocTabBar(painter, tabBar, barRect, true);
     }
     if (dConf.tabs.regular)
         GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3, sides);
@@ -603,21 +600,12 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     const int size(qMin(option->rect.width(), option->rect.height())), _2_(size/2),_4_(size/4), _8_(size/8), _16_(size/16);
     const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
 
-//    const bool isTabBar(widget&&qobject_cast<const QTabBar *>(widget->parentWidget()));
-    bool safTabs(false);
-    const QTabBar *bar(0);
-    if (widget && widget->parentWidget())
-    {
-        bar = qobject_cast<const QTabBar *>(widget->parentWidget());
-        if (bar)
-            safTabs = Ops::isSafariTabBar(qobject_cast<const QTabBar *>(bar));
-    }
-
-    const bool hover(option->HOVER);
-
-    bool isSelected(option->state & State_Selected);
+    const QTabBar *bar = widget ? qobject_cast<const QTabBar *>(widget->parentWidget()) : 0;
+    const bool doc = bar && bar->documentMode();
+    const bool hover = isMouseOver(option);
+    bool selected = isSelected(option);
     if (bar && bar->count() == 1)
-        isSelected = true;
+        selected = true;
 
     QPixmap pix = QPixmap(option->rect.size());
     pix.fill(Qt::transparent);
@@ -626,7 +614,11 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     p.setBrush(Qt::black);
     p.setRenderHint(QPainter::Antialiasing);
     QRect l(pix.rect().adjusted(_16_, _16_, -_16_, -_16_));
-    p.drawEllipse(l);
+//    p.drawEllipse(l);
+    const int ext = qMin(l.height(), l.width()) >> 1;
+    int round = qMin<int>(ext, dConf.tabs.closeRnd);
+    l.shrink((qMax(0, (int)(ext*0.66f - round))));
+    p.drawRoundedRect(l, round, round);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     const int r[2] = { 45, 90 };
     for (int i = 0; i < 2; ++i)
@@ -639,40 +631,39 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     p.end();
 
     bool isDark(false);
-    if (bar)
+    if (doc)
     {
-        if (safTabs || bar->documentMode())
-        {
-            QWidget *d(widget->window());
-            const QPalette pal(d->palette());
-            isDark = Color::lum(pal.color(d->foregroundRole())) > Color::lum(pal.color(d->backgroundRole()));
-        }
-        else
-        {
-            isDark = Color::lum(option->palette.color(bar->foregroundRole())) > Color::lum(option->palette.color(bar->backgroundRole()));
-            if (isSelected)
-                isDark = !isDark;
-        }
+        QWidget *d(widget->window());
+        const QPalette pal(d->palette());
+        isDark = Color::lum(pal.color(d->foregroundRole())) > Color::lum(pal.color(d->backgroundRole()));
+    }
+    else
+    {
+        isDark = Color::lum(option->palette.color(bar->foregroundRole())) > Color::lum(option->palette.color(bar->backgroundRole()));
+        if (selected && !dConf.tabs.regular)
+            isDark = !isDark;
     }
     int cc(isDark?0:255);
     QPixmap tmp(pix);
     FX::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
     QPixmap tmp2(pix);
-    QPalette::ColorRole role(Ops::fgRole(bar, QPalette::WindowText));
-    if (safTabs || (bar && bar->documentMode()))
-        role = QPalette::WindowText;
-    else if (hover)
+    QPalette::ColorRole role(QPalette::ButtonText);
+
+    if (!doc && hover && !dConf.tabs.regular)
         role = QPalette::Highlight;
-    else if (isSelected)
+    else if (!doc && selected && !dConf.tabs.regular)
         role = Ops::opposingRole(role);
-    FX::colorizePixmap(tmp2, option->palette.color(role));
+    QColor c = option->palette.color(role);
+    if (doc || dConf.tabs.regular)
+        c = Color::mid(c, option->palette.color(Ops::opposingRole(role)), 3, 1);
+    FX::colorizePixmap(tmp2, c);
 
     QPixmap closer = QPixmap(option->rect.size());
     closer.fill(Qt::transparent);
     p.begin(&closer);
     p.drawTiledPixmap(closer.rect().translated(0, 1), tmp);
     p.drawTiledPixmap(closer.rect(), tmp2);
-    if (!isSelected && !(option->state & State_MouseOver))
+    if (!selected && !(option->state & State_MouseOver))
     {
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.fillRect(closer.rect(), QColor(0, 0, 0, 127.0f));

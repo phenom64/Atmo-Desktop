@@ -53,6 +53,7 @@ static const char *s_key[] = {
     "toolbtn.followcolors",
     "toolbtn.invertactive",
     "toolbtn.flat",
+    "toolbtn.morph",
 
     "input.rnd",
     "input.inunornd",
@@ -69,6 +70,7 @@ static const char *s_key[] = {
     "tabs.bargrad",
     "tabs.safrnd",          //safaritabs roundness capped at 8 atm, might change in the future if needed
     "tabs.closebuttonside",
+    "tabs.closerrnd",
 
     "uno",
     "uno.gradient",
@@ -163,6 +165,7 @@ static const QVariant s_default[] = {
     false,
     false,
     false,
+    true,
 
     8,
     8,
@@ -179,6 +182,7 @@ static const QVariant s_default[] = {
     "0.0:-5, 1.0:5",
     4,
     0,
+    16,
 
     true,
     "0.0:5, 1.0:-5",
@@ -273,6 +277,7 @@ static const char *s_description[] = {
     /*"toolbtn.followcolors"*/      "If the icons on toolbuttons should be manipulated to be monochromatic and follow the palette (highly experimental and does not always produce nice results)",
     /*"toolbtn.invertactive"*/      "Whether the active/checked toolbuttons should have inverted foreground/background colors a'la Mac Os",
     /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
+    /*"toolbtn.morph"*/             "When toolbtn.folcol=true, morph the icon back into its original colors on hover",
 
     /*"input.rnd"*/                 "Roundness of input boxes, lineedits and spinboxes and such",
     /*"input.inunornd"*/            "Roundness of inputs inside UNO",
@@ -289,6 +294,7 @@ static const char *s_description[] = {
     /*"tabs.bargrad"*/              "Gradient on document mode tabbars",
     /*"tabs.safrnd"*/               "Roundness of tabs in a safari-like tabbar. Max roundness allowed 8",          //safaritabs roundness capped at 8 atm, might change in the future if needed
     /*"tabs.closebuttonside"*/      "Side of the tab the close button should be on, 0 = Left, 1 = Right",
+    /*"tabs.closerrnd"*/            "Roundness of tab close button",
 
     /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os. Always enabled atm",
     /*"uno.gradient"*/              "Gradient of the UNO area",
@@ -738,6 +744,7 @@ Settings::read()
     conf.toolbtn.folCol         = readBool(Toolbtnfolcol);
     conf.toolbtn.invAct         = readBool(Toolbtninvact);
     conf.toolbtn.flat           = readBool(Toolbtnflat);
+    conf.toolbtn.morph          = readBool(Toolbtnmorph);
     //inputs
     conf.input.rnd              = qMin<quint8>(MaxRnd, readInt(Inputrnd));
     conf.input.unoRnd           = qMin<quint8>(MaxRnd, readInt(Inputunornd));
@@ -752,8 +759,9 @@ Settings::read()
     conf.tabs.shadow            = readInt(Tabshadow);
     conf.tabs.gradient          = stringToGrad(readString(Tabgrad));
     conf.tabs.barGrad           = stringToGrad(readString(Tabbargrad));
-    conf.tabs.safrnd            = qMin(readInt(Saftabrnd), 8);
+    conf.tabs.safrnd            = qMin(readInt(Tabsafrnd), 8);
     conf.tabs.closeButtonSide   = readInt(Tabcloser);
+    conf.tabs.closeRnd          = readInt(Tabcloserrnd);
     //uno
     conf.uno.enabled            = /*readBool(Unoenabled)*/true;
     conf.uno.gradient           = stringToGrad(readString(Unograd));

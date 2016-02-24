@@ -39,7 +39,7 @@ public:
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
     static Overlay *overlay(const QWidget *frame);
-    static bool isSupported(const QFrame *f);
+    static bool isSupported(const QWidget *frame);
     inline Sides &sides() { return m_sides; }
 
 protected:

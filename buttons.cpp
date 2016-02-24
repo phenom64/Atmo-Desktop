@@ -466,7 +466,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         fg = widget->foregroundRole();
         bg = widget->backgroundRole();
         QWidget *parent = widget->parentWidget();
-        if (parent
+        if (parent && parent != bar
                 && parent->autoFillBackground()
                 && parent->backgroundRole() != QPalette::Window)
         {
@@ -535,7 +535,8 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
 
     if (opt->toolButtonStyle != Qt::ToolButtonTextOnly)
     {
-        QPixmap pix = opt->icon.pixmap(opt->iconSize, isEnabled(opt) ? QIcon::Normal : QIcon::Disabled);
+        QPixmap orgPix;
+        QPixmap pix = orgPix = opt->icon.pixmap(opt->iconSize, isEnabled(opt) ? QIcon::Normal : QIcon::Disabled);
         if (!pix.isNull())
         {
             if (dConf.toolbtn.folCol && bar)
@@ -544,17 +545,36 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
                 pix = opt->icon.pixmap(opt->iconSize, QIcon::Normal);
                 static QList<IconCheck> s_list;
                 static QList<QPixmap> s_pix;
+
                 const IconCheck check(widget, opt->palette.color(fg), opt->iconSize.height(), opt->icon.name());
                 if (s_list.contains(check))
                     pix = s_pix.at(s_list.indexOf(check));
                 else
                 {
-                    pix = FX::monochromized(pix, opt->palette.color(fg), Inset, isDark);
+                    const QColor &c = isDark ? opt->palette.color(fg) : Color::mid(opt->palette.color(fg), opt->palette.color(bg), 3, 1);
+                    pix = FX::monochromized(pix, c, Inset, isDark);
                     s_list << check;
                     s_pix << pix;
                 }
             }
+
+            const quint8 hover = (dConf.toolbtn.folCol&&dConf.toolbtn.morph)*Anim::ToolBtns::level(btn);
+            if (hover && !inDock)
+            {
+                const int alpha = (255.0f/Steps) * hover;
+                QPainter p(&orgPix);
+                p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+                p.fillRect(orgPix.rect(), QColor(0, 0, 0, alpha));
+                p.end();
+                p.begin(&pix);
+                p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+                p.fillRect(pix.rect(), QColor(0, 0, 0, alpha));
+                p.end();
+
+            }
             drawItemPixmap(painter, inDock?widget->rect():ir, Qt::AlignCenter, pix);
+            if (hover && !inDock)
+                drawItemPixmap(painter, ir, Qt::AlignCenter, orgPix);
         }
     }
     if (hasIndicator)

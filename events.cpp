@@ -53,7 +53,13 @@ Style::eventFilter(QObject *o, QEvent *e)
     case QEvent::Enter:
 //    case QEvent::HoverEnter:
     {
-        qDebug() << w << w->parentWidget();
+
+        if (w->parentWidget() && w->parentWidget()->parentWidget())
+            qDebug() << w << w->parentWidget() << w->parentWidget()->parentWidget() << w->parentWidget()->parentWidget()->parentWidget();
+        else if (w->parentWidget())
+            qDebug() << w << w->parentWidget() << w->parentWidget()->parentWidget();
+        else
+            qDebug() << w << w->parentWidget();
     }
 #endif
     case QEvent::Hide:
@@ -191,12 +197,22 @@ Style::paintEvent(QObject *o, QEvent *e)
         w->installEventFilter(this);
         return true;
     }
-    else if (QAbstractScrollArea *area = qobject_cast<QAbstractScrollArea *>(w->parent()))
-    {
-        area->verticalScrollBar()->update();
-        area->horizontalScrollBar()->update();
-        return false;
-    }
+//    else if (w->inherits("KTextEditor::View"))
+//    {
+//        w->removeEventFilter(this);
+//        QCoreApplication::sendEvent(w, e);
+//        QPainter p(w);
+//        GFX::drawShadow(Sunken, w->rect(), &p, true, 0);
+//        p.end();
+//        w->installEventFilter(this);
+//        return true;
+//    }
+//    else if (QAbstractScrollArea *area = qobject_cast<QAbstractScrollArea *>(w->parent()))
+//    {
+//        area->verticalScrollBar()->update();
+//        area->horizontalScrollBar()->update();
+//        return false;
+//    }
 #if 0
     else if (QTabBar *bar = qobject_cast<QTabBar *>(w))
     {

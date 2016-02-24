@@ -70,6 +70,7 @@ public:
         Toolbtnfolcol,
         Toolbtninvact,
         Toolbtnflat,
+        Toolbtnmorph,
         Inputrnd,
         Inputunornd,
         Inputshadow,
@@ -82,8 +83,9 @@ public:
         Tabshadow,
         Tabgrad,
         Tabbargrad,
-        Saftabrnd,       //safaritabs Roundness Capped At 8 Atm, Might Change In The Future If Needed
+        Tabsafrnd,       //safaritabs Roundness Capped At 8 Atm, Might Change In The Future If Needed
         Tabcloser,
+        Tabcloserrnd,
         Unoenabled,
         Unograd,
         Unotint,
@@ -160,7 +162,7 @@ public:
         struct toolbtn
         {
             quint8 rnd, shadow;
-            bool folCol, invAct, flat;
+            bool folCol, invAct, flat, morph;
             Gradient gradient, activeGradient;
             Tint tint;
         } toolbtn;
@@ -196,7 +198,7 @@ public:
         } shadows;
         struct tabs
         {
-            quint8 rnd, safrnd, closeButtonSide, shadow, docStyle;
+            quint8 rnd, safrnd, closeButtonSide, shadow, docStyle, closeRnd;
             Gradient gradient, barGrad;
             bool safari, regular;
         } tabs;

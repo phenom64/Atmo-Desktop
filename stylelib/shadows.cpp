@@ -100,22 +100,22 @@ Shadow::genShadow()
     {
         QPixmap white(size, size);
         white.fill(Qt::transparent);
-        QRect rect(pix.rect().adjusted(1, 1, -1, 0));
+        QRect rect(pix.rect().adjusted(1, 2, -1, 0));
         QPainter pt(&white);
         Mask::render(rect, Qt::white, &pt, m_round);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round-1);
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         pt.fillRect(rect, QColor(0, 0, 0, 255-m_illumination));
         pt.end();
 
         rect.setBottom(rect.bottom()-1);
+        rect.setTop(rect.top()-1);
 
         QPixmap black(size, size);
         black.fill(Qt::transparent);
         pt.begin(&black);
         pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        Mask::render(rect, Qt::black, &pt, m_round-0.5f);
+        Mask::render(rect, Qt::black, &pt, m_round-1);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
 
         QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
@@ -123,7 +123,7 @@ Shadow::genShadow()
         lg.setColorAt(1, QColor(0, 0, 0, 63));
         pt.fillRect(rect, lg);
 
-        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round+0.5f/*-1*/);
+        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round/*-1*/);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         pt.fillRect(rect, QColor(0, 0, 0, 255-m_opacity));
         pt.end();

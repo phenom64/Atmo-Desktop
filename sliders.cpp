@@ -161,14 +161,16 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         default: break;
         }
 
-        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
+        lg.setStops(Settings::gradientStops(dConf.scrollers.grooveGrad, bgc));
         const quint8 sm = GFX::shadowMargin(dConf.scrollers.grooveShadow);
         GFX::drawClickable(dConf.scrollers.grooveShadow, groove.adjusted(-sm, -sm, sm, sm), painter, lg, MaxRnd, 0, All, option, widget);
 
         ///the slider
+        if (slider.size().isEmpty())
+            return true;
         if (dConf.scrollers.style == 2)
             bgColor = Color::mid(pal.color(QPalette::Highlight), bgColor, 2, 1);
-        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
+        lg.setStops(Settings::gradientStops(dConf.scrollers.sliderGrad, Color::mid(pal.color(QPalette::Highlight), bgColor, level, Steps-level)));
         slider.adjust(1, 1, -1, -1);
         quint8 roundNess((qMin(slider.width(), slider.height()) >> 1));
         QBrush brush(lg);

@@ -20,6 +20,8 @@ public:
 
 protected:
     bool eventFilter(QObject *o, QEvent *e);
+    static void dumpWidget(QPixmap &pix, QWidget *w);
+    static void drawRecursive(QPainter *p, QWidget *w);
 
 protected slots:
     void currentChanged(int i);

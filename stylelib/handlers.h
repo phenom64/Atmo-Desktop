@@ -140,7 +140,6 @@ public:
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
     static void updateWindowDataLater(QWidget *win);
     static void unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data);
-    static QImage windowBg(const QSize &sz, const QColor &bgColor);
     static bool isActiveWindow(const QWidget *w);
 
 public slots:

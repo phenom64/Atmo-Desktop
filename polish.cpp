@@ -311,7 +311,7 @@ Style::polish(QWidget *widget)
         Anim::Tabs::manage(tabBar);
         tabBar->setAttribute(Qt::WA_Hover);
         tabBar->setAttribute(Qt::WA_MouseTracking);
-        installFilter(tabBar);
+//        installFilter(tabBar);
 
         if (tabBar->expanding() && !dConf.uno.enabled)
             tabBar->setExpanding(false);
@@ -390,6 +390,13 @@ Style::polish(QWidget *widget)
         ShadowHandler::manage(widget);
         if (dConf.balloonTips)
             Handlers::BalloonHelper::manage(widget);
+    }
+    else if (widget->inherits("KTextEditor::View"))
+    {
+        Overlay::manage(widget, dConf.shadows.opacity);
+//        static const int m = 2;
+//        widget->setContentsMargins(m,m,m,m);
+//        installFilter(widget);
     }
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment

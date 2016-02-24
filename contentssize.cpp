@@ -153,6 +153,11 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         else
             sz.rwidth() += safBar ? (dConf.tabs.safrnd<<1) : TabPadding;
 
+        if (vertical)
+            sz.rheight() += 4;
+        else
+            sz.rwidth() += 4;
+
         if (!safBar && tab->documentMode)
         {
             if (tab->position != QStyleOptionTabV3::Middle)

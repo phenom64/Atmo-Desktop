@@ -734,7 +734,6 @@ WidgetButton::paintEvent(QPaintEvent *)
 {
     QPainter p(this);
     ButtonBase::paint(p);
-    p.end();
 }
 
 

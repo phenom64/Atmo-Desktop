@@ -464,10 +464,12 @@ ToolBar::adjustMargins(QToolBar *toolBar)
     }
 
     QMainWindow *win = qobject_cast<QMainWindow *>(toolBar->parentWidget());
-    if (!win || !toolBar->layout() || toolBar->actions().isEmpty() || win->toolBarArea(toolBar) != Qt::TopToolBarArea)
-        return;
+//    if (!win || !toolBar->layout() || toolBar->actions().isEmpty() || win->toolBarArea(toolBar) != Qt::TopToolBarArea)
+//        return;
 
-    if (toolBar->geometry().top() <= win->rect().top())
+    if (win && toolBar->geometry().top() <= win->rect().top()
+            && win->toolBarArea(toolBar) == Qt::TopToolBarArea
+            && !win->parentWidget())
     {
         toolBar->layout()->setContentsMargins(0, 0, 0, 0);
         WindowData *d = WindowData::memory(win->winId(), win);
@@ -520,7 +522,7 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
     if (forceSizeUpdate)
     {
         bar->removeEventFilter(this);
-        const QSize is(bar->iconSize());
+        const QSize is = bar->iconSize();
         bar->setIconSize(is - QSize(1, 1));
         bar->setIconSize(is);
         bar->installEventFilter(this);
@@ -1306,52 +1308,6 @@ Window::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data)
     }
 }
 
-QImage
-Window::windowBg(const QSize &sz, const QColor &bgColor)
-{
-    int w = dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.width() : dConf.windows.noise?GFX::noise().width() : 1;
-    int h = !dConf.windows.hor&&!dConf.windows.gradient.isEmpty()?sz.height() : dConf.windows.noise?GFX::noise().height() : 1;
-    QImage img(w, h, QImage::Format_ARGB32);
-    if (XHandler::opacity() < 1.0f)
-        img.fill(Qt::transparent);
-
-    QPainter pt(&img);
-    if (!dConf.windows.gradient.isEmpty())
-    {
-        QLinearGradient lg(0, 0, dConf.windows.hor*img.width(), !dConf.windows.hor*img.height());
-        lg.setStops(DSP::Settings::gradientStops(dConf.windows.gradient, bgColor));
-        pt.fillRect(img.rect(), lg);
-    }
-    else
-        pt.fillRect(img.rect(), bgColor);
-
-    if (dConf.windows.noise)
-    {
-        static QPixmap noisePix;
-        if (noisePix.isNull())
-        {
-            noisePix = QPixmap(GFX::noise().size());
-            noisePix.fill(Qt::transparent);
-            QPainter p(&noisePix);
-            p.drawPixmap(noisePix.rect(), GFX::noise());
-            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            p.fillRect(noisePix.rect(), QColor(0, 0, 0, dConf.windows.noise*2.55f));
-            p.end();
-        }
-        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
-        pt.drawTiledPixmap(img.rect(), noisePix);
-    }
-
-    if (XHandler::opacity() < 1.0f)
-    {
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        pt.fillRect(img.rect(), QColor(0, 0, 0, dConf.opacity*255.0f));
-        pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    }
-    pt.end();
-    return img;
-}
-
 static QList<qulonglong> s_scheduledWindows;
 
 void
@@ -1598,7 +1554,8 @@ ScrollWatcher::updateWin(QWidget *mainWin)
                     tb->update();
             }
     if (WindowData *wd = WindowData::memory(win->winId(), win))
-        wd->sync();
+//        wd->sync();
+        QMetaObject::invokeMethod(wd, "sync", Qt::QueuedConnection);
 }
 
 QSharedMemory
@@ -1617,13 +1574,15 @@ QSharedMemory
         const int dataSize(2048*128*4);
         if (!m->create(dataSize))
             return 0;
-        if (m->lock())
-        {
-            uchar *data = reinterpret_cast<uchar *>(m->data());
-            QImage img(data, 2048, 128, QImage::Format_ARGB32_Premultiplied);
-            img.fill(Qt::transparent);
-            m->unlock();
-        }
+//        if (m->lock())
+//        {
+//            uchar *data = reinterpret_cast<uchar *>(m->data());
+            /* Set N bytes of S to C.  */
+//            memset(data, 0, dataSize);
+//            QImage img(data, 2048, 128, QImage::Format_ARGB32_Premultiplied);
+//            img.fill(Qt::transparent);
+//            m->unlock();
+//        }
     }
     return m;
 }
@@ -1694,16 +1653,16 @@ ScrollWatcher::regenBg(QMainWindow *win)
             vp->setAttribute(Qt::WA_ForceUpdatesDisabled, false);
             vp->setAttribute(Qt::WA_UpdatesDisabled, false);
         }
-        if (dConf.uno.blur)
-            FX::expblur(img, dConf.uno.blur);
 
         if (dConf.uno.opacity < 1.0f)
         {
             QPainter p(&img);
-            p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-            p.fillRect(img.rect(), QColor(0, 0, 0, dConf.uno.opacity*255.0f));
+            p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p.fillRect(img.rect(), QColor(0, 0, 0, 255-(dConf.uno.opacity*255.0f)));
             p.end();
         }
+        if (dConf.uno.blur)
+            FX::expblur(img, dConf.uno.blur);
         m->unlock();
     }
 }

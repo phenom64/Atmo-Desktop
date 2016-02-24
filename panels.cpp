@@ -27,14 +27,14 @@ using namespace DSP;
 bool
 Style::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    Q_UNUSED(option);
+//    Q_UNUSED(option);
     if (!widget || !widget->window() || !painter->isActive() || widget->palette().color(widget->backgroundRole()) != widget->window()->palette().color(QPalette::Window))
         return true;
 
     const QRect r(widget->rect());
     if (dConf.uno.enabled)
     {
-        Sides sides = All;
+        Sides sides = All & ~Top;
         QPoint topLeft = widget->mapTo(widget->window(), widget->rect().topLeft());
         QRect winRect = widget->window()->rect();
         QRect widgetRect = QRect(topLeft, widget->size());
@@ -46,14 +46,11 @@ Style::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidge
         if (widgetRect.right() >= winRect.right())
             sides &= ~Right;
 
-        if (sides & (Left|Right))
-            painter->fillRect(widget->rect(), widget->palette().color(widget->backgroundRole()));
-        else if (!(sides & Bottom))
-            Handlers::Window::drawUnoPart(painter, r/*.sAdjusted(1, 1, -1, -1)*/, widget);
-        const QPen &savedPen = painter->pen();
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
-        painter->drawLine(r.topLeft(), r.topRight());
-        painter->setPen(savedPen);
+        if (!sides)
+        {
+            Handlers::Window::drawUnoPart(painter, option->rect/*.sAdjusted(1, 1, -1, -1)*/, widget);
+            GFX::drawShadow(Rect, option->rect, painter, isEnabled(option), 0, Top);
+        }
     }
     return true;
 }

@@ -195,7 +195,6 @@ public:
     static WindowData *memory(const unsigned int wid, QObject *parent, const bool create = false);
 
     bool isEmpty();
-    bool sync();
 
     const QColor bg();
     void setBg(const QColor &c);
@@ -229,6 +228,9 @@ public:
 
     inline const uint winId() const { return m_winId; }
     static QList<WindowData *> instances();
+
+public slots:
+    void sync();
 
 protected:
     WindowData(const QString &key, QObject *parent, uint id = 0);

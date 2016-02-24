@@ -82,11 +82,16 @@ OverlayHandler::manageOverlay(QWidget *f)
 //------------------------------------------------------------------------------------------------------------
 
 bool
-Overlay::isSupported(const QFrame *f)
+Overlay::isSupported(const QWidget *frame)
 {
-    if (!f || dConf.app == Settings::Eiskalt)
+    if (!frame || dConf.app == Settings::Eiskalt)
         return false;
 
+    if (frame->inherits("KTextEditor::View"))
+        return true;
+    const QFrame *f = qobject_cast<const QFrame *>(frame);
+    if (!f)
+        return false;
     if (f->frameShadow() != QFrame::Sunken || f->frameShape() != QFrame::StyledPanel)
         return false;
 
@@ -109,7 +114,7 @@ Overlay::manage(QWidget *frame, int opacity)
     if (!frame || overlay(frame))
         return false;
 //    QMetaObject::invokeMethod(OverlayHandler::instance(), "manageOverlay", Qt::QueuedConnection, Q_ARG(QWidget*, frame));
-    if (isSupported(qobject_cast<QFrame *>(frame)))
+    if (isSupported(frame))
     {
         new Overlay(frame, opacity);
         return true;
@@ -162,7 +167,7 @@ Overlay::paintEvent(QPaintEvent *)
     if (!isVisible())
         return;
 
-    raise();
+//    raise();
     QPainter p(this);
 #define FOCUS 0
 #if FOCUS

@@ -304,7 +304,7 @@ FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const Q
     p.drawTiledPixmap(r.translated(m, m), source);
     p.end();
     QImage blur(img);
-    FX::expblur(blur, m*2);
+    FX::expblur(blur, m);
     QPixmap highlight(r.size());
     highlight.fill(Qt::transparent);
     p.begin(&highlight);
@@ -321,7 +321,10 @@ FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const Q
     p.begin(&pix);
     p.drawTiledPixmap(pix.rect(), source);
     if (!isDark)
+    {
+        p.setCompositionMode(QPainter::CompositionMode_Overlay);
         p.drawTiledPixmap(pix.rect().translated(0, 1), QPixmap::fromImage(blur), QPoint(m, m));
+    }
     p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
     p.drawTiledPixmap(pix.rect(), source);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOver);
