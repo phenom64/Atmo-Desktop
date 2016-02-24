@@ -370,7 +370,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     case SE_RadioButtonIndicator:
     case SE_CheckBoxIndicator:
     {
-        QRect r(opt->rect.topLeft(), QPoint(opt->rect.topLeft()+QPoint(pixelMetric(PM_IndicatorWidth), pixelMetric(PM_IndicatorHeight))));
+        QRect r(opt->rect.topLeft(), QSize(pixelMetric(PM_IndicatorWidth), pixelMetric(PM_IndicatorHeight)));
+        r.moveTop(r.top() + opt->rect.height() / 2 - r.height() / 2);
         return visualRect(opt->direction, opt->rect, r);
     }
     case SE_RadioButtonContents:

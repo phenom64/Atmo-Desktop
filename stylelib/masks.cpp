@@ -409,7 +409,13 @@ QPixmap
     p.fillRect(img.rect(), QColor(0, 0, 0, 255-dConf.shadows.opacity));
 
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    drawMask(&p, img.rect(), s, pos, Qt::white, shape);
+    p.end();
+
+    QImage limg(img.size(), QImage::Format_ARGB32_Premultiplied);
+    limg.fill(Qt::transparent);
+    p.begin(&limg);
+
+    drawMask(&p, limg.rect(), s, pos, Qt::white, shape);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     QRect r(img.rect());
     switch (shape)
@@ -426,8 +432,12 @@ QPixmap
     }
 
     drawMask(&p, r, s, pos, Qt::white, shape);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.fillPath(tabPath(s, maskAdjusted(img.rect(), shape), shape), QColor(0, 0, 0, 255-dConf.shadows.illumination));
+//    p.setRenderHint(QPainter::Antialiasing);
+    p.fillRect(img.rect(), QColor(0, 0, 0, 255-dConf.shadows.illumination));
+    p.end();
+
+    p.begin(&img);
+    p.drawImage(0,0,limg);
     p.end();
 
 //    if (pos != Selected)

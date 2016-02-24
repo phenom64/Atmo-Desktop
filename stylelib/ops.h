@@ -46,7 +46,7 @@ public:
         if (!widget)
             return false;
         QWidget *w = const_cast<QWidget *>(widget);
-        while (w->parentWidget())
+        while (w)
         {
             if (qobject_cast<T>(w))
                 return true;

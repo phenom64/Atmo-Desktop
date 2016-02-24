@@ -1129,6 +1129,11 @@ Window::eventFilter(QObject *o, QEvent *e)
             updateWindowDataLater(w);
         return false;
     }
+    case QEvent::ApplicationPaletteChange:
+    {
+        GFX::generateData();
+        return false;
+    }
     case QEvent::WindowTitleChange:
     {
         if (TitleWidget *w = o->findChild<TitleWidget *>())

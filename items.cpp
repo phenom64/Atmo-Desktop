@@ -293,7 +293,7 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
 
             fgc = option->palette.color(fg);
             if (!dConf.views.treelines)
-                fgc = Color::mid(fgc, option->palette.color(bg));
+                fgc = Color::mid(fgc, option->palette.color(bg), 2, 1);
         }
         painter->translate(bool(!(option->state & State_Open)), bool(!(option->state & State_Open))?-0.5f:0);
         GFX::drawArrow(painter, fgc, option->rect, option->state & State_Open ? South : East, dConf.views.treelines?7:dConf.arrowSize, Qt::AlignCenter, true);
@@ -328,7 +328,7 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
 
     const QPen pen(painter->pen());
 
-    painter->setPen(QColor(0, 0, 0, 32));
+    painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
     painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
     if (!(widget && opt->rect.right() == widget->rect().right()) || opt->orientation == Qt::Vertical)
         painter->drawLine(opt->rect.topRight(), opt->rect.bottomRight());

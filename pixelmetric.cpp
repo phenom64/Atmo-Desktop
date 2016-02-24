@@ -15,6 +15,7 @@
 #include <QSplitter>
 #include <QStyleOption>
 #include <QToolBar>
+#include <QMainWindow>
 //#include <QToolBar>
 
 #include "dsp.h"
@@ -135,9 +136,9 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_MenuBarPanelWidth:
     case PM_MenuPanelWidth: return 0;
     case PM_MenuBarItemSpacing: return 8;
-    case PM_DockWidgetSeparatorExtent:;
+    case PM_DockWidgetSeparatorExtent:
     case PM_SplitterWidth:
-        return dConf.uno.enabled&&dConf.app!=DSP::Settings::Eiskalt?1:4;
+        return (dConf.uno.enabled && dConf.app != DSP::Settings::Eiskalt  &&  Ops::isOrInsideA<const QMainWindow *>(widget)) ? 1 : 6;
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {

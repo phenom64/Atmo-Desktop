@@ -403,7 +403,7 @@ FX::stretched(QImage img, const QColor &c)
     for (int i = 0; i < size; ++i)
     {
         ENSUREALPHA;
-        const int hue(QColor::fromRgba(pixels[0][i]).hue());
+        const int hue = QColor::fromRgba(pixels[0][i]).hue();
         if (!hues.contains(hue))
             hues << hue;
     }
@@ -415,7 +415,7 @@ FX::stretched(QImage img, const QColor &c)
         for (int i = 0; i < size; ++i)
         {
             ENSUREALPHA;
-            const QColor c(QColor::fromRgba(pixels[0][i]));
+            const QColor c = QColor::fromRgba(pixels[0][i]);
             if (Color::lum(c) < 128)
                 ++l;
             else
@@ -462,7 +462,7 @@ FX::stretched(QImage img, const QColor &c)
     QPainter bp(&bg);
     bp.drawPixmap(br, br, QPixmap::fromImage(img), 0, 0, img.width(), img.height());
     bp.end();
-    FX::blurred(bg, bg.rect(), br);
+    FX::expblur(bg, br);
     bg = bg.copy(bg.rect().adjusted(br, br, -br, -br)); //remove padding so we can easily access relevant pixels with [i]
 
     enum Rgba { Red = 0, Green, Blue, Alpha };

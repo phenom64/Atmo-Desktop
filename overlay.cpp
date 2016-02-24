@@ -94,16 +94,16 @@ Overlay::isSupported(const QWidget *frame)
         return false;
     if (f->frameShadow() != QFrame::Sunken || f->frameShape() != QFrame::StyledPanel)
         return false;
+    if (f->inherits("KMultiTabBarInternal"))
+        return true;
 
     QWidget *p = f->parentWidget();
     if (!p)
         return false;
 
-    if (f->inherits("KMultiTabBarInternal"))
-        return true;
     QLayout *l = p->layout();
     static const QMargins m(0, 0, 0, 0);
-    if ((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || f->size() == p->size())
+    if (/*Ops::isOrInsideA<const QMainWindow *>(frame) &&*/ ((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || f->size() == p->size()))
         return true;
     return false;
 }
@@ -115,10 +115,7 @@ Overlay::manage(QWidget *frame, int opacity)
         return false;
 //    QMetaObject::invokeMethod(OverlayHandler::instance(), "manageOverlay", Qt::QueuedConnection, Q_ARG(QWidget*, frame));
     if (isSupported(frame))
-    {
-        new Overlay(frame, opacity);
-        return true;
-    }
+        return new Overlay(frame, opacity);
     return false;
 }
 
@@ -310,21 +307,24 @@ Overlay::updateOverlay()
         if (!w || w->isAncestorOf(m_frame))
             continue;
 
-        bool isSplitter(style()->pixelMetric(QStyle::PM_SplitterWidth) == 1 && (qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter")));
-        if (isSplitter && !qobject_cast<QSplitterHandle *>(w))
+        bool isSplitter(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter"));
+        if (isSplitter)
         {
             QRect geo = windowGeo(w);
             if (w->height() == 5)
             {
                 geo.setY(geo.y()+2+(pos[i]==South));
                 geo.setHeight(1);
+                isSplitter = geo.contains(m_position[i]);
             }
             else if (w->width() == 5)
             {
                 geo.setX(geo.x()+2+(pos[i]==East));
                 geo.setWidth(1);
+                isSplitter = geo.contains(m_position[i]);
             }
-            isSplitter = geo.contains(m_position[i]);
+            else
+                isSplitter = false;
         }
         const bool isStatusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
         const bool isTabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode() && l[i] == Top);

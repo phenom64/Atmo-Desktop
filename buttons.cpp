@@ -93,8 +93,10 @@ Style::drawPushButtonLabel(const QStyleOption *option, QPainter *painter, const 
     if (opt->features & QStyleOptionButton::Flat)
         fg = (widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
     QRect r(opt->rect);
+    const bool isDefault = opt->features & QStyleOptionButton::DefaultButton;
     if (!opt->text.isEmpty())
-        drawItemText(painter, r, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, fg);
+//        drawItemText(painter, r, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, fg);
+        drawText(r, painter, opt->text, opt, Qt::AlignCenter, fg, Qt::ElideNone, isDefault, isDefault);
     else
         drawItemPixmap(painter, r, Qt::AlignCenter, opt->icon.pixmap(opt->iconSize, isEnabled(opt)?QIcon::Normal:QIcon::Disabled));
     return true;
@@ -111,7 +113,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
         return true;
 
     QPalette::ColorRole bg(QPalette::Button), fg(QPalette::WindowText);
-    const QRect realCheckRect(subElementRect(SE_CheckBoxIndicator, opt, widget));
+    const QRect realCheckRect = subElementRect(SE_CheckBoxIndicator, opt, widget);
     const bool smallTick(dConf.pushbtn.shadow == Yosemite||dConf.pushbtn.shadow == ElCapitan);
     QRect checkRect(realCheckRect.shrinked((smallTick?2:3)));
     if (widget)
@@ -125,7 +127,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
         checkRect.setWidth(checkRect.height());
     }
 
-    QRect textRect(subElementRect(SE_CheckBoxContents, opt, widget));
+    QRect textRect = subElementRect(SE_CheckBoxContents, opt, widget);
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
     drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
 
@@ -561,7 +563,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
             const quint8 hover = (dConf.toolbtn.folCol&&dConf.toolbtn.morph)*Anim::ToolBtns::level(btn);
             if (hover && !inDock)
             {
-                const int alpha = (255.0f/Steps) * hover;
+                const int alpha = (255/Steps) * hover;
                 QPainter p(&orgPix);
                 p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
                 p.fillRect(orgPix.rect(), QColor(0, 0, 0, alpha));

@@ -181,6 +181,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
 //    const QRect cr(subElementRect(SE_DockWidgetCloseButton, opt, widget));
 //    const QRect fr(subElementRect(SE_DockWidgetFloatButton, opt, widget));
 //    const QRect ir(subElementRect(SE_DockWidgetIcon, opt, widget));
+#if 0
     if (dConf.uno.enabled)
     {
         const QDockWidget *dock = qobject_cast<const QDockWidget *>(widget);
@@ -200,6 +201,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
         }
         painter->setPen(savedPen);
     }
+#endif
 
     const QFont f(painter->font());
     QFont bold(f);

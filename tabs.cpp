@@ -637,7 +637,7 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
         const QPalette pal(d->palette());
         isDark = Color::lum(pal.color(d->foregroundRole())) > Color::lum(pal.color(d->backgroundRole()));
     }
-    else
+    else if (bar)
     {
         isDark = Color::lum(option->palette.color(bar->foregroundRole())) > Color::lum(option->palette.color(bar->backgroundRole()));
         if (selected && !dConf.tabs.regular)

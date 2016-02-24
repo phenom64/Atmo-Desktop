@@ -400,7 +400,7 @@ Style::polish(QWidget *widget)
     }
 
     //this needs to be here at the end cause I might alter the frames before in the main if segment
-    if (dConf.uno.enabled && qobject_cast<QFrame *>(widget) && Overlay::isSupported(static_cast<QFrame *>(widget)))
+    if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))
         Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity);
 }
 
@@ -435,6 +435,8 @@ Style::polish(QPalette &p)
     QCommonStyle::polish(p);
     if (dConf.palette)
         p = *dConf.palette;
+
+//    qApp->setPalette(p);
     GFX::generateData();
 }
 
@@ -442,6 +444,7 @@ void
 Style::polish(QApplication *app)
 {
     QCommonStyle::polish(app);
-//    if (app && dConf.palette)
-//        app->setPalette(*dConf.palette);
+    if (app && dConf.palette)
+        app->setPalette(*dConf.palette);
+    GFX::generateData();
 }
