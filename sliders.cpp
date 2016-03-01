@@ -374,9 +374,9 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
         }
     }
     QColor bgc(opt->palette.color(bg));
-    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-    if (isEnabled(option))
-        bgc = Color::mid(bgc, sc, Steps-hl, hl);
+//    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+//    if (isEnabled(option))
+//        bgc = Color::mid(bgc, sc, Steps-hl, hl);
 
     const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
     QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
@@ -540,7 +540,7 @@ Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, cons
     painter->setClipRegion(QRegion(groove)-QRegion(cont));
 
     QLinearGradient lg(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
-    lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
+    lg.setStops(Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
     GFX::drawClickable(dConf.progressbars.shadow, groove, painter, lg, dConf.progressbars.rnd, 0, All, option, widget);
     painter->setClipping(false);
     return true;
@@ -551,12 +551,12 @@ Style::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const
 {
     const QStyleOptionProgressBar *opt = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
     const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
-    if (!opt || opt->text.isEmpty() || (dConf.progressbars.txtHover&&!isMouseOver(opt)&&!dConf.progressbars.textPos))
+    if (!opt || opt->text.isEmpty() || (dConf.progressbars.txtHover && !isMouseOver(opt) && !dConf.progressbars.textPos))
         return true;
 
     painter->save();
 
-    const QPalette::ColorRole fg(dConf.progressbars.textPos==0?QPalette::Text:QPalette::WindowText);
+    const QPalette::ColorRole fg(dConf.progressbars.textPos == 0 ? QPalette::Text : QPalette::WindowText);
     QRect optrect(opt->rect/*subElementRect(SE_ProgressBarGroove, opt, widget)*/); //The groove where the progress indicator is drawn in a QProgressBar.
     QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     QRect label(subElementRect(SE_ProgressBarLabel, opt, widget)); //The text label of a QProgressBar.

@@ -166,14 +166,8 @@ Shadow::genShadow()
         light.fill(Qt::transparent);
         pt.begin(&light);
         Mask::render(rect, Qt::white, &pt, m_round);
-
-        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-        lg.setColorAt(0, Qt::transparent);
-        lg.setColorAt(1, QColor(0, 0, 0, 127));
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        Mask::render(rect, lg, &pt, m_round);
-        rect.shrink(1);
-        Mask::render(rect, Qt::black, &pt, m_round-1);
+        Mask::render(rect.translated(0, 1), Qt::white, &pt, m_round);
         pt.fillRect(light.rect(), QColor(0, 0, 0, 255-m_illumination));
         pt.end();
 
@@ -318,15 +312,16 @@ QPixmap
     QPainter p(&img);
     static const int m = 1;
     QRect rect = img.rect().adjusted(m, m, -(m+bm), -(m+bm));
-    Mask::render(rect, h, &p, r/*+2*/);
+    Mask::render(rect, h, &p, r+2);
     p.end();
 
     FX::expblur(img, 1);
     img = img.copy(0, 0, sz-bm, sz-bm);
 
     p.begin(&img);
+    Mask::render(img.rect().shrinked(1), h, &p, r+1/*+2*/);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    Mask::render(img.rect().adjusted(2, 2, -2, -2), Qt::black, &p, r);
+    Mask::render(img.rect().shrinked(2), Qt::black, &p, r);
     p.end();
 
     map.insert(key, split(QPixmap::fromImage(img), img.width(), r));

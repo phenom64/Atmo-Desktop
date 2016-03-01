@@ -105,10 +105,10 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
         Ops::swap(fg, bg);
 
     QColor bgc(opt->palette.color(bg));
-    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+//    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
     const int hl = Anim::Tabs::level(bar, bar->tabAt(opt->rect.center()));
-    if (opt->ENABLED && !(opt->state & State_On) && bar)
-        bgc = Color::mid(bgc, sc, Steps-hl, hl);
+//    if (opt->ENABLED && !(opt->state & State_On) && bar)
+//        bgc = Color::mid(bgc, sc, Steps-hl, hl);
     QLinearGradient lg;
     QRect r(opt->rect);
     bool vert(false);
@@ -180,79 +180,6 @@ Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget
     if (!opt->documentMode && !dConf.tabs.regular)
         return drawSelector(opt, painter, bar);
     return drawDocumentTabShape(option, painter, widget);
-
-    const bool isSelected(opt->state & State_Selected);
-    QColor c(opt->palette.color(widget?widget->backgroundRole():QPalette::Window));
-
-    bool aboveStatusBar(false);
-    QRect r(opt->rect);
-    QLine s;
-    QLinearGradient lg;
-    static const int m(1);
-    switch (opt->shape)
-    {
-    case QTabBar::RoundedNorth:
-    case QTabBar::TriangularNorth:
-        r.setTop(r.top()+m);
-        if (!isSelected)
-            r.setBottom(r.bottom()-1);
-        s.setPoints(r.topRight(), r.bottomRight());
-        lg = QLinearGradient(r.topLeft(), r.bottomLeft());
-        break;
-    case QTabBar::RoundedSouth:
-    case QTabBar::TriangularSouth:
-        if (dConf.uno.enabled && bar)
-        {
-            const QPoint below(bar->mapTo(bar->window(), bar->rect().bottomRight()+QPoint(0, 2)));
-            if (qobject_cast<QStatusBar *>(bar->window()->childAt(below)))
-                aboveStatusBar = true;
-        }
-        if (!aboveStatusBar)
-            r.setBottom(r.bottom()-m);
-        if (!isSelected)
-            r.setTop(r.top()+1);
-        s.setPoints(r.topRight(), r.bottomRight());
-        lg = QLinearGradient(r.bottomLeft(), r.topLeft());
-        break;
-    case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest:
-        r.setLeft(r.left()+m);
-        if (!isSelected)
-            r.setRight(r.right()-1);
-        s.setPoints(r.bottomLeft(), r.bottomRight());
-        lg = QLinearGradient(r.topLeft(), r.topRight());
-        break;
-    case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast:
-        r.setRight(r.right()-m);
-        if (!isSelected)
-            r.setLeft(r.left()+1);
-        s.setPoints(r.bottomLeft(), r.bottomRight());
-        lg = QLinearGradient(r.topRight(), r.topLeft());
-        break;
-    default: break;
-    }
-    const QPen pen(painter->pen());
-    if (isSelected)
-    {
-        if (bar)
-        {
-            const QPoint tl(bar->mapTo(bar->window(), r.topLeft()));
-            widget->window()->render(painter, tl, QRegion(QRect(tl, r.size())), QWidget::DrawWindowBackground);
-            lg.setColorAt(0.0f, QColor(255, 255, 255, 63));
-            lg.setColorAt(1.0f, Qt::transparent);
-            painter->fillRect(r, lg);
-        }
-        else
-            painter->fillRect(r, c);
-    }
-    if (r.right()+8 < painter->device()->width())
-    {
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
-        painter->drawLine(s);
-    }
-    painter->setPen(pen);
-    return true;
 }
 
 bool
@@ -426,8 +353,8 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     }
     else
     {
-        QColor h = Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2);
-        c = Color::mid(c, h, Steps-level, level);
+//        QColor h = Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2);
+//        c = Color::mid(c, h, Steps-level, level);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
         GFX::drawClickable(dConf.tabs.shadow, Mask::Tab::tabRect(r, pos, opt->shape), painter, lg, dConf.tabs.rnd, level, sides);
     }

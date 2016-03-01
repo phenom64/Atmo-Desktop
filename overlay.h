@@ -2,6 +2,7 @@
 #define OVERLAY_H
 
 #include <QWidget>
+#include <QTimer>
 #include "namespace.h"
 
 class QFrame;
@@ -16,9 +17,6 @@ class OverlayHandler : public QObject
 public:
     static OverlayHandler *instance();
     static void manage(Overlay *o);
-
-public slots:
-    void manageOverlay(QWidget *f);
 
 protected:
     bool eventFilter(QObject *, QEvent *);
@@ -38,7 +36,7 @@ public:
     ~Overlay();
     static bool manage(QWidget *frame, int opacity);
     static bool release(QWidget *frame);
-    static Overlay *overlay(const QWidget *frame);
+    static Overlay *overlay(const QWidget *frame, const bool recursive = false);
     static bool isSupported(const QWidget *frame);
     inline Sides &sides() { return m_sides; }
 
@@ -46,22 +44,32 @@ protected:
     void paintEvent(QPaintEvent *);
     QRegion mask() const;
     bool eventFilter(QObject *o, QEvent *e);
-    static QRect mappedRect(const QWidget *widget);
-    bool frameIsInteresting(const QFrame *frame, const Position p) const;
-    QFrame *getFrameForWidget(QWidget *w, const Position p) const;
     void removeSide(const Side s);
     void addSide(const Side s);
+    bool isSplitter(QWidget *w, const Position p);
 
 private slots:
     void updateOverlay();
 
 private:
     int m_alpha;
-    bool m_hasFocus;
+    bool m_hasFocus, m_shown;
     Sides m_sides;
     QWidget *m_frame;
     QWidget *m_window;
     QPoint m_position[PosCount];
+};
+
+class Restorer : public QTimer
+{
+    Q_OBJECT
+public:
+    Restorer(qulonglong widget);
+public slots:
+    void restore();
+private:
+    qulonglong m_widget;
+
 };
 
 }

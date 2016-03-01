@@ -11,6 +11,7 @@
 #include "stylelib/stackanimator.h"
 #include "defines.h"
 
+#include <QStackedWidget>
 #include <QStackedLayout>
 #include <QWidget>
 #include <QToolBar>
@@ -295,8 +296,6 @@ Style::polish(QWidget *widget)
     }
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
-        tabBar->setBackgroundRole(QPalette::Button);
-        tabBar->setForegroundRole(QPalette::ButtonText);
         if (tabBar->documentMode())
             tabBar->setDrawBase(true);
         if (!Ops::isSafariTabBar(tabBar) && tabBar->expanding())
@@ -318,7 +317,7 @@ Style::polish(QWidget *widget)
 
         if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
         {
-            tabBar->parentWidget()->setObjectName("konsole_tabbar_parent");
+            tabBar->parentWidget()->setProperty("DSP_konsoleTabBarParent", true);
             installFilter(tabBar->parentWidget());
             disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
             connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
@@ -359,6 +358,21 @@ Style::polish(QWidget *widget)
     {
         installFilter(qtw);
     }
+    else if (QFrame *frame = qobject_cast<QFrame *>(widget))
+    {
+//        if (qobject_cast<QStackedWidget *>(frame))
+//        {
+//            frame->setFrameShadow(QFrame::Sunken);
+//            frame->setFrameShape(QFrame::StyledPanel);
+//        }
+        if (frame->inherits("KMultiTabBarInternal"))
+        {
+            frame->setFrameShadow(QFrame::Sunken);
+            frame->setFrameShape(QFrame::StyledPanel);
+            installFilter(frame);
+            frame->setContentsMargins(0, 0, 0, 0);
+        }
+    }
     else if (widget->inherits("KUrlNavigator"))
     {
         if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
@@ -372,16 +386,6 @@ Style::polish(QWidget *widget)
     {
         installFilter(widget);
     }
-    else if (widget->inherits("KMultiTabBarInternal"))
-    {
-        if (QFrame *frame = qobject_cast<QFrame *>(widget))
-        {
-            frame->setFrameShadow(QFrame::Sunken);
-            frame->setFrameShape(QFrame::StyledPanel);
-            installFilter(frame);
-            frame->setContentsMargins(0, 0, 0, 0);
-        }
-    }
     else if (widget->inherits("QTipLabel")) //tooltip
     {
         if (!widget->testAttribute(Qt::WA_TranslucentBackground))
@@ -391,14 +395,14 @@ Style::polish(QWidget *widget)
         if (dConf.balloonTips)
             Handlers::BalloonHelper::manage(widget);
     }
-    else if (widget->inherits("KTextEditor::View"))
+    else if (widget->inherits("KTextEditor::ViewPrivate"))
     {
         Overlay::manage(widget, dConf.shadows.opacity);
-//        static const int m = 2;
-//        widget->setContentsMargins(m,m,m,m);
-//        installFilter(widget);
     }
-
+    else if (widget->inherits("NavigationBar"))
+    {
+        widget->setContentsMargins(2,2,2,2);
+    }
     //this needs to be here at the end cause I might alter the frames before in the main if segment
     if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))
         Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity);

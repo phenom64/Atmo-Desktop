@@ -335,12 +335,13 @@ GFX::drawClickable(ShadowStyle s,
         highLight.setAlpha((255/Steps) * hover);
 
         if (m)
-            Hover::render(r.growed(m), highLight, p, rnd, sides, hover);
-        highLight.setAlpha(highLight.alpha()>>1);
-        const QPainter::CompositionMode mode = p->compositionMode();
-        p->setCompositionMode(QPainter::CompositionMode_Screen);
-        GFX::drawMask(r, p, highLight, rnd, sides);
-        p->setCompositionMode(mode);
+            Hover::render(r.sGrowed(m), highLight, p, rnd, sides, hover);
+//        highLight.setHsv(highLight.hue(), 255, 255);
+//        highLight.setAlpha(highLight.alpha()>>1);
+//        const QPainter::CompositionMode mode = p->compositionMode();
+//        p->setCompositionMode(QPainter::CompositionMode_Screen);
+//        GFX::drawMask(r, p, highLight, rnd, sides);
+//        p->setCompositionMode(mode);
     }
 }
 

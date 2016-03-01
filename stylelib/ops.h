@@ -6,6 +6,8 @@
 #include <QQueue>
 #include <QTimer>
 #include "gfx.h"
+#include <QMainWindow>
+#include <QApplication>
 
 /**
  * This class is a mess atm, I just add stuff here
@@ -34,7 +36,7 @@ public:
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
     static void swap(int &t1, int &t2);
-    template<typename T>static void swap(T &t1, T &t2)
+    template<typename T> static void swap(T &t1, T &t2)
     {
         const T tmp(t1);
         t1 = t2;
@@ -64,6 +66,19 @@ public:
             if (T t = qobject_cast<T>(w))
                 return t;
             w = w->parentWidget();
+        }
+        return 0;
+    }
+
+    template<typename T>
+    static T getChild(const qulonglong child)
+    {
+        const QList<QWidget *> widgets = qApp->allWidgets();
+        for (int i = 0; i < widgets.count(); ++i)
+        {
+            QWidget *w(widgets.at(i));
+            if (reinterpret_cast<qulonglong>(w) == child)
+                return static_cast<T>(w);
         }
         return 0;
     }

@@ -136,10 +136,17 @@ static const char *s_spacerName("DSP_TOOLBARSPACER");
 
 TitleWidget::TitleWidget(QWidget *parent)
     : QWidget(parent)
+    , m_timer(new QTimer(this))
+//sometimes we get 2 mouseevents at the same time... which makes us think its a doubleclick, while is not
+//this makes sure there is at least 10 msec between the clicks.
+    , m_block(false)
+    , m_hasPress(false)
 {
     setContentsMargins(8, 0, 0, 0);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setAttribute(Qt::WA_NoMousePropagation);
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(doubleClickTimeOut()));
+    m_timer->setSingleShot(true);
 }
 
 void
@@ -196,20 +203,52 @@ TitleWidget::paintEvent(QPaintEvent *)
 }
 
 void
+TitleWidget::doubleClickTimeOut()
+{
+//    if (m_block)
+//    {
+//        m_block = false;
+//        m_timer->start(500);
+//    }
+}
+
+void
 TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
 {
     e->accept();
-    if (WindowData *data = WindowData::memory(window()->winId(), window()))
-    if (uint deco = data->decoId())
-        XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
+//    QWidget::mouseDoubleClickEvent(e);
+    const int clickSpeed = QX11Info::appTime()/*e->timestamp()*/-m_time;
+    //sometimes if the window is inactive, and we click the titlebar in order
+    //to move the window, instead for whatever reason we get a doubleclick event,
+    //these mystical 2 clicks are usually closer together then any human (me)
+    //is able to perform (I managed to do a doubleclick in 120 ms, not faster, so
+    //you probably need some 30 years of lol if youre clicking faster then 75 ms)
+    if (clickSpeed > 75 && clickSpeed < 300)
+    {
+        if (WindowData *data = WindowData::memory(window()->winId(), window()))
+        if (uint deco = data->decoId())
+            XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
+        m_time = QX11Info::appTime()/*e->timestamp()*/;
+    }
+}
+
+void
+TitleWidget::mouseReleaseEvent(QMouseEvent *e)
+{
+    e->accept();
 }
 
 void
 TitleWidget::mousePressEvent(QMouseEvent *e)
 {
+    e->accept();
+//#if QT_VERSION >= 0x050000
+//    m_time = e->timestamp();
+//#else
+    m_time = QX11Info::appTime();
+//#endif
     if (e->button() == Qt::LeftButton)
     {
-        QWidget::mousePressEvent(e);
         XHandler::mwRes(e->pos(), e->globalPos(), window()->winId());
         return;
     }
@@ -445,7 +484,7 @@ ToolBar::toolBarVisibilityChanged(const bool visible)
             embedTitleWidgetLater(toolBar);
     }
     else if (!toolBar->isVisibleTo(toolBar->parentWidget()))
-        unembed(toolBar);
+        unembedLater(toolBar);
     Window::updateWindowDataLater(toolBar->window());
 }
 
@@ -484,7 +523,11 @@ ToolBar::adjustMargins(QToolBar *toolBar)
         toolBar->setMovable(false);
     }
     else
-        toolBar->layout()->setContentsMargins(2, 2, 2, 2);
+    {
+        QEvent e(QEvent::StyleChange);
+        QApplication::sendEvent(toolBar, &e);
+//        toolBar->layout()->setContentsMargins(2, 2, 2, 2);
+    }
 }
 
 void
@@ -516,8 +559,8 @@ void
 ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
 {
     s_toolBarQuery[forceSizeUpdate].removeOne(toolbar);
-    QToolBar *bar = getChild<QToolBar *>(toolbar);
-    if (!bar)
+    QToolBar *bar = Ops::getChild<QToolBar *>(toolbar);
+    if (!bar || !bar->isVisible())
         return;
     if (forceSizeUpdate)
     {
@@ -530,29 +573,29 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
         return;
     }
     bar->removeEventFilter(this);
-    if (!bar->isVisible())
-    {
-        const QList<QAction *> actions(bar->actions());
-        for (int i = 0; i < actions.count(); ++i)
-        {
-            QToolButton *btn = qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i)));
-            if (btn)
-            {
-                Sides sides(All);
-                if (i && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i-1))))
-                    sides &= ~(bar->orientation() == Qt::Horizontal?Left:Top);
-                if (i+1 < actions.count())
-                {
-                    QAction *right(actions.at(i+1));
-                    if (qobject_cast<QToolButton *>(bar->widgetForAction(right)))
-                        sides &= ~(bar->orientation() == Qt::Horizontal?Right:Bottom);
-                }
-                s_sides.insert(btn, sides);
-            }
-        }
-    }
-    else
-    {
+//    if (!bar->isVisible())
+//    {
+//        const QList<QAction *> actions(bar->actions());
+//        for (int i = 0; i < actions.count(); ++i)
+//        {
+//            QToolButton *btn = qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i)));
+//            if (btn)
+//            {
+//                Sides sides(All);
+//                if (i && qobject_cast<QToolButton *>(bar->widgetForAction(actions.at(i-1))))
+//                    sides &= ~(bar->orientation() == Qt::Horizontal?Left:Top);
+//                if (i+1 < actions.count())
+//                {
+//                    QAction *right(actions.at(i+1));
+//                    if (qobject_cast<QToolButton *>(bar->widgetForAction(right)))
+//                        sides &= ~(bar->orientation() == Qt::Horizontal?Right:Bottom);
+//                }
+//                s_sides.insert(btn, sides);
+//            }
+//        }
+//    }
+//    else
+//    {
         const QList<QToolButton *> buttons(bar->findChildren<QToolButton *>());
         for (int i = 0; i < buttons.count(); ++i)
         {
@@ -574,7 +617,7 @@ ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
             }
             s_sides.insert(btn, sides);
         }
-    }
+//    }
     s_dirty.insert(bar, false);
     bar->installEventFilter(this);
 }
@@ -604,7 +647,7 @@ void
 ToolBar::fixSpacer(qulonglong toolbar, int width)
 {
 //    s_spacerQueue.removeOne(QPair<qulonglong, int>(toolbar, width));
-    QToolBar *tb = getChild<QToolBar *>(toolbar);
+    QToolBar *tb = Ops::getChild<QToolBar *>(toolbar);
     if (!tb
             || !qobject_cast<QMainWindow *>(tb->parentWidget())
             || tb->findChild<QTabBar *>()
@@ -640,6 +683,19 @@ ToolBar::fixSpacer(qulonglong toolbar, int width)
     tb->insertAction(tb->actions().first(), spacer);
     spacer->setVisible(!tb->isMovable()||width>7);
     tb->installEventFilter(this);
+}
+
+void
+ToolBar::unembedLater(QToolBar *bar)
+{
+    QMetaObject::invokeMethod(instance(), "unembedHelper", Q_ARG(qulonglong, (qulonglong)bar));
+}
+
+void
+ToolBar::unembedHelper(qulonglong toolbar)
+{
+    if (QToolBar *bar = Ops::getChild<QToolBar *>(toolbar))
+        unembed(bar);
 }
 
 void
@@ -803,7 +859,7 @@ ToolBar::embedTitleWidget(qulonglong bar)
 {
 
     s_titleQueue.removeOne(bar);
-    QToolBar *toolBar = getChild<QToolBar *>(bar);
+    QToolBar *toolBar = Ops::getChild<QToolBar *>(bar);
     if (toolBar && toolBar->styleSheet().isEmpty())
     {
         toolBar->blockSignals(true);
@@ -1354,7 +1410,7 @@ void
 Window::updateWindowData(qulonglong window)
 {
     s_scheduledWindows.removeOne(window);
-    QWidget *win = getChild<QWidget *>(window);
+    QWidget *win = Ops::getChild<QWidget *>(window);
     if (!win || !win->isWindow())
         return;
 
@@ -2013,7 +2069,7 @@ Dock::manage(QWidget *win)
 void
 Dock::lockWindowLater(const qulonglong w)
 {
-    QWidget *win = getChild<QWidget *>(w);
+    QWidget *win = Ops::getChild<QWidget *>(w);
     if (!win)
         return;
     QAction *a = new QAction("DSP::DockLocker", win);

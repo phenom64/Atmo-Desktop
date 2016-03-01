@@ -48,25 +48,19 @@ public:
 protected:
     void paintEvent(QPaintEvent *);
     void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
     void mouseDoubleClickEvent(QMouseEvent *e);
     void wheelEvent(QWheelEvent *e);
+protected slots:
+    void doubleClickTimeOut();
+private:
+    QTimer *m_timer;
+    bool m_block, m_hasPress;
+    qulonglong m_time;
 };
 
 namespace Handlers
 {
-
-template<typename T>
-static T getChild(const qulonglong child)
-{
-    const QList<QWidget *> widgets = qApp->allWidgets();
-    for (int i = 0; i < widgets.count(); ++i)
-    {
-        QWidget *w(widgets.at(i));
-        if (reinterpret_cast<qulonglong>(w) == child)
-            return static_cast<T>(w);
-    }
-    return 0;
-}
 
 class Q_DECL_EXPORT ToolBar : public QObject
 {
@@ -81,6 +75,7 @@ public:
     static void adjustMargins(QToolBar *toolBar);
     static Sides sides(const QToolButton *btn);
     static void queryToolBarLater(QToolBar *bar, bool forceSizeUpdate = false);
+    static void queryWidgetForToolButtonSides(QWidget *w);
     static bool isDirty(QToolBar *bar);
     static void setDirty(QToolBar *bar);
     static void fixSpacerLater(QToolBar *toolbar, int width = 7);
@@ -90,6 +85,7 @@ protected:
     void checkForArrowPress(QToolButton *tb, const QPoint pos);
     bool eventFilter(QObject *, QEvent *);
     static void unembed(QToolBar *bar);
+    static void unembedLater(QToolBar *bar);
 
 protected slots:
     void toolBarMovableChanged(const bool movable);
@@ -102,6 +98,8 @@ protected slots:
     void fixSpacer(qulonglong toolbar, int width = 7);
     void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
     void macMenuChanged();
+    void unembedHelper(qulonglong toolbar);
+
 
 private:
     static ToolBar *s_instance;

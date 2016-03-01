@@ -138,41 +138,38 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_MenuBarItemSpacing: return 8;
     case PM_DockWidgetSeparatorExtent:
     case PM_SplitterWidth:
-        return (dConf.uno.enabled && dConf.app != DSP::Settings::Eiskalt  &&  Ops::isOrInsideA<const QMainWindow *>(widget)) ? 1 : 6;
+    {
+        if (widget && widget->parentWidget() && widget->parentWidget()->inherits("NavigationBar")) //qupzilla "toolbar" splitter
+            return 8;
+        return (dConf.uno.enabled && dConf.app != DSP::Settings::Eiskalt && qobject_cast<const QMainWindow *>(widget?widget->window():0)) ? 1 : 6;
+    }
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
         if (!widget)
             return 2;
+        if (Overlay::overlay(widget))
+            return 0;
         if (qobject_cast<const QLineEdit *>(widget) || widget->isWindow())
             return 0;
         if (qobject_cast<const QGroupBox *>(widget))
             return 8;
-
-        const QFrame *frame = qobject_cast<const QFrame *>(widget);
-        if (Overlay::overlay(frame) || Overlay::isSupported(frame))
-            return 0;
-
         if (qobject_cast<const QAbstractScrollArea *>(widget))
             return 2;
 
+        const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (frame && frame->frameShadow() == QFrame::Raised)
             return 8;
         if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
-        const bool inMainWin(qobject_cast<QMainWindow *>(widget->window()));
-
         if (dConf.uno.enabled)
-        if (qobject_cast<const QTabWidget *>(widget) && inMainWin)
-        if (QMainWindow *mw = static_cast<QMainWindow *>(widget->window()))
+        if (qobject_cast<const QTabWidget *>(widget))
+        if (QMainWindow *mw = qobject_cast<QMainWindow *>(widget->window()))
         if (mw->centralWidget() && mw->centralWidget()->isAncestorOf(widget))
         if (!static_cast<const QFrame *>(widget)->frameStyle())
-        {
             return 0;
-        }
-//        return (frame&&frame->frameShadow()==QFrame::Sunken||!dConf.uno.enabled)*2;
-        return !(inMainWin&&dConf.uno.enabled)*2;
+        return 2;
     }
     case PM_ComboBoxFrameWidth: return 0;
     case PM_ToolBarExtensionExtent: return dConf.arrowSize*2;

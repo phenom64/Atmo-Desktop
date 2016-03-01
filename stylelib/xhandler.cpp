@@ -207,7 +207,7 @@ XHandler::pressEvent(const QPoint &globalPos, const XWindow win, const Qt::Mouse
     pressEvent.root_y = globalPos.y();
     pressEvent.detail = index;
     pressEvent.state = mask;
-    pressEvent.time = /*XCB_CURRENT_TIME*/ QX11Info::appTime();
+    pressEvent.time = XCB_CURRENT_TIME /*QX11Info::appTime()*/;
     pressEvent.same_screen = true;
     xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_PRESS, reinterpret_cast<const char*>(&pressEvent));
     xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);

@@ -8,7 +8,7 @@ project(${PNAME})
 
 file(GLOB styleSRCS *.cpp)
 file(GLOB styleHDRS *.h)
-set(styleMOC_HDRS animhandler.h handlers.h ops.h progresshandler.h widgets.h stackanimator.h windowdata.h)
+set(styleMOC_HDRS animhandler.h handlers.h progresshandler.h widgets.h stackanimator.h windowdata.h)
 
 if (QTDBUS_FOUND)
     set(styleSRCS ${styleSRCS} macmenu.cpp)

@@ -94,10 +94,10 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     if (!opt->editable)
     {
         QColor bgc(opt->palette.color(bg));
-        QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+//        QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
         const int hl = Anim::Basic::level(widget);
-        if (isEnabled(option) && !(option->state & State_On))
-            bgc = Color::mid(bgc, sc, Steps-hl, hl);
+//        if (isEnabled(option) && !(option->state & State_On))
+//            bgc = Color::mid(bgc, sc, Steps-hl, hl);
         if (dConf.pushbtn.tint.second > -1)
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
         QLinearGradient lg(frameRect.topLeft(), frameRect.bottomLeft());

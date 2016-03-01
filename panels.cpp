@@ -216,7 +216,7 @@ Style::drawDockTitle(const QStyleOption *option, QPainter *painter, const QWidge
 bool
 Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    if (!widget || widget->isWindow())
+    if (!widget || widget->isWindow() || Overlay::overlay(widget))
         return true;
 
     const QStyleOptionFrameV3 *opt = qstyleoption_cast<const QStyleOptionFrameV3 *>(option);
@@ -226,42 +226,32 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
     if (opt->frameShape == QFrame::NoFrame /*|| opt->frameShape == QFrame::HLine || opt->frameShape == QFrame::VLine*/)
         return true;
 
-#define SAVEPEN const QPen pen(painter->pen())
-#define RESTOREPEN painter->setPen(pen)
     if (opt->frameShape == QFrame::HLine)
     {
-        SAVEPEN;
+        const QPen pen(painter->pen());
         painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         int l, t, r, b, y(opt->rect.center().y());
         opt->rect.getRect(&l, &t, &r, &b);
         painter->drawLine(l, y, r, y);
-        painter->setPen(QColor(255, 255, 255, dConf.shadows.opacity/2));
+        painter->setPen(QColor(255, 255, 255, dConf.shadows.illumination));
         painter->drawLine(l, y+1, r, y+1);
-        RESTOREPEN;
+        painter->setPen(pen);
         return true;
     }
     if (opt->frameShape == QFrame::VLine)
     {
-        SAVEPEN;
+        const QPen pen(painter->pen());
         painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
         int l, t, r, b, x(opt->rect.center().x());
         opt->rect.getRect(&l, &t, &r, &b);
         painter->drawLine(x, t, x, b);
-        RESTOREPEN;
+        painter->setPen(pen);
         return true;
     }
-#undef SAVEPEN
-#undef RESTOREPEN
 
     const QFrame *frame = qobject_cast<const QFrame *>(widget);
-    if (Overlay::overlay(frame))
-        return true;
-
     QRect r(option->rect);
     const bool isView(qobject_cast<const QAbstractScrollArea *>(widget));
-    float o(dConf.shadows.opacity);
-    if (!opt->ENABLED)
-        o/=2;
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
         GFX::drawShadow(Sunken, r, painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All);

@@ -154,7 +154,7 @@ Style::paintEvent(QObject *o, QEvent *e)
         }
         return false;
     }
-    else if (o->objectName() == "konsole_tabbar_parent")
+    else if (o->property("DSP_konsoleTabBarParent").toBool())
     {
         QWidget *w = static_cast<QWidget *>(o);
         QTabBar *tb = w->findChild<QTabBar *>();

@@ -200,7 +200,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     case QStyleOptionViewItemV4::Middle:        sides &= ~(Right|Left); break;
     default: break;
     }
-    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, 0, sides);
+    GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, 0, sides, opt);
     return true;
 }
 
