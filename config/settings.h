@@ -86,6 +86,7 @@ public:
         Tabsafrnd,       //safaritabs Roundness Capped At 8 Atm, Might Change In The Future If Needed
         Tabcloser,
         Tabcloserrnd,
+        Tabdocwidth,
         Unoenabled,
         Unograd,
         Unotint,
@@ -199,6 +200,7 @@ public:
         struct tabs
         {
             quint8 rnd, safrnd, closeButtonSide, shadow, docStyle, closeRnd;
+            quint16 docWidth;
             Gradient gradient, barGrad;
             bool safari, regular;
         } tabs;

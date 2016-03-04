@@ -111,8 +111,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_LineEditContents:
     {
-        const quint8 sm = GFX::shadowMargin(dConf.input.shadow);
-        QRect r(opt->rect.adjusted(sm, sm, -sm, -sm));
+        static const quint8 sm = GFX::shadowMargin(dConf.input.shadow);
+        QRect r = opt->rect.shrinked(sm);
         int h(r.height());
         int hor(qMin<int>(dConf.input.rnd, (h/2))/2);
         r.adjust(hor, 0, -hor, 0);
@@ -340,6 +340,15 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             return visualRect(tab->direction, tab->rect, textRect);
         default: return QCommonStyle::subElementRect(r, opt, widget);
         }
+    }
+    case SE_TabWidgetTabContents:
+    {
+        const QStyleOptionTabWidgetFrameV2 *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrameV2 *>(opt);
+        const QTabWidget *tw = qobject_cast<const QTabWidget *>(widget);
+        QRect rect = QCommonStyle::subElementRect(r, opt, widget);
+        if (tw && !tw->documentMode())
+            rect.shrink(4);
+        return visualRect(twf->direction, opt->rect, rect);
     }
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:
@@ -583,20 +592,25 @@ Style::groupBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget
     if (!box)
         return ret;
     ret = box->rect;
-    const int top(qMax(16, opt->fontMetrics.height()));
-    const int left(8);
+    const int pm = pixelMetric(PM_DefaultFrameWidth, 0, w);
+    const int cpm = pixelMetric(PM_ExclusiveIndicatorHeight);
+    const int top(qMax(cpm, qMax(pm, opt->fontMetrics.height())));
+    const int left(pm);
     switch (sc)
     {
     case SC_GroupBoxCheckBox:
-        ret = QRect(ret.left()+left, ret.top(), top, top);
+        ret = QRect(ret.left()+left, ret.top() + ((top/2) - (cpm/2)), cpm, cpm);
         break;
     case SC_GroupBoxContents:
         ret.setTop(ret.top()+top);
+        ret.shrink((pm/2));
         break;
     case SC_GroupBoxFrame:
+        ret.setTop(ret.top()+top);
+        ret.shrink((pm/4));
         break;
     case SC_GroupBoxLabel:
-        ret = QRect(ret.left()+left+(box->subControls&SC_GroupBoxCheckBox?top:0), ret.top(), ret.width()-top, top);
+        ret = QRect(ret.left()+left+((box->subControls&SC_GroupBoxCheckBox)?cpm:0), ret.top(), ret.width()-pm, top);
         break;
     default: return QCommonStyle::subControlRect(CC_GroupBox, opt, sc, w);
     }

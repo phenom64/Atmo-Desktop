@@ -160,19 +160,26 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
 
         if (!safBar && tab->documentMode)
         {
+            if (bar && bar->isVisible() && dConf.tabs.docWidth)
+            {
+                static const int docTabSize = dConf.tabs.docWidth;
+                static QMap<const QWidget *, bool> map;
+                if (!map.contains(bar))
+                    map.insert(bar, bar->width() > docTabSize*qMax(3, bar->count()));
+
+                if (docTabSize && bar && map.value(bar))
+                {
+                    if (vertical)
+                        sz.setHeight(docTabSize);
+                    else
+                        sz.setWidth(docTabSize);
+                }
+            }
             if (tab->position != QStyleOptionTabV3::Middle)
             {
                 sz.rwidth() += !vertical * TabDocModePadding;
                 sz.rheight() += vertical * TabDocModePadding;
             }
-//            if (bar && bar->expanding())
-//            {
-//                static const int docTabSize = 200;
-//                if (vertical)
-//                    sz.setHeight(docTabSize);
-//                else
-//                    sz.setWidth(docTabSize);
-//            }
         }
         return sz;
     }

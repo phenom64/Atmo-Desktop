@@ -129,9 +129,9 @@ Style::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const 
 //    QRect frame(subControlRect(CC_GroupBox, opt, SC_GroupBoxFrame, widget)); //no need?
     QRect label(subControlRect(CC_GroupBox, opt, SC_GroupBoxLabel, widget));
     QRect check(subControlRect(CC_GroupBox, opt, SC_GroupBoxCheckBox, widget));
-    QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxContents, widget));
+    QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxFrame, widget));
 
-    GFX::drawShadow(Sunken, cont, painter, isEnabled(opt), 8);
+    GFX::drawShadow(Sunken, cont, painter, isEnabled(opt), 6);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -145,7 +145,7 @@ Style::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const 
         QFont f(painter->font());
         f.setBold(true);
         painter->setFont(f);
-        drawItemText(painter, label, opt->textAlignment, opt->palette, opt->ENABLED, opt->text, widget?widget->foregroundRole():QPalette::WindowText);
+        drawItemText(painter, label, opt->textAlignment|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget?widget->foregroundRole():QPalette::WindowText);
         painter->restore();
     }
     return true;

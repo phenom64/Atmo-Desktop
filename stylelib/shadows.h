@@ -21,6 +21,7 @@ public:
     Shadow(const ShadowStyle t, const quint8 r, const quint8 o, const quint8 i);
     void render(const QRect &r, QPainter *p, const Sides s = All);
     static void render(QPixmap *shadow, const QRect &r, QPainter *p, const Sides s = All);
+    static quint8 shadowMargin(const ShadowStyle s);
     inline ShadowStyle type() const {return m_type;}
     inline quint8 round() const { return m_round; }
     inline quint8 opacity() const { return m_opacity; }

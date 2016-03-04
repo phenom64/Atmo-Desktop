@@ -483,7 +483,7 @@ ToolBar::toolBarVisibilityChanged(const bool visible)
         if (dConf.deco.embed)
             embedTitleWidgetLater(toolBar);
     }
-    else if (!toolBar->isVisibleTo(toolBar->parentWidget()))
+    else if (toolBar->findChild<TitleWidget *>()/*!toolBar->isVisibleTo(toolBar->parentWidget())*/)
         unembedLater(toolBar);
     Window::updateWindowDataLater(toolBar->window());
 }

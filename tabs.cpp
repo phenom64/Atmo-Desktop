@@ -393,6 +393,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
     {
         QLinearGradient lg;
         Sides sides(All);
+        if (!full)
         switch (bar->shape())
         {
         case QTabBar::RoundedNorth:
@@ -413,7 +414,8 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
         QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape());
         if (bar->documentMode())
             barRect.grow(m);
-        GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 0, 0, full?All:sides);
+        qDebug() << "drawclickabel" << bar << barRect << bar->documentMode() << bar->geometry();
+        GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 0, 0, sides);
     }
 }
 
@@ -428,16 +430,22 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     {
         QRect r(tabBar->rect());
         QPaintDevice *d = painter->device();
-        r = tabBar->geometry();
-        if (isVertical(0, tabBar))
+        QWidget *dev(0);
+        if (d->devType() == QInternal::Widget)
+            dev = static_cast<QWidget *>(d);
+        if (qobject_cast<QTabWidget *>(dev))
         {
-            r.setTop(0);
-            r.setBottom(d->height());
-        }
-        else
-        {
-            r.setLeft(0);
-            r.setRight(d->width());
+            r = tabBar->geometry();
+            if (isVertical(0, tabBar))
+            {
+                r.setTop(0);
+                r.setBottom(d->height());
+            }
+            else
+            {
+                r.setLeft(0);
+                r.setRight(d->width());
+            }
         }
         drawDocTabBar(painter, tabBar, r);
         return true;

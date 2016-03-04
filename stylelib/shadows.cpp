@@ -7,6 +7,7 @@
 #include <QDebug>
 #include "masks.h"
 #include "macros.h"
+#include "../config/settings.h"
 
 using namespace DSP;
 
@@ -17,6 +18,20 @@ Shadow::Shadow(const ShadowStyle t, const quint8 r, const quint8 o, const quint8
     , m_round(r)
     , m_pix(0)
 {
+}
+
+quint8
+Shadow::shadowMargin(const ShadowStyle s)
+{
+    switch (s)
+    {
+    case Sunken: return 1;
+    case Etched: return 1;
+    case Raised: return 2;
+    case Carved: return 2;
+    case SemiCarved: return 1;
+    default: return 0;
+    }
 }
 
 void
@@ -67,9 +82,13 @@ Shadow::genShadow()
         QImage outlineImage(pix.size(), QImage::Format_ARGB32_Premultiplied);
         outlineImage.fill(Qt::transparent);
         pt.begin(&outlineImage);
-        Mask::render(rect, Qt::black, &pt, m_round);
+//        Mask::render(rect, Qt::black, &pt, qMax<int>(0, m_round-1));
+//        pt.end();
+//        FX::expblur(outlineImage, 1);
+        pt.begin(&outlineImage);
+        Mask::render(rect, Qt::black, &pt, qMax<int>(0, m_round));
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, rnd);
+        Mask::render(rect.shrinked(1), Qt::black, &pt, rnd);
         pt.end();
 
         //actual shadow
@@ -159,6 +178,22 @@ Shadow::genShadow()
         pt.fillRect(dark.rect(), gradient);
 
         Mask::render(rect, Qt::black, &pt, m_round);
+
+        if (dConf.shadows.darkRaisedEdges)
+        {
+            pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
+            const QColor edge(QColor(0, 0, 0, m_opacity>>1));
+            QLinearGradient leftLg(rect.topLeft(), rect.topLeft()+QPoint(1 + (m_round>>1), 0));
+            leftLg.setColorAt(0, edge);
+            leftLg.setColorAt(1, Qt::transparent);
+            QLinearGradient rightLg(rect.topRight(), rect.topRight()-QPoint(m_round>>1, 0));
+            rightLg.setColorAt(0, edge);
+            rightLg.setColorAt(1, Qt::transparent);
+            Mask::render(rect, leftLg, &pt, m_round+1);
+            Mask::render(rect, rightLg, &pt, m_round+1);
+        }
+
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         pt.fillRect(dark.rect(), QColor(0, 0, 0, 255-m_opacity));
         pt.end();
 

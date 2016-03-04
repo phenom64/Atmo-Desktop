@@ -306,23 +306,14 @@ Style::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, cons
 static Sides btnSides(const QToolButton *btn, QWidget *parent)
 {
     Sides sides(All);
-    const bool hor = !parent->layout() || qobject_cast<QHBoxLayout *>(parent->layout());
-
-    if (hor)
-    {
-        if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().topLeft()-QPoint(1, 0))))
-            sides&=~Left;
-        if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().topRight()+QPoint(2, 0))))
-            sides&=~Right;
-    }
-    else
-    {
-        if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().topLeft()-QPoint(0, 1))))
-            sides&=~Top;
-        if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().bottomLeft()+QPoint(0, 2))))
-            sides&=~Bottom;
-    }
-
+    if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().topLeft()-QPoint(1, 0))))
+        sides&=~Left;
+    if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().topRight()+QPoint(2, 0))))
+        sides&=~Right;
+    if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().topLeft()-QPoint(0, 1))))
+        sides&=~Top;
+    if (qobject_cast<QToolButton *>(parent->childAt(btn->geometry().bottomLeft()+QPoint(0, 2))))
+        sides&=~Bottom;
     return sides;
 }
 
@@ -358,15 +349,16 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     const QToolButton *btn = qobject_cast<const QToolButton *>(widget);
     QToolBar *bar = qobject_cast<QToolBar *>(widget->parentWidget());
     quint8 hover = sunken ? Steps : Anim::ToolBtns::level(btn);
+    const bool normal = normalButton(btn);
 
-    if ((dConf.toolbtn.flat || !bar) && (hover || sunken))
+    if ((dConf.toolbtn.flat || !normal) && (hover || sunken))
     {
         QColor h(opt->palette.color(QPalette::Highlight));
         h.setAlpha(63/Steps*hover);
         GFX::drawClickable(sunken?Sunken:-1, option->rect, painter, h, dConf.toolbtn.rnd, hover);
     }
 
-    if (!normalButton(btn))
+    if (!normal)
         return true;
 
     ///Begin actual toolbutton bevel painting, for real toolbuttons... in toolbars!!!!
@@ -573,7 +565,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     const bool inDock(widget&&widget->objectName().startsWith("qt_dockwidget"));
     if (sunken && dConf.toolbtn.invAct && (!btn || !Handlers::ToolBar::isArrowPressed(btn)))
     {
-        fg = bar?bg:fg;
+        fg = bar||normal?bg:fg;
         bg = Ops::opposingRole(fg);
     }
 
@@ -640,7 +632,8 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
             mr.setSize(sz);
             mr.moveCenter(tmp.center());
         }
-        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, fg);
+//        drawItemText(painter, mr, Qt::AlignCenter, opt->palette, isEnabled(opt), opt->text, fg);
+        drawText(mr, painter, opt->text, opt, Qt::AlignCenter, fg, Qt::ElideNone, sunken, sunken);
         painter->resetTransform();
     }
     return true;

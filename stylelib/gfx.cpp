@@ -287,41 +287,21 @@ GFX::drawClickable(ShadowStyle s,
         offset = r.topLeft();
     }
 
-    const quint8 margin = m * !(s == Carved || s == SemiCarved);
-    drawMask(r, p, mask, rnd-margin, sides, offset);
+//    const qint8 margin =  m * (s == Carved || s == SemiCarved);
+    drawMask(r, p, mask, rnd/*-margin*/, sides, offset);
 
     /// END PLATE
 
     switch (s)
     {
     case Carved:
-    case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); break;
+    case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); rnd += m; break;
     case Sunken:
     case Etched: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Raised:
     {
         drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides);
-        if (dConf.shadows.darkRaisedEdges && (sides & (Left|Right)))
-        {
-            QLinearGradient edges(r.topLeft(), r.topRight());
-            const QColor edge(QColor(0, 0, 0, 31));
-            const float position(((float)rnd/*-1.0f*/)/r.width());
-            if (sides & Left)
-            {
-                edges.setColorAt(0.0f, edge);
-                edges.setColorAt(position, Qt::transparent);
-            }
-            if (sides & Right)
-            {
-                edges.setColorAt(1.0f-position, Qt::transparent);
-                edges.setColorAt(1.0f, edge);
-            }
-//            const QPainter::CompositionMode mode(p->compositionMode());
-//            p->setCompositionMode(QPainter::CompositionMode_ColorBurn);
-            drawMask(r, p, edges, rnd-m, sides);
-//            p->setCompositionMode(mode);
-        }
         break;
     }
     case Rect:
@@ -390,15 +370,7 @@ GFX::drawClickable(ShadowStyle s,
 quint8
 GFX::shadowMargin(const ShadowStyle s)
 {
-    switch (s)
-    {
-    case Sunken: return 1;
-    case Etched: return 1;
-    case Raised: return 2;
-    case Carved: return 2;
-    case SemiCarved: return 1;
-    default: return 0;
-    }
+    return Shadow::shadowMargin(s);
 }
 
 void

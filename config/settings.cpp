@@ -71,6 +71,7 @@ static const char *s_key[] = {
     "tabs.safrnd",          //safaritabs roundness capped at 8 atm, might change in the future if needed
     "tabs.closebuttonside",
     "tabs.closerrnd",
+    "tabs.docwidth",
 
     "uno",
     "uno.gradient",
@@ -183,6 +184,7 @@ static const QVariant s_default[] = {
     4,
     0,
     16,
+    0,
 
     true,
     "0.0:5, 1.0:-5",
@@ -295,6 +297,7 @@ static const char *s_description[] = {
     /*"tabs.safrnd"*/               "Roundness of tabs in a safari-like tabbar. Max roundness allowed 8",          //safaritabs roundness capped at 8 atm, might change in the future if needed
     /*"tabs.closebuttonside"*/      "Side of the tab the close button should be on, 0 = Left, 1 = Right",
     /*"tabs.closerrnd"*/            "Roundness of tab close button",
+    /*"tabs.docwidth"*/             "Width/height of document mode tabbar tabs, leave blank or set to 0 for default content based size."
 
     /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os. Always enabled atm",
     /*"uno.gradient"*/              "Gradient of the UNO area",
@@ -762,6 +765,7 @@ Settings::read()
     conf.tabs.safrnd            = qMin(readInt(Tabsafrnd), 8);
     conf.tabs.closeButtonSide   = readInt(Tabcloser);
     conf.tabs.closeRnd          = readInt(Tabcloserrnd);
+    conf.tabs.docWidth          = readInt(Tabdocwidth);
     //uno
     conf.uno.enabled            = /*readBool(Unoenabled)*/true;
     conf.uno.gradient           = stringToGrad(readString(Unograd));
