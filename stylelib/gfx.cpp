@@ -287,8 +287,7 @@ GFX::drawClickable(ShadowStyle s,
         offset = r.topLeft();
     }
 
-//    const qint8 margin =  m * (s == Carved || s == SemiCarved);
-    drawMask(r, p, mask, rnd/*-margin*/, sides, offset);
+    drawMask(r, p, mask, rnd, sides, offset);
 
     /// END PLATE
 
@@ -299,11 +298,7 @@ GFX::drawClickable(ShadowStyle s,
     case Sunken:
     case Etched: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
-    case Raised:
-    {
-        drawShadow(s, r.sAdjusted(-m, -m, m, m), p, isEnabled, rnd, sides);
-        break;
-    }
+    case Raised: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
     default: break;

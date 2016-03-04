@@ -160,12 +160,12 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
 
         if (!safBar && tab->documentMode)
         {
-            if (bar && bar->isVisible() && dConf.tabs.docWidth)
+            if (bar && bar->isVisible() && !bar->testAttribute(Qt::WA_PendingResizeEvent) && dConf.tabs.docWidth)
             {
                 static const int docTabSize = dConf.tabs.docWidth;
                 static QMap<const QWidget *, bool> map;
                 if (!map.contains(bar))
-                    map.insert(bar, bar->width() > docTabSize*qMax(3, bar->count()));
+                    map.insert(bar, bar->width() > docTabSize*qMin(3, bar->count()));
 
                 if (docTabSize && bar && map.value(bar))
                 {

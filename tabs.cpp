@@ -374,7 +374,6 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
             p->fillRect(r, Qt::black);
             p->setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
-
         Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
         if (Ops::isSafariTabBar(bar))
         {
@@ -393,28 +392,28 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
     {
         QLinearGradient lg;
         Sides sides(All);
-        if (!full)
         switch (bar->shape())
         {
         case QTabBar::RoundedNorth:
-        case QTabBar::TriangularNorth: lg = QLinearGradient(r.topLeft(), r.bottomLeft()); sides &= ~(Left|Right); break;
+        case QTabBar::TriangularNorth: lg = QLinearGradient(r.topLeft(), r.bottomLeft()); if (!full) sides &= ~(Left|Right); break;
         case QTabBar::RoundedSouth:
-        case QTabBar::TriangularSouth: lg = QLinearGradient(r.bottomLeft(), r.topLeft()); sides &= ~(Left|Right); break;
+        case QTabBar::TriangularSouth: lg = QLinearGradient(r.bottomLeft(), r.topLeft()); if (!full) sides &= ~(Left|Right); break;
         case QTabBar::RoundedWest:
-        case QTabBar::TriangularWest: lg = QLinearGradient(r.topLeft(), r.topRight()); sides &= ~(Top|Bottom); break;
+        case QTabBar::TriangularWest: lg = QLinearGradient(r.topLeft(), r.topRight()); if (!full) sides &= ~(Top|Bottom); break;
         case QTabBar::RoundedEast:
-        case QTabBar::TriangularEast: lg = QLinearGradient(r.topRight(), r.topLeft()); sides &= ~(Top|Bottom); break;
+        case QTabBar::TriangularEast: lg = QLinearGradient(r.topRight(), r.topLeft()); if (!full) sides &= ~(Top|Bottom); break;
         default: break;
         }
         QColor c = bar->palette().color(bar->backgroundRole());
         if (dConf.differentInactive && Handlers::Window::isActiveWindow(bar))
             c = c.darker(110);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        static const int m = GFX::shadowMargin(Raised) - 1;
         QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape());
         if (bar->documentMode())
-            barRect.grow(m);
-        qDebug() << "drawclickabel" << bar << barRect << bar->documentMode() << bar->geometry();
+        {
+            static const int m = GFX::shadowMargin(Raised) - 1;
+            barRect.sGrow(m);
+        }
         GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 0, 0, sides);
     }
 }
@@ -429,24 +428,24 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     if (tabBar && (tabBar->documentMode() || dConf.tabs.regular))
     {
         QRect r(tabBar->rect());
-        QPaintDevice *d = painter->device();
-        QWidget *dev(0);
-        if (d->devType() == QInternal::Widget)
-            dev = static_cast<QWidget *>(d);
-        if (qobject_cast<QTabWidget *>(dev))
-        {
-            r = tabBar->geometry();
-            if (isVertical(0, tabBar))
-            {
-                r.setTop(0);
-                r.setBottom(d->height());
-            }
-            else
-            {
-                r.setLeft(0);
-                r.setRight(d->width());
-            }
-        }
+//        QPaintDevice *d = painter->device();
+//        QWidget *dev(0);
+//        if (d->devType() == QInternal::Widget)
+//            dev = static_cast<QWidget *>(d);
+//        if (qobject_cast<QTabWidget *>(dev))
+//        {
+//            r = tabBar->geometry();
+//            if (isVertical(0, tabBar))
+//            {
+//                r.setTop(0);
+//                r.setBottom(d->height());
+//            }
+//            else
+//            {
+//                r.setLeft(0);
+//                r.setRight(d->width());
+//            }
+//        }
         drawDocTabBar(painter, tabBar, r);
         return true;
     }

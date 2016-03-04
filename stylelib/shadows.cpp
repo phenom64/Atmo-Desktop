@@ -179,14 +179,14 @@ Shadow::genShadow()
 
         Mask::render(rect, Qt::black, &pt, m_round);
 
-        if (dConf.shadows.darkRaisedEdges)
+        if (dConf.shadows.darkRaisedEdges && m_round > 3)
         {
             pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
             const QColor edge(QColor(0, 0, 0, m_opacity>>1));
-            QLinearGradient leftLg(rect.topLeft(), rect.topLeft()+QPoint(1 + (m_round>>1), 0));
+            QLinearGradient leftLg(rect.topLeft(), rect.topLeft()+QPoint(m_round>>1, 0));
             leftLg.setColorAt(0, edge);
             leftLg.setColorAt(1, Qt::transparent);
-            QLinearGradient rightLg(rect.topRight(), rect.topRight()-QPoint(m_round>>1, 0));
+            QLinearGradient rightLg(rect.topRight()+QPoint(1, 0), rect.topRight()-QPoint(m_round>>1, 0));
             rightLg.setColorAt(0, edge);
             rightLg.setColorAt(1, Qt::transparent);
             Mask::render(rect, leftLg, &pt, m_round+1);
