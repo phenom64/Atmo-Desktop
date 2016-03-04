@@ -212,7 +212,7 @@ Shadow::genShadow()
     }
     case Yosemite:
     {
-        Mask::render(pix.rect(), Qt::black, &p, m_round);
+        Mask::render(pix.rect(), Qt::black, &p, qMax(0.0f, m_round-0.5f));
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(pix.rect().adjusted(1, 1, -1, -1), Qt::black, &p, m_round-1);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -223,7 +223,7 @@ Shadow::genShadow()
     {
         QRect rt(pix.rect());
         const int w(1);
-        Mask::render(rt, Qt::black, &p, m_round);
+        Mask::render(rt, Qt::black, &p, qMax(0.0f, m_round-0.5f));
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(rt.adjusted(w, w, -w, -w), Qt::black, &p, m_round-w);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -232,7 +232,7 @@ Shadow::genShadow()
     }
     case ElCapitan:
     {
-        Mask::render(pix.rect(), Qt::black, &p, m_round);
+        Mask::render(pix.rect(), Qt::black, &p, qMax(0.0f, m_round-0.5f));
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(pix.rect().adjusted(1, 1, -1, -1), Qt::black, &p, m_round-1);
         Mask::render(pix.rect().translated(0, -1), QColor(0, 0, 0, 63), &p, m_round);

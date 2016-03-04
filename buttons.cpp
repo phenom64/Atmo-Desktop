@@ -434,24 +434,24 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, hover, sides, opt, widget);
     sides |= restoreSide;
 
-    if (sunken && (dConf.toolbtn.shadow == Etched || dConf.toolbtn.shadow == Raised) && sides != All)
-    {
-        QPixmap pix(rect.size());
-        pix.fill(Qt::transparent);
-        QPainter pt(&pix);
-        const Sides saved(sides);
-        const quint8 sm = GFX::shadowMargin(Sunken);
-        QRect mr(rect.sAdjusted(sm, sm, -sm, -sm));
-        sides = All-sides;
-        mr.sAdjust(-sm, -sm, sm, sm);
-        sides = saved;
-        GFX::drawShadow(Sunken, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, All-sides);
-        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-        GFX::drawShadow(Sunken, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, sides);
-        pt.fillRect(pix.rect(), QColor(0, 0, 0, 0xff-dConf.shadows.opacity));
-        pt.end();
-        painter->drawTiledPixmap(rect, pix);
-    }
+//    if (sunken && (dConf.toolbtn.shadow == Etched || dConf.toolbtn.shadow == Raised) && sides != All)
+//    {
+//        QPixmap pix(rect.size());
+//        pix.fill(Qt::transparent);
+//        QPainter pt(&pix);
+//        const Sides saved(sides);
+//        const quint8 sm = GFX::shadowMargin(Sunken);
+//        QRect mr(rect.sAdjusted(sm, sm, -sm, -sm));
+//        sides = All-sides;
+//        mr.sAdjust(-sm, -sm, sm, sm);
+//        sides = saved;
+//        GFX::drawShadow(Sunken, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, All-sides);
+//        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        GFX::drawShadow(Sunken, mr, &pt, isEnabled(opt), dConf.toolbtn.rnd, sides);
+//        pt.fillRect(pix.rect(), QColor(0, 0, 0, 0xff-dConf.shadows.opacity));
+//        pt.end();
+//        painter->drawTiledPixmap(rect, pix);
+//    }
 
     bool nextSelected(false);
     if (bar)
@@ -465,7 +465,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     }
 
     const int nextSide=hor?Right:Bottom;
-    if (!(sides&nextSide) && !(nextSelected&&dConf.toolbtn.invAct))
+    if (!sunken && !(sides&nextSide) && !nextSelected)
         GFX::drawShadow(Rect, opt->rect.sAdjusted(m, m, -m, -m), painter, false, MaxRnd, hor?Right:Bottom); //line...
     return true;
 }

@@ -202,7 +202,7 @@ GFX::drawClickable(ShadowStyle s,
                    QBrush mask,
                    int rnd,
                    int hover,
-                   const Sides sides,
+                   Sides sides,
                    const QStyleOption *opt,
                    const QWidget *w,
                    QPoint offset)
@@ -210,10 +210,7 @@ GFX::drawClickable(ShadowStyle s,
     if (s >= ShadowCount)
         return;
 
-
-//    if (!m && qMin(r.width(), r.height()) > 7) //the fancy hover effect needs some space...
-//        r.sShrink(1);
-
+    const ShadowStyle shadow(s);
     const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     bool sunken(opt && opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange));
     if (isLineEdit)
@@ -296,12 +293,41 @@ GFX::drawClickable(ShadowStyle s,
     case Carved:
     case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); rnd += m; break;
     case Sunken:
-    case Etched: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
+    case Etched: r.sGrow(m); drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Raised: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
     default: break;
+    }
+
+
+    if (sunken && (shadow == Etched || shadow == Raised) && sides != All)
+    {
+        const Sides saved(sides);
+        static const quint8 sm = GFX::shadowMargin(Sunken);
+        QRect mr(r.sAdjusted(sm, sm, -sm, -sm));
+        sides = All-sides;
+        mr.sAdjust(-sm, -sm, sm, sm);
+        drawShadow(s, mr, p, isEnabled, rnd, sides);
+        sides = saved;
+
+
+//        QPixmap pix(r.size());
+//        pix.fill(Qt::transparent);
+//        QPainter pt(&pix);
+//        const Sides saved(sides);
+//        static const quint8 sm = GFX::shadowMargin(Sunken);
+//        QRect mr(r.sAdjusted(sm, sm, -sm, -sm));
+//        sides = All-sides;
+//        mr.sAdjust(-sm, -sm, sm, sm);
+//        sides = saved;
+//        GFX::drawShadow(Sunken, mr, &pt, isEnabled, rnd, All-sides);
+//        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        GFX::drawShadow(Sunken, mr, &pt, isEnabled, rnd, sides);
+//        pt.fillRect(pix.rect(), QColor(0, 0, 0, 0xff-dConf.shadows.opacity));
+//        pt.end();
+//        p->drawTiledPixmap(r, pix);
     }
 
     if (hover && !sunken && s != Yosemite)

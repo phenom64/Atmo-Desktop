@@ -36,7 +36,7 @@ public:
                               QBrush mask,
                               int rnd,
                               int hover = 0,
-                              const Sides sides = All,
+                              Sides sides = All,
                               const QStyleOption *opt = 0,
                               const QWidget *w = 0,
                               QPoint offset = QPoint());
