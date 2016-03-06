@@ -280,6 +280,7 @@ TitleWidget::supported(const QToolBar *toolBar)
 
     if (!hasMacMenu
             || dConf.app == Settings::SystemSettings
+            || !toolBar->isVisible()
             || toolBar->isFloating()
             || !toolBar->isMovable()
             || toolBar->orientation() == Qt::Vertical
@@ -484,7 +485,9 @@ ToolBar::toolBarVisibilityChanged(const bool visible)
             embedTitleWidgetLater(toolBar);
     }
     else if (toolBar->findChild<TitleWidget *>()/*!toolBar->isVisibleTo(toolBar->parentWidget())*/)
+    {
         unembedLater(toolBar);
+    }
     Window::updateWindowDataLater(toolBar->window());
 }
 

@@ -148,7 +148,6 @@ Overlay::Overlay(QWidget *parent, int opacity)
 
 Overlay::~Overlay()
 {
-    qDebug() << "~Overlay" << m_frame;
     new Restorer((qulonglong)m_frame);
     m_frame = 0;
 }

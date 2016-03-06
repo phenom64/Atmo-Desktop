@@ -422,7 +422,6 @@ Deco::activeChanged(const bool active)
     {
         m_wd->setValue<bool>(WindowData::IsActiveWindow, active);
         AdaptorManager::instance()->dataChanged(client().data()->windowId());
-        qDebug() << active << client().data()->isActive() << client().data()->windowId();
     }
     if (m_grip)
         m_grip->setColor(Color::mid(fgColor(), bgColor(), 1, 2));;
