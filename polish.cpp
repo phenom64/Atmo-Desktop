@@ -40,6 +40,7 @@
 #include <QStatusBar>
 #include <QToolBox>
 #include <QDebug>
+#include <QCalendarWidget>
 //#include <QWebView>
 
 /* Thomas gave me his blessing to use

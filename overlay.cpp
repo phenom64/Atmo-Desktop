@@ -148,6 +148,7 @@ Overlay::Overlay(QWidget *parent, int opacity)
 
 Overlay::~Overlay()
 {
+    qDebug() << "~Overlay" << m_frame;
     new Restorer((qulonglong)m_frame);
     m_frame = 0;
 }
@@ -221,7 +222,7 @@ Overlay::eventFilter(QObject *o, QEvent *e)
             {
                 s_unsupported << m_frame;
                 hide();
-                deleteLater();
+                QMetaObject::invokeMethod(this, "updateOverlay", Qt::QueuedConnection);
                 return false;
             }
             if (!m_shown)
@@ -277,7 +278,9 @@ Overlay::addSide(const Side s)
 void
 Overlay::updateOverlay()
 {
-    if (!m_frame->isVisible() || isHidden())
+    if (isHidden())
+        deleteLater();
+    if (!m_frame->isVisible())
         return;
     static QMap<QWidget *, QSize> sm;
     if (sm.value(m_frame, QSize()) != m_frame->size())

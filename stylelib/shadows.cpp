@@ -82,10 +82,6 @@ Shadow::genShadow()
         QImage outlineImage(pix.size(), QImage::Format_ARGB32_Premultiplied);
         outlineImage.fill(Qt::transparent);
         pt.begin(&outlineImage);
-//        Mask::render(rect, Qt::black, &pt, qMax<int>(0, m_round-1));
-//        pt.end();
-//        FX::expblur(outlineImage, 1);
-        pt.begin(&outlineImage);
         Mask::render(rect, Qt::black, &pt, qMax<int>(0, m_round));
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         Mask::render(rect.shrinked(1), Qt::black, &pt, rnd);
@@ -341,7 +337,8 @@ QPixmap
     if (map.contains(key))
         return map.value(key);
     static const int bm = 2; //expblur doesnt blur the bottom otherwise....
-    const int sz = qMax(9, r*2+1)+bm;
+    const int corner = qMax<int>(3, r);
+    const int sz = corner*2+1+bm;
     QImage img(sz, sz, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
     QPainter p(&img);
@@ -359,7 +356,7 @@ QPixmap
     Mask::render(img.rect().shrinked(2), Qt::black, &p, r);
     p.end();
 
-    map.insert(key, split(QPixmap::fromImage(img), img.width(), r));
+    map.insert(key, split(QPixmap::fromImage(img), img.width(), corner));
     return map.value(key);
 }
 

@@ -325,7 +325,8 @@ static bool normalButton(const QToolButton *btn)
     QWidget *p = btn->parentWidget();
     if (qobject_cast<QTabBar *>(p)
             || p->inherits("TabBar")
-            || p->property("DSP_konsoleTabBarParent").toBool())
+            || p->property("DSP_konsoleTabBarParent").toBool()
+            || (p->autoFillBackground() && p->backgroundRole() != QPalette::Window))
         return false;
     return true;
 }
@@ -431,7 +432,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         p.fillRect(pix.rect(), lg);
         s_map.insert(check, pix);
     }
-    GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, hover, sides, opt, widget);
+    GFX::drawClickable(shadow, rect, painter, s_map.value(check), dConf.toolbtn.rnd, hover, sides, opt, widget, QPoint(), true);
     sides |= restoreSide;
 
 //    if (sunken && (dConf.toolbtn.shadow == Etched || dConf.toolbtn.shadow == Raised) && sides != All)

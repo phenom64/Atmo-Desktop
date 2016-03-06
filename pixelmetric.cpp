@@ -16,6 +16,7 @@
 #include <QStyleOption>
 #include <QToolBar>
 #include <QMainWindow>
+#include <QCalendarWidget>
 //#include <QToolBar>
 
 #include "dsp.h"
@@ -152,6 +153,8 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
             return 0;
         if (qobject_cast<const QLineEdit *>(widget) || widget->isWindow())
             return 0;
+        if (qobject_cast<const QCalendarWidget *>(widget))
+            return 2;
         if (qobject_cast<const QGroupBox *>(widget))
             return 8;
         if (qobject_cast<const QAbstractScrollArea *>(widget))

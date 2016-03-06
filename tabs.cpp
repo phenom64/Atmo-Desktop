@@ -143,7 +143,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     default: break;
     }
     lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, bgc));
-    GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, hl, sides, opt, bar);
+    GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, hl, sides, opt, bar, QPoint(), true);
     static const quint8 sm = GFX::shadowMargin(dConf.tabs.shadow);
     const QRect mask(r.sAdjusted(sm, sm, -sm, -sm));
     if (isSelected && !isOnly)
@@ -428,24 +428,24 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     if (tabBar && (tabBar->documentMode() || dConf.tabs.regular))
     {
         QRect r(tabBar->rect());
-//        QPaintDevice *d = painter->device();
-//        QWidget *dev(0);
-//        if (d->devType() == QInternal::Widget)
-//            dev = static_cast<QWidget *>(d);
-//        if (qobject_cast<QTabWidget *>(dev))
-//        {
-//            r = tabBar->geometry();
-//            if (isVertical(0, tabBar))
-//            {
-//                r.setTop(0);
-//                r.setBottom(d->height());
-//            }
-//            else
-//            {
-//                r.setLeft(0);
-//                r.setRight(d->width());
-//            }
-//        }
+        QPaintDevice *d = painter->device();
+        QWidget *dev(0);
+        if (d->devType() == QInternal::Widget)
+            dev = static_cast<QWidget *>(d);
+        if (qobject_cast<QTabWidget *>(dev))
+        {
+            r = tabBar->geometry();
+            if (isVertical(0, tabBar))
+            {
+                r.setTop(0);
+                r.setBottom(d->height());
+            }
+            else
+            {
+                r.setLeft(0);
+                r.setRight(d->width());
+            }
+        }
         drawDocTabBar(painter, tabBar, r);
         return true;
     }

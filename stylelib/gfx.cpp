@@ -205,7 +205,8 @@ GFX::drawClickable(ShadowStyle s,
                    Sides sides,
                    const QStyleOption *opt,
                    const QWidget *w,
-                   QPoint offset)
+                   QPoint offset,
+                   const bool invertedSides)
 {
     if (s >= ShadowCount)
         return;
@@ -291,23 +292,22 @@ GFX::drawClickable(ShadowStyle s,
     switch (s)
     {
     case Carved:
-    case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); rnd += m; break;
+    case SemiCarved: drawShadow(Rect, r, p, isEnabled, rnd, sides); r.sGrow(1); break;
     case Sunken:
-    case Etched: r.sGrow(m); drawShadow(s, r, p, isEnabled, rnd, sides); break;
+    case Etched:
+    case Raised: r.sGrow(m); drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
-    case Raised: drawShadow(s, r.sGrowed(m), p, isEnabled, rnd, sides); break;
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
     default: break;
     }
 
-
-    if (sunken && (shadow == Etched || shadow == Raised) && sides != All)
+    if (invertedSides && sunken && (shadow == Etched || shadow == Raised) && sides != All)
     {
         const Sides saved(sides);
         static const quint8 sm = GFX::shadowMargin(Sunken);
         QRect mr(r.sAdjusted(sm, sm, -sm, -sm));
-        sides = All-sides;
+        sides = All & ~sides;
         mr.sAdjust(-sm, -sm, sm, sm);
         drawShadow(s, mr, p, isEnabled, rnd, sides);
         sides = saved;
@@ -336,7 +336,7 @@ GFX::drawClickable(ShadowStyle s,
         highLight.setAlpha((255/Steps) * hover);
 
         if (m)
-            Hover::render(r.sGrowed(m), highLight, p, rnd, sides, hover);
+            Hover::render(r, highLight, p, rnd, sides, hover);
 //        highLight.setHsv(highLight.hue(), 255, 255);
 //        highLight.setAlpha(highLight.alpha()>>1);
 //        const QPainter::CompositionMode mode = p->compositionMode();
