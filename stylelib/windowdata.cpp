@@ -15,7 +15,7 @@ using namespace DSP;
 WindowData
 *WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
 {
-    static const int s_memSize = (sizeof(unsigned int)*(ImageHeight))+(256*256*4);
+    static const int s_memSize = (sizeof(unsigned int)*(ImageHeight))+(2048*256*4);
     if (!wid)
     {
 //        qDebug() << "DSP: cant get windowdata w/o window id";

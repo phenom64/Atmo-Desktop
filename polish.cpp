@@ -10,6 +10,7 @@
 #include "stylelib/color.h"
 #include "stylelib/stackanimator.h"
 #include "defines.h"
+#include "stylelib/titlewidget.h"
 
 #include <QStackedWidget>
 #include <QStackedLayout>
@@ -89,7 +90,6 @@ Style::polish(QWidget *widget)
 #endif
     if (qobject_cast<Handlers::Balloon *>(widget)
             || qobject_cast<SplitterExt *>(widget)
-            || qobject_cast<Buttons *>(widget)
             || qobject_cast<TitleWidget *>(widget))
         return;
 //    if (qobject_cast<QWebView *>(widget))
@@ -103,6 +103,18 @@ Style::polish(QWidget *widget)
             && (widget->objectName() == "qt_qmainwindow_extended_splitter"
                 || qobject_cast<QSplitterHandle *>(widget)))
         SplitterExt::manage(widget);
+
+    if (dConf.deco.embed && dConf.uno.enabled
+            && qobject_cast<QToolBar *>(widget)
+            && qobject_cast<QMainWindow *>(widget->parentWidget())
+            && !widget->parentWidget()->parentWidget()
+            && widget->styleSheet().isEmpty())
+    {
+        QToolBar *tb = static_cast<QToolBar *>(widget);
+        tb->setMovable(true);
+        if (tb->isMovable())
+            TitleWidget::manage(static_cast<QToolBar *>(widget));
+    }
 
     if (dConf.uno.enabled
             && dConf.app == Settings::Konversation
@@ -181,7 +193,8 @@ Style::polish(QWidget *widget)
     {
         bar->setForegroundRole(QPalette::WindowText);
         bar->setBackgroundRole(QPalette::Window);
-        Handlers::ToolBar::manageToolBar(bar);
+//        if (!TitleWidget::isManaging(bar))
+            Handlers::ToolBar::manageToolBar(bar);
     }
     else if (QToolButton *btn = qobject_cast<QToolButton *>(widget))
     {

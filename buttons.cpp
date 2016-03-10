@@ -68,12 +68,12 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
         bc = bc.darker(110);
     if (dConf.pushbtn.tint.second > -1)
         bc = Color::mid(bc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
-    QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
+//    QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
 
     if (sunken || opt->features & QStyleOptionButton::DefaultButton)
     {
         hl = qMax(Steps/2, hl);
-        bc = sc;
+//        bc = sc;
     }
 //    else if (isEnabled(opt))
 //        bc = Color::mid(bc, sc, Steps-hl, hl);

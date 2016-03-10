@@ -208,14 +208,16 @@ public:
         {
             Gradient gradient;
             Tint tint;
-            quint8 noise, blur, noiseStyle;
+            quint8 noise, blur;
+            qint8 noiseStyle;
             float opacity;
             bool enabled, hor, contAware;
         } uno;
         struct windows
         {
             Gradient gradient;
-            quint8 noise, noiseStyle;
+            quint8 noise;
+            qint8 noiseStyle;
             bool hor;
         } windows;
         struct menues
@@ -256,8 +258,8 @@ public:
     static Key key(const QString k);
     static const char *key(const Key k);
     static const QVariant defaultValue(const Key k);
-    template<typename T> static inline T readValue(const Key k) { return readVal(k).value<T>(); }
-#define READ(_TYPE_, _METHOD_) static const _TYPE_ read##_METHOD_(const Key k) { return readValue<_TYPE_>(k); }
+    template<typename T> static inline const T readValue(const Key k) { return readVal(k).value<T>(); }
+#define READ(_TYPE_, _METHOD_) static inline const _TYPE_ read##_METHOD_(const Key k) { return readValue<_TYPE_>(k); }
     READ(bool, Bool) READ(int, Int) READ(float, Float) READ(QString, String) READ(QStringList, StringList)
 #undef READ
     ~Settings();

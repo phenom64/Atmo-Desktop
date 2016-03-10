@@ -29,6 +29,7 @@ public:
     static int pushed(const float v, const float inlo, const float inup, const float outlo = 0.0f, const float outup = 255.0f);
     static QImage stretched(QImage img);
     static QImage stretched(QImage img, const QColor &c);
+    static void autoStretch(QImage &img);
     static void colorizePixmap(QPixmap &pix, const QBrush &b);
     static QPixmap colorized(QPixmap pix, const QBrush &b);
 };

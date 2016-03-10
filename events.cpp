@@ -27,6 +27,7 @@
 #include "overlay.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/shadowhandler.h"
+#include "stylelib/windowhelpers.h"
 
 #include "defines.h"
 #if HASDBUS
@@ -65,7 +66,7 @@ Style::eventFilter(QObject *o, QEvent *e)
     case QEvent::Hide:
     {
         if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
-            Handlers::Window::updateWindowDataLater(w->window());
+            WindowHelpers::updateWindowDataLater(w->window());
         break;
     }
     case QEvent::LayoutRequest:
@@ -79,7 +80,7 @@ Style::eventFilter(QObject *o, QEvent *e)
         else if (qobject_cast<QMenuBar *>(w))
         {
             if (dConf.uno.enabled)
-                Handlers::Window::updateWindowDataLater(w->window());
+                WindowHelpers::updateWindowDataLater(w->window());
 //#if HASDBUS
 //            if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
 //            {
@@ -162,7 +163,8 @@ Style::paintEvent(QObject *o, QEvent *e)
             return false;
 
         QStyleOptionTabBarBaseV2 opt;
-        opt.rect = w->rect();
+        const QPoint tl = tb->mapFrom(w, QPoint());
+        opt.rect = QRect(tl, w->size()+QSize(qAbs(tl.x()), 0));
         opt.rect.setHeight(tb->height());
         QPainter p(w);
         QRect geo(tb->mapTo(w, tb->rect().topLeft()), tb->size());
@@ -247,7 +249,7 @@ Style::resizeEvent(QObject *o, QEvent *e)
     else if (dConf.uno.enabled
              && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o))
              && re->oldSize().height() != re->size().height())
-        Handlers::Window::updateWindowDataLater(w->window());
+        WindowHelpers::updateWindowDataLater(w->window());
     return QCommonStyle::eventFilter(o, e);
 }
 
@@ -260,7 +262,7 @@ Style::showEvent(QObject *o, QEvent *e)
     if (qobject_cast<QMenuBar*>(w))
     {
         if (dConf.uno.enabled)
-            Handlers::Window::updateWindowDataLater(w->window());
+            WindowHelpers::updateWindowDataLater(w->window());
 //#if HASDBUS
 //        if (BE::MacMenu::isActive() && BE::MacMenu::manages(static_cast<QMenuBar *>(w)))
 //        {
@@ -286,7 +288,7 @@ Style::showEvent(QObject *o, QEvent *e)
     else if (qobject_cast<QTabBar *>(w))
     {
         if (dConf.uno.enabled)
-            Handlers::Window::updateWindowDataLater(w->window());
+            WindowHelpers::updateWindowDataLater(w->window());
         return false;
     }
     else if (w->inherits("KTitleWidget") && !dConf.animateStack)

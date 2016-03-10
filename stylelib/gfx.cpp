@@ -23,6 +23,7 @@
 #include "handlers.h"
 #include "masks.h"
 #include "shadows.h"
+#include "windowhelpers.h"
 
 using namespace DSP;
 
@@ -218,7 +219,7 @@ GFX::drawClickable(ShadowStyle s,
         sunken = static_cast<const QLineEdit *>(w)->hasFocus();
     bool inActive(false);
     if (dConf.differentInactive
-            && !Handlers::Window::isActiveWindow(w)
+            && !WindowHelpers::isActiveWindow(w)
             && !sunken
             && s!=Carved&&s!=SemiCarved
             && qobject_cast<const QToolBar *>(w->parentWidget()))
@@ -285,7 +286,7 @@ GFX::drawClickable(ShadowStyle s,
         offset = r.topLeft();
     }
 
-    drawMask(r, p, mask, rnd, sides, offset);
+    drawMask(r, p, mask, rnd-(m*(s==Raised)), sides, offset);
 
     /// END PLATE
 
@@ -553,10 +554,10 @@ static int randInt(int low, int high)
     return qrand() % ((high + 1) - low) + low;
 }
 
-enum Noise { RandomNoise = 0, BrushedMetal, WhiteDots, DiagonalStripes, RaisedDots, Donpo };
+enum Noise { ASDF = -1, RandomNoise = 0, BrushedMetal = 1, WhiteDots = 2, DiagonalStripes = 3, RaisedDots = 4, Donpo = 5, BigStripes = 6 };
 
 QPixmap
-GFX::noisePix(const quint8 style)
+GFX::noisePix(const qint8 style)
 {
     switch (style)
     {
@@ -621,6 +622,47 @@ GFX::noisePix(const quint8 style)
         }
         return QPixmap::fromImage(img);
     }
+    case BigStripes:
+    {
+        static const int s(48);
+        QImage img(s, s, QImage::Format_ARGB32);
+        img.fill(Qt::white);
+        QPainter p(&img);
+        p.setRenderHint(QPainter::Antialiasing);
+//        p.setPen(QPen(Qt::black, s/3));
+//        p.drawLine(img.rect().topLeft()/*-QPoint(s/4, 0)*/, img.rect().bottomRight()/*+QPoint(s/4, 0)*/);
+
+        const int fourthW(img.width()/4);
+        const int fourthH(img.height()/4);
+        const int w(img.width());
+        const int h(img.height());
+        const int topRight[] = { w-fourthW,0, w,0, w,fourthH };
+        const int main[] = { 0,0, fourthW,0, w,h-fourthH, w,h, w-fourthW,h, 0,fourthH };
+        const int bottomLeft[] = { 0,h-fourthH, fourthW,h, 0,h };
+        p.setBrush(Qt::black);
+        p.drawPolygon(QPolygon(3, topRight));
+        p.drawPolygon(QPolygon(6, main));
+        p.drawPolygon(QPolygon(3, bottomLeft));
+
+        p.end();
+        return QPixmap::fromImage(img);
+    }
+    case ASDF:
+    {
+        static const QString file = QString("%1/.local/share/data/dsp/bg.png").arg(QDir::homePath()); //needs to be from xdg
+//        qDebug() << file;
+        QImageReader reader(file);
+        if (!reader.canRead())
+            return noisePix(RandomNoise);
+        QImage img = reader.read();
+        FX::autoStretch(img);
+        return QPixmap::fromImage(img);
+//        img = FX::stretched(img, Qt::black);
+//        const int size = img.width() * img.height();
+//        QRgb *px = reinterpret_cast<QRgb *>(img.bits());
+//        for (int i = 0; i < size; ++i)
+//            px...
+    }
     default:
     {
         static int s(512);
@@ -664,9 +706,12 @@ GFX::makeNoise()
     if (!s_noise)
         s_noise = new QPixmap[2]();
 
-    s_noise[0] = noisePix(dConf.uno.noiseStyle);
+    if (s_noise[0].isNull())
+        s_noise[0] = noisePix(dConf.uno.noiseStyle);
     const QColor bg = qApp->palette().color(QPalette::Window);
-    const QPixmap wNoise = noisePix(dConf.windows.noiseStyle);
+    static QPixmap wNoise;
+    if (wNoise.isNull())
+        wNoise = noisePix(dConf.windows.noiseStyle);
 
     s_noise[1] = FX::mid(wNoise, bg, dConf.windows.noise, 100-dConf.windows.noise);
 //    s_noise[1] = QPixmap(wNoise.size());

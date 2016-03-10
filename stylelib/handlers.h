@@ -29,36 +29,6 @@ class QDockWidget;
 namespace DSP
 {
 
-class Q_DECL_EXPORT Buttons : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit Buttons(QWidget *parent = 0);
-protected:
-    bool eventFilter(QObject *, QEvent *);
-};
-
-class Q_DECL_EXPORT TitleWidget : public QWidget
-{
-    Q_OBJECT
-public:
-    enum TitlePos { Left = 0, Center, Right };
-    explicit TitleWidget(QWidget *parent = 0);
-    static bool supported(const QToolBar *toolBar);
-protected:
-    void paintEvent(QPaintEvent *);
-    void mousePressEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
-    void mouseDoubleClickEvent(QMouseEvent *e);
-    void wheelEvent(QWheelEvent *e);
-protected slots:
-    void doubleClickTimeOut();
-private:
-    QTimer *m_timer;
-    bool m_block, m_hasPress;
-    qulonglong m_time;
-};
-
 namespace Handlers
 {
 
@@ -71,35 +41,20 @@ public:
     static void manageToolBar(QToolBar *tb);
     static void manage(QWidget *child);
     static bool isArrowPressed(const QToolButton *tb);
-    static void embedTitleWidgetLater(QToolBar *toolBar);
-    static void adjustMargins(QToolBar *toolBar);
     static Sides sides(const QToolButton *btn);
     static void queryToolBarLater(QToolBar *bar, bool forceSizeUpdate = false);
-    static void queryWidgetForToolButtonSides(QWidget *w);
     static bool isDirty(QToolBar *bar);
     static void setDirty(QToolBar *bar);
-    static void fixSpacerLater(QToolBar *toolbar, int width = 7);
 
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
     void checkForArrowPress(QToolButton *tb, const QPoint pos);
     bool eventFilter(QObject *, QEvent *);
-    static void unembed(QToolBar *bar);
-    static void unembedLater(QToolBar *bar);
 
 protected slots:
-    void toolBarMovableChanged(const bool movable);
-    void toolBarFloatingChagned(const bool floating);
-    void toolBarOrientationChagned(const Qt::Orientation o);
-    void toolBarVisibilityChanged(const bool visible);
+    void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
-    void embedTitleWidget(qulonglong bar);
-    void fixSpacer(qulonglong toolbar, int width = 7);
-    void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
-    void macMenuChanged();
-    void unembedHelper(qulonglong toolbar);
-
 
 private:
     static ToolBar *s_instance;
@@ -108,41 +63,18 @@ private:
     static QMap<QToolBar *, QAction *> s_spacers;
 };
 
-enum UnoData { ToolBars = 0, ToolBarAndTabBar, TitleBar, Head, HeightCount };
-
-class Q_DECL_EXPORT Data
-{
-public:
-    Data(int *heightData = 0, QTabBar *saftb = 0)
-        : possibleSafTabBar(saftb)
-    {
-        if (heightData)
-            for (int i = 0; i < HeightCount; ++i)
-                height[i]=heightData[i];
-    }
-    ~Data(){}
-    int height[HeightCount];
-    QTabBar *possibleSafTabBar;
-};
-
 class Q_DECL_EXPORT Window : public QObject
 {
     Q_OBJECT
 public:
-    static QMap<QWidget *, Handlers::Data> s_unoData;
     ~Window(){}
     static Window *instance();
     static void manage(QWidget *w);
     static void release(QWidget *w);
     static void addCompactMenu(QWidget *w);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
-    static void updateWindowDataLater(QWidget *win);
-    static void unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data);
-    static bool isActiveWindow(const QWidget *w);
 
 public slots:
-    void dataChanged(QDBusMessage msg);
-    void updateWindowData(qulonglong window);
     void updateDecoBg(QWidget *w);
 
 signals:
@@ -151,7 +83,6 @@ signals:
 protected:
     Window(QObject *parent = 0);
     bool eventFilter(QObject *, QEvent *);
-    static unsigned int getHeadHeight(QWidget *win, bool &separator);
 
 protected slots:
     void menuShow();
@@ -160,14 +91,6 @@ private:
     static Window *s_instance;
     QList<QWidget *> m_menuWins;
 };
-
-static int unoHeight(const QWidget *w, const UnoData d)
-{
-    int i(0);
-    if (Window::s_unoData.contains(const_cast<QWidget *>(w)))
-        i = Window::s_unoData.value(const_cast<QWidget *>(w)).height[d];
-    return i;
-}
 
 class Q_DECL_EXPORT Drag : public QObject
 {

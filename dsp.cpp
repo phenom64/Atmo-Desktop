@@ -8,6 +8,7 @@
 #include "stylelib/progresshandler.h"
 #include "stylelib/animhandler.h"
 #include "stylelib/handlers.h"
+#include "stylelib/windowhelpers.h"
 #include "config/settings.h"
 
 #include <QWidget>
@@ -252,7 +253,7 @@ Style::inUno(QToolBar *bar, bool *activeWindow)
     const QMainWindow *win(bar?qobject_cast<const QMainWindow *>(bar->window()):0);
     const bool inUno = win && bar && win->toolBarArea(bar) == Qt::TopToolBarArea;
     if (activeWindow)
-        *activeWindow = Handlers::Window::isActiveWindow(win);
+        *activeWindow = WindowHelpers::isActiveWindow(win);
     return inUno;
 }
 

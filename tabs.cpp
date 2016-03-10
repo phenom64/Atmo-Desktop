@@ -26,6 +26,7 @@
 #include "stylelib/xhandler.h"
 #include "config/settings.h"
 #include "stylelib/handlers.h"
+#include "stylelib/windowhelpers.h"
 #include "stylelib/fx.h"
 
 using namespace DSP;
@@ -263,7 +264,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     const int level = selected ? 0 : (bar ? Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())) : 0);
 
     QColor c = opt->palette.color(widget?widget->backgroundRole():QPalette::Button);
-    if (dConf.differentInactive && Handlers::Window::isActiveWindow(widget))
+    if (dConf.differentInactive && WindowHelpers::isActiveWindow(widget))
         c = c.darker(110);
 
     bool beforeSelected(false);
@@ -374,7 +375,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
             p->fillRect(r, Qt::black);
             p->setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
-        Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), bar->rect().topLeft()));
+        Handlers::Window::drawUnoPart(p, r, bar, bar->mapTo(bar->window(), r.topLeft()));
         if (Ops::isSafariTabBar(bar))
         {
             const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
@@ -405,7 +406,7 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
         default: break;
         }
         QColor c = bar->palette().color(bar->backgroundRole());
-        if (dConf.differentInactive && Handlers::Window::isActiveWindow(bar))
+        if (dConf.differentInactive && WindowHelpers::isActiveWindow(bar))
             c = c.darker(110);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
         QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape());
@@ -446,6 +447,8 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
                 r.setRight(d->width());
             }
         }
+        else if (dev->property("DSP_konsoleTabBarParent").toBool())
+            r = opt->rect;
         drawDocTabBar(painter, tabBar, r);
         return true;
     }
@@ -535,7 +538,7 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     const QRect line(_2_-_16_, _4_, _8_, size-(_4_*2));
 
     const QTabBar *bar = widget ? qobject_cast<const QTabBar *>(widget->parentWidget()) : 0;
-    const bool doc = bar && bar->documentMode();
+    const bool doc = !bar || bar->documentMode();
     const bool hover = isMouseOver(option);
     bool selected = isSelected(option);
     if (bar && bar->count() == 1)

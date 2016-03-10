@@ -549,3 +549,29 @@ FX::colorized(QPixmap pix, const QBrush &b)
     return pix;
 }
 
+void
+FX::autoStretch(QImage &img)
+{
+    if (img.format() != QImage::Format_ARGB32)
+        img = img.convertToFormat(QImage::Format_ARGB32);
+    const int size = img.width() * img.height();
+    QRgb *px = reinterpret_cast<QRgb *>(img.bits());
+    int inLo(255);
+    int inUp(0);
+    for (int i = 0; i < size; ++i) //determine lowest and highest pixels
+    {
+        const QColor pxc = QColor::fromRgba(px[i]);
+        const int lum = Color::lum(pxc);
+        if (lum > inUp)
+            inUp = lum;
+        if (lum < inLo)
+            inLo = lum;
+        px[i] = qRgba(lum, lum, lum, qAlpha(px[i]));
+    }
+    for (int i = 0; i < size; ++i)
+    {
+        const int v = pushed(qGray(px[i]), inLo, inUp);
+        px[i] = qRgba(v,v,v,qAlpha(px[i]));
+    }
+}
+

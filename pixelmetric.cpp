@@ -128,7 +128,10 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_IndicatorWidth:
     case PM_ExclusiveIndicatorWidth:
     case PM_ExclusiveIndicatorHeight:
-        return 16;
+    {
+        static const int sm = GFX::shadowMargin(dConf.pushbtn.shadow);
+        return 16+sm;
+    }
     case PM_CheckBoxLabelSpacing:
     case PM_RadioButtonLabelSpacing:
         return 4;
@@ -179,7 +182,13 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_ToolBarItemSpacing: return 0;
     case PM_ToolBarSeparatorExtent: return 8;
     case PM_ToolBarFrameWidth: return inUno(qobject_cast<QToolBar *>(const_cast<QWidget *>(widget)))?2:6;
-    case PM_ToolBarHandleExtent: return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
+    case PM_ToolBarHandleExtent:
+    {
+//        if (const QToolBar *bar = qobject_cast<const QToolBar *>(widget))
+//        if (WindowData *data = WindowData::memory(bar->parentWidget()->winId(), bar->parentWidget()))
+//            return data->value<uint>(WindowData::LeftEmbedSize, 0);
+        return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
+    }
 //    case PM_SliderThickness: return 12;
     case PM_ScrollBarExtent: if (dConf.scrollers.style) return dConf.scrollers.size; return Ops::isOrInsideA<const QDockWidget *>(widget)?(int)(dConf.scrollers.size*0.8f)|1:dConf.scrollers.size;
     case PM_SliderThickness:
