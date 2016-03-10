@@ -268,7 +268,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 
     const bool hor(opt->orientation==Qt::Horizontal);
     const ShadowStyle gs(dConf.sliders.grooveShadow);
-    const int d(/*gs==Carved?12:*/dConf.sliders.grooveStyle==3?dConf.sliders.size-2:dConf.sliders.size*0.66f); //shadow size for slider and groove 'extent'
+    const int d(/*gs==Carved?12:*/dConf.sliders.grooveStyle>=3?dConf.sliders.size-2:dConf.sliders.size*0.66f); //shadow size for slider and groove 'extent'
     const QPoint c(groove.center());
     if (hor)
         groove.setHeight(d);
@@ -285,8 +285,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     case 0: break;
     case 1: gbgc = Color::mid(gbgc, opt->palette.color(fg)); break;
     case 2: gbgc = opt->palette.color(fg); break;
-    case 3: gbgc = Color::mid(gbgc, opt->palette.color(fg)); break;
-    default: break;
+    default: gbgc = Color::mid(gbgc, opt->palette.color(fg)); break;
     }
 
     QLinearGradient lga(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
@@ -335,10 +334,10 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     }
     const int hl = Anim::Basic::level(widget);
     GFX::drawClickable(gs, unfill, painter, lga, d, 0, sides, option, widget);
-    if (dConf.sliders.fillGroove)
+    if (dConf.sliders.fillGroove || dConf.sliders.grooveStyle == 4)
     {
         QLinearGradient lgh(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
-        lgh.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(QPalette::Highlight)));
+        lgh.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(dConf.sliders.grooveStyle == 4 ? QPalette::Base : QPalette::Highlight)));
         GFX::drawClickable(gs, fill, painter, lgh, d, 0, fillSides, option, widget);
     }
 

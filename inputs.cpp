@@ -94,6 +94,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     if (!opt->editable)
     {
         QColor bgc(opt->palette.color(bg));
+        QColor fgc(opt->palette.color(Ops::fgRole(widget, QPalette::ButtonText)));
 //        QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
         const int hl = Anim::Basic::level(widget);
 //        if (isEnabled(option) && !(option->state & State_On))
@@ -114,7 +115,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         if (dConf.pushbtn.shadow == Yosemite || dConf.pushbtn.shadow == ElCapitan)
             hc = opt->palette.color(QPalette::Highlight);
         else
-            hc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+            hc = Color::mid(bgc, fgc, 10, 1);
         QLinearGradient lga(opt->rect.topLeft(), opt->rect.bottomLeft());
         lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
 
@@ -122,10 +123,16 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         const quint8 m(GFX::shadowMargin(dConf.pushbtn.shadow));
         if (ltr)
         {
-            const QPen pen(painter->pen());
-            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity>>(!isEnabled(opt))));
-            painter->drawLine(arrowRect.topLeft()+QPoint(0, m), arrowRect.bottomLeft()-QPoint(0, m));
-            painter->setPen(pen);
+//            const QPen pen(painter->pen());
+//            painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity>>(!isEnabled(opt))));
+            const Sides sides =  All & ~(ltr?Left:Right);
+            QRect r = arrowRect.sShrinked(m);
+            r.setWidth(1);
+            painter->fillRect(r, QColor(0, 0, 0, dConf.shadows.opacity>>(!isEnabled(opt))));
+            r.translate(1, 0);
+            painter->fillRect(r, QColor(255, 255, 255, dConf.shadows.illumination>>(!isEnabled(opt))));
+//            painter->drawLine(arrowRect.topLeft()+QPoint(0, m), arrowRect.bottomLeft()-QPoint(0, m));
+//            painter->setPen(pen);
         }
     }
     else
@@ -150,9 +157,9 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     QColor ac(opt->palette.color(opt->editable?QPalette::Text:QPalette::ButtonText));
     if (dConf.pushbtn.shadow == Yosemite || dConf.pushbtn.shadow == ElCapitan)
         ac = opt->palette.color(QPalette::HighlightedText);
-    QRect a1(arrowRect.adjusted(0, 0, 0, -arrowRect.height()/2).translated(0, 1));
-    QRect a2(arrowRect.adjusted(0, arrowRect.height()/2, 0, 0).translated(0, -1));
-    int m(qMax<int>(2, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
+    QRect a1(arrowRect.adjusted(0, 0, 0, -(arrowRect.height()/2+2)));
+    QRect a2(arrowRect.adjusted(0, arrowRect.height()/2+2, 0, 0));
+    int m(qMax<int>(4, GFX::shadowMargin(opt->editable?dConf.input.shadow:dConf.pushbtn.shadow))/2);
     a1.moveLeft(a1.left()+(ltr?-m:m));
     a2.moveLeft(a2.left()+(ltr?-m:m));
 
@@ -161,10 +168,10 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
     const bool upDisabled(!enabled || (!box || !box->currentIndex()));
     if (upDisabled)
         ac.setAlpha(127);
-    GFX::drawArrow(painter, ac, a1, North, 7, Qt::AlignCenter, !upDisabled);
+    GFX::drawArrow(painter, ac, a1, North, 7, Qt::AlignHCenter|Qt::AlignBottom, !upDisabled);
     const bool downDisabled(!enabled || (!box || box->currentIndex()==box->count()-1));
     ac.setAlpha(downDisabled?127:255);
-    GFX::drawArrow(painter, ac, a2, South, 7, Qt::AlignCenter, !downDisabled);
+    GFX::drawArrow(painter, ac, a2, South, 7, Qt::AlignHCenter|Qt::AlignTop, !downDisabled);
     return true;
 }
 

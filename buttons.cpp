@@ -136,7 +136,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
     if (dConf.pushbtn.tint.second > -1)
         bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
 
-    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    QColor sc = Color::mid(bgc, opt->palette.color(fg), 10, 1);
 
     const int hl(Anim::Basic::level(widget));
     if (opt->state & (State_On|State_NoChange))
@@ -202,7 +202,7 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
     if (dConf.pushbtn.tint.second > -1)
         bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
 
-    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
+    QColor sc = Color::mid(bgc, opt->palette.color(fg), 10, 1);
 
     const int hl = Anim::Basic::level(widget);
     if (isOn(opt))
@@ -466,8 +466,27 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     }
 
     const int nextSide=hor?Right:Bottom;
-    if (!sunken && !(sides&nextSide) && !nextSelected)
-        GFX::drawShadow(Rect, opt->rect.sAdjusted(m, m, -m, -m), painter, false, MaxRnd, hor?Right:Bottom); //line...
+    if (!sunken && !(sides&nextSide))
+    {
+        QRect r = opt->rect.sAdjusted(m, m, -m, -m);
+        if (hor)
+            r.setLeft(r.right()); //right() actually returns x+w-1
+        else
+            r.setBottom(r.bottom()); //as right()
+        const int v = nextSelected ? 255 : 0;
+        const int o = nextSelected ? dConf.shadows.illumination : (dConf.shadows.opacity>>(!isEnabled(opt)));
+        painter->fillRect(r, QColor(v,v,v,o));
+//        GFX::drawShadow(Rect, opt->rect.sAdjusted(m, m, -m, -m), painter, false, MaxRnd, hor?Right:Bottom); //line...
+    }
+    if (!(sides & (hor ? Left : Top)) && !sunken)
+    {
+        QRect r = opt->rect.sAdjusted(m, m, -m, -m);
+        if (hor)
+            r.setWidth(1);
+        else
+            r.setHeight(1);
+        painter->fillRect(r, QColor(255,255,255,dConf.shadows.illumination));
+    }
     return true;
 }
 

@@ -106,6 +106,8 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
         Ops::swap(fg, bg);
 
     QColor bgc(opt->palette.color(bg));
+    if (isSelected)
+        bgc = Color::mid(bgc, opt->palette.color(fg), 2, 1);
 //    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
     const int hl = Anim::Tabs::level(bar, bar->tabAt(opt->rect.center()));
 //    if (opt->ENABLED && !(opt->state & State_On) && bar)

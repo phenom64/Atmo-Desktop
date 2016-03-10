@@ -442,7 +442,7 @@ Style::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget
     if (!cb)
         return ret;
     ret = cb->rect;
-    const int arrowSize(20);
+    const int arrowSize(22);
     const int m(cb->editable?GFX::shadowMargin(dConf.input.shadow):0);
     switch (sc)
     {

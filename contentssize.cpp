@@ -344,8 +344,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             h+=pixelMetric(PM_ComboBoxFrameWidth, opt, widget)*2;
         }
 
-        w+=12; //margins left/right for text...
-        w+=h;
+        w+=40; //margins left/right for text and arrow...
         h = qMax<int>(dConf.baseSize, h);
         return QSize(w, h);
     }

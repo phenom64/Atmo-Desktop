@@ -42,7 +42,7 @@ public:
     static void manage(QWidget *child);
     static bool isArrowPressed(const QToolButton *tb);
     static Sides sides(const QToolButton *btn);
-    static void queryToolBarLater(QToolBar *bar, bool forceSizeUpdate = false);
+    static void queryToolBarLater(QToolBar *bar);
     static bool isDirty(QToolBar *bar);
     static void setDirty(QToolBar *bar);
 
@@ -52,7 +52,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 protected slots:
-    void queryToolBar(qulonglong toolbar, bool forceSizeUpdate);
+    void queryToolBar(qulonglong toolbar);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
 

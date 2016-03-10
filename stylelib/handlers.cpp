@@ -201,33 +201,38 @@ ToolBar::isDirty(QToolBar *bar)
     return bar&&s_dirty.value(bar, true);
 }
 
-static QList<qulonglong> s_toolBarQuery[2];
+static QList<qulonglong> s_toolBarQuery;
 
 void
-ToolBar::queryToolBarLater(QToolBar *bar, bool forceSizeUpdate)
+ToolBar::queryToolBarLater(QToolBar *bar)
 {
     const qulonglong tb = (qulonglong)bar;
-    if (!s_toolBarQuery[forceSizeUpdate].contains(tb))
+    if (!s_toolBarQuery.contains(tb))
     {
-        s_toolBarQuery[forceSizeUpdate] << tb;
-        QMetaObject::invokeMethod(instance(), "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,tb), Q_ARG(bool,forceSizeUpdate));
+        s_toolBarQuery << tb;
+        QMetaObject::invokeMethod(instance(), "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,tb));
     }
 }
 
 void
-ToolBar::queryToolBar(qulonglong toolbar, bool forceSizeUpdate)
+ToolBar::queryToolBar(qulonglong toolbar)
 {
-    s_toolBarQuery[forceSizeUpdate].removeOne(toolbar);
+    s_toolBarQuery.removeOne(toolbar);
     QToolBar *bar = Ops::getChild<QToolBar *>(toolbar);
-    if (!bar || !bar->isVisible())
+    if (!bar || !bar->isVisible() /*|| !bar->window()->isVisible()*/)
         return;
-    if (forceSizeUpdate)
+
+    if (isDirty(bar))
     {
+//        QEvent e(QEvent::StyleChange);
+//        QApplication::sendEvent(bar, &e);
         const QSize is = bar->iconSize();
+        bar->removeEventFilter(this);
         bar->setIconSize(is - QSize(1, 1));
         bar->setIconSize(is);
-        s_dirty.insert(bar, true);
-        return;
+        bar->installEventFilter(this);
+//        s_dirty.insert(bar, false);
+//        return;
     }
     const QList<QToolButton *> buttons(bar->findChildren<QToolButton *>());
     for (int i = 0; i < buttons.count(); ++i)
@@ -257,7 +262,7 @@ Sides
 ToolBar::sides(const QToolButton *btn)
 {
     if (btn && qobject_cast<QToolBar *>(btn->parentWidget()) && isDirty(static_cast<QToolBar *>(btn->parentWidget())))
-        queryToolBarLater(static_cast<QToolBar *>(btn->parentWidget()), true);
+        queryToolBarLater(static_cast<QToolBar *>(btn->parentWidget()));
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
@@ -298,6 +303,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             if (!TitleWidget::isManaging(tb))
                 ToolbarHelpers::fixSpacerLater(tb);
             ToolbarHelpers::adjustMarginsLater(tb);
+//            queryToolBarLater(tb, true);
         }
         else if (QToolButton *tbn = qobject_cast<QToolButton *>(o))
         {
@@ -305,7 +311,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
             if (!tb)
                 return false;
             s_dirty.insert(tb, true);
-            return false;
+//            queryToolBarLater(tb, true);
         }
         return false;
     }
