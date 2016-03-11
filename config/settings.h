@@ -102,6 +102,7 @@ public:
         Menuitemshadow,
         Slidersize,
         Sliderdot,
+        Slidermetal,
         Slidergrad,
         Slidergroove,
         Slidergrooveshadow,
@@ -175,7 +176,7 @@ public:
         } input;
         struct sliders
         {
-            bool dot, fillGroove;
+            bool dot, fillGroove, metallic;
             quint8 size, grooveShadow;
             qint16 grooveStyle;
             Gradient grooveGrad, sliderGrad;
@@ -269,9 +270,10 @@ protected:
     static void writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c);
     static QColor readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r);
     static Settings *instance();
+    static unsigned int readColor(const Key k);
 
 private:
-    QSettings *m_settings, *m_paletteSettings, *m_overrideSettings;
+    QSettings *m_settings, *m_presetSettings, *m_paletteSettings, *m_overrideSettings;
     static Settings *s_instance;
 };
 

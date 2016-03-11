@@ -377,12 +377,31 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
 //    if (isEnabled(option))
 //        bgc = Color::mid(bgc, sc, Steps-hl, hl);
 
+    QGradient g;
+    if (dConf.sliders.metallic)
+    {
+        const int add = !(slider.width() & 1) * 1;
+        QConicalGradient cg(slider.center()+QPoint(add,add), -45);
+//        cg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+        const QColor light = Color::mid(bgc, Qt::white, 2, 1);
+        const QColor dark = Color::mid(bgc, Qt::black, 2, 1);
+        cg.setColorAt(0, light);
+        cg.setColorAt(0.25f, dark);
+        cg.setColorAt(0.5f, light);
+        cg.setColorAt(0.75f, dark);
+        cg.setColorAt(1, light);
+        g = cg;
+    }
+    else
+    {
+        QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
+        lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+        g = lg;
+    }
     const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
-    QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
-    lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
-    GFX::drawClickable(sliderShadow, slider, painter, lg, MaxRnd, hl, All, 0, widget);
+    GFX::drawClickable(sliderShadow, slider, painter, g, MaxRnd, hl, All, 0, widget);
 
-    if (dConf.sliders.dot)
+    if (dConf.sliders.dot && !dConf.sliders.metallic)
     {
         const int ds(4+(dConf.sliders.size&1)/*slider.height()/3*/);
         QRect dot(0, 0, ds, ds);

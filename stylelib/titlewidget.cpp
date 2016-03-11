@@ -442,7 +442,7 @@ TitleWidget::macMenuChanged()
             {
                 if (toolBars.at(i) == m_toolBar)
                 {
-                    if (BE::MacMenu::isActive() && dConf.deco.embed)
+                    if (BE::MacMenu::isActive())
                         embedLater();
                     else
                         unembedLater();

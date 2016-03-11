@@ -90,6 +90,7 @@ static const char *s_key[] = {
 
     "sliders.size",
     "sliders.dot",
+    "sliders.metallic",
     "sliders.slidergradient",
     "sliders.groovegradient",
     "sliders.grooveshadow",
@@ -149,9 +150,9 @@ static const QVariant s_default[] = {
     32,
     0,
     false,
-    "0xFFFFC05E",
-    "0xFF88EB51",
-    "0xFFF98862",
+    "#FFC05E",
+    "#88EB51",
+    "#F98862",
 
     8,
     3,
@@ -203,6 +204,7 @@ static const QVariant s_default[] = {
 
     16,
     true,
+    false,
     "0.0:5, 1.0:-5",
     "0.0:-5, 1.0:5",
     0,
@@ -316,6 +318,7 @@ static const char *s_description[] = {
 
     /*"sliders.size"*/              "Size of sliders",
     /*"sliders.dot"*/               "Paint a dot in the middle of the slider handles, like Mac Os pre Yosemite",
+    /*"sliders.metallic"*/          "the infinitely popular conical slidergradient that makes it look like metal",
     /*"sliders.slidergradient"*/    "Gradient of sliderhandles",
     /*"sliders.groovegradient"*/    "Gradient of slidergrooves",
     /*"sliders.grooveshadow"*/      "Shadow of slidergrooves",
@@ -422,7 +425,7 @@ static const QString appName()
 }
 
 
-Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0)
+Settings::Settings() : m_settings(0), m_presetSettings(0), m_paletteSettings(0), m_overrideSettings(0)
 {
     conf.appName = appName();
     if (conf.appName == "eiskaltdcpp-qt")
@@ -455,27 +458,17 @@ Settings::Settings() : m_settings(0), m_paletteSettings(0), m_overrideSettings(0
     {
         if (presetFile.exists())
         {
-            settingsFileName = preset;
-            if (m_settings)
+            m_presetSettings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)), QSettings::IniFormat);
+            const QString paletteFileName = m_presetSettings->value(s_key[Palette], s_default[Palette]).toString();
+            if (!paletteFileName.isEmpty())
             {
-                m_settings->deleteLater();
-                m_settings = 0;
+                QString settingsPath(confPath());
+                settingsPath.append(QString("/%1.conf").arg(paletteFileName));
+                m_paletteSettings = new QSettings(settingsPath, QSettings::IniFormat);
             }
         }
         else
             qDebug() << "DSP: unable to load preset or preset doesnt exist:" << preset;
-    }
-    if (!m_settings)
-        m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
-//    QObject::connect(qApp, SIGNAL(aboutToQuit()), m_settings, SLOT(deleteLater()));
-
-    const QString paletteFileName = m_settings->value(s_key[Palette], s_default[Palette]).toString();
-    if (!paletteFileName.isEmpty())
-    {
-        QString settingsPath(confPath());
-        settingsPath.append(QString("/%1.conf").arg(paletteFileName));
-        m_paletteSettings = new QSettings(settingsPath, QSettings::IniFormat);
-//        QObject::connect(qApp, SIGNAL(aboutToQuit()), m_paletteSettings, SLOT(deleteLater()));
     }
 }
 
@@ -591,9 +584,8 @@ static const char *roles[QPalette::NColorRoles] =
 void
 Settings::writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c)
 {
-    const QString &color = QString::number(c.rgba(), 16);
     paletteSettings()->beginGroup(groups[g]);
-    paletteSettings()->setValue(roles[r], color);
+    paletteSettings()->setValue(roles[r], c.name());
     paletteSettings()->endGroup();
 }
 
@@ -601,12 +593,16 @@ QColor
 Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
 {
     paletteSettings()->beginGroup(groups[g]);
-    const QString color = paletteSettings()->value(roles[r], QString()).toString();
-    QColor c;
-    if (color.size() == 8)
-        c = QColor::fromRgba(color.toUInt(0, 16));
+    QString string = paletteSettings()->value(roles[r], QString()).toString();
+    if (string.isEmpty())
+        string = qApp->palette().color(g, r).name();
+    if (string.size() == 8 && string.toUInt(0, 16))
+    {
+        string.remove(0, 2);
+        string.prepend("#");
+    }
     paletteSettings()->endGroup();
-    return c;
+    return QColor(string);
 }
 
 void
@@ -688,7 +684,14 @@ Settings::readVal(const Key k)
 {
     if (!settings())
         return QVariant();
-    return settings()->value(s_key[k], s_default[k]);
+    QVariant var;
+    if (instance()->m_overrideSettings)
+        var = instance()->m_overrideSettings->value(s_key[k], QVariant());
+    if (!var.isValid() && instance()->m_presetSettings)
+        var = instance()->m_presetSettings->value(s_key[k], QVariant());
+    if (var.isValid())
+        return var;
+    return instance()->m_settings->value(s_key[k], s_default[k]);
 }
 
 const char *
@@ -700,7 +703,21 @@ Settings::description(const Key k)
 QSettings
 *Settings::settings()
 {
-    return instance()->m_overrideSettings?instance()->m_overrideSettings:instance()->m_settings;
+    if (instance()->m_overrideSettings)
+        return instance()->m_overrideSettings;
+    if (instance()->m_presetSettings)
+        return instance()->m_presetSettings;
+    return instance()->m_settings;
+}
+
+unsigned int
+Settings::readColor(const Key k)
+{
+    const QString string = readString(k);
+    QColor c(string);
+    if (c.isValid())
+        return c.rgba();
+    return string.toUInt(0, 16);
 }
 
 void
@@ -730,9 +747,9 @@ Settings::read()
     conf.deco.shadowSize        = readInt(Decoshadowsize);
     conf.deco.frameSize         = readInt(Decoframe);
     conf.deco.embed             = readBool(Decoembedded);
-    conf.deco.min               = readString(Decomincolor).toUInt(0, 16);
-    conf.deco.max               = readString(Decomaxcolor).toUInt(0, 16);
-    conf.deco.close             = readString(Decoclosecolor).toUInt(0, 16);
+    conf.deco.min               = readColor(Decomincolor);
+    conf.deco.max               = readColor(Decomaxcolor);
+    conf.deco.close             = readColor(Decoclosecolor);
     //pushbuttons
     conf.pushbtn.rnd            = qMin<quint8>(MaxRnd, readInt(Pushbtnrnd));
     conf.pushbtn.shadow         = readInt(Pushbtnshadow);
@@ -789,6 +806,7 @@ Settings::read()
     //sliders
     conf.sliders.size           = readInt(Slidersize);
     conf.sliders.dot            = readBool(Sliderdot);
+    conf.sliders.metallic       = readBool(Slidermetal);
     conf.sliders.grooveShadow   = readInt(Slidergrooveshadow);
     conf.sliders.grooveGrad     = stringToGrad(readString(Slidergroove));
     conf.sliders.sliderGrad     = stringToGrad(readString(Slidergrad));

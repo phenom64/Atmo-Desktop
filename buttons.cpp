@@ -44,7 +44,7 @@ bool
 Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionButton *opt = qstyleoption_cast<const QStyleOptionButton *>(option);
-    if (!opt)
+    if (!opt || (widget&&widget->inherits("KColorButton")))
         return true;
     QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Button))/*, fg(Ops::fgRole(widget, QPalette::ButtonText))*/;
     int hl(0);
@@ -147,7 +147,7 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
     QLinearGradient lg(checkRect.topLeft(), checkRect.bottomLeft());
     lg.setStops(Settings::gradientStops(dConf.pushbtn.gradient, bgc));
 
-    GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, 3, hl, All, option, widget);
+    GFX::drawClickable(dConf.pushbtn.shadow, checkRect, painter, lg, qMin<int>(3, dConf.pushbtn.rnd), hl, All, option, widget);
 
     if (smallTick)
         checkRect.shrink(3);
