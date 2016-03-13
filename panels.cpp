@@ -28,10 +28,9 @@ bool
 Style::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
 //    Q_UNUSED(option);
-    if (!widget || !widget->window() || !painter->isActive() || widget->palette().color(widget->backgroundRole()) != widget->window()->palette().color(QPalette::Window))
+    if (!widget || widget->palette().color(widget->backgroundRole()) != widget->window()->palette().color(QPalette::Window))
         return true;
 
-    const QRect r(widget->rect());
     if (dConf.uno.enabled)
     {
         Sides sides = All & ~Top;

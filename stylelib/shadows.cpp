@@ -65,19 +65,18 @@ Shadow::genShadow()
         lightp.end();
 
         //the blur
-        QImage blurredImage(pix.size(), QImage::Format_ARGB32_Premultiplied);
+        QImage blurredImage(pix.size()+QSize(2,2), QImage::Format_ARGB32_Premultiplied);
         blurredImage.fill(Qt::transparent);
         QPainter pt(&blurredImage);
         QRectF rt(rect);
-        float rad(0.75f);
-        rt.adjust(1.0f*rad, 1.5f*rad, -1.0f*rad, -0.75f*rad);
+        rt.adjust(1.0f, 1.5f, -1.0f, -0.75f);
         int rnd(m_round);
         if (rnd)
             --rnd;
         Mask::render(rt, Qt::black, &pt, rnd);
         pt.end();
         FX::expblur(blurredImage, 1);
-
+        blurredImage = blurredImage.copy(0,0,pix.width(),pix.height());
         //the outline
         QImage outlineImage(pix.size(), QImage::Format_ARGB32_Premultiplied);
         outlineImage.fill(Qt::transparent);

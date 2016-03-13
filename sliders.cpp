@@ -124,7 +124,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         const QPen pen(painter->pen());
         const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
                           || qobject_cast<const QTextEdit *>(area)
-                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KateView"))); // I hate application specific hacks! what the fuck is kateview anyway?
+                          || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTextEditor::ViewPrivate"))); // I hate application specific hacks! what the fuck is kateview anyway?
         for (int i = 0; i < 2; ++i)
         {
             if (!i)

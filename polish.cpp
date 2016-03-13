@@ -381,10 +381,11 @@ Style::polish(QWidget *widget)
 //        }
         if (frame->inherits("KMultiTabBarInternal"))
         {
-            frame->setFrameShadow(QFrame::Sunken);
-            frame->setFrameShape(QFrame::StyledPanel);
+            frame->setContentsMargins(2,2,2,2);
+//            frame->setFrameShadow(QFrame::Sunken);
+//            frame->setFrameShape(QFrame::StyledPanel);
             installFilter(frame);
-            frame->setContentsMargins(0, 0, 0, 0);
+//            frame->setContentsMargins(0, 0, 0, 0);
         }
     }
     else if (widget->inherits("KUrlNavigator"))

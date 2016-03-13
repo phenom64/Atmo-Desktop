@@ -350,6 +350,14 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             rect.shrink(4);
         return visualRect(twf->direction, opt->rect, rect);
     }
+    case SE_TabWidgetLayoutItem:
+    {
+        const QStyleOptionTabWidgetFrameV2 *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrameV2 *>(opt);
+        const QTabWidget *tw = qobject_cast<const QTabWidget *>(widget);
+        if (tw && !tw->documentMode())
+            return visualRect(twf->direction, twf->rect, twf->rect.growed(4));
+        break;
+    }
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:
     case SE_ProgressBarContents:

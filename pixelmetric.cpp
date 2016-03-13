@@ -38,34 +38,11 @@ Style::layoutSpacingAndMargins(const QWidget *w)
     if (QWidget *cw = mw->centralWidget())
     if (cw->isAncestorOf(w))
     {
-        if (qobject_cast<const QAbstractScrollArea *>(w) ||
-                qobject_cast<const QSplitter *>(w) ||
-                (qobject_cast<const QHBoxLayout *>(w->layout()) && w->findChild<const QSplitter *>() && w->children().count() == 2)) // <- maclike lego bricking for keepassx
+        if (/*qobject_cast<const QAbstractScrollArea *>(w)
+                || qobject_cast<const QSplitter *>(w)*/
+                Overlay::overlay(w)
+                || (qobject_cast<const QHBoxLayout *>(w->layout()) && w->findChild<const QSplitter *>() && w->children().count() == 2)) // <- maclike lego bricking for keepassx
             return 0;
-#if 0
-        bool hasClickables(false);
-        const QList<QWidget *> kids(widget->findChildren<QWidget *>());
-        for (int i = 0; i < kids.count(); ++i)
-        {
-            const QWidget *w = kids.at(i);
-            if (!w->isVisibleTo(cw) || w->parentWidget() != widget)
-                continue;
-            hasClickables |= qobject_cast<const QAbstractButton *>(w) ||
-                    qobject_cast<const QComboBox *>(w) ||
-                    qobject_cast<const QAbstractSlider *>(w) ||
-                    qobject_cast<const QGroupBox *>(w) ||
-                    qobject_cast<const QLineEdit *>(w) ||
-                    qobject_cast<const QProgressBar *>(w) ||
-                    qobject_cast<const QLabel *>(w) ||
-                    qobject_cast<const QTabWidget *>(w) ||
-                    w->inherits("KTitleWidget") ||
-                    qobject_cast<const QBoxLayout *>(w->layout()); //widget w/ possible clickables...
-            if (hasClickables) //one is enough
-                break;
-        }
-        if (!hasClickables)
-            return 0;
-#endif
     }
     if (qobject_cast<const QGroupBox *>(w))
         return 8;
@@ -143,6 +120,17 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_DockWidgetSeparatorExtent:
     case PM_SplitterWidth:
     {
+        if (const QSplitter *splitter = qobject_cast<const QSplitter *>(widget))
+        {
+            for (int i = 0; i < splitter->count(); ++i)
+            {
+                const QWidget *w = splitter->widget(i);
+                if (!w->isVisible())
+                    continue;
+                if (!Overlay::overlay(w, true))
+                    return 8;
+            }
+        }
         if (widget && widget->parentWidget() && widget->parentWidget()->inherits("NavigationBar")) //qupzilla "toolbar" splitter
             return 8;
         return (dConf.uno.enabled && dConf.app != DSP::Settings::Eiskalt && qobject_cast<const QMainWindow *>(widget?widget->window():0)) ? 1 : 6;

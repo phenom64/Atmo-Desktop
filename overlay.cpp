@@ -80,29 +80,19 @@ Overlay::isSupported(const QWidget *frame)
 {
     if (!frame || dConf.app == Settings::Eiskalt || s_unsupported.contains(frame))
         return false;
-    if (frame->inherits("KTextEditor::ViewPrivate"))
-        return true;
-    const QFrame *f = qobject_cast<const QFrame *>(frame);
-    if (!f)
-        return false;
-    if (f->frameShadow() != QFrame::Sunken || f->frameShape() != QFrame::StyledPanel)
-        return false;
-    if (f->inherits("KMultiTabBarInternal"))
-        return true;
 
-    QWidget *p = f->parentWidget();
+    const QFrame *f = qobject_cast<const QFrame *>(frame);
+    if (f && (f->frameShadow() != QFrame::Sunken || f->frameShape() != QFrame::StyledPanel))
+        return false;
+
+    QWidget *p = frame->parentWidget();
     if (!p)
         return false;
 
     QLayout *l = p->layout();
     static const QMargins m(0, 0, 0, 0);
     const bool dock = qobject_cast<QDockWidget *>(p);
-    if (dock || ((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || f->size() == p->size()))
-    {
-//        qDebug() << p << f;
-        return true;
-    }
-    return false;
+    return (dock || ((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || frame->size() == p->size()));
 }
 
 bool
@@ -217,7 +207,7 @@ Overlay::eventFilter(QObject *o, QEvent *e)
         //        case QEvent::LayoutRequest:
         case QEvent::Show:
         {
-            if (!(qobject_cast<QMainWindow *>(m_frame->window())||qobject_cast<QDockWidget *>(m_frame->window())))
+            if (!isSupported(m_frame) || !(qobject_cast<QMainWindow *>(m_frame->window())||qobject_cast<QDockWidget *>(m_frame->window())))
             {
                 s_unsupported << m_frame;
                 hide();

@@ -175,13 +175,14 @@ Style::paintEvent(QObject *o, QEvent *e)
     }
     else if (w->inherits("KMultiTabBarInternal"))
     {
-        QPainter p(w);
-        QRect r(w->rect());
-        const bool hor(w->width()>w->height());
-        QLinearGradient lg(r.topLeft(), !hor?r.topRight():r.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
-        p.fillRect(r, lg);
-        p.end();
+//        QPainter p(w);
+//        QRect r(w->rect());
+//        const bool hor(w->width()>w->height());
+//        QLinearGradient lg(r.topLeft(), !hor?r.topRight():r.bottomLeft());
+//        lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
+//        p.fillRect(r, lg);
+//        p.end();
+//        qDebug() << w->property("qproperty-position") << w->parentWidget()->property("qproperty-position");
         return false;
     }
     else if (w->inherits("KMultiTabBarTab"))
