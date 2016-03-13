@@ -15,6 +15,7 @@
 class QToolBar;
 class QTabBar;
 class QProgressBar;
+class QAbstractButton;
 
 namespace DSP
 {
@@ -134,6 +135,7 @@ public:
 #undef DRAWARROW
 
     bool drawToolButtonArrow(const QStyleOptionToolButton *opt, QPainter *p, const QWidget *w) const;
+    static Sides btnSides(const QAbstractButton *btn, QWidget *parent);
 
     /* events */
     bool paintEvent(QObject *o, QEvent *e);
@@ -165,6 +167,7 @@ protected:
     static bool isVertical(const QStyleOptionTabV3 *tab = 0, const QTabBar *tabBar = 0);
     static int layoutSpacingAndMargins(const QWidget *w);
     static bool inUno(QToolBar *bar, bool *activeWindow = 0);
+    static bool normalButton(const QAbstractButton *btn);
     void installFilter(QWidget *w);
     void drawText(const QRect &r,
                   QPainter *p,

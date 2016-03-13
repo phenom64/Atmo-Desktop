@@ -45,6 +45,7 @@ public:
     static void queryToolBarLater(QToolBar *bar);
     static bool isDirty(QToolBar *bar);
     static void setDirty(QToolBar *bar);
+    static void changeLater(QWidget *w);
 
 protected:
     ToolBar(QObject *parent = 0):QObject(parent){}
@@ -55,6 +56,7 @@ protected slots:
     void queryToolBar(qulonglong toolbar);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
+    void change(const qulonglong w);
 
 private:
     static ToolBar *s_instance;

@@ -58,6 +58,8 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
         {
             QColor h(opt->palette.color(QPalette::Highlight));
             h.setAlpha(63/Steps*hl);
+            if (sunken || selected)
+                h = Qt::transparent;
             GFX::drawClickable(sunken||selected?Sunken:-1, option->rect, painter, h, dConf.pushbtn.rnd);
         }
         return true;
@@ -280,7 +282,8 @@ Style::drawToolButton(const QStyleOptionComplex *option, QPainter *painter, cons
     return true;
 }
 
-static Sides btnSides(const QAbstractButton *btn, QWidget *parent)
+Sides
+Style::btnSides(const QAbstractButton *btn, QWidget *parent)
 {
     Sides sides(All);
     if (qobject_cast<QAbstractButton *>(parent->childAt(btn->geometry().topLeft()-QPoint(1, 0))))
@@ -294,9 +297,12 @@ static Sides btnSides(const QAbstractButton *btn, QWidget *parent)
     return sides;
 }
 
-static bool normalButton(const QAbstractButton *btn)
+bool
+Style::normalButton(const QAbstractButton *btn)
 {
     if (!btn || !btn->parentWidget() || !btn->parentWidget()->layout())
+        return false;
+    if (!dConf.toolbtn.normal && !qobject_cast<QToolBar *>(btn->parentWidget()) && !btn->parentWidget()->inherits("KMultiTabBarInternal"))
         return false;
 
     QWidget *p = btn->parentWidget();
@@ -332,7 +338,9 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
     {
         QColor h(opt->palette.color(QPalette::Highlight));
         h.setAlpha(63/Steps*hover);
-        GFX::drawClickable(sunken?Sunken:-1, option->rect, painter, h, dConf.toolbtn.rnd, hover);
+        if (sunken)
+            h = Qt::transparent;
+        GFX::drawClickable(sunken?Sunken:-1, option->rect, painter, h, dConf.toolbtn.rnd, sunken?0:hover);
     }
 
     if (!normal)

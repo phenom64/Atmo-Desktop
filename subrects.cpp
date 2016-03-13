@@ -18,12 +18,18 @@
 #include <QStyleOptionToolButton>
 #include <QStyleOptionViewItemV4>
 #include <QComboBox>
+#include <QLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QAbstractButton>
+#include <QLineEdit>
 
 #include "dsp.h"
 #include "stylelib/progresshandler.h"
 #include "stylelib/ops.h"
 #include "config/settings.h"
 #include "stylelib/gfx.h"
+#include "overlay.h"
 
 using namespace DSP;
 
@@ -37,6 +43,26 @@ Style::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubCont
     {
     default: return QCommonStyle::subControlRect(cc, opt, sc, w);
     }
+}
+
+static QLayout *layoutFor(QLayout *l, const QWidget *w)
+{
+    if (!l)
+        return 0;
+    for (int i = 0; i < l->count(); ++i)
+    {
+        QLayoutItem *item = l->itemAt(i);
+        if (item->widget() == w)
+            return l;
+    }
+    for (int i = 0; i < l->count(); ++i)
+    {
+        QLayoutItem *item = l->itemAt(i);
+        if (item->layout())
+            if (QLayout *layout = layoutFor(item->layout(), w))
+                return layout;
+    }
+    return 0;
 }
 
 QRect
@@ -357,6 +383,69 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         if (tw && !tw->documentMode())
             return visualRect(twf->direction, twf->rect, twf->rect.growed(4));
         break;
+    }
+
+    case SE_ProgressBarLayoutItem:
+    case SE_PushButtonLayoutItem:
+    case SE_ComboBoxLayoutItem:
+    case SE_SpinBoxLayoutItem:
+    case SE_ToolButtonLayoutItem:
+    {
+        if (!widget || !widget->parentWidget())
+            return opt->rect;
+        QWidget *p = widget->parentWidget();
+        int h(0),v(0);
+        if (!p || qobject_cast<const QToolBar *>(p))
+        {
+            if (qobject_cast<const QAbstractButton *>(widget))
+                return opt->rect;
+            const QToolBar *bar = static_cast<const QToolBar *>(p);
+            if (bar->orientation() == Qt::Horizontal)
+                h = 2;
+            else
+                v = 2;
+        }
+        if (normalButton(qobject_cast<const QAbstractButton *>(widget)))
+            return opt->rect;
+
+//        if (qobject_cast<const QComboBox *>(widget))
+//        {
+            h = 2;
+            v = 2;
+//        }
+#if 0
+        if (widget->isVisible())
+        {
+            QLayout *lo = layoutFor(p->layout(), widget);
+            if (qobject_cast<QHBoxLayout *>(lo))
+            {
+                t = 2;
+                b = 2;
+            }
+            else if (qobject_cast<QVBoxLayout *>(lo))
+            {
+                l = 2;
+                r = 2;
+            }
+        }
+#endif
+        return visualRect(opt->direction, opt->rect, opt->rect.adjusted(-h, -v, h, v));
+    }
+    case SE_FrameLayoutItem:
+    {
+        if (!widget)
+            return opt->rect;
+        if (Overlay::overlay(widget))
+            return opt->rect;
+        if (qobject_cast<QToolBar *>(widget->parentWidget()))
+            return opt->rect;
+        if (qobject_cast<const QLineEdit *>(widget))
+            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+        if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
+            if (frame->frameShadow() != QFrame::Plain && frame->frameShape() == QFrame::StyledPanel)
+                return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+        return opt->rect;
+//        return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
     }
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:

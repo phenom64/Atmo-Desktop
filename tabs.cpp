@@ -529,7 +529,8 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
     if (dConf.tabs.regular)
         GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3, sides);
     if (!tabWidget->documentMode() && !dConf.tabs.regular)
-        GFX::drawShadow(Sunken, rect, painter, isEnabled(opt), 7, All);
+//        GFX::drawShadow(Sunken, rect, painter, isEnabled(opt), 7, All);
+        GFX::drawClickable(Sunken, rect, painter, QColor(0, 0, 0, 31), 6);
     return true;
 }
 

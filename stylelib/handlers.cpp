@@ -121,8 +121,8 @@ ToolBar
 void
 ToolBar::manage(QWidget *child)
 {
-    if (!qobject_cast<QToolBar *>(child->parentWidget()))
-        return;
+//    if (!qobject_cast<QToolBar *>(child->parentWidget()))
+//        return;
     child->removeEventFilter(instance());
     child->installEventFilter(instance());
     if (qobject_cast<QToolButton *>(child))
@@ -266,6 +266,22 @@ ToolBar::sides(const QToolButton *btn)
     return s_sides.value(const_cast<QToolButton *>(btn), All);
 }
 
+void
+ToolBar::changeLater(QWidget *w)
+{
+    QMetaObject::invokeMethod(instance(), "change", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)w));
+}
+
+void
+ToolBar::change(const qulonglong w)
+{
+    QWidget *widget = Ops::getChild<QWidget *>(w);
+    if (!widget)
+        return;
+    QEvent e(QEvent::StyleChange);
+    QApplication::sendEvent(widget, &e);
+}
+
 bool
 ToolBar::eventFilter(QObject *o, QEvent *e)
 {
@@ -309,7 +325,10 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
         {
             QToolBar *tb = qobject_cast<QToolBar *>(tbn->parentWidget());
             if (!tb)
+            {
+//                changeLater(tbn);
                 return false;
+            }
             s_dirty.insert(tb, true);
 //            queryToolBarLater(tb, true);
         }

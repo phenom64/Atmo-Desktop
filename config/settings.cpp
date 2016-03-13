@@ -54,6 +54,7 @@ static const char *s_key[] = {
     "toolbtn.invertactive",
     "toolbtn.flat",
     "toolbtn.morph",
+    "toolbtn.normal",
 
     "input.rnd",
     "input.inunornd",
@@ -168,6 +169,7 @@ static const char *s_description[] = {
     /*"toolbtn.invertactive"*/      "Whether the active/checked toolbuttons should have inverted foreground/background colors a'la Mac Os",
     /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
     /*"toolbtn.morph"*/             "When toolbtn.folcol=true, morph the icon back into its original colors on hover",
+    /*"toolbtn.normal"*/            "Draw all toolbuttons as normal buttons, not just those inside toolbars",
 
     /*"input.rnd"*/                 "Roundness of input boxes, lineedits and spinboxes and such",
     /*"input.inunornd"*/            "Roundness of inputs inside UNO",
@@ -282,6 +284,7 @@ static const QVariant s_default[] = {
     false,
     false,
     true,
+    false,
 
     8,
     8,
@@ -765,6 +768,7 @@ Settings::read()
     conf.toolbtn.invAct         = readBool(Toolbtninvact);
     conf.toolbtn.flat           = readBool(Toolbtnflat);
     conf.toolbtn.morph          = readBool(Toolbtnmorph);
+    conf.toolbtn.normal         = readBool(Toolbtnnormal);
     //inputs
     conf.input.rnd              = qMin<quint8>(MaxRnd, readInt(Inputrnd));
     conf.input.unoRnd           = qMin<quint8>(MaxRnd, readInt(Inputunornd));

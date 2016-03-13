@@ -83,8 +83,8 @@ Style::polish(QWidget *widget)
 
     QCommonStyle::polish(widget);
 #if DEBUG
-    if (widget->parentWidget())
-        qDebug() << "polishing widget:" << widget << "with parentWidget:" << widget->parentWidget();
+//    if (widget->parentWidget())
+//        qDebug() << "polishing widget:" << widget << "with parentWidget:" << widget->parentWidget();
 
     installFilter(widget);
 #endif
@@ -417,6 +417,15 @@ Style::polish(QWidget *widget)
     else if (widget->inherits("NavigationBar"))
     {
         widget->setContentsMargins(2,2,2,2);
+    }
+    else if (widget->inherits("KateTabButton")) //KateTabButton(0x1dcea80) KateTabBar(0x1ccee10)
+    {
+        QPalette pal = widget->palette();
+        pal.setColor(QPalette::Button, pal.color(QPalette::Window));
+        pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
+        pal.setColor(QPalette::Text, pal.color(QPalette::WindowText));
+        widget->setPalette(pal);
+        widget->parentWidget()->setPalette(pal);
     }
     //this needs to be here at the end cause I might alter the frames before in the main if segment
     if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))

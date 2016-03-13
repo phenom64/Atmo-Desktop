@@ -13,6 +13,8 @@
 #include <QPainter>
 #include <QBrush>
 #include <QMainWindow>
+#include <QSpinBox>
+#include <QComboBox>
 
 #include "fx.h"
 #include "gfx.h"
@@ -212,11 +214,18 @@ GFX::drawClickable(ShadowStyle s,
     if (s >= ShadowCount)
         return;
 
-    const ShadowStyle shadow(s);
-    const bool isLineEdit(qobject_cast<const QLineEdit *>(w));
     bool sunken(opt && opt->state & (QStyle::State_Sunken | QStyle::State_On | QStyle::State_Selected | QStyle::State_NoChange));
-    if (isLineEdit)
-        sunken = static_cast<const QLineEdit *>(w)->hasFocus();
+    const ShadowStyle shadow(s);
+    bool isLineEdit(qobject_cast<const QLineEdit *>(w)||qobject_cast<const QSpinBox *>(w));
+    if (qobject_cast<const QComboBox *>(w) && static_cast<const QComboBox *>(w)->isEditable())
+    {
+        isLineEdit = true;
+        sunken = static_cast<const QComboBox *>(w)->lineEdit()->hasFocus();
+    }
+    else if (isLineEdit)
+        sunken = w->hasFocus();
+    if (isLineEdit && sunken)
+        hover = Steps;
     bool inActive(false);
     if (dConf.differentInactive
             && !WindowHelpers::isActiveWindow(w)
@@ -331,7 +340,7 @@ GFX::drawClickable(ShadowStyle s,
 //        p->drawTiledPixmap(r, pix);
     }
 
-    if (hover && !sunken && s != Yosemite)
+    if (hover && (!sunken || isLineEdit) && s != Yosemite)
     {
         QColor highLight = opt ? opt->palette.color(QPalette::Highlight) : qApp->palette().color(QPalette::Highlight);
         highLight.setAlpha((255/Steps) * hover);
@@ -768,6 +777,11 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QPoint 
             p->fillRect(w->rect(), parent->palette().color(parent->backgroundRole()));
             return;
         }
+        else if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
+        {
+            if (!tw->documentMode() && !dConf.tabs.regular)
+                p->fillRect(w->rect(), QColor(0,0,0,31));
+        }
         parent = parent->parentWidget();
     }
     const QRect r = w->rect();
@@ -790,5 +804,16 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QPoint 
         p->fillRect(r, lg);
         p->setBrushOrigin(off);
         p->setCompositionMode(mode);
+    }
+
+    parent = w->parentWidget();
+    while (parent)
+    {
+        if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
+        {
+            if (!tw->documentMode() && !dConf.tabs.regular)
+                p->fillRect(w->rect(), QColor(0,0,0,31));
+        }
+        parent = parent->parentWidget();
     }
 }

@@ -52,8 +52,8 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     GFX::drawClickable(shadow, option->rect, painter, mask, rnd, 0, All, option, widget);
-    if (option->state & State_HasFocus)
-        Hover::render(option->rect, option->palette.color(QPalette::Highlight), painter, rnd, All, Steps);
+//    if (option->state & State_HasFocus)
+//        Hover::render(option->rect, option->palette.color(QPalette::Highlight), painter, rnd, All, Steps);
     return true;
 }
 

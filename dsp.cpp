@@ -138,6 +138,13 @@ Style::drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPain
     }
 }
 
+static QWidget *fromDevice(QPaintDevice *d)
+{
+    if (d->devType() == QInternal::Widget)
+        return static_cast<QWidget *>(d);
+    return 0;
+}
+
 void
 Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPalette &pal, bool enabled, const QString &text, QPalette::ColorRole textRole) const
 {
@@ -147,6 +154,10 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
     // we need to add either hide/show mnemonic, otherwise
     // we are rendering text w/ '&' characters.
     flags |= Qt::TextHideMnemonic; // Qt::TextHideMnemonicTextShowMnemonic
+
+    if (QWidget *w = fromDevice(painter->device()))
+    if (w->inherits("KateTabButton"))
+        textRole = QPalette::WindowText;
 
     const QPen pen(painter->pen());
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));
@@ -281,7 +292,7 @@ Style::drawText(const QRect &r,
     int regularW(QFontMetrics(f).width(text));
     f.setBold(bold);
     int boldW(QFontMetrics(f).width(text));
-    if (bold && (forceStretch || boldW > r.width()))
+    if (bold && regularW && boldW && (forceStretch || boldW > r.width()))
         f.setStretch(qCeil((double)regularW * 100.0f / (double)boldW));
     if (elide != Qt::ElideNone)
         text = QFontMetrics(f).elidedText(text, elide, r.width(), Qt::TextShowMnemonic);
