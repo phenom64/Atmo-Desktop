@@ -246,6 +246,15 @@ Style::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(widget->window()))
             Handlers::ScrollWatcher::watch(area);
 
+        if (area->viewport()->autoFillBackground() && dConf.views.opacity != 0xff)
+        {
+            QPalette pal = area->palette();
+            QColor base = pal.color(QPalette::Base);
+            base.setAlpha(dConf.views.opacity);
+            pal.setColor(QPalette::Base, base);
+            area->setPalette(pal);
+        }
+
 #if QT_VERSION >= 0x050000
         if (pixelMetric(PM_ScrollView_ScrollBarOverlap, 0, area))
             installFilter(area->viewport());

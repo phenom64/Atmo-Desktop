@@ -72,7 +72,7 @@ StackAnimator::widgetRemoved(int i)
 void
 StackAnimator::currentChanged(int i)
 {
-    if (m_stack->parentWidget()->isHidden())
+    if (!m_stack->parentWidget()->isVisible())
         return;
     if (m_timer->isActive())
     {

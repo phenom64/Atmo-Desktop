@@ -73,6 +73,42 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
 
 //------------------------------------------------------------------------------------------------------------
 
+
+static QLayout *layoutFor(QLayout *l, const QWidget *w)
+{
+    if (!l)
+        return 0;
+    for (int i = 0; i < l->count(); ++i)
+    {
+        QLayoutItem *item = l->itemAt(i);
+        if (item->widget() == w)
+            return l;
+    }
+    for (int i = 0; i < l->count(); ++i)
+    {
+        QLayoutItem *item = l->itemAt(i);
+        if (item->layout())
+            if (QLayout *layout = layoutFor(item->layout(), w))
+                return layout;
+    }
+    return 0;
+}
+
+static int visibleKids(const QLayout *l)
+{
+    int count(0);
+    if (l)
+    for (int i = 0; i < l->count(); ++i)
+    {
+        QLayoutItem *item = l->itemAt(i);
+        if (item->widget() && item->widget()->isVisible())
+            ++count;
+        if (item->layout())
+            count += visibleKids(item->layout());
+    }
+    return count;
+}
+
 static QList<const QWidget *> s_unsupported;
 
 bool
@@ -80,7 +116,8 @@ Overlay::isSupported(const QWidget *frame)
 {
     if (!frame || dConf.app == Settings::Eiskalt || s_unsupported.contains(frame))
         return false;
-
+//    if (frame->inherits("KTextEditor::ViewPrivate"))
+//        return true;
     const QFrame *f = qobject_cast<const QFrame *>(frame);
     if (f && (f->frameShadow() != QFrame::Sunken || f->frameShape() != QFrame::StyledPanel))
         return false;
@@ -89,10 +126,18 @@ Overlay::isSupported(const QWidget *frame)
     if (!p)
         return false;
 
-    QLayout *l = p->layout();
+    QLayout *l = layoutFor(p->layout(), frame);
     static const QMargins m(0, 0, 0, 0);
     const bool dock = qobject_cast<QDockWidget *>(p);
-    return (dock || ((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || frame->size() == p->size()));
+//    const bool fullSize(frame->size() == p->size());
+//    bool supported((!l && fullSize) || visibleKids(l) == 1);
+//    qDebug() << frame << p << p->parentWidget() << l << visibleKids(l);
+    if (dock || (((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || frame->size() == p->size()) /*&& supported*/))
+    {
+        qDebug() << p << frame;
+        return true;
+    }
+    return false;
 }
 
 bool
@@ -326,6 +371,14 @@ Overlay::updateOverlay()
             addSide(l[i]);
         }
     }
+
+    if (m_sides == All) //if we want a full frame,,, we can just use a full frame.... right?
+    {
+        hide();
+        deleteLater();
+        return;
+    }
+
     QRect winRect = m_frame->window()->rect();
     if (frameGeo.top() <= winRect.top())
         removeSide(Top);

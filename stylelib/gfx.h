@@ -52,7 +52,7 @@ public:
 protected:
     static void initShadows();
     static void initTabs();
-    static QPixmap noisePix(const qint8 style);
+    static QPixmap noisePix(const qint8 style, const QString &fileName = QString());
 
 private:
     static QPixmap *s_tab;

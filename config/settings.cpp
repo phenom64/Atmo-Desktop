@@ -78,6 +78,7 @@ static const char *s_key[] = {
     "uno.gradient",
     "uno.tinthue",
     "uno.noisefactor",
+    "uno.noisefile",
     "uno.noisestyle",
     "uno.horizontal",
     "uno.contentaware",
@@ -110,6 +111,7 @@ static const char *s_key[] = {
     "views.itemshadow",
     "views.itemrnd",
     "views.headergradient",
+    "views.opacity",
 
     "progressbars.shadow",
     "progressbars.rnd",
@@ -120,6 +122,7 @@ static const char *s_key[] = {
 
     "windows.gradient",
     "windows.noisefactor",
+    "windows.noisefile",
     "windows.noisestyle",
     "windows.horizontal",
 
@@ -193,6 +196,7 @@ static const char *s_description[] = {
     /*"uno.gradient"*/              "Gradient of the UNO area",
     /*"uno.tinthue"*/               "Hue to tint the UNO area w/",
     /*"uno.noisefactor"*/           "How much noise the UNO area should have",
+    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, \nso a place a file w/ the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
     /*"uno.noisestyle"*/            "Style of the noise on the UNO area, 0 = Generic, 1 = Brushed Metal",
     /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical, Always disabled atm",
     /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
@@ -225,6 +229,7 @@ static const char *s_description[] = {
     /*"views.itemshadow"*/          "Shadow on viewitems",
     /*"views.itemrnd"*/             "Roundness of viewitems",
     /*"views.headergradient"*/      "Gradient on headers in views",
+    /*"views.opacity"*/             "Opacity of views, leave at 255",
 
     /*"progressbars.shadow"*/       "Shadows for progressbars",
     /*"progressbars.rnd"*/          "Roundness for progressbars",
@@ -235,6 +240,7 @@ static const char *s_description[] = {
 
     /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
     /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
+    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, \nso a place a file w/ the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
     /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal, not used atm",
     /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical, not used atm",
 
@@ -308,6 +314,7 @@ static const QVariant s_default[] = {
     "0.0:5, 1.0:-5",
     "-1:0",
     5,
+    QString(),
     0,
     false,
     QStringList(),
@@ -340,6 +347,7 @@ static const QVariant s_default[] = {
     0,
     6,
     "0:5, 1:-5",
+    0xff,
 
     3,
     4,
@@ -350,6 +358,7 @@ static const QVariant s_default[] = {
 
     "0.0:-10, 0.5:10, 1.0:-10",
     0,
+    QString(),
     0,
     true,
 
@@ -792,6 +801,7 @@ Settings::read()
     conf.uno.gradient           = stringToGrad(readString(Unograd));
     conf.uno.tint               = tintColor(readString(Unotint));
     conf.uno.noise              = readInt(Unonoise);
+    conf.uno.noiseFile          = readString(Unonoisefile);
     conf.uno.noiseStyle         = readInt(Unonoisestyle);
     conf.uno.hor                = readBool(Unohor);
     conf.uno.contAware          = readStringList(Unocont).contains(QFileInfo(qApp->applicationFilePath()).fileName());
@@ -800,6 +810,7 @@ Settings::read()
     //windows when not uno
     conf.windows.gradient       = stringToGrad(readString(Wingrad));
     conf.windows.noise          = readInt(Winnoise);
+    conf.windows.noiseFile      = readString(Winnoisefile);
     conf.windows.noiseStyle     = readInt(Winnoisestyle);
     conf.windows.hor            = readBool(Winhor);
     //menues
@@ -829,6 +840,7 @@ Settings::read()
     conf.views.itemShadow       = readInt(Viewitemshadow);
     conf.views.itemRnd          = readInt(Viewitemrnd);
     conf.views.headerGradient   = stringToGrad(readString(Viewheadergrad));
+    conf.views.opacity          = readInt(Viewopacity);
     //progressbars
     conf.progressbars.shadow    = readInt(Progshadow);
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));

@@ -45,26 +45,6 @@ Style::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubCont
     }
 }
 
-static QLayout *layoutFor(QLayout *l, const QWidget *w)
-{
-    if (!l)
-        return 0;
-    for (int i = 0; i < l->count(); ++i)
-    {
-        QLayoutItem *item = l->itemAt(i);
-        if (item->widget() == w)
-            return l;
-    }
-    for (int i = 0; i < l->count(); ++i)
-    {
-        QLayoutItem *item = l->itemAt(i);
-        if (item->layout())
-            if (QLayout *layout = layoutFor(item->layout(), w))
-                return layout;
-    }
-    return 0;
-}
-
 QRect
 Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widget) const
 {
@@ -384,10 +364,10 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             return visualRect(twf->direction, twf->rect, twf->rect.growed(4));
         break;
     }
-
+#if 0
     case SE_ProgressBarLayoutItem:
     case SE_PushButtonLayoutItem:
-    case SE_ComboBoxLayoutItem:
+//    case SE_ComboBoxLayoutItem:
     case SE_SpinBoxLayoutItem:
     case SE_ToolButtonLayoutItem:
     {
@@ -395,7 +375,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             return opt->rect;
         QWidget *p = widget->parentWidget();
         int h(0),v(0);
-        if (!p || qobject_cast<const QToolBar *>(p))
+        if (qobject_cast<const QToolBar *>(p))
         {
             if (qobject_cast<const QAbstractButton *>(widget))
                 return opt->rect;
@@ -431,6 +411,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
 #endif
         return visualRect(opt->direction, opt->rect, opt->rect.adjusted(-h, -v, h, v));
     }
+#endif
     case SE_FrameLayoutItem:
     {
         if (!widget)
@@ -439,8 +420,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             return opt->rect;
         if (qobject_cast<QToolBar *>(widget->parentWidget()))
             return opt->rect;
-        if (qobject_cast<const QLineEdit *>(widget))
-            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+//        if (qobject_cast<const QLineEdit *>(widget))
+//            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
         if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
             if (frame->frameShadow() != QFrame::Plain && frame->frameShape() == QFrame::StyledPanel)
                 return visualRect(opt->direction, opt->rect, opt->rect.growed(2));

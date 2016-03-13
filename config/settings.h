@@ -92,6 +92,7 @@ public:
         Unograd,
         Unotint,
         Unonoise,
+        Unonoisefile,
         Unonoisestyle,
         Unohor,
         Unocont,
@@ -120,6 +121,7 @@ public:
         Viewitemshadow,
         Viewitemrnd,
         Viewheadergrad,
+        Viewopacity,
         Progshadow,
         Progrnd,
         Progtxthover,
@@ -128,6 +130,7 @@ public:
         Progstripe,
         Wingrad,
         Winnoise,
+        Winnoisefile,
         Winnoisestyle,
         Winhor,
         Shadowopacity,
@@ -208,6 +211,7 @@ public:
         } tabs;
         struct uno
         {
+            QString noiseFile;
             Gradient gradient;
             Tint tint;
             quint8 noise, blur;
@@ -217,6 +221,7 @@ public:
         } uno;
         struct windows
         {
+            QString noiseFile;
             Gradient gradient;
             quint8 noise;
             qint8 noiseStyle;
@@ -232,7 +237,7 @@ public:
         {
             bool treelines;
             Gradient itemGradient, headerGradient;
-            quint8 itemShadow, itemRnd;
+            quint8 itemShadow, itemRnd, opacity;
         } views;
     } Conf;
     static Conf conf;

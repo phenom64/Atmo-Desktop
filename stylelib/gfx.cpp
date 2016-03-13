@@ -15,6 +15,7 @@
 #include <QMainWindow>
 #include <QSpinBox>
 #include <QComboBox>
+#include <QGroupBox>
 
 #include "fx.h"
 #include "gfx.h"
@@ -566,7 +567,7 @@ static int randInt(int low, int high)
 enum Noise { ASDF = -1, RandomNoise = 0, BrushedMetal = 1, WhiteDots = 2, DiagonalStripes = 3, RaisedDots = 4, Donpo = 5, BigStripes = 6 };
 
 QPixmap
-GFX::noisePix(const qint8 style)
+GFX::noisePix(const qint8 style, const QString &fileName)
 {
     switch (style)
     {
@@ -658,7 +659,7 @@ GFX::noisePix(const qint8 style)
     }
     case ASDF:
     {
-        static const QString file = QString("%1/.local/share/data/dsp/bg.png").arg(QDir::homePath()); //needs to be from xdg
+        const QString file = QString("%1/.local/share/data/dsp/%2").arg(QDir::homePath(), fileName); //needs to be from xdg
 //        qDebug() << file;
         QImageReader reader(file);
         if (!reader.canRead())
@@ -716,11 +717,11 @@ GFX::makeNoise()
         s_noise = new QPixmap[2]();
 
     if (s_noise[0].isNull())
-        s_noise[0] = noisePix(dConf.uno.noiseStyle);
+        s_noise[0] = noisePix(dConf.uno.noiseStyle, dConf.uno.noiseFile);
     const QColor bg = qApp->palette().color(QPalette::Window);
     static QPixmap wNoise;
     if (wNoise.isNull())
-        wNoise = noisePix(dConf.windows.noiseStyle);
+        wNoise = noisePix(dConf.windows.noiseStyle, dConf.windows.noiseFile);
 
     s_noise[1] = FX::mid(wNoise, bg, dConf.windows.noise, 100-dConf.windows.noise);
 //    s_noise[1] = QPixmap(wNoise.size());
@@ -814,6 +815,8 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QPoint 
             if (!tw->documentMode() && !dConf.tabs.regular)
                 p->fillRect(w->rect(), QColor(0,0,0,31));
         }
+        else if (QGroupBox *gb = qobject_cast<QGroupBox *>(parent))
+            p->fillRect(gb->rect(), QColor(0,0,0,31));
         parent = parent->parentWidget();
     }
 }
