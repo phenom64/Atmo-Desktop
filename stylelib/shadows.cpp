@@ -30,6 +30,7 @@ Shadow::margin(const ShadowStyle s)
     case Raised: return 2;
     case Carved: return 2;
     case SemiCarved: return 1;
+    case -1: return 1;
     default: return 0;
     }
 }

@@ -192,13 +192,13 @@ static const char *s_description[] = {
     /*"tabs.closerrnd"*/            "Roundness of tab close button",
     /*"tabs.docwidth"*/             "Width/height of document mode tabbar tabs, leave blank or set to 0 for default content based size.",
 
-    /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os. Always enabled atm",
+    /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os",
     /*"uno.gradient"*/              "Gradient of the UNO area",
     /*"uno.tinthue"*/               "Hue to tint the UNO area w/",
     /*"uno.noisefactor"*/           "How much noise the UNO area should have",
     /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file w/ the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
     /*"uno.noisestyle"*/            "Style of the noise on the UNO area, 0 = Generic, 1 = Brushed Metal",
-    /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical, Always disabled atm",
+    /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical",
     /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
     /*"uno.contentopacity"*/        "Opacity of the content painted in the toolbar",
     /*"uno.contentblurradius"*/     "Amount of blur applied to the content in the toolbar",
@@ -835,7 +835,7 @@ Settings::read()
     conf.tabs.closeRnd          = readInt(Tabcloserrnd);
     conf.tabs.docWidth          = readInt(Tabdocwidth);
     //uno
-    conf.uno.enabled            = /*readBool(Unoenabled)*/true;
+    conf.uno.enabled            = readBool(Unoenabled);
     conf.uno.gradient           = stringToGrad(readString(Unograd));
     conf.uno.tint               = tintColor(readString(Unotint));
     conf.uno.noise              = readInt(Unonoise);

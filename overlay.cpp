@@ -134,7 +134,7 @@ Overlay::isSupported(const QWidget *frame)
 //    qDebug() << frame << p << p->parentWidget() << l << visibleKids(l);
     if (dock || (((l && l->spacing() == 0 && l->contentsMargins() == m) || (!l && p->contentsMargins() == m) || frame->size() == p->size()) /*&& supported*/))
     {
-        qDebug() << p << frame;
+//        qDebug() << p << frame;
         return true;
     }
     return false;

@@ -27,6 +27,7 @@
 #include "masks.h"
 #include "shadows.h"
 #include "windowhelpers.h"
+#include "windowdata.h"
 
 using namespace DSP;
 
@@ -310,7 +311,7 @@ GFX::drawClickable(ShadowStyle s,
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
-    default: break;
+    default: r.sGrow(m); break;
     }
 
     if (invertedSides && sunken && (shadow == Etched || shadow == Raised) && sides != All)
@@ -763,7 +764,7 @@ GFX::subRect(const QRect &r, const int flags, const QRect &sr)
 }
 
 void
-GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QPoint &offset)
+GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset)
 {
     if (!w)
         return;
@@ -786,6 +787,9 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QPoint 
         parent = parent->parentWidget();
     }
     const QRect r = w->rect();
+    if (!dConf.uno.enabled)
+    if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
+        offset += QPoint(data->value<int>(WindowData::TitleHeight, 0), 0);
     if (dConf.windows.noise)
         p->drawTiledPixmap(r, GFX::noise(true), offset);
     else

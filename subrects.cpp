@@ -412,22 +412,22 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         return visualRect(opt->direction, opt->rect, opt->rect.adjusted(-h, -v, h, v));
     }
 #endif
-    case SE_FrameLayoutItem:
-    {
-        if (!widget)
-            return opt->rect;
-        if (Overlay::overlay(widget))
-            return opt->rect;
-        if (qobject_cast<QToolBar *>(widget->parentWidget()))
-            return opt->rect;
-//        if (qobject_cast<const QLineEdit *>(widget))
-//            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
-        if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
-            if (frame->frameShadow() != QFrame::Plain && frame->frameShape() == QFrame::StyledPanel)
-                return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
-        return opt->rect;
-//        return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
-    }
+//    case SE_FrameLayoutItem:
+//    {
+//        if (!widget)
+//            return opt->rect;
+//        if (Overlay::overlay(widget))
+//            return opt->rect;
+//        if (qobject_cast<QToolBar *>(widget->parentWidget()))
+//            return opt->rect;
+////        if (qobject_cast<const QLineEdit *>(widget))
+////            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+////        if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
+////            if (frame->frameShadow() != QFrame::Plain && frame->frameShape() == QFrame::StyledPanel)
+////                return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+//        return opt->rect;
+////        return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+//    }
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:
     case SE_ProgressBarContents:

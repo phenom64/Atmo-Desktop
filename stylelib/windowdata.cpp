@@ -202,26 +202,52 @@ WindowData::decoId()
     return 0;
 }
 
+static void gradientToData(const Gradient g, uint *d)
+{
+    for (int i = 0; i < g.count(); ++i)
+    {
+        GradientStop stop(g.at(i));
+        d[i] = (d[i] & ~0xffff0000) | (((int)(stop.first*10000) << 16) & 0xffff0000);
+        d[i] = (d[i] & ~0x0000ffff) | ((stop.second+100) & 0x0000ffff);
+    }
+}
+
 void
-WindowData::setGradient(const Gradient g)
+WindowData::setButtonGradient(const Gradient g)
 {
     if (lock())
     {
         uint *d = reinterpret_cast<uint *>(data());
         d[ToolBtnGradientSize] = qMin(32, g.count());
         d = &d[ToolBtnGradient];
-        for (int i = 0; i < g.count(); ++i)
-        {
-            GradientStop stop(g.at(i));
-            d[i] = (d[i] & ~0xffff0000) | (((int)(stop.first*10000) << 16) & 0xffff0000);
-            d[i] = (d[i] & ~0x0000ffff) | ((stop.second+100) & 0x0000ffff);
-        }
+        gradientToData(g, d);
         unlock();
     }
 }
 
+void
+WindowData::setWindowGradient(const Gradient g)
+{
+    if (lock())
+    {
+        uint *d = reinterpret_cast<uint *>(data());
+        d[WindowGradientSize] = qMin(32, g.count());
+        d = &d[WindowGradient];
+        gradientToData(g, d);
+        unlock();
+    }
+}
+
+static Gradient dataToGradient(const uint *data, const int stops)
+{
+    Gradient g;
+    for (int i = 0; i < stops; ++i)
+        g << GradientStop((float)((data[i]&0xffff0000)>>16)/10000.0f, (int)(data[i]&0x0000ffff)-100);
+    return g;
+}
+
 const Gradient
-WindowData::gradient()
+WindowData::buttonGradient()
 {
     MemoryLocker locker(this);
     if (locker.lockObtained())
@@ -229,10 +255,21 @@ WindowData::gradient()
         const uint *d = reinterpret_cast<const uint *>(constData());
         const int stops = d[ToolBtnGradientSize];
         const uint *data = &d[ToolBtnGradient];
-        Gradient g;
-        for (int i = 0; i < stops; ++i)
-            g << GradientStop((float)((data[i]&0xffff0000)>>16)/10000.0f, (int)(data[i]&0x0000ffff)-100);
-        return g;
+        return dataToGradient(data, stops);
+    }
+    return Gradient();
+}
+
+const Gradient
+WindowData::windowGradient()
+{
+    MemoryLocker locker(this);
+    if (locker.lockObtained())
+    {
+        const uint *d = reinterpret_cast<const uint *>(constData());
+        const int stops = d[WindowGradientSize];
+        const uint *data = &d[WindowGradient];
+        return dataToGradient(data, stops);
     }
     return Gradient();
 }

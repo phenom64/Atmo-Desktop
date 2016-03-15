@@ -202,7 +202,7 @@ Style::paintEvent(QObject *o, QEvent *e)
         w->installEventFilter(this);
         return true;
     }
-    else if (w->inherits("KateTabButton"))
+    else if (w->inherits("KateTabButton")) //kate tabbutons and tabbar... sighs
     {
         QAbstractButton *btn = static_cast<QAbstractButton *>(w);
         QPainter p(w);

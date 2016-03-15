@@ -302,7 +302,8 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
     {
         if (QToolBar *tb = qobject_cast<QToolBar *>(o))
         {
-            if (e->type() == QEvent::ShowToParent && !TitleWidget::isManaging(tb))
+            if (e->type() == QEvent::ShowToParent
+                    && !TitleWidget::isManaging(tb))
                 ToolbarHelpers::fixSpacerLater(tb);
             s_dirty.insert(tb, true);
 //            queryToolBarLater(tb, true);
@@ -506,12 +507,15 @@ Window::eventFilter(QObject *o, QEvent *e)
             if (WindowData *data = WindowData::memory(w->winId(), w))
             {
                 QRect line(0, WindowHelpers::unoHeight(w), w->width(), 1);
-                if (!data->value<bool>(WindowData::Separator, true) && data->value<bool>(WindowData::Uno))
+                if (dConf.uno.enabled)
                 {
-                    p.fillRect(line, QColor(0, 0, 0, dConf.shadows.opacity));
-                    line.translate(0, 1);
+                    if (!data->value<bool>(WindowData::Separator, true))
+                    {
+                        p.fillRect(line, QColor(0, 0, 0, dConf.shadows.opacity));
+                        line.translate(0, 1);
+                    }
+                    p.fillRect(line, QColor(255, 255, 255, dConf.shadows.illumination));
                 }
-                p.fillRect(line, QColor(255, 255, 255, dConf.shadows.illumination));
             }
             p.end();
         }

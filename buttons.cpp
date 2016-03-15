@@ -56,11 +56,12 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
         const bool selected = isSelected(option);
         if (hl || sunken || selected)
         {
-            QColor h(opt->palette.color(QPalette::Highlight));
-            h.setAlpha(63/Steps*hl);
+//            QColor h(opt->palette.color(QPalette::Highlight));
+//            h.setAlpha(63/Steps*hl);
             if (sunken || selected)
-                h = Qt::transparent;
-            GFX::drawClickable(sunken||selected?Sunken:-1, option->rect, painter, h, dConf.pushbtn.rnd);
+                hl = 0;
+//                h = Qt::transparent;
+            GFX::drawClickable(sunken||selected?Sunken:-1, option->rect, painter, Qt::transparent, dConf.pushbtn.rnd, hl);
         }
         return true;
     }

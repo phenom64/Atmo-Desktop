@@ -313,7 +313,7 @@ Deco::updateData()
         const bool buttonShouldBeVisible(titleHeight()>6);
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
-        const Gradient g = m_wd->gradient();
+        const Gradient g = m_wd->buttonGradient();
         if (m_embedder)
         {
             m_embedder->setButtonStyle(buttonStyle);
@@ -326,6 +326,8 @@ Deco::updateData()
             m_embedder->setGradient(g);
         }
 
+        if (!m_wd->value<bool>(WindowData::Uno, false))
+            m_winGradient = m_wd->windowGradient();
 
         if (m_leftButtons)
         {
@@ -436,6 +438,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     painter->save();
     //bg
     bool needPaintBg(true);
+    const bool uno = m_wd && m_wd->value<bool>(WindowData::Uno, false);
     if (m_wd && m_wd->lock())
     {
         painter->setBrushOrigin(titleBar().topLeft());
@@ -446,6 +449,15 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             needPaintBg = false;
         }
         m_wd->unlock();
+        if (!uno && !m_winGradient.isEmpty())
+        {
+            const bool hor = m_wd->value<bool>(WindowData::Horizontal, false);
+            QLinearGradient lg(rect().topLeft(), hor ? rect().topRight() : rect().bottomLeft());
+            lg.setStops(Settings::gradientStops(m_winGradient));
+            painter->setCompositionMode(QPainter::CompositionMode_Overlay);
+            painter->fillRect(titleBar(), lg);
+            painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
     }
     if (needPaintBg)
     {
@@ -685,8 +697,8 @@ Deco::event(QEvent *event)
         break;
     }
     case QEvent::Wheel:
-        qDebug() << event;
-        return true;
+//        qDebug() << event;
+//        return true;
         break;
     default: break;
     }
@@ -696,7 +708,7 @@ Deco::event(QEvent *event)
 void
 Deco::wheelEvent(QWheelEvent *event)
 {
-    qDebug() << "wheelEvent" << event;
+//    qDebug() << "wheelEvent" << event;
 }
 
 void

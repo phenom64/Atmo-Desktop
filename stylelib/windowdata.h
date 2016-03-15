@@ -127,6 +127,9 @@ public:
         ToolBtnGradientSize,
         ToolBtnGradient,
         ToolBtnGradientEnd = ToolBtnGradient+32,
+        WindowGradientSize,
+        WindowGradient,
+        WindowGradientEnd = WindowGradient+32,
         DecoID,
         ImageWidth,
         ImageHeight,
@@ -214,8 +217,11 @@ public:
     const uint decoId();
     void setDecoId(const uint id);
 
-    const Gradient gradient();
-    void setGradient(const Gradient g);
+    const Gradient buttonGradient();
+    void setButtonGradient(const Gradient g);
+
+    const Gradient windowGradient();
+    void setWindowGradient(const Gradient g);
 
     const QImage image() const;
 

@@ -68,47 +68,59 @@ WindowHelpers::updateWindowData(qulonglong window)
     if (!data)
         return;
 
-    bool separator(true);
-    const unsigned int height = getHeadHeight(win, separator);
     QPalette pal(win->palette());
     if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify
         pal = QApplication::palette();
-
-    if (dConf.differentInactive)
+    if (dConf.uno.enabled)
     {
-        if (isActiveWindow(win))
+        bool separator(true);
+        const unsigned int height = getHeadHeight(win, separator);
+        if (dConf.differentInactive)
         {
-            pal.setColor(QPalette::Active, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::black, 10, 1));
-            pal.setColor(QPalette::Active, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::black, 10, 1));
-            pal.setCurrentColorGroup(QPalette::Active);
+            if (isActiveWindow(win))
+            {
+                pal.setColor(QPalette::Active, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::black, 10, 1));
+                pal.setColor(QPalette::Active, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::black, 10, 1));
+                pal.setCurrentColorGroup(QPalette::Active);
+            }
+            else
+            {
+                pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
+                pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
+                pal.setCurrentColorGroup(QPalette::Inactive);
+            }
         }
-        else
-        {
-            pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
-            pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
-            pal.setCurrentColorGroup(QPalette::Inactive);
-        }
-//        win->setPalette(pal);
-    }
-
-    if (dConf.uno.enabled && height)
-    {
         int width(0);
         if (data->lock())
         {
-
             unoBg(win, width, height, pal, data->imageData());
             data->setImageSize(width, height);
             data->unlock();
         }
+        data->setValue<bool>(WindowData::Separator, separator);
+        data->setValue<int>(WindowData::UnoHeight, height);
     }
-    data->setValue<bool>(WindowData::Separator, separator);
+    else
+    {
+        const int th = data->value<int>(WindowData::TitleHeight, 0);
+        if (data->lock())
+        {
+            QImage img(data->imageData(), GFX::noise(true).width(), th, QImage::Format_ARGB32_Premultiplied);
+            img.fill(Qt::transparent);
+            QPainter p(&img);
+            p.drawTiledPixmap(img.rect(), GFX::noise(true));
+            p.end();
+            data->setImageSize(img.width(), img.height());
+            data->unlock();
+        }
+        data->setWindowGradient(dConf.windows.gradient);
+        data->setValue<bool>(WindowData::Separator, false);
+    }
     data->setValue<bool>(WindowData::WindowIcon, dConf.deco.icon);
     data->setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
     data->setValue<bool>(WindowData::Uno, dConf.uno.enabled);
     data->setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
     data->setValue<int>(WindowData::Opacity, XHandler::opacity()*255.0f);
-    data->setValue<int>(WindowData::UnoHeight, height);
     data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
     data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity);
@@ -118,7 +130,7 @@ WindowHelpers::updateWindowData(qulonglong window)
     data->setMinColor(QColor::fromRgba(dConf.deco.min));
     data->setFg(pal.color(win->foregroundRole()));
     data->setBg(pal.color(win->backgroundRole()));
-    data->setGradient(dConf.toolbtn.gradient);
+    data->setButtonGradient(dConf.toolbtn.gradient);
     win->update();
 //    if (TitleWidget *w = win->findChild<TitleWidget *>())
 //        w->update();

@@ -61,6 +61,7 @@ ToolbarHelpers::fixSpacer(qulonglong toolbar, int width)
     if (!spacer)
     {
         QWidget *w = new QWidget(tb);
+        w->setObjectName("DSP_spacer");
         spacer = tb->insertWidget(tb->actions().first(), w);
         spacer->setObjectName(s_spacerName);
     }

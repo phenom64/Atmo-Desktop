@@ -430,17 +430,22 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     const QStyleOptionTabBarBaseV2 *opt = qstyleoption_cast<const QStyleOptionTabBarBaseV2 *>(option);
     if (!opt)
         return true;
+    if (!widget)
+    {
+        if (painter->device()->devType() == QInternal::Widget)
+            widget = static_cast<const QWidget *>(painter->device());
+    }
     const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget);
     if (opt->documentMode || (tabBar&&tabBar->documentMode()) || dConf.tabs.regular)
     {
-        QRect r(tabBar?tabBar->rect():opt->tabBarRect);
+        QRect r(tabBar?tabBar->rect():widget?widget->rect():opt->rect);
         QPaintDevice *d = painter->device();
         QWidget *dev(0);
         if (d->devType() == QInternal::Widget)
             dev = static_cast<QWidget *>(d);
         if (qobject_cast<QTabWidget *>(dev))
         {
-            r = tabBar ? tabBar->geometry() : opt->tabBarRect;
+            r = tabBar ? tabBar->geometry() : widget?widget->geometry():opt->rect;
             if (isVertical(0, tabBar))
             {
                 r.setTop(0);
@@ -455,7 +460,7 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
         else if (dev && dev->property("DSP_konsoleTabBarParent").toBool())
             r = opt->rect;
         else
-            r = opt->tabBarRect;
+            r = widget?widget->rect():opt->rect;
         drawDocTabBar(opt, painter, tabBar, r);
         return true;
     }

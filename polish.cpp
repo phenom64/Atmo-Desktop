@@ -434,7 +434,7 @@ Style::polish(QWidget *widget)
     }
     else if (widget->inherits("KateTabButton")) //KateTabButton(0x1dcea80) KateTabBar(0x1ccee10)
     {
-//        widget->setMaximumWidth(200);
+//        widget->setMaximumWidth(200); //cant, kate uses its own layouting, not a QLayout...
         installFilter(widget);
     }
     else if (widget->inherits("KateTabBar"))
