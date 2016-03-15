@@ -5,9 +5,10 @@
 #include <QImageReader>
 #include "styleconfig.h"
 #include "settings.h"
-#include <iostream>
+#include <iostream>     // std::cout, std::endl
+#include <iomanip>      // std::setw
 
-enum Task { WriteDefaults = 0, Edit, PrintInfo, ListVars, GenHighlight, Invalid };
+enum Task { WriteDefaults = 0, Edit, PrintInfo, ListVars, ShadowInfo, GenHighlight, Invalid };
 
 Task getTask(int argc, char *argv[])
 {
@@ -21,10 +22,17 @@ Task getTask(int argc, char *argv[])
             return PrintInfo;
         if (!qstrcmp(argv[1], "--listvars"))
             return ListVars;
+        if (!qstrcmp(argv[1], "--shadowinfo") && argc > 2)
+            return ShadowInfo;
         if (!qstrcmp(argv[1], "--genhighlight") && argc > 2)
             return GenHighlight;
     }
     return Invalid;
+}
+
+static void printShadowInfo(const int shadow)
+{
+    qDebug() << DSP::Settings::shadowDescription(shadow);
 }
 
 static const char *stylishedTypeName(const char *typeName)
@@ -58,13 +66,53 @@ static void printHelp()
               << "--writedefaults                 Write default values to dsp.conf\n"
               << "--edit                          Open dsp.conf for editing in your default text editor\n"
               << "--printinfo <var>               Print information about <var>\n"
-              << "--listvars                      List available variables";
+              << "--listvars                      List available variables\n"
+              << "--shadowinfo <int>              print info about shadow <int>";
 }
 
 static void printVars()
 {
+    int colW(0);
     for (int i = 0; i < DSP::Settings::Keycount; ++i)
-        std::cout << DSP::Settings::key((DSP::Settings::Key)i) << "\n";
+    {
+        int col = strlen(DSP::Settings::key((DSP::Settings::Key)i));
+        if (col > colW)
+            colW = col;
+    }
+    colW += 4; //some nice spacing...
+    for (int i = 0; i < DSP::Settings::Keycount; ++i)
+    {
+#if 0
+        QString line;
+        line.append(DSP::Settings::key((DSP::Settings::Key)i));
+        line.append("\t\t");
+        line.append("Value: ");
+        line.append(DSP::Settings::readVal((DSP::Settings::Key)i).toString());
+        line.append("\t\t");
+        line.append("Default: ");
+        line.append(DSP::Settings::defaultValue((DSP::Settings::Key)i).toString());
+        line.append("\t\t");
+        line.append("Description: ");
+        line.append(DSP::Settings::description((DSP::Settings::Key)i));
+        line.append("\n");
+        std::cout << line.toLatin1().data();
+#endif
+        std::cout << std::left
+                  << std::setw(colW)
+                  << DSP::Settings::key((DSP::Settings::Key)i)
+//                  << "Value: "
+//                  << std::setw(40)
+//                  << DSP::Settings::readVal((DSP::Settings::Key)i).toString().toLatin1().data()
+//                  << "Default: "
+//                  << std::setw(30)
+//                  << DSP::Settings::defaultValue((DSP::Settings::Key)i).toString().toLatin1().data()
+//                  << "Description: "
+                  << DSP::Settings::description((DSP::Settings::Key)i)
+                  << std::endl;
+    }
+    std::cout << std::endl
+              << "use --printinfo <varname> for more info"
+              << std::endl;
 }
 
 static void genHighlight(const QString &file)
@@ -129,7 +177,7 @@ static void genHighlight(const QString &file)
 
     QColor c = QColor::fromHsv(activeHue, sat, val);
     const QString color = QString("#%1").arg(QString::number(c.rgba(), 16).mid(2));
-    std::cout << color.toLocal8Bit().data();
+    std::cout << std::endl << "Generated color: " << std::endl << color.toLocal8Bit().data() << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -161,6 +209,7 @@ int main(int argc, char *argv[])
         }
         break;
     }
+    case ShadowInfo: printShadowInfo(atoi(argv[2])); break;
     case GenHighlight: genHighlight(argv[2]); break;
     case ListVars: printVars(); break;
     default: printHelp(); break;

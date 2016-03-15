@@ -196,7 +196,7 @@ static const char *s_description[] = {
     /*"uno.gradient"*/              "Gradient of the UNO area",
     /*"uno.tinthue"*/               "Hue to tint the UNO area w/",
     /*"uno.noisefactor"*/           "How much noise the UNO area should have",
-    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, \nso a place a file w/ the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
+    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file w/ the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
     /*"uno.noisestyle"*/            "Style of the noise on the UNO area, 0 = Generic, 1 = Brushed Metal",
     /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical, Always disabled atm",
     /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
@@ -240,7 +240,7 @@ static const char *s_description[] = {
 
     /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
     /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
-    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, \nso a place a file w/ the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
+    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file w/ the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
     /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal, not used atm",
     /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical, not used atm",
 
@@ -387,6 +387,44 @@ const QVariant
 Settings::defaultValue(const Key k)
 {
     return s_default[k];
+}
+
+const char
+*Settings::shadowName(const int shadow)
+{
+    if (shadow < 0 || shadow >= ShadowCount)
+        return "Invalid";
+    static const char *names[ShadowCount] =
+    {
+        "Sunken",
+        "Etched",   //maclike toolbar shadow pre-yosemite
+        "Raised",   //pretty much a normal pushbutton like shadow
+        "Yosemite", //yosemite simple shadow that reacts differently if widget inside toolbar...
+        "Carved",   //rhino like
+        "Rect",     //simple rounded rectangle, no honky-ponky
+        "ElCapitan",
+        "SemiCarved"
+    };
+    return names[shadow];
+}
+
+const char
+*Settings::shadowDescription(const int shadow)
+{
+    if (shadow < 0 || shadow >= ShadowCount)
+        return "Invalid";
+    static const char *names[ShadowCount] =
+    {
+        "Sunken: a shadow intended to make the control look as if below window surface.",
+        "Etched: a shadow intended to look etched into the window.",
+        "Raised: a shadow intended to make the control look raised above the window.",
+        "Yosemite: a 'shadow' (more like a rectangle) to loosely mimic the look of the mac os yosemite 'shadows' - unrecommended, looks dull and bland.",
+        "Carved: a shadow 'inspired' the the ever popular 'rhino' style for mac os",   //rhino like
+        "Rect: a simple rectangle, mostly internally used.",     //simple rounded rectangle, no honky-ponky
+        "ElCapitan: a 'shadow' (more like rectangle) to loosely mimic the look of the mac os elcapitan 'shadows' - unrecommended, looks dull and bland.",
+        "SemiCarved: same as carved but less margins."
+    };
+    return names[shadow];
 }
 
 static const QString confPath()

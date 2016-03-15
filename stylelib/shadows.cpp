@@ -21,7 +21,7 @@ Shadow::Shadow(const ShadowStyle t, const quint8 r, const quint8 o, const quint8
 }
 
 quint8
-Shadow::shadowMargin(const ShadowStyle s)
+Shadow::margin(const ShadowStyle s)
 {
     switch (s)
     {

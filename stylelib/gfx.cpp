@@ -402,7 +402,7 @@ GFX::drawClickable(ShadowStyle s,
 quint8
 GFX::shadowMargin(const ShadowStyle s)
 {
-    return Shadow::shadowMargin(s);
+    return Shadow::margin(s);
 }
 
 void

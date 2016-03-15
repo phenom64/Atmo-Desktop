@@ -250,9 +250,14 @@ Style::polish(QWidget *widget)
         {
             QPalette pal = area->palette();
             QColor base = pal.color(QPalette::Base);
+            QColor altbase = pal.color(QPalette::AlternateBase);
             base.setAlpha(dConf.views.opacity);
+            altbase.setAlpha(0);
             pal.setColor(QPalette::Base, base);
+            pal.setColor(QPalette::AlternateBase, altbase);
             area->setPalette(pal);
+            if (qobject_cast<QAbstractItemView *>(area))
+                static_cast<QAbstractItemView *>(area)->setAlternatingRowColors(false);
         }
 
 #if QT_VERSION >= 0x050000
@@ -429,12 +434,13 @@ Style::polish(QWidget *widget)
     }
     else if (widget->inherits("KateTabButton")) //KateTabButton(0x1dcea80) KateTabBar(0x1ccee10)
     {
-        QPalette pal = widget->palette();
-        pal.setColor(QPalette::Button, pal.color(QPalette::Window));
-        pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
-        pal.setColor(QPalette::Text, pal.color(QPalette::WindowText));
-        widget->setPalette(pal);
-        widget->parentWidget()->setPalette(pal);
+//        widget->setMaximumWidth(200);
+        installFilter(widget);
+    }
+    else if (widget->inherits("KateTabBar"))
+    {
+        widget->setFixedHeight(dConf.baseSize+TabBarBottomSize);
+        installFilter(widget);
     }
     //this needs to be here at the end cause I might alter the frames before in the main if segment
     if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))

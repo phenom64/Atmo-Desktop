@@ -53,8 +53,6 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
     if (isSeparator)
     {
-        painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
-        painter->translate(0, 0.5f);
         const int top(opt->rect.top());
         const int y(top+(h/2));
         QFont f(painter->font());
@@ -63,14 +61,13 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         painter->setFont(f);
         if (hasText)
             painter->setClipRegion(QRegion(opt->rect)-QRegion(itemTextRect(painter->fontMetrics(), opt->rect, Qt::AlignCenter, opt->ENABLED, opt->text)));
-        painter->drawLine(0, y, w, y);
+        GFX::drawShadow(Etched, QRect(0, y, w, 1), painter, isEnabled(opt), 0, Bottom);
+
         if (hasText)
+        {
             painter->setClipping(false);
-
-        painter->translate(0, -0.5f);
-        if (hasText)
             drawItemText(painter, opt->rect, Qt::AlignCenter, pal, isEnabled(opt), opt->text, fg);
-
+        }
         painter->setFont(sf);
         painter->restore();
         return true;

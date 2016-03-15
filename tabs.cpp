@@ -364,11 +364,13 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     return true;
 }
 
-static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const bool full = false)
+static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, const QTabBar *bar, QRect rect, const bool full = false)
 {
-    if (!bar->isVisible())
+    if (p->device()->devType() != QInternal::Widget)
         return;
-    QRect r(rect.isValid()?rect:bar->rect());
+    const bool documentMode = opt&&opt->documentMode || bar&&bar->documentMode();
+    QWidget *dev = static_cast<QWidget *>(p->device());
+    QRect r(rect.isValid()?rect: bar?bar->rect():dev->rect());
     if (Ops::isUnoTabBar(bar))
     {
         if (XHandler::opacity() < 1.0f)
@@ -391,11 +393,12 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
         }
 
     }
-    if (bar->documentMode() || dConf.tabs.regular)
+    if (documentMode || dConf.tabs.regular)
     {
         QLinearGradient lg;
         Sides sides(All);
-        switch (bar->shape())
+        const int shape = bar ? bar->shape() : opt ? opt->shape : QTabBar::RoundedNorth;
+        switch (shape)
         {
         case QTabBar::RoundedNorth:
         case QTabBar::TriangularNorth: lg = QLinearGradient(r.topLeft(), r.bottomLeft()); if (!full) sides &= ~(Left|Right); break;
@@ -407,17 +410,17 @@ static void drawDocTabBar(QPainter *p, const QTabBar *bar, QRect rect, const boo
         case QTabBar::TriangularEast: lg = QLinearGradient(r.topRight(), r.topLeft()); if (!full) sides &= ~(Top|Bottom); break;
         default: break;
         }
-        QColor c = bar->palette().color(bar->backgroundRole());
-        if (dConf.differentInactive && WindowHelpers::isActiveWindow(bar))
+        QColor c = dev->palette().color(dev->backgroundRole());
+        if (dConf.differentInactive && WindowHelpers::isActiveWindow(dev))
             c = c.darker(110);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, bar->shape());
-        if (bar->documentMode())
+        QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, shape);
+        if (documentMode)
         {
             static const int m = GFX::shadowMargin(Raised) - 1;
             barRect.sGrow(m);
         }
-        GFX::drawClickable(bar->documentMode()?Raised:Rect, barRect, p, lg, 0, 0, sides);
+        GFX::drawClickable(documentMode?Raised:Rect, barRect, p, lg, 0, 0, sides);
     }
 }
 
@@ -428,16 +431,16 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
     if (!opt)
         return true;
     const QTabBar *tabBar = qobject_cast<const QTabBar *>(widget);
-    if (tabBar && (tabBar->documentMode() || dConf.tabs.regular))
+    if (opt->documentMode || (tabBar&&tabBar->documentMode()) || dConf.tabs.regular)
     {
-        QRect r(tabBar->rect());
+        QRect r(tabBar?tabBar->rect():opt->tabBarRect);
         QPaintDevice *d = painter->device();
         QWidget *dev(0);
         if (d->devType() == QInternal::Widget)
             dev = static_cast<QWidget *>(d);
         if (qobject_cast<QTabWidget *>(dev))
         {
-            r = tabBar->geometry();
+            r = tabBar ? tabBar->geometry() : opt->tabBarRect;
             if (isVertical(0, tabBar))
             {
                 r.setTop(0);
@@ -449,9 +452,11 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
                 r.setRight(d->width());
             }
         }
-        else if (dev->property("DSP_konsoleTabBarParent").toBool())
+        else if (dev && dev->property("DSP_konsoleTabBarParent").toBool())
             r = opt->rect;
-        drawDocTabBar(painter, tabBar, r);
+        else
+            r = opt->tabBarRect;
+        drawDocTabBar(opt, painter, tabBar, r);
         return true;
     }
     return true;
@@ -524,7 +529,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         }
         default: break;
         }
-        drawDocTabBar(painter, tabBar, barRect, true);
+        drawDocTabBar(0, painter, tabBar, barRect, true);
     }
     if (dConf.tabs.regular)
         GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3, sides);

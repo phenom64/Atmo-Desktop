@@ -96,21 +96,23 @@ Style::eventFilter(QObject *o, QEvent *e)
 //            }
 //#endif
         }
+        else if (w->inherits("KMultiTabBarInternal"))
+        {
+            if (QLayout *l = w->layout())
+            {
+                if (l->count())
+                {
+                    QLayoutItem *item = l->itemAt(l->count()-1);
+                    if (item->spacerItem())
+                    {
+                        l->removeItem(item);
+                        delete item;
+                    }
+                }
+            }
+        }
         break;
     }
-//    case QEvent::MetaCall:
-//    {
-//        if (w->property("DSP_KTitleLabel").toBool() && !dConf.animateStack)
-//            static_cast<QLabel *>(w)->setAlignment(Qt::AlignCenter);
-//        break;
-//    }
-#if 0
-    case QEvent::HoverEnter:
-    {
-        qDebug() << w << w->parentWidget();
-        break;
-    }
-#endif
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
@@ -198,6 +200,33 @@ Style::paintEvent(QObject *o, QEvent *e)
         w->removeEventFilter(this);
         QCoreApplication::sendEvent(o, e);
         w->installEventFilter(this);
+        return true;
+    }
+    else if (w->inherits("KateTabButton"))
+    {
+        QAbstractButton *btn = static_cast<QAbstractButton *>(w);
+        QPainter p(w);
+        QStyleOptionTabV3 opt;
+        opt.initFrom(w);
+        opt.text = btn->text();
+        if (btn->isChecked())
+            opt.state |= State_Selected|State_Sunken|State_Active; //which one of these is it?
+        const bool reg = dConf.tabs.regular;
+        dConf.tabs.regular = true;
+        drawTab(&opt, &p);
+        dConf.tabs.regular = reg;
+        return true;
+    }
+    else if (w->inherits("KateTabBar"))
+    {
+        QPainter p(w);
+        QStyleOptionTabBarBaseV2 opt;
+        opt.initFrom(w);
+        opt.tabBarRect = w->rect();
+        const bool reg = dConf.tabs.regular;
+        dConf.tabs.regular = true;
+        drawTabBar(&opt, &p);
+        dConf.tabs.regular = reg;
         return true;
     }
 //    else if (w->inherits("KTextEditor::View"))

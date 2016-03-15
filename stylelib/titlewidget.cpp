@@ -395,10 +395,14 @@ TitleWidget::eventFilter(QObject *o, QEvent *e)
         const int newCount = visibleKids();
         if (m_visibleCount != newCount)
         {
-            qDebug() << m_visibleCount << newCount;
             embedLater();
             m_visibleCount = newCount;
         }
+        return false;
+    }
+    case QEvent::WindowTitleChange:
+    {
+        update();
         return false;
     }
     default: return false;
