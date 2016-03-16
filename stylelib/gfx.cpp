@@ -789,7 +789,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset
     const QRect r = w->rect();
     if (!dConf.uno.enabled)
     if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
-        offset += QPoint(data->value<int>(WindowData::TitleHeight, 0), 0);
+        offset += QPoint(0, data->value<int>(WindowData::TitleHeight, 0));
     if (dConf.windows.noise)
         p->drawTiledPixmap(r, GFX::noise(true), offset);
     else

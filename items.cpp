@@ -315,7 +315,7 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
     const QStyleOptionHeader *opt = qstyleoption_cast<const QStyleOptionHeader *>(option);
     if (!opt)
         return true;
-    QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
+    QPalette::ColorRole bg(/*Ops::bgRole(widget, */QPalette::Button/*)*/);
     if (opt->sortIndicator)
         bg = QPalette::Highlight;
 
@@ -357,7 +357,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
 
     painter->save();
     const QRect tr(subElementRect(SE_HeaderLabel, opt, widget));
-    QPalette::ColorRole fg(Ops::fgRole(widget, QPalette::Text));
+    QPalette::ColorRole fg(/*Ops::fgRole(widget, */QPalette::ButtonText/*)*/);
 
     if (opt->sortIndicator)
     {

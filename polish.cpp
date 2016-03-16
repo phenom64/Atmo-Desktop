@@ -326,9 +326,10 @@ Style::polish(QWidget *widget)
     {
         if (tabBar->documentMode())
             tabBar->setDrawBase(true);
-        if (!Ops::isSafariTabBar(tabBar) && tabBar->expanding())
+        const bool safari = Ops::isSafariTabBar(tabBar);
+        if (!safari && tabBar->expanding())
             tabBar->setExpanding(false);
-        if (tabBar->documentMode())
+        if (safari)
         {
             QPalette pal(tabBar->palette());
             pal.setColor(QPalette::Button, pal.color(QPalette::Window));

@@ -133,7 +133,7 @@ static const char *s_key[] = {
 };
 
 static const char *s_description[] = {
-    /*"opacity"*/                   "Opacity for UNO parts, *NOT* enabled atm due to problems w/ Qt5",
+    /*"opacity"*/                   "Opacity for UNO parts, *NOT* enabled atm due to problems with Qt5",
     /*"blacklist"*/                 "Blacklist of apps that should not get opacity if set, mostly media players should be here",
     /*"removetitlebars"*/           "Hack for removing titlebars from windows in order to get the look of Mac Os Yosemite",
     /*"titlepos"*/                  "Position of the title in the toolbar (if room for it at all), 0 = Left, 1 = Center, 2 = Right",
@@ -146,7 +146,7 @@ static const char *s_description[] = {
     /*"palette"*/                   "Palette to be used (filename, no suffix), this should only be used in presets, not directly in dsp.conf",
     /*"animatestack"*/              "Animate when the topmost widget in a stack changes, ie: when the active tab changes",
     /*"animatescroll"*/             "Smooth scrolling globally, known to cause trouble in certain cases, mainly dolphin",
-    /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles w/ Ctrl+Alt+D",
+    /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles with Ctrl+Alt+D",
     /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
 
     /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
@@ -161,13 +161,13 @@ static const char *s_description[] = {
     /*"pushbtn.rnd"*/               "Roundness of normal pushbuttons",
     /*"pushbtn.shadow"*/            "Shadow of normal pushbuttons",
     /*"pushbtn.gradient"*/          "Gradient of normal pushbuttons",
-    /*"pushbtn.tinthue"*/           "Hue to tint normal pushbuttons w/",
+    /*"pushbtn.tinthue"*/           "Hue to tint normal pushbuttons with",
 
     /*"toolbtn.rnd"*/               "Roundness of toolbuttons",
     /*"toolbtn.shadow"*/            "Shadow of toolbuttons",
     /*"toolbtn.gradient"*/          "Gradient of toolbuttons",
     /*"toolbtn.activegradient"*/    "Gradient on active/selected toolbuttons",
-    /*"toolbtn.tinthue"*/           "Hue to tint toolbuttons w/",
+    /*"toolbtn.tinthue"*/           "Hue to tint toolbuttons with",
     /*"toolbtn.followcolors"*/      "If the icons on toolbuttons should be manipulated to be monochromatic and follow the palette (highly experimental and does not always produce nice results)",
     /*"toolbtn.invertactive"*/      "Whether the active/checked toolbuttons should have inverted foreground/background colors a'la Mac Os",
     /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
@@ -178,7 +178,7 @@ static const char *s_description[] = {
     /*"input.inunornd"*/            "Roundness of inputs inside UNO",
     /*"input.shadow"*/              "Shadow of input boxes, lineedits and spinboxes and such",
     /*"input.gradient"*/            "Gradient of input boxes, lineedits and spinboxes and such",
-    /*"input.tinthue"*/             "Hue to tint input boxes, lineedits and spinboxes and such w/",
+    /*"input.tinthue"*/             "Hue to tint input boxes, lineedits and spinboxes and such with",
 
     /*"tabs.docstyle"*/             "Style / shape of document mode tabbar tabs, 0 = Chrome, 1 = Simple",
     /*"tabs.selectors"*/            "Use selectors instead of tabs on tabwidgets",
@@ -194,9 +194,9 @@ static const char *s_description[] = {
 
     /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os",
     /*"uno.gradient"*/              "Gradient of the UNO area",
-    /*"uno.tinthue"*/               "Hue to tint the UNO area w/",
+    /*"uno.tinthue"*/               "Hue to tint the UNO area with",
     /*"uno.noisefactor"*/           "How much noise the UNO area should have",
-    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file w/ the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
+    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file with the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
     /*"uno.noisestyle"*/            "Style of the noise on the UNO area, 0 = Generic, 1 = Brushed Metal",
     /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical",
     /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
@@ -214,7 +214,7 @@ static const char *s_description[] = {
     /*"sliders.slidergradient"*/    "Gradient of sliderhandles",
     /*"sliders.groovegradient"*/    "Gradient of slidergrooves",
     /*"sliders.grooveshadow"*/      "Shadow of slidergrooves",
-    /*"sliders.fillgroove"*/        "Fill up the groove like a progressbar to where the slider is w/ the highight color",
+    /*"sliders.fillgroove"*/        "Fill up the groove like a progressbar to where the slider is with the highight color",
     /*"sliders.groovestyle"*/       "How to fill groove section of a slider, 0 = Window colored, 1 = Blend of WindowText and Window color, 2 = WindowText color",
 
     /*"scrollers.size"*/            "Size of scrollbars",
@@ -240,13 +240,13 @@ static const char *s_description[] = {
 
     /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
     /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
-    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file w/ the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
+    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, so place a file with the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
     /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal, not used atm",
     /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical, not used atm",
 
     /*"shadows.opacity"*/           "Opacity of the shadows painted on widgets",
     /*"shadows.illumination"*/      "Opacity of the illuminated(light) parts of the shadows",
-    /*"shadows.darkraisededges"*/   "Whether widgets w/ a raised shadow should be darker around the left/right edges",
+    /*"shadows.darkraisededges"*/   "Whether widgets with a raised shadow should be darker around the left/right edges",
     /*"shadows.ontextopacity"*/     "Opacity of the textshadow/textbevel, 0 to disable (faster)"
 };
 

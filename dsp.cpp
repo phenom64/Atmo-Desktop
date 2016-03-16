@@ -157,7 +157,7 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
 
     if (QWidget *w = fromDevice(painter->device()))
     if (w->inherits("KateTabButton"))
-        textRole = QPalette::WindowText;
+        textRole = QPalette::ButtonText;
 
     const QPen pen(painter->pen());
     const QPalette::ColorRole bgRole(Ops::opposingRole(textRole));

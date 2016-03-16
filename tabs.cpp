@@ -99,8 +99,8 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
             isSelected(opt->state & State_Selected);
 
     Sides sides(All);
-    QPalette::ColorRole fg(Ops::fgRole(bar, QPalette::ButtonText)),
-            bg(Ops::bgRole(bar, QPalette::Button));
+    QPalette::ColorRole fg(/*Ops::fgRole(bar, */QPalette::ButtonText/*)*/),
+            bg(/*Ops::bgRole(bar, */QPalette::Button/*)*/);
 
     if (isSelected)
         Ops::swap(fg, bg);
@@ -236,7 +236,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     const bool selected = isSelected(opt);
-    QPalette::ColorRole fg = widget ? widget->foregroundRole() : QPalette::ButtonText;
+    QPalette::ColorRole fg = /*widget ? widget->foregroundRole() :*/ QPalette::ButtonText;
     const bool safari(Ops::isSafariTabBar(bar));
     if (selected && !safari && !(bar && bar->documentMode()) && !dConf.tabs.regular)
         fg = Ops::opposingRole(fg);
@@ -265,7 +265,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     const bool last = opt->position == QStyleOptionTabV3::End;
     const int level = selected ? 0 : (bar ? Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())) : 0);
 
-    QColor c = opt->palette.color(widget?widget->backgroundRole():QPalette::Button);
+    QColor c = opt->palette.color(/*widget?widget->backgroundRole():*/QPalette::Button);
     if (dConf.differentInactive && WindowHelpers::isActiveWindow(widget))
         c = c.darker(110);
 
@@ -410,7 +410,7 @@ static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, cons
         case QTabBar::TriangularEast: lg = QLinearGradient(r.topRight(), r.topLeft()); if (!full) sides &= ~(Top|Bottom); break;
         default: break;
         }
-        QColor c = dev->palette().color(dev->backgroundRole());
+        QColor c = dev->palette().color(QPalette::Button/*dev->backgroundRole()*/);
         if (dConf.differentInactive && WindowHelpers::isActiveWindow(dev))
             c = c.darker(110);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));

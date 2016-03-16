@@ -104,7 +104,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         if (isSunken(opt))
             level = Steps;
         const QPalette pal = QApplication::palette();
-        QColor bgColor(pal.color(QPalette::Window)), fgColor(pal.color(QPalette::WindowText));
+        QColor bgColor(pal.color(QPalette::Button)), fgColor(pal.color(QPalette::ButtonText));
 
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
         lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
