@@ -16,6 +16,8 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QGroupBox>
+#include <QStyleOptionToolButton>
+#include <QVBoxLayout>
 
 #include "fx.h"
 #include "gfx.h"
@@ -267,7 +269,17 @@ GFX::drawClickable(ShadowStyle s,
     case Carved:
     case SemiCarved:
     {
-        QLinearGradient lg(r.topLeft(), r.bottomLeft());
+        bool hor(false);
+        if (mask.gradient() && mask.gradient()->type() == QGradient::LinearGradient)
+        {
+            const QLinearGradient *grad = static_cast<const QLinearGradient *>(mask.gradient());
+            qDebug() << grad->start() << grad->finalStop();
+            if (grad->start().y() == grad->finalStop().y())
+                hor = true;
+        }
+        if (w && w->parentWidget() && qobject_cast<QVBoxLayout *>(w->parentWidget()->layout()))
+            hor = true;
+        QLinearGradient lg(r.topLeft(), hor ? r.topRight() : r.bottomLeft());
         lg.setColorAt(0, QColor(0, 0, 0, dConf.shadows.opacity));
         lg.setColorAt(1, QColor(255, 255, 255, dConf.shadows.illumination));
         drawMask(r, p, lg, rnd, sides);

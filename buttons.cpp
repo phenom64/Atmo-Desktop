@@ -481,7 +481,11 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     const bool multiTab = widget && widget->inherits("KMultiTabBarTab");
     const bool hasMenu = opt->features & QStyleOptionToolButton::MenuButtonPopup;
 
-    Sides sides = tbtn ? Handlers::ToolBar::sides(tbtn) : btnSides(btn, btn->parentWidget());
+    Sides sides(All);
+    if (tbtn)
+        sides = Handlers::ToolBar::sides(tbtn);
+    else if (btn)
+        sides = btnSides(btn, btn->parentWidget());
     QRect rect = opt->rect;
     QRect arrow = subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget);
     QRect mr = multiTab?rect:(rect.sAdjusted(sm, sm, -sm, -sm));
