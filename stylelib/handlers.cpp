@@ -304,7 +304,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
         {
             if (e->type() == QEvent::ShowToParent
                     && !TitleWidget::isManaging(tb))
-                ToolbarHelpers::fixSpacerLater(tb);
+                ToolbarHelpers::fixSpacerLater(tb, dConf.uno.enabled ? 7 : 4);
             s_dirty.insert(tb, true);
 //            queryToolBarLater(tb, true);
         }
@@ -318,7 +318,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
         {
             s_dirty.insert(tb, true);
             if (!TitleWidget::isManaging(tb))
-                ToolbarHelpers::fixSpacerLater(tb);
+                ToolbarHelpers::fixSpacerLater(tb, dConf.uno.enabled ? 7 : 4);
             ToolbarHelpers::adjustMarginsLater(tb);
 //            queryToolBarLater(tb, true);
         }
@@ -503,7 +503,7 @@ Window::eventFilter(QObject *o, QEvent *e)
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
 
             }
-            GFX::drawWindowBg(&p, w, bgColor);
+            GFX::drawWindowBg(&p, w, bgColor, w->rect());
             if (WindowData *data = WindowData::memory(w->winId(), w))
             {
                 QRect line(0, WindowHelpers::unoHeight(w), w->width(), 1);

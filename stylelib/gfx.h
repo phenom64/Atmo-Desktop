@@ -47,12 +47,12 @@ public:
     static void drawRadioMark(QPainter *p, const QColor &c, const QRect &r, const bool bevel = false);
     static void drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
     static QRect subRect(const QRect &r, const int flags, const QRect &sr);
-    static void drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset = QPoint());
+    static void drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &rect, QPoint offset = QPoint());
 
 protected:
+    static QPixmap noisePix(const qint8 style, const QString &fileName = QString());
     static void initShadows();
     static void initTabs();
-    static QPixmap noisePix(const qint8 style, const QString &fileName = QString());
 
 private:
     static QPixmap *s_tab;

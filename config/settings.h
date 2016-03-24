@@ -72,6 +72,7 @@ public:
         Toolbtnflat,
         Toolbtnmorph,
         Toolbtnnormal,
+        Toolbtnmask,
         Inputrnd,
         Inputunornd,
         Inputshadow,
@@ -168,7 +169,7 @@ public:
         struct toolbtn
         {
             quint8 rnd, shadow;
-            bool folCol, invAct, flat, morph, normal;
+            bool folCol, invAct, flat, morph, normal, mask;
             Gradient gradient, activeGradient;
             Tint tint;
         } toolbtn;

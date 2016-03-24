@@ -122,7 +122,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
 
     QStringList text(opt->text.split("\t"));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
-    const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
+//    const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 
     for (int i = 0; i < text.count(); ++i)
     {

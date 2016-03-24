@@ -55,6 +55,7 @@ static const char *s_key[] = {
     "toolbtn.flat",
     "toolbtn.morph",
     "toolbtn.normal",
+    "toolbtn.mask",
 
     "input.rnd",
     "input.inunornd",
@@ -173,6 +174,7 @@ static const char *s_description[] = {
     /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
     /*"toolbtn.morph"*/             "When toolbtn.folcol=true, morph the icon back into its original colors on hover",
     /*"toolbtn.normal"*/            "Draw all toolbuttons as normal buttons, not just those inside toolbars",
+    /*"toolbtn.mask"*/              "Draw toolbutton mask as a normal button, default true"
 
     /*"input.rnd"*/                 "Roundness of input boxes, lineedits and spinboxes and such",
     /*"input.inunornd"*/            "Roundness of inputs inside UNO",
@@ -238,11 +240,11 @@ static const char *s_description[] = {
     /*"progressbars.gradient"*/     "Gradient on progressbars",
     /*"progressbars.stripesize"*/   "Size of stripes on progressbars",
 
-    /*"windows.gradient"*/          "Gradient for windows if UNO not enabled, not used atm",
-    /*"windows.noisefactor"*/       "How much noise to use on the window background, not used atm",
+    /*"windows.gradient"*/          "Gradient for windows",
+    /*"windows.noisefactor"*/       "How much noise to use on the window background",
     /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, so place a file with the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
-    /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal, not used atm",
-    /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical, not used atm",
+    /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal",
+    /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical",
 
     /*"shadows.opacity"*/           "Opacity of the shadows painted on widgets",
     /*"shadows.illumination"*/      "Opacity of the illuminated(light) parts of the shadows",
@@ -291,6 +293,7 @@ static const QVariant s_default[] = {
     false,
     true,
     false,
+    true,
 
     8,
     8,
@@ -816,6 +819,7 @@ Settings::read()
     conf.toolbtn.flat           = readBool(Toolbtnflat);
     conf.toolbtn.morph          = readBool(Toolbtnmorph);
     conf.toolbtn.normal         = readBool(Toolbtnnormal);
+    conf.toolbtn.mask           = readBool(Toolbtnmask)&&!(conf.toolbtn.shadow==Carved||conf.toolbtn.shadow==SemiCarved);
     //inputs
     conf.input.rnd              = qMin<quint8>(MaxRnd, readInt(Inputrnd));
     conf.input.unoRnd           = qMin<quint8>(MaxRnd, readInt(Inputunornd));

@@ -109,6 +109,7 @@ public:
     bool event(QEvent *event);
     const int titleHeight() const;
     void setTitleHeight(const int h);
+    const int border();
 
 public slots:
     /**
@@ -127,6 +128,7 @@ protected slots:
     void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
     void dataDestroyed() { if (sender() == m_wd) m_wd = 0; }
+    void maximizedChanged(const bool max);
 
 protected:
     void hoverEnter();

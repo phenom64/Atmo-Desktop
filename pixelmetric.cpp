@@ -149,7 +149,11 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         if (qobject_cast<const QGroupBox *>(widget))
             return 8;
         if (qobject_cast<const QAbstractScrollArea *>(widget))
+//        {
+//            if (!dConf.uno.enabled && static_cast<const QFrame *>(widget)->frameStyle() == (QFrame::StyledPanel|QFrame::Sunken))
+//                return 4;
             return 2;
+//        }
 
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (frame && frame->frameShadow() == QFrame::Raised)

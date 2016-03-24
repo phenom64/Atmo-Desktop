@@ -117,7 +117,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         const bool safBar = Ops::isSafariTabBar(bar);
         const bool vertical = isVertical(tab, bar);
         QSize sz(contentsSize);
-        const quint8 bs = dConf.baseSize + (!safBar && (tab->documentMode || dConf.tabs.regular)) * TabBarBottomSize;
+//        const int add = dConf.uno.enabled||!tab->documentMode ? 1 : 2;
+        const quint8 bs = dConf.baseSize + (!safBar && (tab->documentMode || dConf.tabs.regular)) * (TabBarBottomSize/**add*/);
         if (sz.height() < bs)
             sz.setHeight(bs);
         if (sz.width() < bs)

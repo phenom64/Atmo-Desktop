@@ -90,7 +90,7 @@ private:
     bool m_hasPress, m_hasMouse, m_hoverLock;
     ButtonStyle m_buttonStyle;
     QMap<quint64, QPixmap> m_bgPix;
-    int m_shadowOpacity;
+    int m_shadowOpacity, m_shadowIllumination;
     ShadowStyle m_shadowStyle;
     QColor m_color;
     Gradient m_gradient;

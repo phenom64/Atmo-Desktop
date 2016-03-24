@@ -246,6 +246,16 @@ Style::polish(QWidget *widget)
                 && qobject_cast<QMainWindow *>(widget->window()))
             Handlers::ScrollWatcher::watch(area);
 
+//        if (area->viewport()->autoFillBackground())
+//        {
+//            const quint8 mg(pixelMetric(PM_DefaultFrameWidth, 0, widget));
+//            const QMargins m(mg, mg, mg, mg);
+
+//            area->setContentsMargins(m);
+//            area->setAutoFillBackground(false); //area is autofilling? why?
+//            area->setFrameStyle(QFrame::StyledPanel|QFrame::Sunken);
+
+//        }
         if (area->viewport()->autoFillBackground() && dConf.views.opacity != 0xff)
         {
             QPalette pal = area->palette();
@@ -329,6 +339,7 @@ Style::polish(QWidget *widget)
         const bool safari = Ops::isSafariTabBar(tabBar);
         if (!safari && tabBar->expanding())
             tabBar->setExpanding(false);
+//        qDebug() << tabBar->foregroundRole();
         if (safari)
         {
             QPalette pal(tabBar->palette());

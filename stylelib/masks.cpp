@@ -7,6 +7,9 @@
 #include <QBrush>
 #include <QRect>
 #include "color.h"
+#include <QDebug>
+#include "gfx.h"
+#include "handlers.h"
 
 using namespace DSP;
 
@@ -251,22 +254,24 @@ Mask::Tab::overlap(const TabStyle s)
 QRect
 Mask::Tab::maskAdjusted(const QRect &r, const int shape)
 {
+//    static const int add = dConf.uno.enabled ? 1 : 2;
+    static const int padding = TabBarBottomSize/* * add*/;
     switch (shape)
     {
     case QTabBar::RoundedNorth:
-    case QTabBar::TriangularNorth: return r.adjusted(2, 4, -2, -TabBarBottomSize); break;
+    case QTabBar::TriangularNorth: return r.adjusted(2, 4, -2, -padding); break;
     case QTabBar::RoundedWest:
-    case QTabBar::TriangularWest: return r.adjusted(4, 2, -TabBarBottomSize, -2); break;
+    case QTabBar::TriangularWest: return r.adjusted(4, 2, -padding, -2); break;
     case QTabBar::RoundedEast:
-    case QTabBar::TriangularEast: return r.adjusted(TabBarBottomSize, 2, -4, -2); break;
+    case QTabBar::TriangularEast: return r.adjusted(padding, 2, -4, -2); break;
     case QTabBar::RoundedSouth:
-    case QTabBar::TriangularSouth: return r.adjusted(2, TabBarBottomSize, -2, -4); break;
+    case QTabBar::TriangularSouth: return r.adjusted(2, padding, -2, -4); break;
     default: return r;
     }
 }
 
 void
-Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QBrush &b, const QStyleOptionTabV3 *opt, const quint8 hover)
+Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QWidget *w, QBrush b, const QStyleOptionTabV3 *opt, const quint8 hover, const bool inUno)
 {
     if (!opt)
         return;
@@ -275,34 +280,61 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
     const bool vert = isVertical(opt->shape);
 
     r.adjust(-padding*!vert, -padding*vert, padding*!vert, padding*vert);
-    drawMask(p, r, s, pos, b, opt->shape);
-    const QColor shadow = Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), Steps-hover, hover);
-    drawShadow(p, r, s, pos, shadow, opt->shape);
+    QLinearGradient lg;
+    switch (opt->shape)
+    {
+    case QTabBar::RoundedNorth:
+    case QTabBar::TriangularNorth: lg = QLinearGradient(r.topLeft(), r.bottomLeft()); break;
+    case QTabBar::RoundedWest:
+    case QTabBar::TriangularWest:  lg = QLinearGradient(r.topLeft(), r.topRight()); break;
+    case QTabBar::RoundedEast:
+    case QTabBar::TriangularEast:  lg = QLinearGradient(r.topRight(), r.topLeft()); break;
+    case QTabBar::RoundedSouth:
+    case QTabBar::TriangularSouth:  lg = QLinearGradient(r.bottomLeft(), r.topLeft()); break;
+    default: break;
+    }
+    lg.setColorAt(0, QColor(255,255,255,dConf.shadows.illumination));
+    lg.setColorAt(0.8, Qt::transparent);
+    lg.setColorAt(1.0, Qt::transparent);
+    QRect rect(r);
     if (pos == Selected)
     {
         switch (opt->shape)
         {
         case QTabBar::RoundedNorth:
-        case QTabBar::TriangularNorth: r.translate(0, 1); break;
+        case QTabBar::TriangularNorth: rect.translate(0, 1); break;
         case QTabBar::RoundedSouth:
-        case QTabBar::TriangularSouth: r.translate(0, -1);  break;
+        case QTabBar::TriangularSouth: rect.translate(0, -1); break;
         case QTabBar::RoundedWest:
-        case QTabBar::TriangularWest: r.translate(1, 0); break;
+        case QTabBar::TriangularWest: rect.translate(1, 0); break;
         case QTabBar::RoundedEast:
-        case QTabBar::TriangularEast: r.translate(-1, 0);  break;
+        case QTabBar::TriangularEast: rect.translate(-1, 0); break;
         default: break;
         }
-        p->fillPath(tabPath(s, maskAdjusted(r, opt->shape), opt->shape), b);
+        QPixmap pix(w->size());
+        pix.fill(Qt::transparent);
+        QPainter pt(&pix);
+        if (inUno)
+            Handlers::Window::drawUnoPart(&pt, pix.rect(), w, w->mapTo(w->window(), QPoint()));
+        else
+            GFX::drawWindowBg(&pt, w, opt->palette.color(QPalette::Window), pix.rect(), w->mapTo(w->window(), QPoint()));
+        pt.end();
+        p->fillPath(tabPath(s, maskAdjusted(rect, opt->shape), opt->shape), pix);
     }
+    drawMask(p, r, s, pos, lg, opt->shape);
+    const QColor shadow = Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), Steps-hover, hover);
+    drawShadow(p, r, s, pos, shadow, opt->shape);
 }
 
 QSize
 Mask::Tab::maskSize(const TabStyle s, const int shape)
 {
     const quint8 base(128/*overlap(s)*4+1*/);
+//    static const int add = dConf.uno.enabled ? 1 : 2;
+    static const int padding = TabBarBottomSize /** add*/;
     if (isVertical(shape))
-        return QSize(dConf.baseSize + TabBarBottomSize, base);
-    return QSize(base, dConf.baseSize + TabBarBottomSize);
+        return QSize(dConf.baseSize + padding, base);
+    return QSize(base, dConf.baseSize + padding);
 }
 
 QPoint
@@ -344,7 +376,7 @@ Mask::Tab::eraseSides(const QRect &r, QPainter *p, const QPainterPath &path, con
     tmpp.drawPath(path);
     tmpp.end();
     p->drawImage(eraseOffset(r.size(), pos, shape, overlap), img);
-    FX::expblur(img, 2);
+    FX::expblur(img, 1);
     p->drawImage(eraseOffset(r.size(), pos, shape, overlap), img);
     p->setRenderHint(QPainter::Antialiasing, hadAA);
     p->setCompositionMode(mode);
@@ -394,7 +426,8 @@ QPixmap
     QImage img(maskSize(s, shape), QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
     QPainter p(&img);
-    drawMask(&p, img.rect(), s, pos, c, shape);
+    const bool vert = isVertical(shape);
+    drawMask(&p, img.rect().adjusted(-(!vert), -vert, !vert, vert), s, pos, c, shape);
     p.end();
 
     FX::expblur(img, 2);
@@ -402,13 +435,12 @@ QPixmap
     p.begin(&img);
     drawMask(&p, img.rect(), s, pos, c, shape, true);
 
-//    eraseSides(img.rect(), &p, tabPath(s, img.rect(), shape), pos, shape);
+    eraseSides(img.rect(), &p, tabPath(s, img.rect(), shape), pos, shape, overlap(s)-3);
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    drawMask(&p, img.rect(), s, pos, Qt::black, shape);
+//    drawMask(&p, img.rect(), s, pos, Qt::black, shape);
     p.fillRect(tabBarRect(img.rect(), BeforeSelected, shape), Qt::black);
     p.fillRect(img.rect(), QColor(0, 0, 0, 255-dConf.shadows.opacity));
-
-    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    drawMask(&p, img.rect(), s, pos, Qt::black, shape);
     p.end();
 
     QImage limg(img.size(), QImage::Format_ARGB32_Premultiplied);
@@ -487,9 +519,10 @@ void
 Mask::Tab::drawMask(QPainter *p, const QRect &r, const TabStyle s, const TabPos pos, const QBrush &b, const int shape, const bool outline)
 {
     QPixmap *mask = tabMask(s, pos, shape, outline);
+    QPixmap colMask[3];
     for (int i = 0; i < 3; ++i)
-        mask[i] = colorized(mask[i], b);
-    drawTiles(p, r, mask, shape);
+        colMask[i] = colorized(mask[i], b, r.topLeft());
+    drawTiles(p, r, colMask, shape);
 }
 
 void
@@ -538,10 +571,10 @@ Mask::Tab::tabBarRect(const QRect &r, const TabPos pos, const int shape)
     const int y = r.y();
     const int w = r.width();
     const int h = r.height();
-    int padding = TabBarBottomSize;
+//    const int add = dConf.uno.enabled ? 1 : 2;
+    int padding = TabBarBottomSize /** add*/;
     if (pos != Selected)
         ++padding;
-
     switch (shape)
     {
     case QTabBar::RoundedNorth:
@@ -567,7 +600,8 @@ Mask::Tab::tabRect(const QRect &r, const TabPos pos, const int shape)
     const int y = r.y();
     const int w = r.width();
     const int h = r.height();
-    int padding = TabBarBottomSize;
+//    const int add = dConf.uno.enabled ? 1 : 2;
+    int padding = TabBarBottomSize /** add*/;
 //    if (pos != Selected)
 //        ++padding;
 
@@ -605,12 +639,15 @@ Mask::Tab::isVertical(const int shape)
 }
 
 QPixmap
-Mask::Tab::colorized(const QPixmap &pix, const QBrush &b)
+Mask::Tab::colorized(const QPixmap &pix, const QBrush &b, const QPoint &offSet)
 {
     QPixmap ret(pix.size());
     ret.fill(Qt::transparent);
     QPainter p(&ret);
+    const QPoint bo = p.brushOrigin();
+    p.setBrushOrigin(-offSet);
     p.fillRect(ret.rect(), b);
+    p.setBrushOrigin(bo);
     p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
     p.drawPixmap(0, 0, pix);
     p.end();

@@ -270,6 +270,39 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         for (int i = 1; i < 3; ++i)
             p.drawEllipse(r.adjusted(i, i, -i, -i));
         p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+#if 0
+        r.adjust(2, 2, -2, -2);
+
+        //frame
+        p.setBrush(QColor(255, 255, 255, m_shadowIllumination));
+        p.drawEllipse(r.translated(0, 1));
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.setBrush(Qt::black);
+        p.drawEllipse(r);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        p.setBrush(QColor(0, 0, 0, m_shadowOpacity));
+        p.drawEllipse(r);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.setBrush(Qt::black);
+        p.drawEllipse(r.adjusted(1,1,-1,-1));
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+        //button color
+        const int bgLum = Color::lum(color(Bg));
+        const int fgLum = Color::lum(color(Fg));
+        const bool dark = fgLum > bgLum;
+        const quint8 rgb = dark ? 0 : 255;
+        const quint8 a = dark ? fgLum - bgLum : bgLum - fgLum;
+        p.setBrush(QColor(rgb, rgb, rgb, a));
+//        p.setBrush(QColor(0, 0, 0, fgLum));
+        p.drawEllipse(r.adjusted(1,1,-1,-1));
+//        p.setBrush(QColor(0, 0, 0, a));
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        for (int i = 1; i < 3; ++i)
+            p.drawEllipse(r.adjusted(i+1, i+1, -(i+1), -(i+1)));
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+#endif
         break;
     }
     case NeoDesk:

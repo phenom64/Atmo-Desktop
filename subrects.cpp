@@ -167,6 +167,29 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         int ladd((safBar && (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab))*o);
         int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
         QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));
+
+        if (!dConf.uno.enabled&&tab->documentMode)
+        switch (tab->shape)
+        {
+        case QTabBar::RoundedNorth:
+        case QTabBar::TriangularNorth:
+            rect.setBottom(rect.bottom()-(TabBarBottomSize-1));
+            break;
+        case QTabBar::RoundedSouth:
+        case QTabBar::TriangularSouth:
+            rect.setTop(rect.top()+(TabBarBottomSize));
+            break;
+        case QTabBar::RoundedWest:
+        case QTabBar::TriangularWest:
+            rect.setRight(rect.right()-(TabBarBottomSize-1));
+            break;
+        case QTabBar::RoundedEast:
+        case QTabBar::TriangularEast:
+            rect.setLeft(rect.left()+TabBarBottomSize);
+            break;
+        default: break;
+        }
+
         QRect textRect(rect);
 
         const bool east(tab->shape == QTabBar::RoundedEast || tab->shape == QTabBar::TriangularEast);
@@ -223,7 +246,6 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             else
                 textRect.setRight(rightRect.left());
         }
-
         const bool needShift = dConf.tabs.regular && !tab->documentMode && !isSelected(tab);
         const bool last = tab->position == QStyleOptionTabV3::End;
         const bool first = tab->position == QStyleOptionTabV3::Beginning||tab->position == QStyleOptionTabV3::OnlyOneTab;
@@ -411,23 +433,22 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
 #endif
         return visualRect(opt->direction, opt->rect, opt->rect.adjusted(-h, -v, h, v));
     }
+
+    case SE_FrameLayoutItem:
+    {
+        if (dConf.uno.enabled || !widget)
+            return opt->rect;
+        if (qobject_cast<QToolBar *>(widget->parentWidget()))
+            return opt->rect;
+//        if (qobject_cast<const QLineEdit *>(widget))
+//            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+        if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
+            if (frame->frameShadow() != QFrame::Plain && frame->frameShape() == QFrame::StyledPanel)
+                return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+        return opt->rect;
+//        return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
+    }
 #endif
-//    case SE_FrameLayoutItem:
-//    {
-//        if (!widget)
-//            return opt->rect;
-//        if (Overlay::overlay(widget))
-//            return opt->rect;
-//        if (qobject_cast<QToolBar *>(widget->parentWidget()))
-//            return opt->rect;
-////        if (qobject_cast<const QLineEdit *>(widget))
-////            return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
-////        if (const QFrame *frame = qobject_cast<const QFrame *>(widget))
-////            if (frame->frameShadow() != QFrame::Plain && frame->frameShape() == QFrame::StyledPanel)
-////                return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
-//        return opt->rect;
-////        return visualRect(opt->direction, opt->rect, opt->rect.growed(2));
-//    }
     case SE_ProgressBarLabel:
     case SE_ProgressBarGroove:
     case SE_ProgressBarContents:

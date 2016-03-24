@@ -22,7 +22,7 @@ public:
     public:
         static QPixmap *tabMask(const TabStyle s, const TabPos pos, const int shape = QTabBar::RoundedNorth, const bool outline = false);
         static QPixmap *tabShadow(const TabStyle s, const TabPos pos, const QColor &c, const int shape = QTabBar::RoundedNorth);
-        static void drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QBrush &b, const QStyleOptionTabV3 *opt, const quint8 hover = 0);
+        static void drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, const QWidget *w, QBrush b, const QStyleOptionTabV3 *opt, const quint8 hover = 0, const bool inUno = false);
         static QPainterPath tabPath(const TabStyle s, QRect r, const int shape = QTabBar::RoundedNorth);
         static QRect maskAdjusted(const QRect &r, const int shape = QTabBar::RoundedNorth);
         static QSize maskSize(const TabStyle s, const int shape = QTabBar::RoundedNorth);
@@ -37,7 +37,7 @@ public:
         static QPainterPath chromePath(QRect r, const int shape = QTabBar::RoundedNorth);
         static QPainterPath simplePath(QRect r, const int shape = QTabBar::RoundedNorth);
         static bool isVertical(const int shape);
-        static QPixmap colorized(const QPixmap &pix, const QBrush &b);
+        static QPixmap colorized(const QPixmap &pix, const QBrush &b, const QPoint &offSet = QPoint());
         static int overlap(const TabStyle s);
     };
 };

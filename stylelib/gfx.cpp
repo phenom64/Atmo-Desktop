@@ -30,6 +30,7 @@
 #include "shadows.h"
 #include "windowhelpers.h"
 #include "windowdata.h"
+#include "xhandler.h"
 
 using namespace DSP;
 
@@ -716,6 +717,7 @@ GFX::noisePix(const qint8 style, const QString &fileName)
             p.drawImage(QPoint(256, 256), bothFlip);
             p.end();
             noise = noise.copy(b>>1, b>>1, noise.width()-b, noise.height()-b);
+            FX::autoStretch(noise);
         }
         return QPixmap::fromImage(noise);
     }
@@ -776,7 +778,7 @@ GFX::subRect(const QRect &r, const int flags, const QRect &sr)
 }
 
 void
-GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset)
+GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &rect, QPoint offset)
 {
     if (!w)
         return;
@@ -794,14 +796,18 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset
         else if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
         {
             if (!tw->documentMode() && !dConf.tabs.regular)
-                p->fillRect(w->rect(), QColor(0,0,0,31));
+                p->fillRect(w->rect(), QColor(0,0,0,15));
         }
         parent = parent->parentWidget();
     }
-    const QRect r = w->rect();
+    const QRect r = rect;
     if (!dConf.uno.enabled)
-    if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
-        offset += QPoint(0, data->value<int>(WindowData::TitleHeight, 0));
+//    if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
+    {
+        int l,t,r,b;
+        XHandler::getDecoBorders(l,r,t,b, w->window()->winId());
+        offset += QPoint(l, t);
+    }
     if (dConf.windows.noise)
         p->drawTiledPixmap(r, GFX::noise(true), offset);
     else
@@ -809,17 +815,17 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset
 
     if (!dConf.windows.gradient.isEmpty())
     {
-        const QRect wr = w->window()->rect();
+        const QRect wr(w->mapTo(w->window(), QPoint()), w->window()->size());
         QLinearGradient lg(wr.topLeft(), wr.bottomLeft());
         if (dConf.windows.hor)
             lg = QLinearGradient(wr.topLeft(), wr.topRight());
         lg.setStops(Settings::gradientStops(dConf.windows.gradient));
         const QPainter::CompositionMode mode = p->compositionMode();
         p->setCompositionMode(QPainter::CompositionMode_Overlay);
-        const QPoint off = p->brushOrigin();
-        p->setBrushOrigin(-offset);
+//        const QPoint off = p->brushOrigin();
+//        p->setBrushOrigin(-offset);
         p->fillRect(r, lg);
-        p->setBrushOrigin(off);
+//        p->setBrushOrigin(off);
         p->setCompositionMode(mode);
     }
 
@@ -829,10 +835,10 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, QPoint offset
         if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
         {
             if (!tw->documentMode() && !dConf.tabs.regular)
-                p->fillRect(w->rect(), QColor(0,0,0,31));
+                p->fillRect(w->rect(), QColor(0,0,0,15));
         }
         else if (QGroupBox *gb = qobject_cast<QGroupBox *>(parent))
-            p->fillRect(gb->rect(), QColor(0,0,0,31));
+            p->fillRect(gb->rect(), QColor(0,0,0,15));
         parent = parent->parentWidget();
     }
 }

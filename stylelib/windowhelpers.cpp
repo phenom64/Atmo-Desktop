@@ -40,6 +40,12 @@ WindowHelpers::WindowHelpers(QObject *parent)
 }
 
 bool
+WindowHelpers::inUno(const QWidget *w)
+{
+    return w&&w->mapTo(w->window(), QPoint()).y() < unoHeight(w->window());
+}
+
+bool
 WindowHelpers::scheduleWindow(const qulonglong w)
 {
     if (instance()->m_scheduled.contains(w))
@@ -102,10 +108,10 @@ WindowHelpers::updateWindowData(qulonglong window)
     }
     else
     {
-        const int th = data->value<int>(WindowData::TitleHeight, 0);
+//        const int th = data->value<int>(WindowData::TitleHeight, 0);
         if (data->lock())
         {
-            QImage img(data->imageData(), GFX::noise(true).width(), th, QImage::Format_ARGB32_Premultiplied);
+            QImage img(data->imageData(), GFX::noise(true).width(), GFX::noise(true).height(), QImage::Format_ARGB32_Premultiplied);
             img.fill(Qt::transparent);
             QPainter p(&img);
             p.drawTiledPixmap(img.rect(), GFX::noise(true));

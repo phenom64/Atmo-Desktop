@@ -145,16 +145,16 @@ Style::paintEvent(QObject *o, QEvent *e)
             needPaint |= (bool)static_cast<QTabWidget *>(w)->cornerWidget((Qt::Corner)i);
         if (needPaint)
             drawTabBar(&opt, &p, tb);
-        if (o->inherits("KTabWidget"))
-        {
-            QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
-            QPainter p(tabWidget);
-            QStyleOptionTabWidgetFrameV2 opt;
-            opt.initFrom(tabWidget);
-            drawTabWidget(&opt, &p, tabWidget);
-            p.end();
-            return true;
-        }
+//        if (o->inherits("KTabWidget"))
+//        {
+//            QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
+//            QPainter p(tabWidget);
+//            QStyleOptionTabWidgetFrameV2 opt;
+//            opt.initFrom(tabWidget);
+//            drawTabWidget(&opt, &p, tabWidget);
+//            p.end();
+//            return true;
+//        }
         return false;
     }
     else if (o->property("DSP_konsoleTabBarParent").toBool())

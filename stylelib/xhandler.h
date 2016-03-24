@@ -44,10 +44,13 @@ public:
 
 #if HASXCB
     typedef quint32 XPixmap;
+    typedef quint32 dlong;
 #elif HASX11
     typedef unsigned long XPixmap;
+    typedef unsigned long dlong;
 #else
     typedef void XPixmap;
+    typedef void dlong;
 #endif
     typedef WId XWindow;
 

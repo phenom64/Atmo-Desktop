@@ -94,8 +94,15 @@ unsigned char
                 freeData(reply);
                 return 0;
             }
-            if (unsigned char *data = reinterpret_cast<unsigned char *>(xcb_get_property_value(reply)))
-                return data;
+            n = reply->value_len;
+            //meh... cant free only the data from outside...
+            //so we copy it to another container and return that :((((((((((((((
+            //fix
+            const int bytes = n*sizeof(quint32);
+            quint32 *data = (quint32*)malloc(bytes);
+            memcpy(data, xcb_get_property_value(reply), bytes);
+            freeData(reply);
+            return (uchar*)data;
         }
     }
 #elif HASX11
@@ -482,17 +489,17 @@ XHandler::move(const XWindow win, const QPoint &p)
 void
 XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id)
 {
-    int n;
-    unsigned long *data = getXProperty<unsigned long>(id, _NET_FRAME_EXTENTS, n);
-    if (n != 4)
-        left = right = top = bottom = 0;
-    else
+    int n(0);
+    dlong *data = getXProperty<dlong>(id, _NET_FRAME_EXTENTS, n);
+    if (n == 4)
     {
         left = data[0];
         right = data[1];
         top = data[2];
         bottom = data[3];
     }
+    else
+        left = right = top = bottom = 0;
     if (data)
         freeData(data);
 }

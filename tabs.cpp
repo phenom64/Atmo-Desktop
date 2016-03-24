@@ -236,7 +236,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     const bool selected = isSelected(opt);
-    QPalette::ColorRole fg = /*widget ? widget->foregroundRole() :*/ QPalette::ButtonText;
+    QPalette::ColorRole fg = widget ? widget->foregroundRole() : QPalette::ButtonText;
     const bool safari(Ops::isSafariTabBar(bar));
     if (selected && !safari && !(bar && bar->documentMode()) && !dConf.tabs.regular)
         fg = Ops::opposingRole(fg);
@@ -347,17 +347,13 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     if (!ltr && !vertical)
         beforeSelected = !beforeSelected && !selected;
 
-
     const TabPos pos = beforeSelected?BeforeSelected:selected?Selected:AfterSelected;
     if (opt->documentMode)
     {
-        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        Mask::Tab::drawTab((TabStyle)dConf.tabs.docStyle, pos, r, painter, lg, qstyleoption_cast<const QStyleOptionTabV3 *>(opt), level);
+        Mask::Tab::drawTab((TabStyle)dConf.tabs.docStyle, pos, r, painter, widget, lg, opt, level, WindowHelpers::inUno(widget));
     }
     else
     {
-//        QColor h = Color::mid(opt->palette.color(QPalette::Highlight), c, 1, 2);
-//        c = Color::mid(c, h, Steps-level, level);
         lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
         GFX::drawClickable(dConf.tabs.shadow, Mask::Tab::tabRect(r, pos, opt->shape), painter, lg, dConf.tabs.rnd, level, sides);
     }
@@ -398,29 +394,59 @@ static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, cons
         QLinearGradient lg;
         Sides sides(All);
         const int shape = bar ? bar->shape() : opt ? opt->shape : QTabBar::RoundedNorth;
+        QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, shape);
         switch (shape)
         {
         case QTabBar::RoundedNorth:
-        case QTabBar::TriangularNorth: lg = QLinearGradient(r.topLeft(), r.bottomLeft()); if (!full) sides &= ~(Left|Right); break;
+        case QTabBar::TriangularNorth:
+            lg = QLinearGradient(r.topLeft(), r.bottomLeft());
+            if (!dConf.uno.enabled && documentMode)
+                barRect.adjust(2, 0, -2, 0);
+            if (!full)
+                sides &= ~(Left|Right);
+            if (documentMode && !WindowHelpers::inUno(bar))
+                sides &= ~Bottom;
+            break;
         case QTabBar::RoundedSouth:
-        case QTabBar::TriangularSouth: lg = QLinearGradient(r.bottomLeft(), r.topLeft()); if (!full) sides &= ~(Left|Right); break;
+        case QTabBar::TriangularSouth:
+            lg = QLinearGradient(r.bottomLeft(), r.topLeft());
+            if (!full)
+                sides &= ~(Left|Right);
+            if (documentMode)
+                sides &= ~Top;
+            break;
         case QTabBar::RoundedWest:
-        case QTabBar::TriangularWest: lg = QLinearGradient(r.topLeft(), r.topRight()); if (!full) sides &= ~(Top|Bottom); break;
+        case QTabBar::TriangularWest:
+            lg = QLinearGradient(r.topLeft(), r.topRight());
+            if (!full)
+                sides &= ~(Top|Bottom);
+            if (documentMode)
+                sides &= ~Right;
+            break;
         case QTabBar::RoundedEast:
-        case QTabBar::TriangularEast: lg = QLinearGradient(r.topRight(), r.topLeft()); if (!full) sides &= ~(Top|Bottom); break;
+        case QTabBar::TriangularEast:
+            lg = QLinearGradient(r.topRight(), r.topLeft());
+            if (!full)
+                sides &= ~(Top|Bottom);
+            if (documentMode)
+                sides &= ~Left;
+            break;
         default: break;
         }
-        QColor c = dev->palette().color(QPalette::Button/*dev->backgroundRole()*/);
-        if (dConf.differentInactive && WindowHelpers::isActiveWindow(dev))
-            c = c.darker(110);
-        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
-        QRect barRect = Mask::Tab::tabBarRect(r, BeforeSelected, shape);
         if (documentMode)
         {
             static const int m = GFX::shadowMargin(Raised) - 1;
             barRect.sGrow(m);
+            GFX::drawShadow(Raised, barRect, p, true, 0, sides);
         }
-        GFX::drawClickable(documentMode?Raised:Rect, barRect, p, lg, 0, 0, sides);
+        else
+        {
+            QColor c = dev->palette().color(QPalette::Button/*dev->backgroundRole()*/);
+            if (dConf.differentInactive && WindowHelpers::isActiveWindow(dev))
+                c = c.darker(110);
+            lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
+            GFX::drawClickable(documentMode?Raised:Rect, barRect, p, lg, 0, 0, sides);
+        }
     }
 }
 
@@ -534,13 +560,14 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         }
         default: break;
         }
-        drawDocTabBar(0, painter, tabBar, barRect, true);
+        if (!tabBar->documentMode())
+            drawDocTabBar(0, painter, tabBar, barRect, true);
     }
     if (dConf.tabs.regular)
         GFX::drawShadow(Raised, rect, painter, isEnabled(opt), 3, sides);
     if (!tabWidget->documentMode() && !dConf.tabs.regular)
 //        GFX::drawShadow(Sunken, rect, painter, isEnabled(opt), 7, All);
-        GFX::drawClickable(Sunken, rect, painter, QColor(0, 0, 0, 31), 6);
+        GFX::drawClickable(Sunken, rect, painter, QColor(0, 0, 0, 15), 6);
     return true;
 }
 

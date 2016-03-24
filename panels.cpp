@@ -131,7 +131,7 @@ Style::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const 
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxFrame, widget));
 
 //    GFX::drawShadow(Sunken, cont, painter, isEnabled(opt), 6);
-    GFX::drawClickable(Sunken, cont, painter, QColor(0, 0, 0, 31), 6);
+    GFX::drawClickable(Sunken, cont, painter, QColor(0, 0, 0, 15), 6);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -254,7 +254,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
     const bool isView(qobject_cast<const QAbstractScrollArea *>(widget));
 
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        GFX::drawShadow(Sunken, r, painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7, All);
+        GFX::drawShadow(Sunken, r, painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7);
     else if (opt->state & State_Raised)
         GFX::drawShadow(Raised, r, painter, isEnabled(opt), 8);
     else if (frame && frame->frameShadow() == QFrame::Plain)

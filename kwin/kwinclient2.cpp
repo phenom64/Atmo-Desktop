@@ -264,11 +264,25 @@ Deco::init()
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
+    connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
 
     if (client().data()->isResizeable() && !m_grip)
         m_grip = new Grip(this);
     if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons) && !m_embedder)
         m_embedder = new EmbedHandler(this);
+}
+
+const int
+Deco::border()
+{
+    return 6;
+}
+
+void
+Deco::maximizedChanged(const bool max)
+{
+    const int m = max||!m_wd||m_wd->value<bool>(WindowData::Uno, false) ? 0 : border();
+    setBorders(QMargins(m, titleBar().height(), m, m));
 }
 
 void
@@ -310,6 +324,8 @@ Deco::updateData()
             removeEmbedder();
 
         setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
+        if (!m_wd->value<bool>(WindowData::Uno, false))
+            setBorders(QMargins(border(),titleHeight(),border(),border()));
         const bool buttonShouldBeVisible(titleHeight()>6);
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
@@ -409,10 +425,10 @@ void
 Deco::widthChanged(const int width)
 {
     if (m_leftButtons)
-        m_leftButtons->setPos(QPoint(6, client().data()->isModal()?2:4));
+        m_leftButtons->setPos(QPoint(borders().left() ? borders().left() : 6, client().data()->isModal()?2:4));
     if (m_rightButtons)
-        m_rightButtons->setPos(QPointF((width-m_rightButtons->geometry().width())-6, client().data()->isModal()?2:4));
-    setTitleBar(QRect(0, 0, width, titleHeight()));
+        m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+(borders().right() ? borders().right() : 6))), client().data()->isModal()?2:4));
+    setTitleBar(QRect(borders().left(), 0, width, titleHeight()));
 }
 
 void
@@ -445,7 +461,10 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         const QImage img = m_wd->image();
         if (!img.isNull())
         {
-            painter->fillRect(titleBar(), img);
+            QRect r = rect();
+            if (uno)
+                r = titleBar();
+            painter->fillRect(r, img);
             needPaintBg = false;
         }
         m_wd->unlock();
@@ -455,7 +474,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             QLinearGradient lg(rect().topLeft(), hor ? rect().topRight() : rect().bottomLeft());
             lg.setStops(Settings::gradientStops(m_winGradient));
             painter->setCompositionMode(QPainter::CompositionMode_Overlay);
-            painter->fillRect(titleBar(), lg);
+            painter->fillRect(rect(), lg);
             painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
     }

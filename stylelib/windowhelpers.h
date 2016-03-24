@@ -17,6 +17,7 @@ public:
     static WindowHelpers *instance();
     static void updateWindowDataLater(QWidget *win);
     static bool isActiveWindow(const QWidget *w);
+    static bool inUno(const QWidget *w);
     static int unoHeight(QWidget *win, bool includeClientPart = true, bool includeTitleBar = false);
 
 protected:
