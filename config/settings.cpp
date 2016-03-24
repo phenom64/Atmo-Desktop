@@ -174,7 +174,7 @@ static const char *s_description[] = {
     /*"toolbtn.flat"*/              "Windows alike toolbuttons thats just icons and/or text",
     /*"toolbtn.morph"*/             "When toolbtn.folcol=true, morph the icon back into its original colors on hover",
     /*"toolbtn.normal"*/            "Draw all toolbuttons as normal buttons, not just those inside toolbars",
-    /*"toolbtn.mask"*/              "Draw toolbutton mask as a normal button, default true"
+    /*"toolbtn.mask"*/              "Draw toolbutton mask as a normal button, default true",
 
     /*"input.rnd"*/                 "Roundness of input boxes, lineedits and spinboxes and such",
     /*"input.inunornd"*/            "Roundness of inputs inside UNO",
