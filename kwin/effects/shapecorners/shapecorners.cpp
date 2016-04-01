@@ -166,7 +166,7 @@ ShapeCornersEffect::reconfigure(ReconfigureFlags flags)
 {
     Q_UNUSED(flags)
     m_alpha = 63;
-    setRoundness(16);
+    setRoundness(5);
 }
 
 void
