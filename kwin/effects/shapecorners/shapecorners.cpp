@@ -20,9 +20,12 @@
 #include "shapecorners.h"
 #include <QPainter>
 #include <QImage>
+#include <QFile>
+#include <QTextStream>
 #include <QStandardPaths>
 #include <kwinglplatform.h>
 #include <kwinglutils.h>
+#include <QMatrix4x4>
 
 KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(  DSPFactory,
                                         DSP::ShapeCornersEffect,
@@ -34,7 +37,7 @@ KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED(  DSPFactory,
 namespace DSP
 {
 
-ShapeCornersEffect::ShapeCornersEffect()
+ShapeCornersEffect::ShapeCornersEffect() : KWin::Effect(), m_shader(0)
 {
     for (int i = 0; i < NTex; ++i)
     {
@@ -53,12 +56,33 @@ ShapeCornersEffect::ShapeCornersEffect()
         shadersDir = QStringLiteral("kwin/shaders/1.40/");
 
     const QString fragmentshader = QStandardPaths::locate(QStandardPaths::GenericDataLocation, shadersDir + QStringLiteral("shapecorners.frag"));
-    m_shader = KWin::ShaderManager::instance()->loadFragmentShader(KWin::ShaderManager::GenericShader, fragmentshader);
+//    m_shader = KWin::ShaderManager::instance()->loadFragmentShader(KWin::ShaderManager::GenericShader, fragmentshader);
+    QFile file(fragmentshader);
+    if (file.open(QFile::ReadOnly))
+    {
+        QByteArray frag = file.readAll();
+        m_shader = KWin::ShaderManager::instance()->generateCustomShader(KWin::ShaderTrait::MapTexture, QByteArray(), frag);
+        file.close();
+        qDebug() << frag;
+        qDebug() << "shader valid: " << m_shader->isValid();
+        if (m_shader->isValid())
+        {
+            const int sampler = m_shader->uniformLocation("sampler");
+            const int corner = m_shader->uniformLocation("corner");
+            KWin::ShaderManager::instance()->pushShader(m_shader);
+            m_shader->setUniform(corner, 1);
+            m_shader->setUniform(sampler, 0);
+            KWin::ShaderManager::instance()->popShader();
+        }
+    }
+    else
+        deleteLater();
 }
 
 ShapeCornersEffect::~ShapeCornersEffect()
 {
-    delete m_shader;
+    if (m_shader)
+        delete m_shader;
     for (int i = 0; i < NTex; ++i)
     {
         if (m_tex[i])
@@ -130,6 +154,7 @@ ShapeCornersEffect::genRect()
 void
 ShapeCornersEffect::setRoundness(const int r)
 {
+    m_alpha = 0xff;
     m_size = r;
     m_corner = QSize(m_size, m_size);
     genMasks();
@@ -141,7 +166,7 @@ ShapeCornersEffect::reconfigure(ReconfigureFlags flags)
 {
     Q_UNUSED(flags)
     m_alpha = 63;
-    setRoundness(5);
+    setRoundness(16);
 }
 
 void
@@ -202,7 +227,6 @@ ShapeCornersEffect::paintWindow(KWin::EffectWindow *w, int mask, QRegion region,
         KWin::effects->paintWindow(w, mask, region, data);
         return;
     }
-    const QRect s(KWin::effects->virtualScreenGeometry());
 
     //map the corners
     const QRect geo(w->geometry());
@@ -221,6 +245,7 @@ ShapeCornersEffect::paintWindow(KWin::EffectWindow *w, int mask, QRegion region,
 
     //copy the corner regions
     KWin::GLTexture tex[NTex];
+    const QRect s(KWin::effects->virtualScreenGeometry());
     for (int i = 0; i < NTex; ++i)
     {
         tex[i] = KWin::GLTexture(GL_RGBA8, rect[i].size());
@@ -234,51 +259,64 @@ ShapeCornersEffect::paintWindow(KWin::EffectWindow *w, int mask, QRegion region,
     KWin::effects->paintWindow(w, mask, region, data);
 
     //'shape' the corners
-    KWin::ShaderManager::instance()->pushShader(m_shader);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    int mvpMatrixLocation     = m_shader->uniformLocation("modelViewProjectionMatrix");
+    KWin::ShaderManager *sm = KWin::ShaderManager::instance();
+    sm->pushShader(m_shader/*KWin::ShaderTrait::MapTexture*/);
+
     for (int i = 0; i < NTex; ++i)
     {
+//        QMatrix4x4 matrix;
+//        matrix.ortho(rect[i]);
+//        m_shader->setUniform(KWin::GLShader::ModelViewProjectionMatrix, matrix);
+        QMatrix4x4 modelViewProjection;
+        modelViewProjection.ortho(0, s.width(), s.height(), 0, 0, 65535);
+        modelViewProjection.translate(rect[i].x(), rect[i].y());
+        m_shader->setUniform(mvpMatrixLocation, modelViewProjection);
         glActiveTexture(GL_TEXTURE1);
-        m_shader->setUniform("corner", 1);
         m_tex[3-i]->bind();
         glActiveTexture(GL_TEXTURE0);
         tex[i].bind();
+
         tex[i].render(region, rect[i]);
+
         tex[i].unbind();
         m_tex[3-i]->unbind();
     }
-    KWin::ShaderManager::instance()->popShader();
-
-    if (data.brightness() == 1.0 && data.crossFadeProgress() == 1.0)
-    {
-        const QRect rrect[NTex] =
-        {
-            rect[0].adjusted(-1, -1, 0, 0),
-            rect[1].adjusted(0, -1, 1, 0),
-            rect[2].adjusted(0, 0, 1, 1),
-            rect[3].adjusted(-1, 0, 0, 1)
-        };
-        const float o(data.opacity());
-        KWin::ShaderManager::instance()->pushShader(KWin::ShaderManager::GenericShader, true)->setUniform(KWin::GLShader::ModulationConstant, QVector4D(o, o, o, o));;
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        for (int i = 0; i < NTex; ++i)
-        {
-            m_rect[i]->bind();
-            m_rect[i]->render(region, rrect[i]);
-            m_rect[i]->unbind();
-        }
-        KWin::ShaderManager::instance()->popShader();
-        KWin::ShaderManager::instance()->pushShader(KWin::ShaderManager::ColorShader, true);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        QRegion reg = QRegion(geo.adjusted(-1, -1, 1, 1)) - geo;
-        for (int i = 0; i < 4; ++i)
-            reg -= rrect[i];
-        fillRegion(reg, QColor(0, 0, 0, m_alpha*data.opacity()));
-        fillRegion(QRegion(geo.x()+m_size, geo.y(), geo.width()-m_size*2, 1), QColor(255, 255, 255, m_alpha*data.opacity()));
-        KWin::ShaderManager::instance()->popShader();
-    }
+    sm->popShader();
+    data.quads = qds;
     glDisable(GL_BLEND);
+
+//    if (data.brightness() == 1.0 && data.crossFadeProgress() == 1.0)
+//    {
+//        const QRect rrect[NTex] =
+//        {
+//            rect[0].adjusted(-1, -1, 0, 0),
+//            rect[1].adjusted(0, -1, 1, 0),
+//            rect[2].adjusted(0, 0, 1, 1),
+//            rect[3].adjusted(-1, 0, 0, 1)
+//        };
+//        const float o(data.opacity());
+////        KWin::ShaderManager::instance()->pushShader(KWin::ShaderManager::GenericShader, true)->setUniform(KWin::GLShader::ModulationConstant, QVector4D(o, o, o, o));
+//        KWin::ShaderManager::instance()->pushShader(KWin::ShaderTrait::UniformColor)->setUniform(KWin::GLShader::ModulationConstant, QVector4D(o, o, o, o));;
+//        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+//        for (int i = 0; i < NTex; ++i)
+//        {
+//            m_rect[i]->bind();
+//            m_rect[i]->render(region, rrect[i]);
+//            m_rect[i]->unbind();
+//        }
+//        KWin::ShaderManager::instance()->popShader();
+//        KWin::ShaderManager::instance()->pushShader(KWin::ShaderTrait::UniformColor);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//        QRegion reg = QRegion(geo.adjusted(-1, -1, 1, 1)) - geo;
+//        for (int i = 0; i < 4; ++i)
+//            reg -= rrect[i];
+//        fillRegion(reg, QColor(0, 0, 0, m_alpha*data.opacity()));
+//        fillRegion(QRegion(geo.x()+m_size, geo.y(), geo.width()-m_size*2, 1), QColor(255, 255, 255, m_alpha*data.opacity()));
+//        KWin::ShaderManager::instance()->popShader();
+//    }
 }
 
 void
