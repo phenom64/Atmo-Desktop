@@ -314,6 +314,7 @@ Deco::initMemory(WindowData *data)
 void
 Deco::updateData()
 {
+    qDebug() << "updateData" << client().data()->windowId();
     if (!m_wd)
         initMemory(WindowData::memory(client().data()->windowId(), this, true));
     if (m_wd)

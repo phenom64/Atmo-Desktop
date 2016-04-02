@@ -140,6 +140,7 @@ WindowHelpers::updateWindowData(qulonglong window)
     win->update();
 //    if (TitleWidget *w = win->findChild<TitleWidget *>())
 //        w->update();
+    qDebug() << "updateing window data" << win;
     emit instance()->windowDataChanged(win);
     data->sync();
 }

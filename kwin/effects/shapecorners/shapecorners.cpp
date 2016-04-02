@@ -270,7 +270,7 @@ ShapeCornersEffect::paintWindow(KWin::EffectWindow *w, int mask, QRegion region,
         QMatrix4x4 modelViewProjection;
         modelViewProjection.ortho(0, s.width(), s.height(), 0, 0, 65535);
         modelViewProjection.translate(rect[i].x(), rect[i].y());
-        m_shader->setUniform(mvpMatrixLocation, data.projectionMatrix());
+        m_shader->setUniform(mvpMatrixLocation, modelViewProjection);
         glActiveTexture(GL_TEXTURE1);
         m_tex[3-i]->bind();
         glActiveTexture(GL_TEXTURE0);

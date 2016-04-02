@@ -1,6 +1,7 @@
 #include "windowdata.h"
 #include <QObject>
 #include <QDebug>
+//#include <QWidget>
 //#include <QImage>
 
 #include "defines.h"
@@ -16,7 +17,7 @@ WindowData
 *WindowData::memory(const unsigned int wid, QObject *parent, const bool create)
 {
     static const int s_memSize = (sizeof(unsigned int)*(ImageHeight))+(2048*256*4);
-    if (!wid)
+    if (!wid || !parent)
     {
 //        qDebug() << "DSP: cant get windowdata w/o window id";
         return 0;
@@ -25,6 +26,8 @@ WindowData
     WindowData *m = parent->findChild<WindowData *>(keyName);
     if (!m)
         m = new WindowData(keyName, parent, wid);
+//    if (parent->isWidgetType())
+//        qDebug() << static_cast<QWidget *>(parent)->winId() << wid;
     if (m->isAttached() || m->attach())
     {
         if (m->size() == s_memSize)
