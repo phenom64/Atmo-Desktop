@@ -815,7 +815,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
 
     if (!dConf.windows.gradient.isEmpty())
     {
-        const QRect wr(w->mapTo(w->window(), QPoint()), w->window()->size());
+        const QRect wr(w->mapFrom(w->window(), QPoint()), w->window()->size());
         QLinearGradient lg(wr.topLeft(), wr.bottomLeft());
         if (dConf.windows.hor)
             lg = QLinearGradient(wr.topLeft(), wr.topRight());
