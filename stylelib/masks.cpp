@@ -265,7 +265,7 @@ Mask::Tab::maskAdjusted(const QRect &r, const int shape)
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast: return r.adjusted(padding, 2, -4, -2); break;
     case QTabBar::RoundedSouth:
-    case QTabBar::TriangularSouth: return r.adjusted(2, padding, -2, -4); break;
+    case QTabBar::TriangularSouth: return r.adjusted(2, padding, -2, -3); break;
     default: return r;
     }
 }
@@ -281,6 +281,7 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
 
     r.adjust(-padding*!vert, -padding*vert, padding*!vert, padding*vert);
     QLinearGradient lg;
+    bool south(false);
     switch (opt->shape)
     {
     case QTabBar::RoundedNorth:
@@ -290,7 +291,7 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:  lg = QLinearGradient(r.topRight(), r.topLeft()); break;
     case QTabBar::RoundedSouth:
-    case QTabBar::TriangularSouth:  lg = QLinearGradient(r.bottomLeft(), r.topLeft()); break;
+    case QTabBar::TriangularSouth: lg = QLinearGradient(r.bottomLeft(), r.topLeft()); south = true; break;
     default: break;
     }
     lg.setColorAt(0, QColor(255,255,255,dConf.shadows.illumination));
@@ -304,7 +305,7 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
         case QTabBar::RoundedNorth:
         case QTabBar::TriangularNorth: rect.translate(0, 1); break;
         case QTabBar::RoundedSouth:
-        case QTabBar::TriangularSouth: rect.translate(0, -1); break;
+        case QTabBar::TriangularSouth: rect.translate(0, 0); break;
         case QTabBar::RoundedWest:
         case QTabBar::TriangularWest: rect.translate(1, 0); break;
         case QTabBar::RoundedEast:
@@ -321,7 +322,8 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
         pt.end();
         p->fillPath(tabPath(s, maskAdjusted(rect, opt->shape), opt->shape), pix);
     }
-    drawMask(p, r, s, pos, lg, opt->shape);
+    if (!south)
+        drawMask(p, r, s, pos, lg, opt->shape);
     const QColor shadow = Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), Steps-hover, hover);
     drawShadow(p, r, s, pos, shadow, opt->shape);
 }
@@ -371,7 +373,7 @@ Mask::Tab::eraseSides(const QRect &r, QPainter *p, const QPainterPath &path, con
     img.fill(Qt::transparent);
     QPainter tmpp(&img);
     tmpp.setRenderHint(QPainter::Antialiasing);
-    tmpp.setPen(QPen(Qt::black, 2.0f));
+    tmpp.setPen(QPen(Qt::black, 1.0f));
     tmpp.setBrush(Qt::black);
     tmpp.drawPath(path);
     tmpp.end();

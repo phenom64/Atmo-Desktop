@@ -28,9 +28,9 @@ class SharedDataAdaptorManager : public QObject
     Q_OBJECT
 public:
     static SharedDataAdaptorManager *instance();
-    void updateData(uint win);
-    void emitWindowActiveChanged(uint win, bool active);
-    void emitDataChanged(uint win);
+    void updateData(quint32 win);
+    void emitWindowActiveChanged(quint32 win, bool active);
+    void emitDataChanged(quint32 win);
 
 protected:
     SharedDataAdaptorManager(QObject *parent = 0);
@@ -50,11 +50,11 @@ public:
     SharedDataAdaptor(SharedDataAdaptorManager *parent);
 
 public slots:
-    Q_NOREPLY void updateData(uint win) { m_manager->updateData(win); }
+    Q_NOREPLY void updateData(quint32 win) { m_manager->updateData(win); }
 
 signals:
-     void windowActiveChanged(uint win, bool active);
-     void dataChanged(uint win);
+     void windowActiveChanged(quint32 win, bool active);
+     void dataChanged(quint32 win);
 
 private:
      SharedDataAdaptorManager *m_manager;
@@ -136,12 +136,12 @@ public:
         ImageData
     };
 
-    typedef unsigned int Type;
+    typedef quint32 Type;
     template<typename T> void setValue(const Type type, const T value)
     {
         if (lock())
         {
-            unsigned int *d = reinterpret_cast<unsigned int *>(data());
+            quint32 *d = static_cast<quint32 *>(data());
             switch (type)
             {
             case Separator:
@@ -159,7 +159,7 @@ public:
             case ShadowOpacity:     d[1] = (d[1] & ~ShadowOpacityMask) | ((value << 8) & ShadowOpacityMask); break;
             case LeftEmbedSize:     d[1] = (d[1] & ~LeftEmbedSizeMask) | ((value << 16) & LeftEmbedSizeMask); break;
             case RightEmbedSize:    d[1] = (d[1] & ~RightEmbedSizeMask) | ((value << 24) & RightEmbedSizeMask); break;
-            case FollowDecoShadow:  d[2] = (d[2] & ~FollowDecoShadowMask) | (value & FollowDecoShadowMask);
+            case FollowDecoShadow:  d[2] = (d[2] & ~FollowDecoShadowMask) | (value & FollowDecoShadowMask); break;
             default: break;
             }
             unlock();
@@ -171,7 +171,7 @@ public:
         MemoryLocker locker(this);
         if (locker.lockObtained())
         {
-            unsigned int *d = reinterpret_cast<unsigned int *>(data());
+            quint32 *d = static_cast<quint32 *>(data());
             switch (type)
             {
             case Separator:
@@ -195,7 +195,7 @@ public:
         }
         return defaultVal;
     }
-    static WindowData *memory(const unsigned int wid, QObject *parent, const bool create = false);
+    static WindowData *memory(const quint32 wid, QObject *parent, const bool create = false);
 
     bool isEmpty();
 
@@ -214,8 +214,8 @@ public:
     const QColor closeColor();
     void setCloseColor(const QColor &c);
 
-    const uint decoId();
-    void setDecoId(const uint id);
+    const quint32 decoId();
+    void setDecoId(const quint32 id);
 
     const Gradient buttonGradient();
     void setButtonGradient(const Gradient g);
@@ -232,17 +232,18 @@ public:
     void setImageSize(const int w, const int h);
     const QSize imageSize() const;
 
-    inline const uint winId() const { return m_winId; }
+    inline const quint32 winId() const { return m_winId; }
     static QList<WindowData *> instances();
 
 public slots:
     void sync();
 
 protected:
-    WindowData(const QString &key, QObject *parent, uint id = 0);
+    WindowData(const QString &key, QObject *parent, quint32 id = 0);
+    ~WindowData();
 
 private:
-    unsigned int m_winId;
+    quint32 m_winId;
 };
 
 } //namespace

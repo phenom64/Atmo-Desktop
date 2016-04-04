@@ -63,8 +63,8 @@ ShapeCornersEffect::ShapeCornersEffect() : KWin::Effect(), m_shader(0)
         QByteArray frag = file.readAll();
         m_shader = KWin::ShaderManager::instance()->generateCustomShader(KWin::ShaderTrait::MapTexture, QByteArray(), frag);
         file.close();
-        qDebug() << frag;
-        qDebug() << "shader valid: " << m_shader->isValid();
+//        qDebug() << frag;
+//        qDebug() << "shader valid: " << m_shader->isValid();
         if (m_shader->isValid())
         {
             const int sampler = m_shader->uniformLocation("sampler");

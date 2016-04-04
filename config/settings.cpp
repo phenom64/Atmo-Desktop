@@ -74,6 +74,7 @@ static const char *s_key[] = {
     "tabs.closebuttonside",
     "tabs.closerrnd",
     "tabs.docwidth",
+    "tabs.invertDocumode",
 
     "uno",
     "uno.gradient",
@@ -193,6 +194,7 @@ static const char *s_description[] = {
     /*"tabs.closebuttonside"*/      "Side of the tab the close button should be on, 0 = Left, 1 = Right",
     /*"tabs.closerrnd"*/            "Roundness of tab close button",
     /*"tabs.docwidth"*/             "Width/height of document mode tabbar tabs, leave blank or set to 0 for default content based size.",
+    /*"tabs.invertDocumode"*/       "Invert (upside down) document mode tabs like safari tabs.",
 
     /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os",
     /*"uno.gradient"*/              "Gradient of the UNO area",
@@ -312,6 +314,7 @@ static const QVariant s_default[] = {
     0,
     16,
     0,
+    false,
 
     true,
     "0.0:5, 1.0:-5",
@@ -838,6 +841,7 @@ Settings::read()
     conf.tabs.closeButtonSide   = readInt(Tabcloser);
     conf.tabs.closeRnd          = readInt(Tabcloserrnd);
     conf.tabs.docWidth          = readInt(Tabdocwidth);
+    conf.tabs.invDoc            = readBool(Tabinvdoc);
     //uno
     conf.uno.enabled            = readBool(Unoenabled);
     conf.uno.gradient           = stringToGrad(readString(Unograd));

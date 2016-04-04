@@ -155,7 +155,7 @@ private:
     Gradient m_gradient, m_winGradient;
     WindowData *m_wd; 
     Grip *m_grip;
-    int m_prevLum, m_noise, m_buttonStyle;
+    int m_prevLum, m_noise, m_buttonStyle, m_tries;
     bool m_separator, m_isHovered;
 };
 

@@ -15,6 +15,8 @@ if (QT5BUILD)
     
     if (EFFECTS_H)
         include_directories(${EFFECTS_H})
+    else (EFFECTS_H)
+        message(STATUS "didnt find kwineffects.h, not building effects")
     endif (EFFECTS_H)
     
     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)

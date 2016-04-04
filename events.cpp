@@ -65,19 +65,19 @@ Style::eventFilter(QObject *o, QEvent *e)
 #endif
     case QEvent::Hide:
     {
-        if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(o)))
+        if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(w)))
             WindowHelpers::updateWindowDataLater(w->window());
         break;
     }
     case QEvent::LayoutRequest:
     {
-        if (w->inherits("KTitleWidget") && !dConf.animateStack)
-        {
+//        if (w->inherits("KTitleWidget") && !dConf.animateStack)
+//        {
 //            QList<QLabel *> lbls = w->findChildren<QLabel *>();
 //            for (int i = 0; i < lbls.count(); ++i)
 //                lbls.at(i)->setAlignment(Qt::AlignCenter);
-        }
-        else if (qobject_cast<QMenuBar *>(w))
+//        }
+        /*else */if (qobject_cast<QMenuBar *>(w))
         {
             if (dConf.uno.enabled)
                 WindowHelpers::updateWindowDataLater(w->window());

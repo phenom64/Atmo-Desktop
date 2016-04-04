@@ -137,10 +137,12 @@ WindowHelpers::updateWindowData(qulonglong window)
     data->setFg(pal.color(win->foregroundRole()));
     data->setBg(pal.color(win->backgroundRole()));
     data->setButtonGradient(dConf.toolbtn.gradient);
-    win->update();
+//    win->update();
+    QMetaObject::invokeMethod(win, "update", Qt::QueuedConnection);
 //    if (TitleWidget *w = win->findChild<TitleWidget *>())
 //        w->update();
-    qDebug() << "updateing window data" << win;
+//    data->setProperty("DSP_ATTACHED", true);
+//    qDebug() << "WindowHelpers::updateWindowData" << win << win->winId() << data->value<bool>(WindowData::Uno, false) << data->key() << data->errorString() << data->isAttached();
     emit instance()->windowDataChanged(win);
     data->sync();
 }

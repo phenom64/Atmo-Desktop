@@ -89,6 +89,7 @@ public:
         Tabcloser,
         Tabcloserrnd,
         Tabdocwidth,
+        Tabinvdoc,
         Unoenabled,
         Unograd,
         Unotint,
@@ -208,7 +209,7 @@ public:
             quint8 rnd, safrnd, closeButtonSide, shadow, docStyle, closeRnd;
             quint16 docWidth;
             Gradient gradient, barGrad;
-            bool safari, regular;
+            bool safari, regular, invDoc;
         } tabs;
         struct uno
         {

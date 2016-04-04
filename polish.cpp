@@ -335,7 +335,11 @@ Style::polish(QWidget *widget)
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
         if (tabBar->documentMode())
+        {
             tabBar->setDrawBase(true);
+            if (dConf.tabs.invDoc && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
+                tabBar->setShape(QTabBar::RoundedSouth);
+        }
         const bool safari = Ops::isSafariTabBar(tabBar);
         if (!safari && tabBar->expanding())
             tabBar->setExpanding(false);

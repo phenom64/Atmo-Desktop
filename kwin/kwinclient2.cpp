@@ -202,6 +202,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_buttonStyle(0)
     , m_isHovered(false)
     , m_embedder(0)
+    , m_tries(0)
 {
     if (s_factory)
         setParent(s_factory);
@@ -270,6 +271,7 @@ Deco::init()
         m_grip = new Grip(this);
     if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons) && !m_embedder)
         m_embedder = new EmbedHandler(this);
+    QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 
 const int
@@ -314,9 +316,8 @@ Deco::initMemory(WindowData *data)
 void
 Deco::updateData()
 {
-    qDebug() << "updateData" << client().data()->windowId();
     if (!m_wd)
-        initMemory(WindowData::memory(client().data()->windowId(), this, true));
+        initMemory(WindowData::memory(client().data()->windowId(), this));
     if (m_wd)
     {
         if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embedder)
@@ -325,8 +326,12 @@ Deco::updateData()
             removeEmbedder();
 
         setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
-        if (!m_wd->value<bool>(WindowData::Uno, false))
+        const bool uno = m_wd->value<bool>(WindowData::Uno, false);
+        if (!uno)
+        {
             setBorders(QMargins(border(),titleHeight(),border(),border()));
+            m_winGradient = m_wd->windowGradient();
+        }
         const bool buttonShouldBeVisible(titleHeight()>6);
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
         const int shadowOpacity = m_wd->value<int>(WindowData::ShadowOpacity);
@@ -342,9 +347,6 @@ Deco::updateData()
             m_embedder->setMinColor(m_wd->minColor());
             m_embedder->setGradient(g);
         }
-
-        if (!m_wd->value<bool>(WindowData::Uno, false))
-            m_winGradient = m_wd->windowGradient();
 
         if (m_leftButtons)
         {
@@ -393,6 +395,12 @@ Deco::updateData()
                 }
             }
         m_wd->setDecoId(client().data()->decorationId());
+        m_tries = 0;
+    }
+    else
+    {
+        if (++m_tries < 4)
+            QTimer::singleShot(250, this, SLOT(updateData()));
     }
     update();
 }
@@ -477,6 +485,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             painter->setCompositionMode(QPainter::CompositionMode_Overlay);
             painter->fillRect(rect(), lg);
             painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+            needPaintBg = false;
         }
     }
     if (needPaintBg)
