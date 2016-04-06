@@ -110,6 +110,7 @@ public:
     const int titleHeight() const;
     void setTitleHeight(const int h);
     const int border();
+//    QSharedData<KDecoration2::DecorationShadow> shadow() const;
 
 public slots:
     /**

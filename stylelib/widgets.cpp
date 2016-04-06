@@ -20,6 +20,8 @@
 
 using namespace DSP;
 
+static const float s_pen(2.0f);
+
 ButtonBase::ButtonBase(Type type)
     : m_type(type)
     , m_hasPress(false)
@@ -346,11 +348,11 @@ ButtonBase::paintCloseButton(QPainter &p)
                         | ((quint64)c.rgba()<<32));
     if (!m_bgPix.contains(check))
     {
-        if (m_buttonStyle == -1)
+        if (m_buttonStyle == NoStyle)
         {
             QPixmap pix(buttonRect().size());
             const int s(pix.width()/8);
-            const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            const QPen pen(color(Mid), s_pen, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
             QRect rect = pix.rect().adjusted(s, s, -s, -s);
             rect.adjust(s, s, -s, -s);
             pix.fill(Qt::transparent);
@@ -412,7 +414,7 @@ ButtonBase::paintMaxButton(QPainter &p)
         {
             QPixmap pix(buttonRect().size());
             const int s(pix.width()/8);
-            const QPen pen(color(isMaximized()?Highlight:Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            const QPen pen(color(isMaximized()?Highlight:Mid), s_pen, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
             QRect rect = pix.rect().adjusted(s, s, -s, -s);
             rect.adjust(s, s, -s, -s);
             pix.fill(Qt::transparent);
@@ -490,7 +492,7 @@ ButtonBase::paintMinButton(QPainter &p)
         {
             QPixmap pix(buttonRect().size());
             const int s(pix.width()/8);
-            const QPen pen(color(Mid), s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            const QPen pen(color(Mid), s_pen, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
             QRect rect = pix.rect().adjusted(s, s, -s, -s);
             rect.adjust(s, s, -s, -s);
             pix.fill(Qt::transparent);

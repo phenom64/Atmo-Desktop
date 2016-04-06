@@ -100,8 +100,16 @@ void
 Deco::Data::addDataForWinClass(const QString &winClass, QSettings &s)
 {
     Data d;
-    d.fg = QColor::fromRgba(s.value("fgcolor", "0x00000000").toString().toUInt(0, 16));
-    d.bg = QColor::fromRgba(s.value("bgcolor", "0x00000000").toString().toUInt(0, 16));
+    QString fgColor = s.value("fgcolor", "#000000").toString();
+    d.fg = QColor(fgColor);
+    if (fgColor.size() == QString("0xff000000").size() && fgColor.startsWith("0x")) //old format
+        d.fg = QColor::fromRgba(fgColor.toUInt(0, 16));
+
+    QString bgColor = s.value("bgcolor", "#ffffff").toString();
+    d.bg = QColor(bgColor);
+    if (bgColor.size() == QString("0xffffffff").size() && bgColor.startsWith("0x")) //old format
+        d.bg = QColor::fromRgba(bgColor.toUInt(0, 16));
+
     d.grad = DSP::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noise = s.value("noise", 20).toUInt();
     d.separator = s.value("separator", true).toBool();
