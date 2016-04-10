@@ -283,37 +283,42 @@ ShapeCornersEffect::paintWindow(KWin::EffectWindow *w, int mask, QRegion region,
     }
     sm->popShader();
     data.quads = qds;
+#if 0
+    if (data.brightness() == 1.0 && data.crossFadeProgress() == 1.0)
+    {
+        const QRect rrect[NTex] =
+        {
+            rect[0].adjusted(-1, -1, 0, 0),
+            rect[1].adjusted(0, -1, 1, 0),
+            rect[2].adjusted(0, 0, 1, 1),
+            rect[3].adjusted(-1, 0, 0, 1)
+        };
+        const float o(data.opacity());
+        KWin::GLShader *shader = KWin::ShaderManager::instance()->pushShader(KWin::ShaderTrait::MapTexture|KWin::ShaderTrait::UniformColor|KWin::ShaderTrait::Modulate);
+        shader->setUniform(KWin::GLShader::ModulationConstant, QVector4D(o, o, o, o));
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        for (int i = 0; i < NTex; ++i)
+        {
+            QMatrix4x4 modelViewProjection;
+            modelViewProjection.ortho(0, s.width(), s.height(), 0, 0, 65535);
+            modelViewProjection.translate(rrect[i].x(), rrect[i].y());
+            shader->setUniform("modelViewProjectionMatrix", modelViewProjection);
+            m_rect[i]->bind();
+            m_rect[i]->render(region, rrect[i]);
+            m_rect[i]->unbind();
+        }
+//        KWin::ShaderManager::instance()->popShader();
+//        shader = KWin::ShaderManager::instance()->pushShader(KWin::ShaderTrait::UniformColor);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        QRegion reg = QRegion(geo.adjusted(-1, -1, 1, 1)) - geo;
+        for (int i = 0; i < 4; ++i)
+            reg -= rrect[i];
+        fillRegion(reg, QColor(0, 0, 0, m_alpha*data.opacity()));
+        fillRegion(QRegion(geo.x()+m_size, geo.y(), geo.width()-m_size*2, 1), QColor(255, 255, 255, m_alpha*data.opacity()));
+        KWin::ShaderManager::instance()->popShader();
+    }
+#endif
     glDisable(GL_BLEND);
-
-//    if (data.brightness() == 1.0 && data.crossFadeProgress() == 1.0)
-//    {
-//        const QRect rrect[NTex] =
-//        {
-//            rect[0].adjusted(-1, -1, 0, 0),
-//            rect[1].adjusted(0, -1, 1, 0),
-//            rect[2].adjusted(0, 0, 1, 1),
-//            rect[3].adjusted(-1, 0, 0, 1)
-//        };
-//        const float o(data.opacity());
-////        KWin::ShaderManager::instance()->pushShader(KWin::ShaderManager::GenericShader, true)->setUniform(KWin::GLShader::ModulationConstant, QVector4D(o, o, o, o));
-//        KWin::ShaderManager::instance()->pushShader(KWin::ShaderTrait::UniformColor)->setUniform(KWin::GLShader::ModulationConstant, QVector4D(o, o, o, o));;
-//        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-//        for (int i = 0; i < NTex; ++i)
-//        {
-//            m_rect[i]->bind();
-//            m_rect[i]->render(region, rrect[i]);
-//            m_rect[i]->unbind();
-//        }
-//        KWin::ShaderManager::instance()->popShader();
-//        KWin::ShaderManager::instance()->pushShader(KWin::ShaderTrait::UniformColor);
-//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//        QRegion reg = QRegion(geo.adjusted(-1, -1, 1, 1)) - geo;
-//        for (int i = 0; i < 4; ++i)
-//            reg -= rrect[i];
-//        fillRegion(reg, QColor(0, 0, 0, m_alpha*data.opacity()));
-//        fillRegion(QRegion(geo.x()+m_size, geo.y(), geo.width()-m_size*2, 1), QColor(255, 255, 255, m_alpha*data.opacity()));
-//        KWin::ShaderManager::instance()->popShader();
-//    }
 }
 
 void

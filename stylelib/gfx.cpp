@@ -274,7 +274,7 @@ GFX::drawClickable(ShadowStyle s,
         if (mask.gradient() && mask.gradient()->type() == QGradient::LinearGradient)
         {
             const QLinearGradient *grad = static_cast<const QLinearGradient *>(mask.gradient());
-            qDebug() << grad->start() << grad->finalStop();
+//            qDebug() << grad->start() << grad->finalStop();
             if (grad->start().y() == grad->finalStop().y())
                 hor = true;
         }

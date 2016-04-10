@@ -337,7 +337,7 @@ Style::polish(QWidget *widget)
         if (tabBar->documentMode())
         {
             tabBar->setDrawBase(true);
-            if (dConf.tabs.invDoc && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
+            if (dConf.tabs.invDoc && !dConf.uno.enabled && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
                 tabBar->setShape(QTabBar::RoundedSouth);
         }
         const bool safari = Ops::isSafariTabBar(tabBar);
