@@ -42,6 +42,7 @@
 #include <QToolBox>
 #include <QDebug>
 #include <QCalendarWidget>
+#include <QTableView>
 //#include <QWebView>
 
 /* Thomas gave me his blessing to use
@@ -289,6 +290,23 @@ Style::polish(QWidget *widget)
             pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
             widget->setPalette(pal);
         }
+        if (dConf.views.traditional)
+        {
+            QList<QHeaderView *> headers = area->findChildren<QHeaderView *>();
+            for (int i = 0; i < headers.count(); ++i)
+            {
+                QHeaderView *header = headers.at(i);
+                QPalette palette = header->palette();
+                palette.setColor(QPalette::Window, palette.color(QPalette::Base));
+                palette.setColor(QPalette::WindowText, palette.color(QPalette::Text));
+                palette.setColor(QPalette::Button, palette.color(QPalette::Base));
+                palette.setColor(QPalette::ButtonText, palette.color(QPalette::Text));
+                header->setPalette(palette);
+                header->setAutoFillBackground(true);
+                header->viewport()->setAutoFillBackground(true);
+                header->viewport()->setPalette(palette); //could we maybe believe at this point that we want base colored headers...
+            }
+        }
     }
     else if (qobject_cast<QStatusBar *>(widget))
     {
@@ -334,38 +352,7 @@ Style::polish(QWidget *widget)
     }
     else if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
     {
-        if (tabBar->documentMode())
-        {
-            tabBar->setDrawBase(true);
-            if (dConf.tabs.invDoc && !dConf.uno.enabled && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
-                tabBar->setShape(QTabBar::RoundedSouth);
-        }
-        const bool safari = Ops::isSafariTabBar(tabBar);
-        if (!safari && tabBar->expanding())
-            tabBar->setExpanding(false);
-//        qDebug() << tabBar->foregroundRole();
-        if (safari)
-        {
-            QPalette pal(tabBar->palette());
-            pal.setColor(QPalette::Button, pal.color(QPalette::Window));
-            pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
-            tabBar->setPalette(pal);
-        }
-        Anim::Tabs::manage(tabBar);
-        tabBar->setAttribute(Qt::WA_Hover);
-        tabBar->setAttribute(Qt::WA_MouseTracking);
-//        installFilter(tabBar);
-
-        if (tabBar->expanding() && !dConf.uno.enabled)
-            tabBar->setExpanding(false);
-
-        if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
-        {
-            tabBar->parentWidget()->setProperty("DSP_konsoleTabBarParent", true);
-            installFilter(tabBar->parentWidget());
-            disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
-            connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
-        }
+        polishLater(tabBar);
     }
     else if (QGroupBox *gb = qobject_cast<QGroupBox *>(widget))
     {
@@ -442,7 +429,8 @@ Style::polish(QWidget *widget)
     }
     else if (widget->inherits("KTextEditor::ViewPrivate"))
     {
-        Overlay::manage(widget, dConf.shadows.opacity);
+        if (dConf.uno.enabled && dConf.uno.overlay)
+            Overlay::manage(widget, dConf.shadows.opacity);
     }
     else if (widget->inherits("NavigationBar"))
     {
@@ -459,7 +447,7 @@ Style::polish(QWidget *widget)
         installFilter(widget);
     }
     //this needs to be here at the end cause I might alter the frames before in the main if segment
-    if (dConf.uno.enabled && qobject_cast<QFrame *>(widget))
+    if (dConf.uno.enabled && dConf.uno.overlay && qobject_cast<QFrame *>(widget))
         Overlay::manage(static_cast<QFrame *>(widget), dConf.shadows.opacity);
 }
 
@@ -506,4 +494,59 @@ Style::polish(QApplication *app)
     if (app && dConf.palette)
         app->setPalette(*dConf.palette);
     GFX::generateData();
+}
+
+void
+Style::polishSlot(QWidget *widget)
+{
+    if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
+        {
+            bool docMode = tabBar->documentMode();
+            qDebug() << tabBar->parentWidget() << tabBar->documentMode();
+            if (QTabWidget *tw = qobject_cast<QTabWidget *>(tabBar->parentWidget()))
+            {
+                qDebug() << tw << tw->documentMode();
+                docMode = tw->documentMode();
+            }
+            if (docMode)
+            {
+                tabBar->setDrawBase(true);
+                if (dConf.tabs.invDoc && !dConf.uno.enabled && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
+                    tabBar->setShape(QTabBar::RoundedSouth);
+            }
+            const bool safari = Ops::isSafariTabBar(tabBar);
+            if (!safari && tabBar->expanding())
+                tabBar->setExpanding(false);
+    //        qDebug() << tabBar->foregroundRole();
+            if (safari || docMode)
+            {
+                QPalette pal(tabBar->palette());
+                pal.setColor(QPalette::Button, pal.color(QPalette::Window));
+                pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
+                tabBar->setPalette(pal);
+            }
+            else
+            {
+                QPalette pal(tabBar->palette());
+                pal.setColor(QPalette::Window, pal.color(QPalette::Button));
+                pal.setColor(QPalette::WindowText, pal.color(QPalette::ButtonText));
+                tabBar->setPalette(pal);
+            }
+            Anim::Tabs::manage(tabBar);
+            tabBar->setAttribute(Qt::WA_Hover);
+            tabBar->setAttribute(Qt::WA_MouseTracking);
+            if (dConf.uno.enabled) //we need to ajust UNO height data on hide/show...
+                installFilter(tabBar);
+
+            if (tabBar->expanding() && !dConf.uno.enabled)
+                tabBar->setExpanding(false);
+
+            if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
+            {
+                tabBar->parentWidget()->setProperty("DSP_konsoleTabBarParent", true);
+                installFilter(tabBar->parentWidget());
+                disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
+                connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
+            }
+        }
 }

@@ -301,3 +301,9 @@ Style::drawText(const QRect &r,
     drawItemText(p, r, flags, opt->palette, isEnabled(opt), text, textRole);
     p->setFont(font);
 }
+
+void
+Style::polishLater(QWidget *widget)
+{
+    QMetaObject::invokeMethod(this, "polishSlot", Qt::QueuedConnection, Q_ARG(QWidget *, widget));
+}

@@ -187,7 +187,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
 
     QRect rect(option->rect);
     Sides sides(All);
-    if (full || (sunken && selectRows))
+    if (!dConf.views.traditional && (full || (sunken && selectRows)))
         sides &= ~(Right|Left);
 
     if (opt)
@@ -255,7 +255,7 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
 
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
     const bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
-    const bool selected(selectRows && isSelected(option));
+    const bool selected(selectRows && isSelected(option) && !dConf.views.traditional);
     if (selected)
         drawViewItemBg(option, painter, widget);
     painter->save();
@@ -315,13 +315,19 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
     const QStyleOptionHeader *opt = qstyleoption_cast<const QStyleOptionHeader *>(option);
     if (!opt)
         return true;
-    QPalette::ColorRole bg(/*Ops::bgRole(widget, */QPalette::Button/*)*/);
+    QPalette::ColorRole bg(/*Ops::bgRole(widget, */dConf.views.traditional ? QPalette::Base : QPalette::Button/*)*/);
     if (opt->sortIndicator)
         bg = QPalette::Highlight;
-
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(bg));
     lg.setStops(DSP::Settings::gradientStops(dConf.views.headerGradient, b));
+    if (dConf.views.traditional)
+    {
+        if (opt->sortIndicator)
+            GFX::drawClickable(dConf.views.headerShadow, opt->rect, painter, lg, dConf.views.headerRnd);
+        return true;
+    }
+
     painter->fillRect(opt->rect, lg);
 
     const QPen pen(painter->pen());
@@ -357,7 +363,7 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
 
     painter->save();
     const QRect tr(subElementRect(SE_HeaderLabel, opt, widget));
-    QPalette::ColorRole fg(/*Ops::fgRole(widget, */QPalette::ButtonText/*)*/);
+    QPalette::ColorRole fg(/*Ops::fgRole(widget, */dConf.views.traditional ? QPalette::Text : QPalette::ButtonText/*)*/);
 
     if (opt->sortIndicator)
     {

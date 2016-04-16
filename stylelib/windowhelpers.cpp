@@ -58,6 +58,7 @@ void
 WindowHelpers::updateWindowDataLater(QWidget *win)
 {
     const qulonglong window = (qulonglong)win;
+//    qDebug() << "WindowHelpers::updateWindowDataLater" << window;
     if (scheduleWindow(window))
         QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(qulonglong, window));
 }
@@ -73,6 +74,8 @@ WindowHelpers::updateWindowData(qulonglong window)
     WindowData *data = WindowData::memory(win->winId(), win, true);
     if (!data)
         return;
+
+//    qDebug() << "WindowHelpers::updateWindowData" << window;
 
     QPalette pal(win->palette());
     if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify

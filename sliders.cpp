@@ -51,31 +51,76 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         slider.adjust(m, m, -m, -m);
 
         QColor bgc(opt->palette.color(bg));
+        QColor fgc(opt->palette.color(fg));
+        bool isKate(false);
+        if (area)
+        {
+//            qDebug() << area << area->viewport()->foregroundRole() << area->viewport()->backgroundRole();
+            bgc = area->viewport()->palette().color(area->viewport()->backgroundRole());
+            fgc = area->viewport()->palette().color(area->viewport()->foregroundRole());
+        }
+//        else if (widget)
+//        {
+//            const QWidget *p = widget;
+//            bgc = p->palette().color(QPalette::Window);
+//            fgc = p->palette().color(QPalette::WindowText);
+//        }
+        else if (widget->parentWidget() && widget->parentWidget()->inherits("KTextEditor::ViewPrivate"))
+        {
+            isKate = true;
+            static QColor *c(0);
+            if (!c)
+            {
+                QWidget *p = widget->parentWidget();
+                QList<QWidget *> kids = p->findChildren<QWidget *>();
+                for (int i = 0; i < kids.size(); ++i)
+                {
+                    if (kids.at(i)->inherits("KateViewInternal"))
+                    {
+                        QWidget *kateView = kids.at(i);
+                        QImage img(1, 1, QImage::Format_ARGB32_Premultiplied);
+                        img.fill(Qt::transparent);
+                        const QRect r(kateView->rect());
+                        kateView->render(&img, QPoint(), QRegion(r.right(), r.bottom(), r.right()+1, r.bottom()+1));
+                        c = new QColor(QColor::fromRgba(img.pixel(QPoint(0, 0))));
+                    }
+                }
+            }
+            bgc = *c;
+        }
+        if (!Color::contrast(fgc, bgc))
+            fgc = Qt::white; //both most likely pretty much black so try white first...
+        if (!Color::contrast(fgc, bgc))
+            fgc = Qt::black;
         if (widget && (widget->inherits("QWebView") || (area && area->inherits("KHTMLView"))))
         {
-            painter->fillRect(groove, option->palette.color(QPalette::Base));
+            painter->fillRect(groove, bgc);
             fg = QPalette::Text;
         }
-        else if (bar && painter->device() == bar
+        else if (isKate)
+        {
+            painter->fillRect(groove, bgc);
+        }
+        else if (bar && bar->parentWidget() && painter->device() == bar
                  && opt->palette.color(QPalette::Window) == bar->window()->palette().color(QPalette::Window)
                  && (bgc.alpha() < 0xff || bg != QPalette::Base ))
         {
-            const QRect geo(bar->mapTo(bar->window(), QPoint()), bar->size());
-            bar->window()->render(painter, geo.topLeft(), geo, QWidget::DrawWindowBackground);
+//            QWidget *p = bar->parentWidget();
+            const QPoint tl(bar->mapTo(bar->window(), QPoint()));
+//            bar->parentWidget()->render(painter, geo.topLeft(), geo, 0);
+            GFX::drawWindowBg(painter, bar, opt->palette.color(QPalette::Window), opt->rect, tl);
         }
         else
         {
-            bool isTransparent(false);
-#if QT_VERSION >= 0x050000
-            isTransparent = pixelMetric(PM_ScrollView_ScrollBarOverlap, option, widget);
-#endif
-            if (!isTransparent)
+//            bool isTransparent(false);
+//#if QT_VERSION >= 0x050000
+//            isTransparent = pixelMetric(PM_ScrollView_ScrollBarOverlap, option, widget);
+//#endif
+//            if (!isTransparent)
                 painter->fillRect(groove, bgc);
         }
-
-        QColor fgc(opt->palette.color(fg));
-
-        if (bg == QPalette::Base
+        if (dConf.scrollers.separator
+                && bg == QPalette::Base
                 && area
                 && area->frameShadow() == QFrame::Sunken
                 && area->frameShape() == QFrame::StyledPanel)

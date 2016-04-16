@@ -381,8 +381,6 @@ static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, cons
             const bool hadAA(p->testRenderHint(QPainter::Antialiasing));
             p->setRenderHint(QPainter::Antialiasing, false);
             p->fillRect(r, QColor(0, 0, 0, 15));
-            p->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
-            p->drawLine(r.bottomLeft(), r.bottomRight());
             GFX::drawTabBarShadow(p, r);
             p->setRenderHint(QPainter::Antialiasing, hadAA);
             return;
@@ -404,7 +402,7 @@ static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, cons
                 barRect.adjust(2, 0, -2, 0);
             if (!full)
                 sides &= ~(Left|Right);
-            if (documentMode && !WindowHelpers::inUno(bar))
+            if (documentMode && !(WindowHelpers::inUno(bar) && dConf.uno.overlay))
                 sides &= ~Bottom;
             break;
         case QTabBar::RoundedSouth:
@@ -479,8 +477,10 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
             }
             else
             {
+                QRegion bef(r.adjusted(2, 0, -2, 0));
                 r.setLeft(0);
                 r.setRight(d->width());
+                painter->setClipRegion(QRegion(r) - bef);
             }
         }
         else if (dev && dev->property("DSP_konsoleTabBarParent").toBool())
@@ -488,6 +488,7 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
         else
             r = widget?widget->rect():opt->rect;
         drawDocTabBar(opt, painter, tabBar, r);
+        painter->setClipping(false);
         return true;
     }
     return true;
@@ -624,7 +625,7 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     QPixmap tmp(pix);
     FX::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
     QPixmap tmp2(pix);
-    QPalette::ColorRole role(QPalette::ButtonText);
+    QPalette::ColorRole role(doc ? QPalette::WindowText : QPalette::ButtonText);
 
     if (!doc && hover && !dConf.tabs.regular)
         role = QPalette::Highlight;

@@ -226,7 +226,7 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
     GFX::drawClickable(dConf.input.shadow, edit, painter, mask, dConf.input.rnd, 0, All, option, widget);
     const bool enabled(isEnabled(opt));
     const QSpinBox *box = qobject_cast<const QSpinBox *>(widget);
-    QColor c = opt->palette.color(QPalette::WindowText);
+    QColor c = opt->palette.color(QPalette::Text);
     if (!enabled || (box && box->maximum() == box->value()))
         c.setAlpha(127);
     GFX::drawArrow(painter, c, up, North, dConf.arrowSize, Qt::AlignBottom|(ltr?Qt::AlignLeft:Qt::AlignRight), enabled && (box && box->minimum() != box->value()));

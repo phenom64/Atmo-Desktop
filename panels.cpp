@@ -253,8 +253,35 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
     QRect r(option->rect);
     const bool isView(qobject_cast<const QAbstractScrollArea *>(widget));
 
+//    if (true && isView)
+//    {
+//        const QAbstractScrollArea *area = static_cast<const QAbstractScrollArea *>(widget);
+//        Mask::render(r, area->viewport()->palette().color(area->viewport()->backgroundRole()), painter, 2.0f);
+//        return true;
+//    }
+
     if ((frame && frame->frameShadow() == QFrame::Sunken) || (opt->state & State_Sunken))
-        GFX::drawShadow(Sunken, r, painter, isEnabled(opt), !isView&&(!frame || !qobject_cast<QMainWindow *>(frame->window()))*7);
+    {
+
+
+        if (isView && dConf.views.traditional)
+        {
+            QColor base = frame->palette().color(frame->backgroundRole());
+            const QAbstractScrollArea *area = static_cast<const QAbstractScrollArea *>(widget);
+            base = area->viewport()->palette().color(area->viewport()->backgroundRole());
+            GFX::drawClickable(dConf.views.viewShadow, r, painter, base, dConf.views.viewRnd);
+        }
+        else
+        {
+//        static const ShadowStyle style = Raised;
+//        static const int sm = FrameWidth - (GFX::shadowMargin(style)/*+1*/);
+//        r.adjust(sm, sm, -sm, -sm);
+            int rnd(8);
+            if (isView || (widget && widget->inherits("KTextEditor::ViewPrivate")))
+                rnd = 0;
+            GFX::drawShadow(Sunken, r, painter, isEnabled(opt), rnd);
+        }
+    }
     else if (opt->state & State_Raised)
         GFX::drawShadow(Raised, r, painter, isEnabled(opt), 8);
     else if (frame && frame->frameShadow() == QFrame::Plain)

@@ -178,6 +178,10 @@ protected:
                   const Qt::TextElideMode elide,
                   const bool bold,
                   const bool forceStretch = false) const;
+    void polishLater(QWidget *widget);
+
+protected slots:
+    void polishSlot(QWidget *widget);
 
 private:
     StyleComplexControl m_cc[CCSize];

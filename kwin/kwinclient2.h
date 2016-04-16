@@ -150,13 +150,13 @@ protected:
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
     EmbedHandler *m_embedder;
-    QPixmap m_pix/*, m_bevelCorner[3]*/;
+    QPixmap m_pix, m_bevelCorner[3];
     QSharedMemory *m_mem;
     QColor m_bg, m_fg;
     Gradient m_gradient, m_winGradient;
     WindowData *m_wd; 
     Grip *m_grip;
-    int m_prevLum, m_noise, m_buttonStyle, m_tries;
+    int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
     bool m_separator, m_isHovered;
 };
 

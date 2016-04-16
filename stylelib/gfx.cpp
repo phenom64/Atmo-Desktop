@@ -806,7 +806,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
     {
         int l,t,r,b;
         XHandler::getDecoBorders(l,r,t,b, w->window()->winId());
-        offset += QPoint(l, t);
+        offset += QPoint(0, t);
     }
     if (dConf.windows.noise)
         p->drawTiledPixmap(r, GFX::noise(true), offset);
@@ -822,10 +822,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
         lg.setStops(Settings::gradientStops(dConf.windows.gradient));
         const QPainter::CompositionMode mode = p->compositionMode();
         p->setCompositionMode(QPainter::CompositionMode_Overlay);
-//        const QPoint off = p->brushOrigin();
-//        p->setBrushOrigin(-offset);
         p->fillRect(r, lg);
-//        p->setBrushOrigin(off);
         p->setCompositionMode(mode);
     }
 

@@ -120,6 +120,8 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_DockWidgetSeparatorExtent:
     case PM_SplitterWidth:
     {
+        if (!dConf.uno.enabled || !dConf.uno.overlay)
+            return 6;
         if (const QSplitter *splitter = qobject_cast<const QSplitter *>(widget))
         {
             for (int i = 0; i < splitter->count(); ++i)
@@ -127,7 +129,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
                 const QWidget *w = splitter->widget(i);
                 if (!w->isVisible())
                     continue;
-                if (!Overlay::overlay(w, true))
+                if (!Overlay::overlay(w))
                     return 8;
             }
         }
@@ -149,11 +151,13 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         if (qobject_cast<const QGroupBox *>(widget))
             return 8;
         if (qobject_cast<const QAbstractScrollArea *>(widget))
-//        {
+        {
 //            if (!dConf.uno.enabled && static_cast<const QFrame *>(widget)->frameStyle() == (QFrame::StyledPanel|QFrame::Sunken))
 //                return 4;
-            return 2;
-//        }
+            static const quint8 sm = GFX::shadowMargin(dConf.views.viewShadow) + bool(dConf.views.viewShadow<Raised);
+            static const quint8 pm = dConf.views.traditional ? qMax<quint8>(sm, (dConf.views.viewRnd >> 1)) : 2;
+            return pm;
+        }
 
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (frame && frame->frameShadow() == QFrame::Raised)

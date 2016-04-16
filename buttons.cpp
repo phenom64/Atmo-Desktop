@@ -116,24 +116,24 @@ Style::drawCheckBox(const QStyleOption *option, QPainter *painter, const QWidget
     if (!opt)
         return true;
 
-    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::WindowText);
+    QPalette::ColorRole bg(QPalette::Button), fg(QPalette::ButtonText);
     const QRect realCheckRect = subElementRect(SE_CheckBoxIndicator, opt, widget);
     const bool smallTick(dConf.pushbtn.shadow == Yosemite||dConf.pushbtn.shadow == ElCapitan);
     QRect checkRect(realCheckRect.shrinked((smallTick?2:3)));
     if (widget)
     {
-        if (qobject_cast<const QCheckBox *>(widget))
-        {
-            bg = widget->backgroundRole();
-            fg = widget->foregroundRole();
-        }
+//        if (qobject_cast<const QCheckBox *>(widget))
+//        {
+//            bg = widget->backgroundRole();
+//            fg = widget->foregroundRole();
+//        }
         checkRect.setBottom(qMin(checkRect.bottom(), widget->rect().bottom()));
         checkRect.setWidth(checkRect.height());
     }
 
     QRect textRect = subElementRect(SE_CheckBoxContents, opt, widget);
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
 
     QColor bgc(opt->palette.color(bg));
     if (dConf.pushbtn.tint.second > -1)
@@ -184,15 +184,15 @@ Style::drawRadioButton(const QStyleOption *option, QPainter *painter, const QWid
     QRect checkRect(realCheckRect.shrinked((smallTick?2:3)));
     if (widget)
     {
-        bg = widget->backgroundRole();
-        fg = widget->foregroundRole();
+//        bg = widget->backgroundRole();
+//        fg = widget->foregroundRole();
         checkRect.setBottom(qMin(checkRect.bottom(), widget->rect().bottom()));
         checkRect.setWidth(checkRect.height());
     }
 
     QRect textRect(subElementRect(SE_RadioButtonContents, opt, widget));
     int hor(opt->direction==Qt::LeftToRight?Qt::AlignLeft:Qt::AlignRight);
-    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():fg);
+    drawItemText(painter, textRect, hor|Qt::AlignVCenter, opt->palette, isEnabled(opt), opt->text, widget&&widget->parentWidget()?widget->parentWidget()->foregroundRole():QPalette::WindowText);
 
     if (isOn(opt) && smallTick)
     {
@@ -373,7 +373,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
                            || qobject_cast<QHBoxLayout *>(widget->parentWidget()->layout())))
                    || widget->width() > widget->height());
     Sides restoreSide(0);
-    if (opt->features & QStyleOptionToolButton::MenuButtonPopup)
+    if (opt->features & QStyleOptionToolButton::MenuButtonPopup) //toolbutton has arrow...
     {
         const QRect arrow(subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget));
         if (sunken && Handlers::ToolBar::isArrowPressed(tbtn))
@@ -388,7 +388,10 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
             bca = Color::mid(bca, sc, Steps-hla, hla);
         }
         QLinearGradient lga(rect.topLeft(), hor?rect.bottomLeft():rect.topRight());
-        lga.setStops(Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bca));
+        if (dConf.toolbtn.mask || sunken)
+            lga.setStops(Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bca));
+        else
+            lga.setStops(Settings::gradientStops(dConf.toolbtn.gradient));
         GFX::drawClickable(shadow, arrow, painter, lga, dConf.toolbtn.rnd, hover, sides & ~(hor?Left:Top), opt, widget);
         GFX::drawShadow(Rect, arrow.adjusted(!hor*m, hor*m, -(!hor*m), -(hor*m)), painter, false, MaxRnd, hor?Left:Top); //line...
         if (hor)
@@ -494,12 +497,15 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     QRect arrow = subControlRect(CC_ToolButton, opt, SC_ToolButtonMenu, widget);
     QRect mr = multiTab?rect:(rect.sAdjusted(sm, sm, -sm, -sm));
 
-    QPalette::ColorRole bg = normal||(multiTab&&dConf.toolbtn.mask) ? QPalette::Button : QPalette::Window;
-    QPalette::ColorRole fg = normal||(multiTab&&dConf.toolbtn.mask) ? QPalette::ButtonText : QPalette::WindowText;
+    QPalette::ColorRole bg = dConf.toolbtn.mask&&(normal||(multiTab&&dConf.toolbtn.mask)) ? QPalette::Button : QPalette::Window;
+    QPalette::ColorRole fg = dConf.toolbtn.mask&&(normal||(multiTab&&dConf.toolbtn.mask)) ? QPalette::ButtonText : QPalette::WindowText;
     if (widget)
     {
-        fg = widget->foregroundRole();
-        bg = widget->backgroundRole();
+        if (normal || sunken)
+        {
+            fg = widget->foregroundRole();
+            bg = widget->backgroundRole();
+        }
         QWidget *parent = widget->parentWidget();
         if (!normal && parent && parent != bar
                 && parent->autoFillBackground()

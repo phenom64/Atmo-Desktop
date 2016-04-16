@@ -86,6 +86,7 @@ static const char *s_key[] = {
     "uno.contentaware",
     "uno.contentopacity",
     "uno.contentblurradius",
+    "uno.overlay",
 
     "menues.icons",
     "menues.gradient",
@@ -107,13 +108,19 @@ static const char *s_key[] = {
     "scrollers.groovegradient",
     "scrollers.groovestyle",
     "scrollers.grooveshadow",
+    "scrollers.separator",
 
     "views.treelines",
     "views.itemgradient",
     "views.itemshadow",
     "views.itemrnd",
     "views.headergradient",
+    "views.headershadow",
+    "views.headerrnd",
     "views.opacity",
+    "views.traditional",
+    "views.rnd",
+    "views.shadow",
 
     "progressbars.shadow",
     "progressbars.rnd",
@@ -206,6 +213,7 @@ static const char *s_description[] = {
     /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
     /*"uno.contentopacity"*/        "Opacity of the content painted in the toolbar",
     /*"uno.contentblurradius"*/     "Amount of blur applied to the content in the toolbar",
+    /*"uno.overlay"*/               "Use overlays on the frames so we get 1px frame frames always for layouts w/ 0 spacing.",
 
     /*"menues.icons"*/              "Show icons in menues",
     /*"menues.gradient"*/           "Gradient on menues",
@@ -227,13 +235,19 @@ static const char *s_description[] = {
     /*"scrollers.groovegradient"*/  "Gradient of the groove part of scrollbars, only read if style of scrollbars set to 1 (Pre Yosemite alike)",
     /*"scrollers.groovestyle"*/     "How to fill groove section of a scrollbar, 0 = Window colored, 1 = Blend of WindowText and Window color, 2 = WindowText color",
     /*"scrollers.grooveshadow"*/    "Shadow for the groove in scrollbars to be used, only read if style of scrollbars set to 1 (Pre Yosemite alike)",
+    /*"scrollers.separator"*/       "Draw a separator line between the view and the scrollbar when using scrollers.style=0",
 
     /*"views.treelines"*/           "Draw the branches in the treeviews",
     /*"views.itemgradient"*/        "Gradient on viewitems",
     /*"views.itemshadow"*/          "Shadow on viewitems",
     /*"views.itemrnd"*/             "Roundness of viewitems",
     /*"views.headergradient"*/      "Gradient on headers in views",
+    /*"views.headershadow"*/        "Shadow for the header items if views.traditional is set",
+    /*"views.headerrnd"*/           "Roundness of header items if views.traditional is set",
     /*"views.opacity"*/             "Opacity of views, leave at 255",
+    /*"views.traditional"*/         "Traditional views, no honky-ponky, just how you'd expect the views to work, you can set roundness and shadow...",
+    /*"views.rnd"*/                 "Roundness of views if views.traditional is set.",
+    /*"views.shadow"*/              "Shadows of views if views.traditional is set.",
 
     /*"progressbars.shadow"*/       "Shadows for progressbars",
     /*"progressbars.rnd"*/          "Roundness for progressbars",
@@ -326,6 +340,7 @@ static const QVariant s_default[] = {
     QStringList(),
     10,
     2,
+    true,
 
     false,
     "0:5, 1:-5",
@@ -347,13 +362,19 @@ static const QVariant s_default[] = {
     "0.0:5, 0.5:-5, 1.0:5",
     0,
     0,
+    true,
 
     true,
     "0:5, 1:-5",
     0,
     6,
     "0:5, 1:-5",
+    Sunken,
+    4,
     0xff,
+    false,
+    4,
+    0,
 
     3,
     4,
@@ -853,6 +874,7 @@ Settings::read()
     conf.uno.contAware          = readStringList(Unocont).contains(QFileInfo(qApp->applicationFilePath()).fileName());
     conf.uno.opacity            = readFloat(Unoopacity)/100.0f;
     conf.uno.blur               = readInt(Unocontblur);
+    conf.uno.overlay            = readBool(Unooverlay);
     //windows when not uno
     conf.windows.gradient       = stringToGrad(readString(Wingrad));
     conf.windows.noise          = readInt(Winnoise);
@@ -880,13 +902,20 @@ Settings::read()
     conf.scrollers.sliderGrad   = stringToGrad(readString(Scrollergrad));
     conf.scrollers.grooveStyle  = readInt(Scrollerinvert);
     conf.scrollers.grooveShadow = readInt(Scrollergshadow);
+    conf.scrollers.separator    = readBool(Scrollseparator);
     //views
     conf.views.treelines        = readBool(Viewtreelines);
     conf.views.itemGradient     = stringToGrad(readString(Viewitemgrad));
     conf.views.itemShadow       = readInt(Viewitemshadow);
     conf.views.itemRnd          = readInt(Viewitemrnd);
     conf.views.headerGradient   = stringToGrad(readString(Viewheadergrad));
+    conf.views.headerShadow     = readInt(Viewheadershadow);
+    conf.views.headerRnd        = readInt(Viewheaderrnd);
     conf.views.opacity          = readInt(Viewopacity);
+    conf.views.traditional      = readBool(Viewtrad);
+    conf.views.viewRnd          = readInt(Viewrnd);
+    conf.views.viewShadow       = readInt(Viewshadow);
+
     //progressbars
     conf.progressbars.shadow    = readInt(Progshadow);
     conf.progressbars.rnd       = qMin<quint8>(MaxRnd, readInt(Progrnd));

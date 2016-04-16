@@ -34,7 +34,7 @@ typedef QPair<QColor, int> Tint;
 class Q_DECL_EXPORT Settings
 {
 public:
-    enum Key {
+    enum Key { ///TODO: convert to camel case
         Opacity = 0,
         Blacklist,
         Removetitle,
@@ -50,6 +50,7 @@ public:
         Animatescroll,
         Lockdocks,
         Differentinactive,
+
         Decobuttons,
         Decoicon,
         Decoshadowsize,
@@ -58,10 +59,12 @@ public:
         Decomincolor,
         Decomaxcolor,
         Decoclosecolor,
+
         Pushbtnrnd,
         Pushbtnshadow,
         Pushbtngrad,
         Pushbtntint,
+
         Toolbtnrnd,
         Toolbtnshadow,
         Toolbtngrad,
@@ -73,11 +76,13 @@ public:
         Toolbtnmorph,
         Toolbtnnormal,
         Toolbtnmask,
+
         Inputrnd,
         Inputunornd,
         Inputshadow,
         Inputgrad,
         Inputtint,
+
         Tabdocstyle,
         Tabselectors,
         Tabsaf,
@@ -90,6 +95,7 @@ public:
         Tabcloserrnd,
         Tabdocwidth,
         Tabinvdoc,
+
         Unoenabled,
         Unograd,
         Unotint,
@@ -100,10 +106,13 @@ public:
         Unocont,
         Unoopacity,
         Unocontblur,
+        Unooverlay,
+
         Menuicons,
         Menugrad,
         Menuitemgrad,
         Menuitemshadow,
+
         Slidersize,
         Sliderdot,
         Slidermetal,
@@ -112,33 +121,45 @@ public:
         Slidergrooveshadow,
         Sliderfillgroove,
         Sliderinvert,
+
         Scrollersize,
         Scrollerstyle,
         Scrollergrad,
         Scrollergroove,
         Scrollerinvert,
         Scrollergshadow,
+        Scrollseparator,
+
         Viewtreelines,
         Viewitemgrad,
         Viewitemshadow,
         Viewitemrnd,
         Viewheadergrad,
+        Viewheadershadow,
+        Viewheaderrnd,
         Viewopacity,
+        Viewtrad,
+        Viewrnd,
+        Viewshadow,
+
         Progshadow,
         Progrnd,
         Progtxthover,
         Progtxtpos,
         Proggrad,
         Progstripe,
+
         Wingrad,
         Winnoise,
         Winnoisefile,
         Winnoisestyle,
         Winhor,
+
         Shadowopacity,
         Shadowillumination,
         Shadowdarkraised,
         Shadowontextopacity,
+
         Keycount,
         Invalid
     };
@@ -192,6 +213,7 @@ public:
             quint8 size, style, grooveShadow;
             qint16 grooveStyle;
             Gradient grooveGrad, sliderGrad;
+            bool separator;
         } scrollers;
         struct progressbars
         {
@@ -219,7 +241,7 @@ public:
             quint8 noise, blur;
             qint8 noiseStyle;
             float opacity;
-            bool enabled, hor, contAware;
+            bool enabled, hor, contAware, overlay;
         } uno;
         struct windows
         {
@@ -237,9 +259,9 @@ public:
         } menues;
         struct views
         {
-            bool treelines;
+            bool treelines, traditional;
             Gradient itemGradient, headerGradient;
-            quint8 itemShadow, itemRnd, opacity;
+            quint8 itemShadow, itemRnd, opacity, viewRnd, viewShadow, headerShadow, headerRnd;
         } views;
     } Conf;
     static Conf conf;

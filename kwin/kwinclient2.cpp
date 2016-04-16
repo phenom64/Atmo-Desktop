@@ -211,6 +211,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_isHovered(false)
     , m_embedder(0)
     , m_tries(0)
+    , m_bevel(0)
 {
     if (s_factory)
         setParent(s_factory);
@@ -230,9 +231,10 @@ Deco::~Deco()
 void
 Deco::init()
 {
+    KDecoration2::Decoration::init();
     setBorders(QMargins(0, 0, 0, 0));
     setTitleHeight(client().data()->isModal()?20:25);
-
+    m_bevel = 1;
     if (const uint id = client().data()->windowId())
     {
         AdaptorManager::instance()->addDeco(this);
@@ -338,7 +340,18 @@ Deco::updateData()
         if (!uno)
         {
             setBorders(QMargins(border(),titleHeight(),border(),border()));
+            if (m_grip)
+            {
+                m_grip->deleteLater();
+                m_grip = 0;
+            }
             m_winGradient = m_wd->windowGradient();
+            if (m_bevel != 1)
+            {
+                m_bevel = 1;
+                for (int i = 0; i < 3; ++i)
+                    m_bevelCorner[i] = QPixmap();
+            }
         }
         const bool buttonShouldBeVisible(titleHeight()>6);
         const int buttonStyle = m_wd->value<int>(WindowData::Buttons);
@@ -506,8 +519,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
 
     const int bgLum(Color::lum(bgColor()));
     const bool isDark(Color::lum(fgColor()) > bgLum);
-
-    if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal())
+    if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal() && !client().data()->isMaximized())
         paintBevel(painter, bgLum);
 
     if ((m_wd && m_wd->value<bool>(WindowData::Separator)) || (!m_wd && m_separator))
@@ -617,7 +629,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
 void
 Deco::paintBevel(QPainter *painter, const int bgLum)
 {
-#if 0
+//#if 0
     if (m_bevelCorner[0].isNull() || m_prevLum != bgLum)
     {
         static const int size(5);
@@ -634,25 +646,25 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
         tmp.fill(Qt::transparent);
         QPainter pt(&tmp);
         pt.setRenderHint(QPainter::Antialiasing);
-        const QRectF bevel(0.5f, 0.5f, tmp.width()-0.5f, tmp.height());
-        QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
-        lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255/*.0f*/, bgLum/**1.1f*/)));
-        lg.setColorAt(0.5f, Qt::transparent);
-        pt.setBrush(lg);
+//        const QRectF bevel(0.5f, 0.5f, tmp.width()-0.5f, tmp.height());
+//        QLinearGradient lg(bevel.topLeft(), bevel.bottomLeft());
+//        lg.setColorAt(0.0f, QColor(255, 255, 255, qMin(255/*.0f*/, bgLum/**1.1f*/)));
+//        lg.setColorAt(0.5f, Qt::transparent);
+        pt.setBrush(QColor(255, 255, 255, qMin(255/*.0f*/, bgLum/**1.1f*/)));
         pt.setPen(Qt::NoPen);
         pt.drawEllipse(tmp.rect());
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         pt.setBrush(Qt::black);
-        pt.drawEllipse(tmp.rect().adjusted(1, 1, -1, -1));
+        pt.drawEllipse(tmp.rect().translated(0, m_bevel));
         pt.end();
         m_bevelCorner[0] = tmp.copy(QRect(0, 0, size, size));
         m_bevelCorner[1] = tmp.copy(QRect(size+1, 0, size, size));
-        m_bevelCorner[2] = tmp.copy(size, 0, 1, 1);
+        m_bevelCorner[2] = tmp.copy(size, 0, 1, m_bevel);
     }
-    painter->drawPixmap(QRect(titleBar().topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
-    painter->drawPixmap(QRect(titleBar().topRight()-QPoint(m_bevelCorner[1].width()-1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
-    painter->drawTiledPixmap(titleBar().adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(titleBar().height()-1)), m_bevelCorner[2]);
-#endif
+    painter->drawPixmap(QRect(rect().topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
+    painter->drawPixmap(QRect(rect().topRight()-QPoint(m_bevelCorner[1].width()-1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
+    painter->drawTiledPixmap(rect().adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(rect().height()-m_bevel)), m_bevelCorner[2]);
+//#endif
 }
 
 const QColor

@@ -2,6 +2,7 @@
 #include "stylelib/ops.h"
 #include "stylelib/widgets.h"
 #include "config/settings.h"
+#include "stylelib/windowhelpers.h"
 
 #include <QSplitterHandle>
 #include <QStyle>
@@ -348,8 +349,9 @@ Overlay::updateOverlay()
 
         const bool splitter = isSplitter(w, (Position)i);
         const bool statusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
-        const bool tabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode() && l[i] == Top);
-        if ( statusBar || splitter || tabBar )
+//        const bool tabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode() && l[i] == Top);
+        const bool inUno = dConf.uno.enabled && WindowHelpers::unoHeight(w->window()) >= w->mapTo(w->window(), QPoint()).y();
+        if ( statusBar || splitter || inUno )
         {
             removeSide(l[i]);
         }

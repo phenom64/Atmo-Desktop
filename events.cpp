@@ -18,6 +18,7 @@
 #include <QPushButton>
 #include <QDebug>
 #include <QScrollBar>
+#include <QHeaderView>
 
 #include "dsp.h"
 #include "stylelib/xhandler.h"
@@ -132,6 +133,7 @@ Style::paintEvent(QObject *o, QEvent *e)
 
     if (qobject_cast<QTabWidget *>(w))
     {
+        return false;
         QTabBar *tb = w->findChild<QTabBar *>();
         if (!tb)
             return false;

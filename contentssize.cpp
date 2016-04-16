@@ -356,7 +356,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     case CT_ItemViewItem:
     {
         QSize sz(QCommonStyle::sizeFromContents(ct, opt, contentsSize, widget));
-        static const int sm = GFX::shadowMargin(dConf.views.itemShadow)*2 + dConf.views.itemRnd;
+        static const int sm = GFX::shadowMargin(dConf.views.itemShadow) * 2 + 2;
         sz.rheight() += sm;
 #if 0
         const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);

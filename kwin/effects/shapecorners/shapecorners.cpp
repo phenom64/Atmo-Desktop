@@ -172,12 +172,13 @@ ShapeCornersEffect::reconfigure(ReconfigureFlags flags)
 void
 ShapeCornersEffect::prePaintWindow(KWin::EffectWindow *w, KWin::WindowPrePaintData &data, int time)
 {
+
     if (!m_shader->isValid()
             || !w->isPaintingEnabled()
             || !w->hasDecoration()
             || KWin::effects->activeFullScreenEffect()
             || w->isDesktop()
-            || !w->isNormalWindow()
+            || w->isModal()
             || data.quads.isTransformed())
     {
         KWin::effects->prePaintWindow(w, data, time);
@@ -219,7 +220,7 @@ ShapeCornersEffect::paintWindow(KWin::EffectWindow *w, int mask, QRegion region,
             || !w->hasDecoration()
             || KWin::effects->activeFullScreenEffect()
             || w->isDesktop()
-            || !w->isNormalWindow()
+            || w->isModal()
             || data.quads.isTransformed()
             || (mask & PAINT_WINDOW_TRANSFORMED)
             || !hasShadow(data.quads))

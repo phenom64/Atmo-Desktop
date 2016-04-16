@@ -504,19 +504,16 @@ Window::eventFilter(QObject *o, QEvent *e)
 
             }
             GFX::drawWindowBg(&p, w, bgColor, w->rect());
-            if (WindowData *data = WindowData::memory(w->winId(), w))
-            {
+//            if (WindowData *data = WindowData::memory(w->winId(), w))
+//            {
                 QRect line(0, WindowHelpers::unoHeight(w), w->width(), 1);
                 if (dConf.uno.enabled)
-                {
-                    if (!data->value<bool>(WindowData::Separator, true))
-                    {
-                        p.fillRect(line, QColor(0, 0, 0, dConf.shadows.opacity));
-                        line.translate(0, 1);
-                    }
+//                {
+//                    if (!data->value<bool>(WindowData::Separator, true))
+//                        line.translate(0, 1);
                     p.fillRect(line, QColor(255, 255, 255, dConf.shadows.illumination));
-                }
-            }
+//                }
+//            }
             p.end();
         }
         return false;
@@ -681,8 +678,15 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
         p->setBrushOrigin(bo);
         data->unlock();
     }
-    if (dConf.uno.contAware && w->mapTo(win, QPoint(0, 0)).y() < clientUno)
+    const QPoint tl = w->mapTo(win, QPoint(0, 0));
+    if (dConf.uno.contAware && tl.y() < clientUno)
         ScrollWatcher::drawContBg(p, win, r, offset);
+
+    if (tl.y()+r.height() == clientUno)
+    {
+        r.setTop(r.bottom()); //bottom() == y()+height()-1
+        p->fillRect(r, QColor(0, 0, 0, dConf.shadows.opacity));
+    }
     return true;
 }
 
