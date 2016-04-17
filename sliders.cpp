@@ -65,7 +65,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
 //            bgc = p->palette().color(QPalette::Window);
 //            fgc = p->palette().color(QPalette::WindowText);
 //        }
-        else if (widget->parentWidget() && widget->parentWidget()->inherits("KTextEditor::ViewPrivate"))
+        else if (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTextEditor::ViewPrivate"))
         {
             isKate = true;
             static QColor *c(0);
@@ -443,7 +443,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
         lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
         g = lg;
     }
-    const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:Raised);
+    const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:dConf.sliders.grooveShadow==-1?-1:Raised);
     GFX::drawClickable(sliderShadow, slider, painter, g, MaxRnd, hl, All, 0, widget);
 
     if (dConf.sliders.dot && !dConf.sliders.metallic)

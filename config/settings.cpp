@@ -74,7 +74,7 @@ static const char *s_key[] = {
     "tabs.closebuttonside",
     "tabs.closerrnd",
     "tabs.docwidth",
-    "tabs.invertDocumode",
+    "tabs.invertdocumode",
 
     "uno",
     "uno.gradient",

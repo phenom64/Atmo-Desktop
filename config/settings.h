@@ -204,7 +204,8 @@ public:
         struct sliders
         {
             bool dot, fillGroove, metallic;
-            quint8 size, grooveShadow;
+            qint8 grooveShadow;
+            quint8 size;
             qint16 grooveStyle;
             Gradient grooveGrad, sliderGrad;
         } sliders;
