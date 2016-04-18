@@ -30,6 +30,7 @@ static const char *s_key[] = {
     "animatescroll",
     "lockdocks",
     "differentinactive",
+    "icontheme",
 
     "deco.buttons",
     "deco.icon",
@@ -157,6 +158,7 @@ static const char *s_description[] = {
     /*"animatescroll"*/             "Smooth scrolling globally, known to cause trouble in certain cases, mainly dolphin",
     /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles with Ctrl+Alt+D",
     /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
+    /*"icontheme"*/                 "Icontheme to use, must exist in one of the icontheme pats and must have a index.theme file in it, only read for presets, not global dsp.conf.",
 
     /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
     /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
@@ -284,6 +286,7 @@ static const QVariant s_default[] = {
     false,
     false,
     false,
+    QString(),
 
     0,
     true,
@@ -818,6 +821,7 @@ Settings::read()
     conf.animateScroll          = readBool(Animatescroll);
     conf.lockDocks              = readBool(Lockdocks);
     conf.differentInactive      = readBool(Differentinactive);
+    conf.iconTheme              = instance()->m_presetSettings ? readString(Icontheme) : QString();
     //deco
     conf.deco.buttons           = readInt(Decobuttons);
     conf.deco.icon              = readBool(Decoicon);
@@ -929,6 +933,18 @@ Settings::read()
     conf.shadows.darkRaisedEdges= readBool(Shadowdarkraised);
     conf.shadows.onTextOpacity  = readInt(Shadowontextopacity)*2.55f;
     readPalette();
+}
+
+QStringList
+Settings::availableIconThemes()
+{
+    QStringList availableThemes;
+    for (int i = 0; i < QIcon::themeSearchPaths().size(); ++i)
+    {
+        QDir dir(QIcon::themeSearchPaths().at(i));
+        availableThemes << dir.entryList(QDir::NoDotAndDotDot|QDir::Dirs);
+    }
+    return availableThemes;
 }
 
 void

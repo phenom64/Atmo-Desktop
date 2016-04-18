@@ -44,8 +44,11 @@ public:
     inline void setButtonStyle(const ButtonStyle s) { m_buttonStyle = s; m_bgPix.clear(); }
     inline const ButtonStyle buttonStyle() const { return m_buttonStyle; }
 
-    inline void setShadowOpacity(const int o) { m_shadowOpacity = o; m_bgPix.clear(); }
+    inline void setShadowOpacity(const int o) { m_shadowOpacity = o; dConf.shadows.opacity = o; dConf.shadows.onTextOpacity = o; m_bgPix.clear(); }
     inline const int shadowOpacity() const { return m_shadowOpacity; }
+
+    inline void setShadowIlluminationOpacity(const int o) { m_shadowIllumination = o; dConf.shadows.illumination = o; m_bgPix.clear(); }
+    inline const int shadowIlluminationOpacity() const { return m_shadowIllumination; }
 
     //if style is followtoolbtn...
     inline void setShadowStyle(const ShadowStyle s) { m_shadowStyle = s; m_bgPix.clear(); }

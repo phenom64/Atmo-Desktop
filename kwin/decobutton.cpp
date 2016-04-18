@@ -300,6 +300,12 @@ EmbeddedWidget::setButtonShadowOpacity(const int o)
 }
 
 void
+EmbeddedWidget::setButtonShadowIlluminationOpacity(const int o)
+{
+    BUTTONS(BUTTON->setShadowIlluminationOpacity(o);)
+}
+
+void
 EmbeddedWidget::setButtonStyle(ButtonBase::ButtonStyle style)
 {
     BUTTONS(BUTTON->setButtonStyle(style);)
@@ -368,6 +374,13 @@ EmbedHandler::setButtonShadowOpacity(const int o)
 {
     RUN(EW->setButtonShadowOpacity(o);)
 }
+
+void
+EmbedHandler::setButtonShadowIlluminationOpacity(const int o)
+{
+    RUN(EW->setButtonShadowIlluminationOpacity(o);)
+}
+
 
 void
 EmbedHandler::setButtonStyle(ButtonBase::ButtonStyle style)

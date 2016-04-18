@@ -23,7 +23,7 @@ public:
     static QPixmap mid(const QPixmap &p1, const QBrush &b, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
     static QPixmap mid(const QPixmap &p1, const QPixmap &p2, const int a1 = 1, const int a2 = 1, const QSize &sz = QSize());
     static void colortoalpha(float *a1, float *a2, float *a3, float *a4, float c1, float c2, float c3);
-    static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const QColor &ref = QColor());
+    static QPixmap sunkenized(const QRect &r, const QPixmap &source, const bool isDark = false, const int shadowOpacity = 127);
     static QPixmap monochromized(const QPixmap &source, const QColor &color, const Effect effect = Noeffect, bool isDark = false);
     static int stretch(const int v, const float n = 1.5f);
     static int pushed(const float v, const float inlo, const float inup, const float outlo = 0.0f, const float outup = 255.0f);

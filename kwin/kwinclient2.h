@@ -157,6 +157,7 @@ private:
     WindowData *m_wd; 
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
+    quint8 m_illumination, m_textBevOpacity;
     bool m_separator, m_isHovered;
 };
 

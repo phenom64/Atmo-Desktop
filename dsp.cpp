@@ -89,6 +89,11 @@ Style::Style() : QCommonStyle()
     if (XHandler::opacity() < 1.0f)
         qApp->installEventFilter(&t);
 #endif
+    if (!dConf.iconTheme.isEmpty() && Settings::availableIconThemes().contains(dConf.iconTheme))
+    {
+        qDebug() << dConf.iconTheme << "found, trying to apply...";
+        QIcon::setThemeName(dConf.iconTheme);
+    }
 }
 
 Style::~Style()
@@ -175,7 +180,8 @@ Style::drawItemText(QPainter *painter, const QRect &rect, int flags, const QPale
         painter->setPen(bevel);
         painter->drawText(rect.translated(0, 1), flags, text);
     }
-    painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
+    if (textRole != QPalette::NoRole)
+        painter->setPen(pal.color(enabled ? QPalette::Active : QPalette::Disabled, textRole));
     painter->drawText(rect, flags, text);
     painter->setPen(pen);
 }

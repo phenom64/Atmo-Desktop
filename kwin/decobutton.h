@@ -51,6 +51,7 @@ public:
 
     const QPoint topLeft() const;
     void setButtonShadowOpacity(const int o);
+    void setButtonShadowIlluminationOpacity(const int o);
     void setButtonStyle(ButtonBase::ButtonStyle style);
     void setButtonShadow(const ShadowStyle ss);
     void setCloseColor(const QColor &c);
@@ -84,6 +85,7 @@ public:
     ~EmbedHandler();
     void repaint();
     void setButtonShadowOpacity(const int o);
+    void setButtonShadowIlluminationOpacity(const int o);
     void setButtonStyle(ButtonBase::ButtonStyle style);
     void setButtonShadow(const ShadowStyle ss);
     void setCloseColor(const QColor &c);

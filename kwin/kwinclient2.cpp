@@ -212,6 +212,8 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_embedder(0)
     , m_tries(0)
     , m_bevel(0)
+    , m_illumination(0)
+    , m_textBevOpacity(0)
 {
     if (s_factory)
         setParent(s_factory);
@@ -235,6 +237,8 @@ Deco::init()
     setBorders(QMargins(0, 0, 0, 0));
     setTitleHeight(client().data()->isModal()?20:25);
     m_bevel = 1;
+    m_illumination = 127;
+    m_textBevOpacity = 127;
     if (const uint id = client().data()->windowId())
     {
         AdaptorManager::instance()->addDeco(this);
@@ -330,6 +334,8 @@ Deco::updateData()
         initMemory(WindowData::memory(client().data()->windowId(), this));
     if (m_wd)
     {
+        m_illumination = m_wd->value<uint>(WindowData::Illumination, 127);
+        m_textBevOpacity = m_wd->value<uint>(WindowData::TextBevOpacity, 127);
         if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embedder)
             m_embedder = new EmbedHandler(this);
         else if (!m_wd->value<bool>(WindowData::EmbeddedButtons, false) && m_embedder)
@@ -361,6 +367,7 @@ Deco::updateData()
         {
             m_embedder->setButtonStyle(buttonStyle);
             m_embedder->setButtonShadowOpacity(shadowOpacity);
+            m_embedder->setButtonShadowIlluminationOpacity(m_illumination);
             m_embedder->repaint();
             m_embedder->setButtonShadow(m_wd->value<int>(WindowData::FollowDecoShadow));
             m_embedder->setCloseColor(m_wd->closeColor());
@@ -381,6 +388,7 @@ Deco::updateData()
                         b->setButtonStyle(buttonStyle);
                         b->setShadowStyle(m_wd->value<int>(WindowData::FollowDecoShadow));
                         b->setShadowOpacity(shadowOpacity);
+                        b->setShadowIlluminationOpacity(m_illumination);
                         b->setVisible(buttonShouldBeVisible);
                         b->setGradient(g);
                         switch (b->ButtonBase::type())
@@ -404,6 +412,7 @@ Deco::updateData()
                         b->setButtonStyle(buttonStyle);
                         b->setShadowStyle(m_wd?m_wd->value<int>(WindowData::FollowDecoShadow):dConf.toolbtn.shadow);
                         b->setShadowOpacity(shadowOpacity);
+                        b->setShadowIlluminationOpacity(m_illumination);
                         b->setVisible(buttonShouldBeVisible);
                         b->setGradient(g);
                         switch (b->ButtonBase::type())
@@ -520,7 +529,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     const int bgLum(Color::lum(bgColor()));
     const bool isDark(Color::lum(fgColor()) > bgLum);
     if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal() && !client().data()->isMaximized())
-        paintBevel(painter, bgLum);
+        paintBevel(painter, m_illumination/*bgLum*/);
 
     if ((m_wd && m_wd->value<bool>(WindowData::Separator)) || (!m_wd && m_separator))
     {
@@ -573,10 +582,10 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             text = painter->fontMetrics().elidedText(text, Qt::ElideRight, maxW, Qt::TextShowMnemonic);
             textRect = painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text);
         }
-        if (client().data()->isActive())
+        if (client().data()->isActive() && m_textBevOpacity)
         {
             const int rgb(isDark?0:255);
-            painter->setPen(QColor(rgb, rgb, rgb, 127));
+            painter->setPen(QColor(rgb, rgb, rgb, m_textBevOpacity));
             painter->drawText(textRect.translated(0, 1), Qt::AlignCenter|Qt::TextHideMnemonic, text);
         }
 

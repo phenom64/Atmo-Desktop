@@ -1,6 +1,7 @@
 #include "fx.h"
 #include <math.h>
 #include "color.h"
+#include "../config/settings.h"
 #include <QImage>
 #include <QPixmap>
 #include <QPainter>
@@ -290,7 +291,7 @@ FX::colortoalpha (float *a1,
 }
 
 QPixmap
-FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const QColor &ref)
+FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const int shadowOpacity)
 {
     int m(4);
     QImage img(r.size()+QSize(m, m), QImage::Format_ARGB32);
@@ -298,7 +299,7 @@ FX::sunkenized(const QRect &r, const QPixmap &source, const bool isDark, const Q
     img.fill(Qt::transparent);
     QPainter p(&img);
     int rgb(isDark?255:0);
-    int alpha(/*qMin(*/255.0f/*, 2*dConf.shadows.opacity)*/);
+    int alpha(/*qMin(*/shadowOpacity/*, 2*dConf.shadows.opacity)*/);
     p.fillRect(img.rect(), QColor(rgb, rgb, rgb, alpha));
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.drawTiledPixmap(r.translated(m, m), source);
@@ -525,7 +526,7 @@ QPixmap
 FX::monochromized(const QPixmap &source, const QColor &color, const Effect effect, bool isDark)
 {
     const QPixmap &result = QPixmap::fromImage(stretched(source.toImage(), color));
-    if (effect == Inset)
+    if (effect == Inset && dConf.shadows.onTextOpacity)
         return sunkenized(result.rect(), result, isDark);
     return result;
 }

@@ -133,10 +133,10 @@ Shadow::genShadow()
         Mask::render(rect, Qt::black, &pt, m_round-1);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
 
-        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
-        lg.setColorAt(0, Qt::transparent);
-        lg.setColorAt(1, QColor(0, 0, 0, 63));
-        pt.fillRect(rect, lg);
+//        QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
+//        lg.setColorAt(0, Qt::transparent);
+//        lg.setColorAt(1, QColor(0, 0, 0, 63));
+//        pt.fillRect(rect, lg);
 
         Mask::render(rect.adjusted(1, 1, -1, -1), Qt::black, &pt, m_round/*-1*/);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);

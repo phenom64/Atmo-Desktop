@@ -3,12 +3,14 @@
 #include <QDebug>
 #include <typeinfo>
 #include <QImageReader>
+#include <QList>
+#include <QString>
 #include "styleconfig.h"
 #include "settings.h"
 #include <iostream>     // std::cout, std::endl
 #include <iomanip>      // std::setw
 
-enum Task { WriteDefaults = 0, Edit, PrintInfo, ListVars, ShadowInfo, GenHighlight, Invalid };
+enum Task { WriteDefaults = 0, Edit, IconPaths, PrintIconThemes, PrintInfo, ListVars, ShadowInfo, GenHighlight, Invalid };
 
 Task getTask(int argc, char *argv[])
 {
@@ -18,6 +20,10 @@ Task getTask(int argc, char *argv[])
             return WriteDefaults;
         if (!qstrcmp(argv[1], "--edit"))
             return Edit;
+        if (!qstrcmp(argv[1], "--listiconpaths"))
+            return IconPaths;
+        if (!qstrcmp(argv[1], "--listiconthemes"))
+            return PrintIconThemes;
         if (!qstrcmp(argv[1], "--printinfo") && argc > 2)
             return PrintInfo;
         if (!qstrcmp(argv[1], "--listvars"))
@@ -26,6 +32,7 @@ Task getTask(int argc, char *argv[])
             return ShadowInfo;
         if (!qstrcmp(argv[1], "--genhighlight") && argc > 2)
             return GenHighlight;
+
     }
     return Invalid;
 }
@@ -67,6 +74,8 @@ static void printHelp()
               << "--edit                          Open dsp.conf for editing in your default text editor\n"
               << "--printinfo <var>               Print information about <var>\n"
               << "--listvars                      List available variables\n"
+              << "--listiconpaths                 List paths where qt looks for icons\n"
+              << "--listiconthemes                List available icon themes\n"
               << "--shadowinfo <int>              print info about shadow <int>";
 }
 
@@ -180,6 +189,22 @@ static void genHighlight(const QString &file)
     std::cout << std::endl << "Generated color: " << std::endl << color.toLocal8Bit().data() << std::endl;
 }
 
+static void printIconPaths()
+{
+    const QStringList icons = QIcon::themeSearchPaths();
+    std::cout << std::endl << "Qt looks for icons in:" << std::endl << std::endl;
+    for (int i = 0; i < icons.size(); ++i)
+        std::cout << "\t" << QString(icons.at(i)).toLocal8Bit().data() << std::endl;
+}
+
+static void printIconThemes()
+{
+    const QStringList themes = DSP::Settings::availableIconThemes();
+    std::cout << std::endl << "Available icon themes:" << std::endl << std::endl;
+    for (int i = 0; i < themes.size(); ++i)
+        std::cout << "\t" << QString(themes.at(i)).toLocal8Bit().data() << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     const Task t = getTask(argc, argv);
@@ -188,6 +213,8 @@ int main(int argc, char *argv[])
     {
     case WriteDefaults: DSP::Settings::writeDefaults(); break;
     case Edit: DSP::Settings::edit(); break;
+    case IconPaths: printIconPaths(); break;
+    case PrintIconThemes: printIconThemes(); break;
     case PrintInfo:
     {
         DSP::Settings::Key k = DSP::Settings::key(argv[2]);

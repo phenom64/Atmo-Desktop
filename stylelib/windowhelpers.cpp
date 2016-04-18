@@ -133,6 +133,8 @@ WindowHelpers::updateWindowData(qulonglong window)
     data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
     data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity);
+    data->setValue<int>(WindowData::Illumination, dConf.shadows.illumination);
+    data->setValue<int>(WindowData::TextBevOpacity, dConf.shadows.onTextOpacity);
     data->setValue<int>(WindowData::FollowDecoShadow, dConf.toolbtn.shadow);
     data->setCloseColor(QColor::fromRgba(dConf.deco.close));
     data->setMaxColor(QColor::fromRgba(dConf.deco.max));

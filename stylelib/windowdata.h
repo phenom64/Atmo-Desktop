@@ -98,7 +98,9 @@ public:
         ShadowOpacityMask =             0x0000fe00,
         LeftEmbedSizeMask =             0x00fe0000,
         RightEmbedSizeMask=             0xff000000,
-        FollowDecoShadowMask=           0x0000000f
+        FollowDecoShadowMask=           0x0000000f,
+        IlluminationMask =              0xff000000,
+        TextBevOpacityMask =            0x00ff0000,
     };
     enum ValueType {
         Separator = 0,
@@ -116,7 +118,9 @@ public:
         ShadowOpacity,
         LeftEmbedSize,
         RightEmbedSize,
-        FollowDecoShadow
+        FollowDecoShadow,
+        Illumination,
+        TextBevOpacity
     };
     enum SharedValue { //when data cast to unsigned int ptr
         BgColor = 3, //first ones reserved for data
@@ -160,6 +164,8 @@ public:
             case LeftEmbedSize:     d[1] = (d[1] & ~LeftEmbedSizeMask) | ((value << 16) & LeftEmbedSizeMask); break;
             case RightEmbedSize:    d[1] = (d[1] & ~RightEmbedSizeMask) | ((value << 24) & RightEmbedSizeMask); break;
             case FollowDecoShadow:  d[2] = (d[2] & ~FollowDecoShadowMask) | (value & FollowDecoShadowMask); break;
+            case Illumination:      d[2] = (d[2] & ~IlluminationMask) | ((value<<24) & IlluminationMask); break;
+            case TextBevOpacity:    d[2] = (d[2] & ~TextBevOpacityMask) | ((value<<16) & TextBevOpacityMask); break;
             default: break;
             }
             unlock();
@@ -190,6 +196,8 @@ public:
             case LeftEmbedSize:     return (T)((d[1] & LeftEmbedSizeMask) >> 16);
             case RightEmbedSize:    return (T)((d[1] & RightEmbedSizeMask) >> 24);
             case FollowDecoShadow:  return (T)(d[2] & FollowDecoShadowMask);
+            case Illumination:      return (T)(d[2] & IlluminationMask) >> 24;
+            case TextBevOpacity:    return (T)(d[2] & TextBevOpacityMask) >> 16;
             default:                return T();
             }
         }

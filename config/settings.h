@@ -50,6 +50,7 @@ public:
         Animatescroll,
         Lockdocks,
         Differentinactive,
+        Icontheme,
 
         Decobuttons,
         Decoicon,
@@ -168,7 +169,7 @@ public:
     typedef uint App;
     typedef struct _Conf
     {
-        QString appName;
+        QString appName, iconTheme;
         App app;
         float opacity;
         QStringList blackList;
@@ -278,6 +279,8 @@ public:
 
     static QSettings *settings();
     static QSettings *paletteSettings();
+
+    static QStringList availableIconThemes();
 
     static void setFileName(const QString &file);
     static void restoreFileName();
