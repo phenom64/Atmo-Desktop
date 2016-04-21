@@ -800,29 +800,33 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
         }
         parent = parent->parentWidget();
     }
-    const QRect r = rect;
+    const QRect rt = rect;
+    int l(0),t(0),r(0),b(0);
     if (!dConf.uno.enabled)
 //    if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
     {
-        int l,t,r,b;
         XHandler::getDecoBorders(l,r,t,b, w->window()->winId());
         offset += QPoint(0, t);
     }
     if (dConf.windows.noise)
-        p->drawTiledPixmap(r, GFX::noise(true), offset);
+        p->drawTiledPixmap(rt, GFX::noise(true), offset);
     else
-        p->fillRect(r, bg);
+        p->fillRect(rt, bg);
 
     if (!dConf.windows.gradient.isEmpty())
     {
-        const QRect wr(w->mapFrom(w->window(), QPoint()), w->window()->size());
+        QRect wr(w->mapFrom(w->window(), rt.topLeft()), w->window()->size());
+        wr.setTop(wr.top()-t);
+        wr.setBottom(wr.bottom()+b);
+        wr.setLeft(wr.left()-l);
+        wr.setRight(wr.right()+r);
         QLinearGradient lg(wr.topLeft(), wr.bottomLeft());
         if (dConf.windows.hor)
             lg = QLinearGradient(wr.topLeft(), wr.topRight());
         lg.setStops(Settings::gradientStops(dConf.windows.gradient));
         const QPainter::CompositionMode mode = p->compositionMode();
         p->setCompositionMode(QPainter::CompositionMode_Overlay);
-        p->fillRect(r, lg);
+        p->fillRect(rt, lg);
         p->setCompositionMode(mode);
     }
 
