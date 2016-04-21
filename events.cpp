@@ -114,6 +114,20 @@ Style::eventFilter(QObject *o, QEvent *e)
         }
         break;
     }
+    case QEvent::WindowStateChange:
+    {
+        if (qobject_cast<QMainWindow *>(w))
+        {
+            if (QWidget *center = static_cast<QMainWindow *>(w)->centralWidget())
+                if (center->property("DSP_center").toBool())
+                {
+                    if (w->isFullScreen())
+                        center->setContentsMargins(0,0,0,0);
+                    else
+                        center->setContentsMargins(8,8,8,8);
+                }
+        }
+    }
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);
@@ -230,6 +244,12 @@ Style::paintEvent(QObject *o, QEvent *e)
         drawTabBar(&opt, &p);
         dConf.tabs.regular = reg;
         return true;
+    }
+    else if (w->property("DSP_center").toBool())
+    {
+        QPainter p(w);
+        GFX::drawClickable(Raised, w->rect(), &p, w->palette().color(QPalette::Window), 6);
+        return false;
     }
 //    else if (w->inherits("KTextEditor::View"))
 //    {

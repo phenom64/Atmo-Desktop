@@ -31,6 +31,8 @@ static const char *s_key[] = {
     "lockdocks",
     "differentinactive",
     "icontheme",
+    "iconpaths",
+    "framernd",
 
     "deco.buttons",
     "deco.icon",
@@ -159,6 +161,8 @@ static const char *s_description[] = {
     /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles with Ctrl+Alt+D",
     /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
     /*"icontheme"*/                 "Icontheme to use, must exist in one of the icontheme pats and must have a index.theme file in it, only read for presets, not global dsp.conf.",
+    /*"iconpaths"*/                 "Extra paths where to look for icons, ~ means $HOME, stringlist.",
+    /*"framernd"*/                  "Roundness for frames in general, groupboxes, sunken frames... raised frames etc.",
 
     /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
     /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
@@ -287,6 +291,8 @@ static const QVariant s_default[] = {
     false,
     false,
     QString(),
+    QStringList(),
+    8,
 
     0,
     true,
@@ -822,6 +828,8 @@ Settings::read()
     conf.lockDocks              = readBool(Lockdocks);
     conf.differentInactive      = readBool(Differentinactive);
     conf.iconTheme              = instance()->m_presetSettings ? readString(Icontheme) : QString();
+    conf.iconPaths              = readStringList(Iconpaths);
+    conf.frameRnd               = readInt(Framernd);
     //deco
     conf.deco.buttons           = readInt(Decobuttons);
     conf.deco.icon              = readBool(Decoicon);
@@ -938,13 +946,37 @@ Settings::read()
 QStringList
 Settings::availableIconThemes()
 {
-    QStringList availableThemes;
-    for (int i = 0; i < QIcon::themeSearchPaths().size(); ++i)
+    static bool inited(false);
+    static QStringList availableThemes;
+    if (inited)
+        return availableThemes;
+    QStringList availablePaths = QIcon::themeSearchPaths();
+    QStringList userPaths = readStringList(Iconpaths);
+    formatIconPathsList(userPaths);
+    availablePaths << userPaths;
+    QIcon::setThemeSearchPaths(availablePaths);
+
+    for (int i = 0; i < availablePaths.size(); ++i)
     {
-        QDir dir(QIcon::themeSearchPaths().at(i));
+        QDir dir(availablePaths.at(i));
         availableThemes << dir.entryList(QDir::NoDotAndDotDot|QDir::Dirs);
     }
+    inited = true;
     return availableThemes;
+}
+
+void
+Settings::formatIconPathsList(QStringList &paths)
+{
+    static const QString home = QDir::homePath();
+    QStringList newPaths;
+    for (int i = 0; i < paths.size(); ++i)
+    {
+        QString path = paths.at(i);
+        path.replace("~", home);
+        newPaths << path;
+    }
+    paths = newPaths;
 }
 
 void

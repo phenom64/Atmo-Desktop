@@ -51,6 +51,7 @@ QStyle
 Q_EXPORT_PLUGIN2(StyleProject, ProjectStylePlugin)
 #endif
 
+#if 0
 #if QT_VERSION >= 0x050000
 class TranslucencyWatcher : public QObject
 {
@@ -77,6 +78,7 @@ protected:
 };
 static TranslucencyWatcher t;
 #endif
+#endif
 
 Style::Style() : QCommonStyle()
 {
@@ -85,9 +87,11 @@ Style::Style() : QCommonStyle()
     init();
     assignMethods();
     GFX::generateData();
+#if 0
 #if QT_VERSION >= 0x050000
     if (XHandler::opacity() < 1.0f)
         qApp->installEventFilter(&t);
+#endif
 #endif
     if (!dConf.iconTheme.isEmpty() && Settings::availableIconThemes().contains(dConf.iconTheme))
     {

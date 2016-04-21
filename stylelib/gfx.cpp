@@ -838,4 +838,10 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
             p->fillRect(gb->rect(), QColor(0,0,0,15));
         parent = parent->parentWidget();
     }
+//    if (XHandler::opacity() < 1.0f)
+//    {
+//        p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+//        p->fillRect(rect, QColor(0,0,0,XHandler::opacity()*255.0f));
+//        p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+//    }
 }

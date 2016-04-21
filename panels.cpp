@@ -131,7 +131,7 @@ Style::drawGroupBox(const QStyleOptionComplex *option, QPainter *painter, const 
     QRect cont(subControlRect(CC_GroupBox, opt, SC_GroupBoxFrame, widget));
 
 //    GFX::drawShadow(Sunken, cont, painter, isEnabled(opt), 6);
-    GFX::drawClickable(Sunken, cont, painter, QColor(0, 0, 0, 15), 6);
+    GFX::drawClickable(Sunken, cont, painter, QColor(0, 0, 0, 15), dConf.frameRnd);
     if (opt->subControls & SC_GroupBoxCheckBox)
     {
         QStyleOptionButton btn;
@@ -276,15 +276,15 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
 //        static const ShadowStyle style = Raised;
 //        static const int sm = FrameWidth - (GFX::shadowMargin(style)/*+1*/);
 //        r.adjust(sm, sm, -sm, -sm);
-            int rnd(8);
+            int rnd(dConf.frameRnd);
             if (isView || (widget && widget->inherits("KTextEditor::ViewPrivate")))
                 rnd = 0;
             GFX::drawShadow(Sunken, r, painter, isEnabled(opt), rnd);
         }
     }
     else if (opt->state & State_Raised)
-        GFX::drawShadow(Raised, r, painter, isEnabled(opt), 8);
+        GFX::drawShadow(Raised, r, painter, isEnabled(opt), dConf.frameRnd);
     else if (frame && frame->frameShadow() == QFrame::Plain)
-        GFX::drawShadow(Etched, r, painter, isEnabled(opt), 8);
+        GFX::drawShadow(Etched, r, painter, isEnabled(opt), dConf.frameRnd);
     return true;
 }

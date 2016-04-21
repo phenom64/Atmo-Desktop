@@ -31,6 +31,8 @@ WindowData
         m->unlock();
         return m;
     }
+//    if (m)
+//        qDebug() << m->errorString() << wid << m->key() << m->nativeKey();
     return 0;
 }
 

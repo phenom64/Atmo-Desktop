@@ -186,8 +186,9 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     }
     case CT_ToolButton:
     {
-        if (!widget || (widget && !widget->parentWidget()))
-            return contentsSize;
+
+        if (!widget || !widget->parentWidget() || widget->inherits("KMultiTabBarTab"))
+            return contentsSize + QSize(8,8);
 
         const QStyleOptionToolButton *optbtn = qstyleoption_cast<const QStyleOptionToolButton *>(opt);
         if (!optbtn)
@@ -207,7 +208,6 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         }
         static const int add(qFloor(dConf.baseSize*0.4f)), hAdd(qFloor(add*0.5f));
         sz+=QSize(hor?add:hAdd, hor?hAdd:add);
-
         if (!dConf.toolbtn.flat)
         {
             Sides sides = All;
@@ -235,12 +235,16 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                     *hvsz += 2;
             }
             static const int minSz(dConf.baseSize);
+
             if (hor && sz.height() < minSz)
                 sz.setHeight(minSz);
             else if (!hor && sz.width() < minSz)
                 sz.setWidth(minSz);
 
-            if ((optbtn->features & QStyleOptionToolButton::MenuButtonPopup) || ((optbtn->features & QStyleOptionToolButton::Arrow) && optbtn->arrowType && optbtn->toolButtonStyle != Qt::ToolButtonIconOnly))
+            if ((optbtn->features & QStyleOptionToolButton::MenuButtonPopup)
+                    || ((optbtn->features & QStyleOptionToolButton::Arrow)
+                        && optbtn->arrowType
+                        && optbtn->toolButtonStyle != Qt::ToolButtonIconOnly))
                 *hvsz+=16;
         }
         return sz;

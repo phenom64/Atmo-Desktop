@@ -88,6 +88,8 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             }
             bgc = *c;
         }
+        if (bgc.alpha() != 0xff)
+            bgc = widget ? widget->parentWidget()->palette().color(QPalette::Window) : qApp->palette().color(QPalette::Window);
         if (!Color::contrast(fgc, bgc))
             fgc = Qt::white; //both most likely pretty much black so try white first...
         if (!Color::contrast(fgc, bgc))
@@ -106,6 +108,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
                  && (bgc.alpha() < 0xff || bg != QPalette::Base ))
         {
 //            QWidget *p = bar->parentWidget();
+
             const QPoint tl(bar->mapTo(bar->window(), QPoint()));
 //            bar->parentWidget()->render(painter, geo.topLeft(), geo, 0);
             GFX::drawWindowBg(painter, bar, opt->palette.color(QPalette::Window), opt->rect, tl);
@@ -139,7 +142,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             painter->setPen(saved);
         }
         if (bar && !bar->isSliderDown())
-            fgc.setAlpha(85.0f+((170.0f/(float)Steps)*level));
+            fgc.setAlpha(qMin<int>(255, 85.0f+((170.0f/(float)Steps)*level)));
         GFX::drawMask(slider, painter, fgc);
 //        const int rnd(qMin(slider.height(), slider.width())/2);
 //        painter->drawRoundedRect(slider, rnd, rnd);

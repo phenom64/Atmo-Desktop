@@ -51,6 +51,8 @@ public:
         Lockdocks,
         Differentinactive,
         Icontheme,
+        Iconpaths,
+        Framernd,
 
         Decobuttons,
         Decoicon,
@@ -172,9 +174,9 @@ public:
         QString appName, iconTheme;
         App app;
         float opacity;
-        QStringList blackList;
+        QStringList blackList, iconPaths;
         bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks, animateStack, animateScroll, simpleArrows;
-        quint8 titlePos, arrowSize, baseSize;
+        quint8 titlePos, arrowSize, baseSize, frameRnd;
         QPalette *palette;
         struct deco
         {
@@ -281,6 +283,7 @@ public:
     static QSettings *paletteSettings();
 
     static QStringList availableIconThemes();
+//    static QStrignList availableIconPaths();
 
     static void setFileName(const QString &file);
     static void restoreFileName();
@@ -295,6 +298,7 @@ public:
     static Key key(const QString k);
     static const char *key(const Key k);
     static const QVariant defaultValue(const Key k);
+    static void formatIconPathsList(QStringList &paths);
     template<typename T> static inline const T readValue(const Key k) { return readVal(k).value<T>(); }
 #define READ(_TYPE_, _METHOD_) static inline const _TYPE_ read##_METHOD_(const Key k) { return readValue<_TYPE_>(k); }
     READ(bool, Bool) READ(int, Int) READ(float, Float) READ(QString, String) READ(QStringList, StringList)

@@ -74,7 +74,6 @@ WindowHelpers::updateWindowData(qulonglong window)
     WindowData *data = WindowData::memory(win->winId(), win, true);
     if (!data)
         return;
-
 //    qDebug() << "WindowHelpers::updateWindowData" << window;
 
     QPalette pal(win->palette());

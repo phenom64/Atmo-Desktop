@@ -65,11 +65,14 @@ static void applyBlur(QWidget *widget)
 void
 Style::applyTranslucency(QWidget *widget)
 {
+//    qDebug() << "applyTranslucency" << widget;
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
     const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
     if (wasVisible)
         widget->hide();
+//    widget->setParent(0); // Create TopLevel-Widget
+//    widget->setAttribute(Qt::WA_NoSystemBackground, true);
     widget->setAttribute(Qt::WA_TranslucentBackground);
     widget->setWindowIcon(icn);
     widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
@@ -157,23 +160,65 @@ Style::polish(QWidget *widget)
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())
                 Handlers::Window::addCompactMenu(widget);
+#if 0
 #if QT_VERSION < 0x050000
             if (XHandler::opacity() < 1.0f && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
+#endif
 #endif
             if (dConf.lockDocks)
                 Handlers::Dock::manage(widget);
             Handlers::Window::manage(widget);
             if (dConf.removeTitleBars)
                 ShadowHandler::manage(widget);
+
+#if 0
+            if (!dConf.uno.enabled)
+            {
+                QMainWindow *win = static_cast<QMainWindow *>(widget);
+                QWidget *center = win->centralWidget();
+                if (center && !qobject_cast<QTabWidget *>(center) && center->layout())
+                {
+                    center->setProperty("DSP_center", true);
+                    installFilter(center);
+                    installFilter(win);
+                    QPalette pal(center->palette());
+
+                    const QColor win(pal.color(QPalette::Window));
+                    const QColor wintxt(pal.color(QPalette::WindowText));
+                    pal.setColor(QPalette::Window, wintxt);
+                    pal.setColor(QPalette::WindowText, win);
+
+                    const QColor base(pal.color(QPalette::Base));
+                    const QColor text(pal.color(QPalette::Text));
+                    pal.setColor(QPalette::Base, text);
+                    pal.setColor(QPalette::AlternateBase, text);
+                    pal.setColor(QPalette::Text, base);
+
+                    center->setPalette(pal);
+                    static const int m(8);
+                    center->setContentsMargins(m,m,m,m);
+                    QList<QAbstractScrollArea *> areas = center->findChildren<QAbstractScrollArea *>();
+                    for (int i = 0; i < areas.size(); ++i)
+                    {
+                        QAbstractScrollArea *area = areas.at(i);
+                        area->viewport()->setAutoFillBackground(true);
+                        area->viewport()->setBackgroundRole(QPalette::Base);
+                        area->viewport()->setForegroundRole(QPalette::Text);
+                    }
+                }
+            }
+#endif
         }
         else if (qobject_cast<QDialog *>(widget))
         {
+#if 0
 #if QT_VERSION < 0x050000
             if (!dConf.uno.enabled
                     && XHandler::opacity() < 1.0f
                     && !widget->testAttribute(Qt::WA_TranslucentBackground))
                 applyTranslucency(widget);
+#endif
 #endif
             Handlers::Window::manage(widget);
         }
@@ -404,6 +449,15 @@ Style::polish(QWidget *widget)
             installFilter(frame);
 //            frame->setContentsMargins(0, 0, 0, 0);
         }
+        else if (widget->inherits("QTipLabel")) //tooltip
+        {
+            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
+                applyTranslucency(widget);
+
+            ShadowHandler::manage(widget);
+            if (dConf.balloonTips)
+                Handlers::BalloonHelper::manage(widget);
+        }
     }
     else if (widget->inherits("KUrlNavigator"))
     {
@@ -417,15 +471,6 @@ Style::polish(QWidget *widget)
     else if (widget->inherits("KMultiTabBarTab"))
     {
         installFilter(widget);
-    }
-    else if (widget->inherits("QTipLabel")) //tooltip
-    {
-        if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-            applyTranslucency(widget);
-
-        ShadowHandler::manage(widget);
-        if (dConf.balloonTips)
-            Handlers::BalloonHelper::manage(widget);
     }
     else if (widget->inherits("KTextEditor::ViewPrivate"))
     {
@@ -500,53 +545,53 @@ void
 Style::polishSlot(QWidget *widget)
 {
     if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
+    {
+        bool docMode = tabBar->documentMode();
+        QTabWidget *tw(0);
+        if (tw = qobject_cast<QTabWidget *>(tabBar->parentWidget()))
+            docMode = tw->documentMode();
+        if (docMode)
         {
-            bool docMode = tabBar->documentMode();
-            qDebug() << tabBar->parentWidget() << tabBar->documentMode();
-            if (QTabWidget *tw = qobject_cast<QTabWidget *>(tabBar->parentWidget()))
-            {
-                qDebug() << tw << tw->documentMode();
-                docMode = tw->documentMode();
-            }
-            if (docMode)
-            {
-                tabBar->setDrawBase(true);
-                if (dConf.tabs.invDoc && !dConf.uno.enabled && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
-                    tabBar->setShape(QTabBar::RoundedSouth);
-            }
-            const bool safari = Ops::isSafariTabBar(tabBar);
-            if (!safari && tabBar->expanding())
-                tabBar->setExpanding(false);
-    //        qDebug() << tabBar->foregroundRole();
-            if (safari || docMode)
-            {
-                QPalette pal(tabBar->palette());
-                pal.setColor(QPalette::Button, pal.color(QPalette::Window));
-                pal.setColor(QPalette::ButtonText, pal.color(QPalette::WindowText));
-                tabBar->setPalette(pal);
-            }
-            else
-            {
-                QPalette pal(tabBar->palette());
-                pal.setColor(QPalette::Window, pal.color(QPalette::Button));
-                pal.setColor(QPalette::WindowText, pal.color(QPalette::ButtonText));
-                tabBar->setPalette(pal);
-            }
-            Anim::Tabs::manage(tabBar);
-            tabBar->setAttribute(Qt::WA_Hover);
-            tabBar->setAttribute(Qt::WA_MouseTracking);
-            if (dConf.uno.enabled) //we need to ajust UNO height data on hide/show...
-                installFilter(tabBar);
-
-            if (tabBar->expanding() && !dConf.uno.enabled)
-                tabBar->setExpanding(false);
-
-            if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
-            {
-                tabBar->parentWidget()->setProperty("DSP_konsoleTabBarParent", true);
-                installFilter(tabBar->parentWidget());
-                disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
-                connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
-            }
+            tabBar->setDrawBase(true);
+            if (dConf.tabs.invDoc && !dConf.uno.enabled && tabBar->shape() == QTabBar::RoundedNorth || tabBar->shape() == QTabBar::TriangularNorth)
+                tabBar->setShape(QTabBar::RoundedSouth);
         }
+        const bool safari = Ops::isSafariTabBar(tabBar);
+        if (!safari && tabBar->expanding())
+            tabBar->setExpanding(false);
+        if (safari || docMode)
+        {
+            QPalette pal(tabBar->palette());
+            const QColor fg(pal.color(QPalette::WindowText));
+            const QColor bg(pal.color(QPalette::Window));
+            pal.setColor(QPalette::Button, bg);
+            pal.setColor(QPalette::ButtonText, fg);
+            pal.setColor(tabBar->backgroundRole(), bg);
+            pal.setColor(tabBar->foregroundRole(), fg);
+            tabBar->setPalette(pal);
+        }
+        else
+        {
+            QPalette pal(tabBar->palette());
+            pal.setColor(QPalette::Window, pal.color(QPalette::Button));
+            pal.setColor(QPalette::WindowText, pal.color(QPalette::ButtonText));
+            tabBar->setPalette(pal);
+        }
+        Anim::Tabs::manage(tabBar);
+        tabBar->setAttribute(Qt::WA_Hover);
+        tabBar->setAttribute(Qt::WA_MouseTracking);
+        if (dConf.uno.enabled) //we need to ajust UNO height data on hide/show...
+            installFilter(tabBar);
+
+        if (tabBar->expanding() && !dConf.uno.enabled)
+            tabBar->setExpanding(false);
+
+        if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
+        {
+            tabBar->parentWidget()->setProperty("DSP_konsoleTabBarParent", true);
+            installFilter(tabBar->parentWidget());
+            disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
+            connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
+        }
+    }
 }
