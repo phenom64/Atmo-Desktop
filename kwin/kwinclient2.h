@@ -153,7 +153,8 @@ private:
     QPixmap m_pix, m_bevelCorner[3];
     QSharedMemory *m_mem;
     QColor m_bg, m_fg;
-    Gradient m_gradient, m_winGradient;
+    Gradient m_gradient;
+    QGradientStops m_winGradient;
     WindowData *m_wd; 
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;

@@ -785,62 +785,79 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
 
     if (w->autoFillBackground())
         return;
-    QWidget *parent = w->parentWidget();
-    while (parent)
+    if (!w->isWindow())
     {
-        if (parent->autoFillBackground())
+        QWidget *parent = w->parentWidget();
+        while (parent)
         {
-            p->fillRect(w->rect(), parent->palette().color(parent->backgroundRole()));
-            return;
+            if (parent->isWindow())
+                break;
+            if (parent->autoFillBackground())
+            {
+                p->fillRect(w->rect(), parent->palette().color(parent->backgroundRole()));
+                return;
+            }
+            else if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
+            {
+                if (!tw->documentMode() && !dConf.tabs.regular)
+                    p->fillRect(w->rect(), QColor(0,0,0,15));
+            }
+            parent = parent->parentWidget();
         }
-        else if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
-        {
-            if (!tw->documentMode() && !dConf.tabs.regular)
-                p->fillRect(w->rect(), QColor(0,0,0,15));
-        }
-        parent = parent->parentWidget();
     }
-    const QRect rt = rect;
     int l(0),t(0),r(0),b(0);
     if (!dConf.uno.enabled)
 //    if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
     {
-        XHandler::getDecoBorders(l,r,t,b, w->window()->winId());
+        const quint32 wid = w->isWindow() ? w->winId() : w->window()->winId();
+        XHandler::getDecoBorders(l,r,t,b, wid);
         offset += QPoint(0, t);
     }
     if (dConf.windows.noise)
-        p->drawTiledPixmap(rt, GFX::noise(true), offset);
+        p->drawTiledPixmap(rect, GFX::noise(true), offset);
     else
-        p->fillRect(rt, bg);
+        p->fillRect(rect, bg);
 
     if (!dConf.windows.gradient.isEmpty())
     {
-        QRect wr(w->mapFrom(w->window(), rt.topLeft()), w->window()->size());
-        wr.setTop(wr.top()-t);
-        wr.setBottom(wr.bottom()+b);
-        wr.setLeft(wr.left()-l);
-        wr.setRight(wr.right()+r);
+        QRect wr(rect);
+        if (!w->isWindow())
+            wr = QRect(w->mapFrom(w->window(), QPoint()), w->window()->size());
+//        qDebug() << l << t << r << b << w->isWindow() << w << wr;
+        wr.adjust(-l, -t, r, b);
+//        qDebug() << wr << rect << w->rect() << (p->device() == (QPaintDevice *)w) << p->brushOrigin();
+//        const QPoint bo = p->brushOrigin();
+//        p->setBrushOrigin(l, t);
         QLinearGradient lg(wr.topLeft(), wr.bottomLeft());
         if (dConf.windows.hor)
             lg = QLinearGradient(wr.topLeft(), wr.topRight());
-        lg.setStops(Settings::gradientStops(dConf.windows.gradient));
+        static QGradientStops stops;
+        if (stops.isEmpty())
+            stops = Settings::gradientStops(dConf.windows.gradient);
+        lg.setStops(stops);
         const QPainter::CompositionMode mode = p->compositionMode();
         p->setCompositionMode(QPainter::CompositionMode_Overlay);
-        p->fillRect(rt, lg);
+        p->fillRect(rect, lg);
         p->setCompositionMode(mode);
+//        p->setBrushOrigin(bo);
     }
 
-    parent = w->parentWidget();
-    while (parent)
+    if (!w->isWindow())
     {
-        if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
+        QWidget *parent = w->parentWidget();
+        while (parent)
         {
-            if (!tw->documentMode() && !dConf.tabs.regular)
-                p->fillRect(w->rect(), QColor(0,0,0,15));
+            if (parent->isWindow())
+                break;
+            if (QTabWidget *tw = qobject_cast<QTabWidget *>(parent))
+            {
+                if (!tw->documentMode() && !dConf.tabs.regular)
+                    p->fillRect(w->rect(), QColor(0,0,0,15));
+            }
+            else if (QGroupBox *gb = qobject_cast<QGroupBox *>(parent))
+                p->fillRect(gb->rect(), QColor(0,0,0,15));
+            parent = parent->parentWidget();
         }
-        else if (QGroupBox *gb = qobject_cast<QGroupBox *>(parent))
-            p->fillRect(gb->rect(), QColor(0,0,0,15));
-        parent = parent->parentWidget();
     }
 //    if (XHandler::opacity() < 1.0f)
 //    {

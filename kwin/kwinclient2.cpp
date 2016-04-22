@@ -351,7 +351,7 @@ Deco::updateData()
                 m_grip->deleteLater();
                 m_grip = 0;
             }
-            m_winGradient = m_wd->windowGradient();
+            m_winGradient = Settings::gradientStops(m_wd->windowGradient());
             if (m_bevel != 1)
             {
                 m_bevel = 1;
@@ -511,7 +511,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         {
             const bool hor = m_wd->value<bool>(WindowData::Horizontal, false);
             QLinearGradient lg(rect().topLeft(), hor ? rect().topRight() : rect().bottomLeft());
-            lg.setStops(Settings::gradientStops(m_winGradient));
+            lg.setStops(m_winGradient);
             painter->setCompositionMode(QPainter::CompositionMode_Overlay);
             painter->fillRect(rect(), lg);
             painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
