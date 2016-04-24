@@ -114,6 +114,7 @@ Style::eventFilter(QObject *o, QEvent *e)
         }
         break;
     }
+#if 0
     case QEvent::WindowStateChange:
     {
         if (qobject_cast<QMainWindow *>(w))
@@ -128,6 +129,7 @@ Style::eventFilter(QObject *o, QEvent *e)
                 }
         }
     }
+#endif
     default: break;
     }
     return QCommonStyle::eventFilter(o, e);

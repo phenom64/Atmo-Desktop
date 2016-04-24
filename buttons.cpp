@@ -303,6 +303,8 @@ Style::normalButton(const QAbstractButton *btn)
 {
     if (!btn || !btn->parentWidget() || !btn->parentWidget()->layout())
         return false;
+    if (dConf.toolbtn.flat)
+        return false;
     if (!dConf.toolbtn.normal && !qobject_cast<QToolBar *>(btn->parentWidget()) && !btn->parentWidget()->inherits("KMultiTabBarInternal"))
         return false;
 
