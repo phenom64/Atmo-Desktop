@@ -154,7 +154,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         {
 //            if (!dConf.uno.enabled && static_cast<const QFrame *>(widget)->frameStyle() == (QFrame::StyledPanel|QFrame::Sunken))
 //                return 4;
-            static const quint8 sm = GFX::shadowMargin(dConf.views.viewShadow) + bool(dConf.views.viewShadow<Raised);
+            static const quint8 sm = qMax(2, GFX::shadowMargin(dConf.views.viewShadow) + bool(dConf.views.viewShadow<Raised));
             static const quint8 pm = dConf.views.traditional ? qMax<quint8>(sm, (dConf.views.viewRnd >> 1)) : 2;
             return pm;
         }

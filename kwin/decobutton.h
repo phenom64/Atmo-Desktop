@@ -3,32 +3,40 @@
 
 #include "../stylelib/widgets.h" //buttonbase class
 #include <KDecoration2/DecorationButton>
+#include <KDecoration2/DecorationButtonGroup>
 
 namespace KDecoration2 { class Decoration; }
 namespace DSP
 {
 class Deco;
+class Button;
+
+///-----------------------------------------------------------------------------
+
 class Button : public KDecoration2::DecorationButton, public ButtonBase
 {
     Q_OBJECT
 public:
+    ~Button();
     explicit Button(QObject *parent, const QVariantList &args);
-    static Button *create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent);
+    static Button *create(KDecoration2::DecorationButtonType buttonType, KDecoration2::Decoration *decoration, QObject *parent);
     void paint(QPainter *painter, const QRect &repaintArea);
-    const QRect buttonRect() const {return geometry().toRect();}
+    const QRect buttonRect() const { return geometry().toRect(); }
+    const QSize buttonSize() const;
+    void updateGeometry() { setGeometry(QRect(geometry().topLeft().toPoint(), buttonSize())); }
     static bool isSupported(KDecoration2::DecorationButtonType t, Deco *d);
 
 protected:
-    explicit Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObject *parent = 0);
+    explicit Button(KDecoration2::DecorationButtonType buttonType, Deco *decoration, QObject *parent = 0);
 
     void hoverEnterEvent(QHoverEvent *event);
     void hoverLeaveEvent(QHoverEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
 
     void hoverChanged();
 
     //pure virtuals from buttonbase
-    const QColor color(const ColorRole &c = Fg) const;
     const bool isDark() const;
     const bool isMaximized() const;
     const bool isActive() const;

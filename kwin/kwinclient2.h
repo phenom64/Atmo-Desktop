@@ -74,12 +74,15 @@ public slots:
 };
 class Grip;
 class EmbedHandler;
+class ButtonGroup;
+class ButtonGroupBase;
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
     friend class Grip;
     friend class EmbeddedWidget;
     friend class EmbeddedButton;
+    friend class Data;
     Q_OBJECT
 public:
     class Data
@@ -88,7 +91,7 @@ public:
         int noise, btnStyle;
         Gradient grad;
         QColor bg, fg;
-        bool separator;
+        bool separator, icon;
         void operator =(const Data &d)
         {
             noise = d.noise;
@@ -97,6 +100,7 @@ public:
             fg = d.fg;
             separator = d.separator;
             btnStyle = d.btnStyle;
+            icon = d.icon;
         }
         static void addDataForWinClass(const QString &winClass, QSettings &s);
         static void readWindowData();
@@ -132,13 +136,18 @@ protected slots:
     void maximizedChanged(const bool max);
 
 protected:
+    void setButtonsVisible(const bool visible);
+    void recalculate();
     void hoverEnter();
     void hoverLeave();
 
     void checkForDataFromWindowClass();
     void updateBgPixmap();
-    void initMemory(WindowData *data);
+    WindowData *getShm();
     void paintBevel(QPainter *painter, const int bgLum);
+    void paintBling(QPainter *painter, const QRect &r);
+    const QRect titleTextArea() const;
+    const QPainterPath blingPath(const quint8 style, const QRectF &r, const int radius) const;
 
     const QColor bgColor() const;
     const QColor fgColor() const;
@@ -149,17 +158,18 @@ protected:
 
 private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
+    ButtonGroupBase *m_buttonManager;
     EmbedHandler *m_embedder;
-    QPixmap m_pix, m_bevelCorner[3];
+    QPixmap m_pix, m_bevelCorner[3], *m_bling;
     QSharedMemory *m_mem;
-    QColor m_bg, m_fg;
+    QColor m_bg, m_fg, m_textBg, m_textFg;
     Gradient m_gradient;
     QGradientStops m_winGradient;
     WindowData *m_wd; 
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
-    quint8 m_illumination, m_textBevOpacity;
-    bool m_separator, m_isHovered;
+    quint8 m_illumination, m_textBevOpacity, m_shadowOpacity;
+    bool m_separator, m_isHovered, m_contAware, m_blingEnabled, m_icon, m_isDark;
 };
 
 class DecoAdaptor;

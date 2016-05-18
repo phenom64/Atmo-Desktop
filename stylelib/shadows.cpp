@@ -29,6 +29,7 @@ Shadow::margin(const ShadowStyle s)
     case Etched: return 1;
     case Raised: return 2;
     case Carved: return 2;
+    case LagaDesk: return 3;
     case SemiCarved: return 1;
     case -1: return 1;
     default: return 0;
@@ -56,7 +57,7 @@ Shadow::genShadow()
         light.fill(Qt::transparent);
         QPainter lightp(&light);
         lightp.setClipRect(rect.adjusted(0, rect.height()/2, 0, 0));
-        Mask::render(rect, QColor(255, 255, 255, m_illumination), &lightp, m_round);
+        Mask::render(rect, QColor(255,255,255,m_illumination), &lightp, m_round);
         lightp.setCompositionMode(QPainter::CompositionMode_DestinationOut);
 
         rect.setBottom(rect.bottom()-1);
@@ -108,7 +109,10 @@ Shadow::genShadow()
 
         //finally dump it on the resulting pixmap
         p.fillRect(pix.rect(), light);
+//        p.drawImage(0, 0, light);
+//        p.drawPixmap(0, 0, light);
         p.fillRect(pix.rect(), dark);
+//        p.drawImage(0, 0, dark);
         break;
     }
     case Etched:
@@ -234,6 +238,50 @@ Shadow::genShadow()
         Mask::render(pix.rect().translated(0, -1), QColor(0, 0, 0, 63), &p, m_round);
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.fillRect(pix.rect(), QColor(0, 0, 0, 255-m_opacity));
+        break;
+    }
+    case LagaDesk:
+    {
+        const QColor dark(0,0,0,m_opacity), light(255,255,255,m_illumination);
+        QImage img(pix.size()+QSize(2,2), QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter pt(&img);
+        QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
+        lg.setColorAt(0, dark);
+        lg.setColorAt(1, light);
+        QRect r = pix.rect();
+#define narrowed(_VAR_) adjusted(_VAR_, _VAR_, -(_VAR_), -(_VAR_))
+        Mask::render(r.adjusted(2, 1, -2, -1), lg, &pt, m_round);
+        pt.end();
+        FX::expblur(img, 1);
+        p.drawImage(0, 0, img);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        Mask::render(r.narrowed(2), Qt::black, &p, m_round+1);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        Mask::render(r.narrowed(2), dark, &p, m_round+1);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        Mask::render(r.narrowed(3), Qt::black, &p, m_round);
+        p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+        QImage bevel(img.size(), QImage::Format_ARGB32_Premultiplied);
+        bevel.fill(Qt::transparent);
+        pt.begin(&bevel);
+        pt.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        Mask::render(r.narrowed(3), light, &pt, m_round-1);
+        pt.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        Mask::render(r.narrowed(4), Qt::black, &pt, m_round-2);
+        pt.end();
+
+//        FX::expblur(bevel, 1);
+
+//        pt.begin(&bevel);
+//        pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+//        Mask::render(r.narrowed(3), Qt::black, &pt, m_round-1);
+//        pt.end();
+
+        p.drawImage(0, 0, bevel);
+
+#undef narrowed
         break;
     }
     default: break;

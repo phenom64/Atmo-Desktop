@@ -31,6 +31,7 @@ enum ShadowType { Sunken = 0,
                   Rect,     //simple rounded rectangle, no honky-ponky
                   ElCapitan,
                   SemiCarved,
+                  LagaDesk, //http://lagadesk.deviantart.com/art/MoNoChroMinal-307076680?q=gallery%3ALaGaDesk%2F11859681&qo=82
                   ShadowCount };
 
 enum TabPart { LeftTabPart = 0, MidTabPart, RightTabPart, TabPartCount };

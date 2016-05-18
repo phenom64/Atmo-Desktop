@@ -292,6 +292,12 @@ GFX::drawClickable(ShadowStyle s,
         rnd = qMax(rnd-add, 0);
         break;
     }
+    case LagaDesk:
+    {
+        rnd -= m;
+        if (rnd < 0)
+            rnd = 0;
+    }
     default: r.sShrink(m); break;
     }
 
@@ -324,6 +330,13 @@ GFX::drawClickable(ShadowStyle s,
     case Yosemite: if (!w||!qobject_cast<const QToolBar *>(w->parentWidget())) drawShadow(s, r, p, isEnabled, rnd, sides); break;
     case Rect:
     case ElCapitan: drawShadow(s, r, p, isEnabled, rnd, sides); break;
+    case LagaDesk:
+    {
+        r.sGrow(m);
+        rnd += m;
+        drawShadow(LagaDesk, r, p, isEnabled, rnd, sides);
+        break;
+    }
     default: r.sGrow(m); break;
     }
 
@@ -570,6 +583,30 @@ GFX::drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int siz
     p->setPen(pen);
     p->setBrush(brush);
     p->setRenderHint(QPainter::Antialiasing, aa);
+}
+
+void
+GFX::drawHandle(QPainter *p, const QRect &r, const bool hor)
+{
+    if (hor)
+    {
+        for (int i = r.top()+1; i < r.bottom(); i+=3)
+        {
+            const QRect rect(r.left(), i, r.width(), 1);
+            p->fillRect(rect, QColor(0,0,0,dConf.shadows.opacity));
+            p->fillRect(rect.translated(0, 1), QColor(255,255,255,dConf.shadows.illumination));
+        }
+    }
+    else
+    {
+        for (int i = r.left()+1; i < r.right(); i+=3)
+        {
+            const QRect rect(i, r.top(), 1, r.height());
+            p->fillRect(rect, QColor(0,0,0,dConf.shadows.opacity));
+            p->fillRect(rect.translated(1, 0), QColor(255,255,255,dConf.shadows.illumination));
+        }
+    }
+
 }
 
 static int randInt(int low, int high)

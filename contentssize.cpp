@@ -164,16 +164,16 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             if (bar && bar->isVisible() && !bar->testAttribute(Qt::WA_PendingResizeEvent) && dConf.tabs.docWidth)
             {
                 static const int docTabSize = dConf.tabs.docWidth;
-                static QMap<const QWidget *, bool> map;
-                if (!map.contains(bar))
-                    map.insert(bar, bar->width() > docTabSize*qMin(3, bar->count()));
+//                static QMap<const QWidget *, bool> map;
+//                if (!map.contains(bar))
+//                    map.insert(bar, bar->width() > docTabSize*qMin(3, bar->count()));
 
-                if (docTabSize && bar && map.value(bar))
+                if (docTabSize && bar /*&& map.value(bar)*/)
                 {
                     if (vertical)
-                        sz.setHeight(docTabSize);
+                        sz.setHeight(qBound(32, docTabSize, (((bar->height()&~1)-32)/bar->count())-1));
                     else
-                        sz.setWidth(docTabSize);
+                        sz.setWidth(qBound(32, docTabSize, (((bar->width()&~1)-32)/bar->count())-1));
                 }
             }
             if (tab->position != QStyleOptionTabV3::Middle)

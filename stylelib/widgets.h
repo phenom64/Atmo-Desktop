@@ -9,10 +9,11 @@
 
 namespace DSP
 {
+class ButtonGroupBase;
 class Q_DECL_EXPORT ButtonBase
 {
 public:
-    enum Style { NoStyle = -1, Yosemite = 0, Lion = 1, Sunken = 2, Carved = 3, FollowToolBtn = 4, MagPie = 5, NeoDesk = 6, StyleCount };
+    enum Style { NoStyle = -1, Yosemite = 0, Lion = 1, Sunken = 2, Carved = 3, FollowToolBtn = 4, MagPie = 5, NeoDesk = 6, Anton = 7, StyleCount };
     typedef int ButtonStyle;
     enum ColorRole { Fg = 0, Bg, Mid, Highlight };
     enum Type
@@ -30,36 +31,23 @@ public:
         Custom
     };
 
-    ButtonBase(Type type);
+    ButtonBase(const Type buttonType, ButtonGroupBase *group = 0);
     virtual ~ButtonBase();
+    const ButtonStyle buttonStyle() const;
 
     virtual const QRect buttonRect() const = 0;
+    virtual const QSize buttonSize() const { return QSize(16, 16); }
     virtual const bool isHovered() const { return m_hasMouse; }
     void paint(QPainter &p);
     bool processMouseEvent(QMouseEvent *e);
     void unhover() { m_hasMouse = false; m_hoverLock = false; hoverChanged(); }
     void hover();
-    const Type type() const { return m_type; }
-
-    inline void setButtonStyle(const ButtonStyle s) { m_buttonStyle = s; m_bgPix.clear(); }
-    inline const ButtonStyle buttonStyle() const { return m_buttonStyle; }
-
-    inline void setShadowOpacity(const int o) { m_shadowOpacity = o; dConf.shadows.opacity = o; dConf.shadows.onTextOpacity = o; m_bgPix.clear(); }
-    inline const int shadowOpacity() const { return m_shadowOpacity; }
-
-    inline void setShadowIlluminationOpacity(const int o) { m_shadowIllumination = o; dConf.shadows.illumination = o; m_bgPix.clear(); }
-    inline const int shadowIlluminationOpacity() const { return m_shadowIllumination; }
-
-    //if style is followtoolbtn...
-    inline void setShadowStyle(const ShadowStyle s) { m_shadowStyle = s; m_bgPix.clear(); }
-    inline const ShadowStyle shadowStyle() { return m_shadowStyle; }
-
-    inline void setCustomColor(const QColor &c) { if (!c.isValid()) return; m_color = c; m_bgPix.clear(); }
-    inline const QColor customColor() { return m_color; }
-
-    inline void setGradient(const Gradient &g) { m_gradient = g; m_bgPix.clear(); }
+    inline const Type buttonType() const { return m_type; }
+    ButtonGroupBase *group() { return group(); }
 
 protected:
+    quint64 state() const;
+    void clearBgPix() { m_bgPix.clear(); }
     void drawBase(QColor c, QPainter &p, QRect &r) const;
     void paintCloseButton(QPainter &p);
     void paintMinButton(QPainter &p);
@@ -73,7 +61,10 @@ protected:
     void paintQuickHelpButton(QPainter &p);
     void paintApplicationMenuButton(QPainter &p);
 
-    virtual const QColor color(const ColorRole &c = Fg) const = 0;
+    void drawX(QPainter &p, const QRect &r, const QBrush &brush);
+    void drawArrow(QPainter &p, const QRect &r, const QBrush &brush, const bool up = false);
+
+    const QColor color(const ColorRole c = Fg) const;
     virtual const bool isDark() const = 0;
     virtual const bool isMaximized() const = 0;
     virtual const bool isActive() const = 0;
@@ -95,8 +86,31 @@ private:
     QMap<quint64, QPixmap> m_bgPix;
     int m_shadowOpacity, m_shadowIllumination;
     ShadowStyle m_shadowStyle;
-    QColor m_color;
+    QColor m_color, m_bg, m_fg;
     Gradient m_gradient;
+    ButtonGroupBase *m_group;
+    friend class ButtonGroupBase;
+};
+
+class Q_DECL_EXPORT ButtonGroupBase
+{
+public:
+    typedef QList<ButtonBase *> Buttons;
+    static ButtonGroupBase *buttonGroup(const quint64 window);
+    static void cleanUp(const quint64 window);
+    Buttons buttons() { return m_buttons; }
+    void clearCache();
+    void setColors(const QColor &bg, const QColor &fg, const QColor &min = QColor(), const QColor &max = QColor(), const QColor &close = QColor());
+    void configure(const int shadowOpacity, const int shadowIllumination, const ButtonBase::ButtonStyle buttonStyle, const ShadowStyle shadowStyle, const Gradient &grad);
+    void addButton(ButtonBase *button) { m_buttons << button; }
+    void removeButton(ButtonBase *button) { m_buttons.removeOne(button); }
+
+protected:
+    ButtonGroupBase(const quint64 window);
+
+private:
+    Buttons m_buttons;
+    quint64 m_window;
 };
 
 class Q_DECL_EXPORT WidgetButton : public ButtonBase, public QWidget

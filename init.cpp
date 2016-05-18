@@ -72,6 +72,7 @@ Style::assignMethods()
     m_ce[CE_ToolBoxTabShape] = method(drawToolBoxTabShape);
     m_ce[CE_ToolBoxTabLabel] = method(drawToolBoxTabLabel);
     m_ce[CE_ShapedFrame] = method(drawFrame);
+    m_ce[CE_ColumnViewGrip] = method(drawColumnViewGrip);
 
     /* complex controls */
     m_cc[CC_ToolButton] = method(drawToolButton);

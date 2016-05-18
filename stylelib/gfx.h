@@ -46,6 +46,7 @@ public:
     static void drawCheckMark(QPainter *p, const QColor &c, const QRect &r, const bool tristate = false, const bool bevel = false);
     static void drawRadioMark(QPainter *p, const QColor &c, const QRect &r, const bool bevel = false);
     static void drawArrow(QPainter *p, const QColor &c, QRect r, const Direction d, int size, const Qt::Alignment align = Qt::AlignCenter, const bool bevel = false);
+    static void drawHandle(QPainter *p, const QRect &r, const bool hor);
     static QRect subRect(const QRect &r, const int flags, const QRect &sr);
     static void drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &rect, QPoint offset = QPoint());
 

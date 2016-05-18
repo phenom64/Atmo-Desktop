@@ -17,23 +17,30 @@
 #include <QX11Info>
 #endif
 
-///-------------------------------------------------------------------------------------------------
-
 namespace DSP
 {
 
+///-------------------------------------------------------------------------------------------------
+
 Button::Button(QObject *parent, const QVariantList &args)
-    : KDecoration2::DecorationButton(args.at(0).value<KDecoration2::DecorationButtonType>(), args.at(1).value<KDecoration2::Decoration*>(), parent)
-    , ButtonBase((ButtonBase::Type)args.at(0).value<KDecoration2::DecorationButtonType>())
+    : KDecoration2::DecorationButton(args.at(0).value<KDecoration2::DecorationButtonType>(),
+                                     args.at(1).value<KDecoration2::Decoration*>(),
+                                     parent)
+    , ButtonBase((ButtonBase::Type)args.at(0).value<KDecoration2::DecorationButtonType>(),
+                 static_cast<Deco *>(args.at(1).value<KDecoration2::Decoration*>())->m_buttonManager)
 {
-    setGeometry(QRectF(0, 0, 16, 16));
+    setGeometry(QRect(QPoint(0, 0), buttonSize()));
 }
 
 Button::Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObject *parent)
     : KDecoration2::DecorationButton(type, decoration, parent)
-    , ButtonBase((ButtonBase::Type)type)
+    , ButtonBase((ButtonBase::Type)type, decoration->m_buttonManager)
 {
-    setGeometry(QRectF(0, 0, 16, 16));
+    setGeometry(QRect(QPoint(0, 0), buttonSize()));
+}
+
+Button::~Button()
+{
 }
 
 bool
@@ -58,6 +65,18 @@ Button
         if (isSupported(type, d))
             return new Button(type, d, parent);
     return 0;
+}
+
+const QSize
+Button::buttonSize() const
+{
+    if (buttonStyle() == ButtonBase::Anton)
+    {
+        if (buttonType() == ButtonBase::Close)
+            return QSize(19, 15);
+        return QSize(17, 15);
+    }
+    return QSize(16, 16);
 }
 
 void
@@ -108,25 +127,6 @@ Button::isDark() const
     return Color::lum(color(ButtonBase::Fg)) > Color::lum(color(ButtonBase::Bg));
 }
 
-const QColor
-Button::color(const ColorRole &c) const
-{
-    if (c == Mid)
-    {
-        const QColor &fg = static_cast<Deco *>(decoration().data())->fgColor();
-        const QColor &bg = static_cast<Deco *>(decoration().data())->bgColor();
-        const bool dark(Color::lum(fg) > Color::lum(bg));
-        return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
-    }
-    if (c == ButtonBase::Highlight)
-        return decoration()->client().data()->palette().color(QPalette::Highlight);
-    if (c == ButtonBase::Fg)
-        return static_cast<Deco *>(decoration().data())->fgColor();
-    if (c == ButtonBase::Bg)
-        return static_cast<Deco *>(decoration().data())->bgColor();
-    return QColor();
-}
-
 void
 Button::hoverEnterEvent(QHoverEvent *event)
 {
@@ -146,6 +146,16 @@ Button::mouseReleaseEvent(QMouseEvent *event)
 {
     KDecoration2::DecorationButton::mouseReleaseEvent(event);
 //    update();
+    processMouseEvent(event);
+    update();
+}
+
+void
+Button::mousePressEvent(QMouseEvent *event)
+{
+    KDecoration2::DecorationButton::mousePressEvent(event);
+    processMouseEvent(event);
+    update();
 }
 
 void
@@ -288,54 +298,6 @@ EmbeddedWidget::wheelEvent(QWheelEvent *e)
     e->accept();
 }
 
-#define BUTTON buttons.at(i)
-#define BUTTONS(...) \
-{ QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>()); \
-    for (int i = 0; i < buttons.count(); ++i) { __VA_ARGS__ } }
-
-void
-EmbeddedWidget::setButtonShadowOpacity(const int o)
-{
-    BUTTONS(BUTTON->setShadowOpacity(o);)
-}
-
-void
-EmbeddedWidget::setButtonShadowIlluminationOpacity(const int o)
-{
-    BUTTONS(BUTTON->setShadowIlluminationOpacity(o);)
-}
-
-void
-EmbeddedWidget::setButtonStyle(ButtonBase::ButtonStyle style)
-{
-    BUTTONS(BUTTON->setButtonStyle(style);)
-}
-
-void
-EmbeddedWidget::setButtonShadow(const ShadowStyle ss)
-{
-    BUTTONS(BUTTON->setShadowStyle(ss);)
-}
-
-void
-EmbeddedWidget::setGradient(const Gradient &g)
-{
-    BUTTONS(BUTTON->setGradient(g);)
-}
-
-#define SETCOLOR(_ENUM_, _FUNC_) void \
-EmbeddedWidget::set##_FUNC_##Color(const QColor &c) \
-{ \
-    QList<EmbeddedButton *> buttons(findChildren<EmbeddedButton *>()); \
-    for (int i = 0; i < buttons.count(); ++i) \
-        if (buttons.at(i)->type() == Button::_ENUM_) \
-            buttons.at(i)->setCustomColor(c); \
-}
-
-SETCOLOR(Close, Close)
-SETCOLOR(Minimize, Min)
-SETCOLOR(Maximize, Max)
-
 //--------------------------------------------------------------------------------------------------------
 
 EmbedHandler::EmbedHandler(Deco *d) : m_deco(d)
@@ -369,44 +331,6 @@ EmbedHandler::repaint()
     RUN(EW->repaint();)
 }
 
-void
-EmbedHandler::setButtonShadowOpacity(const int o)
-{
-    RUN(EW->setButtonShadowOpacity(o);)
-}
-
-void
-EmbedHandler::setButtonShadowIlluminationOpacity(const int o)
-{
-    RUN(EW->setButtonShadowIlluminationOpacity(o);)
-}
-
-
-void
-EmbedHandler::setButtonStyle(ButtonBase::ButtonStyle style)
-{
-    RUN(EW->setButtonStyle(style);)
-}
-
-void
-EmbedHandler::setButtonShadow(const ShadowStyle ss)
-{
-    RUN(EW->setButtonShadow(ss);)
-}
-
-void
-EmbedHandler::setGradient(const Gradient g)
-{
-    RUN(EW->setGradient(g);)
-}
-
-#define SETBUTTONCOLOR(_FUNC_) \
-void EmbedHandler::set##_FUNC_##Color(const QColor &c) \
-{ RUN(EW->set##_FUNC_##Color(c);) }
-
-SETBUTTONCOLOR(Close)
-SETBUTTONCOLOR(Min)
-SETBUTTONCOLOR(Max)
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -507,7 +431,7 @@ EmbeddedButton::onClick(const Qt::MouseButton &button)
 {
 //    if (button == Qt::LeftButton)
 //    {
-        switch (type())
+        switch (buttonType())
         {
         case Close: decoration()->requestClose(); break;
         case Maximize: decoration()->requestToggleMaximization(button); break;

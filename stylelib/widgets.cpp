@@ -15,14 +15,13 @@
 #include "windowdata.h"
 #include "fx.h"
 #include "masks.h"
-
-#define ISIZE 4
+#include "shapes.h"
 
 using namespace DSP;
 
 static const float s_pen(2.0f);
 
-ButtonBase::ButtonBase(Type type)
+ButtonBase::ButtonBase(const Type type, ButtonGroupBase *group)
     : m_type(type)
     , m_hasPress(false)
     , m_hasMouse(false)
@@ -32,7 +31,10 @@ ButtonBase::ButtonBase(Type type)
     , m_shadowIllumination(dConf.shadows.illumination)
     , m_shadowStyle(dConf.toolbtn.shadow)
     , m_gradient(dConf.toolbtn.gradient)
+    , m_group(group)
 {
+    if (group)
+        group->addButton(this);
     for (int i = 0; i < Custom; ++i)
         m_paintMethod[i] = 0;
 
@@ -65,7 +67,28 @@ ButtonBase::ButtonBase(Type type)
 
 ButtonBase::~ButtonBase()
 {
+    if (m_group)
+        m_group->removeButton(this);
+}
 
+
+const ButtonBase::ButtonStyle
+ButtonBase::buttonStyle() const
+{
+    return m_buttonStyle;
+}
+
+
+const QColor
+ButtonBase::color(const ColorRole c) const
+{
+    if (c == Fg)
+        return m_fg;
+    if (c == Bg)
+        return m_bg;
+    if (c == Mid)
+        return Color::mid(m_bg, m_fg);
+    return qApp->palette().color(QPalette::Highlight);
 }
 
 void
@@ -139,9 +162,9 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 {
     const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::lum(color(Bg)));
     const float rat(isActive()?1.5f:0.5f);
-    if (buttonStyle() && buttonStyle() != FollowToolBtn)
+    if (m_buttonStyle && m_buttonStyle != FollowToolBtn)
         c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
-    switch (buttonStyle())
+    switch (m_buttonStyle)
     {
     case Yosemite:
     {
@@ -258,7 +281,8 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     }
     case MagPie:
     {
-        r.adjust(2, 2, -2, -2);
+//        r.adjust(2, 2, -2, -2);
+        r.shrink(2);
         const int bgLum = Color::lum(color(Bg));
         const int fgLum = Color::lum(color(Fg));
         p.setBrush(QColor(255, 255, 255, m_shadowIllumination));
@@ -273,7 +297,6 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         for (int i = 1; i < 3; ++i)
             p.drawEllipse(r.adjusted(i, i, -i, -i));
         p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-
 #if 0
         r.adjust(2, 2, -2, -2);
 
@@ -331,8 +354,59 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         r.shrink(2);
         break;
     }
+    case Anton:
+    {
+        QLinearGradient lg(r.topLeft(), r.bottomLeft());
+        const int start(m_hasPress?140:223), end(/*m_hasPress?140:*/175);
+        lg.setColorAt(0, QColor(start,start,start));
+        lg.setColorAt(1, QColor(end,end,end));
+        GFX::drawClickable(m_hasPress?DSP::Sunken:DSP::Raised, r/*.adjusted(-1, 0, 1, 0)*/, &p, lg, 2);
+        r.shrink(2);
+        break;
+    }
     default: break;
     }
+}
+
+void
+ButtonBase::drawX(QPainter &p, const QRect &r, const QBrush &brush)
+{
+    const bool anton = m_buttonStyle == Anton;
+    const int size = anton ? 5 : 7;
+    QRectF rt(QPoint(), QSize(size, size));
+    rt.moveCenter(QRectF(r).center()/*+QPoint(!(r.width() & 1), !(r.height() & 1))*/);
+    p.fillPath(Shapes::xMark(rt), brush);
+}
+
+void
+ButtonBase::drawArrow(QPainter &p, const QRect &r, const QBrush &brush, const bool up)
+{
+    const bool anton = m_buttonStyle == Anton;
+    const int size = anton ? 5 : 7;
+    QRectF rt(QPoint(), QSize(size, size));
+    rt.moveCenter(QRectF(r).center()/*+QPoint(!(r.width() & 1), !(r.height() & 1))*/);
+    if (up)
+        p.fillPath(Shapes::upArrow(rt), brush);
+    else
+        p.fillPath(Shapes::downArrow(rt), brush);
+}
+
+quint64
+ButtonBase::state() const
+{
+    QRect r(buttonRect());
+    const QColor c(color(Mid));
+    const quint64 check((quint64)(r.width()*r.height())
+                        | ((quint64)(m_buttonStyle+1)   << 16)
+                        | ((quint64)onAllDesktops()     << 20)
+                        | ((quint64)isMaximized()       << 21)
+                        | ((quint64)isActive()          << 22)
+                        | ((quint64)isHovered()         << 23)
+                        | ((quint64)keepBelow()         << 24)
+                        | ((quint64)keepAbove()         << 25)
+                        | ((quint64)m_hasPress          << 26)
+                        | ((quint64)c.rgba()            << 32));
+    return check;
 }
 
 void
@@ -341,12 +415,7 @@ ButtonBase::paintCloseButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(buttonRect());
-    const QColor c(color(Mid));
-    const quint64 check((r.width()*r.height())
-                        | ((quint64)(m_buttonStyle+1)<<24)
-                        | ((quint64)isActive()<<28)
-                        | ((quint64)isHovered()<<30)
-                        | ((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         if (m_buttonStyle == NoStyle)
@@ -373,19 +442,24 @@ ButtonBase::paintCloseButton(QPainter &p)
             pt.setPen(Qt::NoPen);
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
+            const bool anton = m_buttonStyle == Anton;
+//            if (anton)
+//                rect.translate(0,1);
             drawBase(isActive()?m_color:color(Bg), pt, rect);
-            if (m_buttonStyle == MagPie)
+            if (m_buttonStyle == MagPie || anton)
             {
-                QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
-                rt.moveCenter(rect.center()+QPoint(1, 1));
-                pt.setPen(QPen(color(isActive()?Fg:Mid), 2.0f));
-                pt.drawLine(rt.topLeft(), rt.bottomRight());
-                pt.drawLine(rt.topRight(), rt.bottomLeft());
+                QColor c = color(isActive()?Fg:Mid);
+                if (anton)
+                {
+                    drawX(pt, rect.translated(0, 1), QColor(255,255,255));
+                    c = QColor(127,127,127);
+                }
+                drawX(pt, rect, c);
             }
             else if (isHovered())
             {
                 pt.setBrush(color(Fg));
-                QRect r(QPoint(), QSize(ISIZE, ISIZE));
+                QRect r(QPoint(), QSize(4, 4));
                 r.moveCenter(rect.center());
                 pt.drawEllipse(r);
             }
@@ -402,13 +476,7 @@ ButtonBase::paintMaxButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(buttonRect());
-    const QColor c(color(Mid));
-    const quint64 check((r.width()*r.height())
-                        | ((quint64)(m_buttonStyle+1)<<24)
-                        | ((quint64)isMaximized()<<26)
-                        | ((quint64)isActive()<<28)
-                        | ((quint64)isHovered()<<30)
-                        | ((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         if (m_buttonStyle == NoStyle)
@@ -437,20 +505,24 @@ ButtonBase::paintMaxButton(QPainter &p)
             pt.setPen(Qt::NoPen);
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
+            const bool anton = m_buttonStyle == Anton;
+//            if (anton)
+//                rect.translate(0,1);
             drawBase(isActive()?m_color:color(Bg), pt, rect);
-            if (m_buttonStyle == MagPie)
+            if (m_buttonStyle == MagPie || anton)
             {
-                QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
-                rt.moveCenter(rect.center()+QPoint(1, 1));
-                pt.setPen(QPen(color(isActive()?Fg:Mid), 2.0f));
-                rt.adjust(0, 1, 0, -1);
-                pt.drawLine(rt.bottomLeft(), QPoint(rt.center().x(), rt.top()));
-                pt.drawLine(rt.bottomRight(), QPoint(rt.center().x(), rt.top()));
+                QColor c = color(isActive()?Fg:Mid);
+                if (anton)
+                {
+                    drawArrow(pt, rect.translated(0, 1), QColor(255,255,255), true);
+                    c = QColor(127,127,127);
+                }
+                drawArrow(pt, rect, c, true);
             }
             else if (isHovered())
             {
                 pt.setBrush(color(Fg));
-                QRect r(QPoint(), QSize(ISIZE, ISIZE));
+                QRect r(QPoint(), QSize(4, 4));
                 r.moveCenter(rect.center());
                 pt.setPen(QPen(color(Fg), 2.0f));
                 if (isMaximized())
@@ -481,12 +553,7 @@ ButtonBase::paintMinButton(QPainter &p)
     p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing);
     QRect r(buttonRect());
-    const QColor c(color(Mid));
-    const quint64 check((r.width()*r.height())
-                        | ((quint64)(m_buttonStyle+1)<<24)
-                        | ((quint64)isActive()<<28)
-                        | ((quint64)isHovered()<<30)
-                        | ((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         if (m_buttonStyle == NoStyle)
@@ -514,19 +581,23 @@ ButtonBase::paintMinButton(QPainter &p)
             pt.setPen(Qt::NoPen);
             pt.setRenderHint(QPainter::Antialiasing);
             QRect rect(pix.rect());
+            const bool anton = m_buttonStyle == Anton;
+//            if (anton)
+//                rect.translate(0,1);
             drawBase(isActive()?m_color:color(Bg), pt, rect);
-            if (m_buttonStyle == MagPie)
+            if (m_buttonStyle == MagPie || anton)
             {
-                QRect rt(QPoint(), QSize(ISIZE+1, ISIZE+1));
-                rt.moveCenter(rect.center()+QPoint(1, 1));
-                pt.setPen(QPen(color(isActive()?Fg:Mid), 2.0f));
-                rt.adjust(0, 1, 0, -1);
-                pt.drawLine(rt.topLeft(), QPoint(rt.center().x(), rt.bottom()));
-                pt.drawLine(rt.topRight(), QPoint(rt.center().x(), rt.bottom()));
+                QColor c = color(isActive()?Fg:Mid);
+                if (anton)
+                {
+                    drawArrow(pt, rect.translated(0, 1), QColor(255,255,255), false);
+                    c = QColor(127,127,127);
+                }
+                drawArrow(pt, rect, c, false);
             }
             else if (isHovered())
             {
-                QRect r(QPoint(), QSize(ISIZE, ISIZE));
+                QRect r(QPoint(), QSize(4, 4));
                 r.moveCenter(rect.center());
                 pt.setBrush(color(Fg));
                 pt.setPen(QPen(color(Fg), 2.0f));
@@ -547,7 +618,7 @@ ButtonBase::paintOnAllDesktopsButton(QPainter &p)
 {
     const bool all(onAllDesktops());
     const QColor c(color(Mid));
-    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)all<<28)|((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         QPixmap pix(buttonRect().size());
@@ -575,7 +646,7 @@ void
 ButtonBase::paintWindowMenuButton(QPainter &p)
 {
     const QColor c(color(Mid));
-    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         QPixmap pix(buttonRect().size());
@@ -607,7 +678,7 @@ void
 ButtonBase::paintKeepAboveButton(QPainter &p)
 {
     const QColor c(color(keepAbove()?Highlight:Mid));
-    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         QPixmap pix(buttonRect().size());
@@ -636,7 +707,7 @@ void
 ButtonBase::paintKeepBelowButton(QPainter &p)
 {
     const QColor c(color(keepBelow()?Highlight:Mid));
-    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         QPixmap pix(buttonRect().size());
@@ -665,7 +736,7 @@ void
 ButtonBase::paintShadeButton(QPainter &p)
 {
     const QColor c(color(shade()?Highlight:Mid));
-    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         QPixmap pix(buttonRect().size());
@@ -690,7 +761,7 @@ void
 ButtonBase::paintQuickHelpButton(QPainter &p)
 {
     const QColor c(color(Mid));
-    const quint64 check((buttonRect().width()*buttonRect().height())|((quint64)c.rgba()<<32));
+    const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
         QPixmap pix(buttonRect().size());
@@ -726,6 +797,73 @@ ButtonBase::paintQuickHelpButton(QPainter &p)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+static QMap<quint64, ButtonGroupBase *> s_buttonBases;
+
+ButtonGroupBase
+*ButtonGroupBase::buttonGroup(const quint64 window)
+{
+    if (!s_buttonBases.contains(window))
+        s_buttonBases.insert(window, new ButtonGroupBase(window));
+    return s_buttonBases.value(window);
+}
+
+void
+ButtonGroupBase::cleanUp(const quint64 window)
+{
+    if (s_buttonBases.contains(window))
+        delete s_buttonBases.take(window);
+}
+
+ButtonGroupBase::ButtonGroupBase(const quint64 window) : m_window(window)
+{
+
+}
+
+void
+ButtonGroupBase::setColors(const QColor &bg, const QColor &fg, const QColor &min, const QColor &max, const QColor &close)
+{
+    for (int i = 0; i < buttons().size(); ++i)
+    {
+        ButtonBase *button = buttons().at(i);
+        button->m_bg = bg;
+        button->m_fg = fg;
+        if (min.isValid() && max.isValid() && close.isValid())
+            switch (button->buttonType())
+            {
+            case ButtonBase::Close: button->m_color = close; break;
+            case ButtonBase::Minimize: button->m_color = min; break;
+            case ButtonBase::Maximize: button->m_color = max; break;
+            default: break;
+            }
+    }
+}
+
+void
+ButtonGroupBase::configure(const int shadowOpacity, const int shadowIllumination, const ButtonBase::ButtonStyle buttonStyle, const ShadowStyle shadowStyle, const Gradient &grad)
+{
+    for (int i = 0; i < buttons().size(); ++i)
+    {
+        ButtonBase *button = buttons().at(i);
+        button->m_shadowOpacity = shadowOpacity;
+        button->m_shadowIllumination = shadowIllumination;
+        button->m_buttonStyle = buttonStyle;
+        button->m_shadowStyle = shadowStyle;
+        button->m_gradient = grad;
+    }
+}
+
+void
+ButtonGroupBase::clearCache()
+{
+    for (int i = 0; i < buttons().size(); ++i)
+    {
+        ButtonBase *button = buttons().at(i);
+        button->clearBgPix();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+
 WidgetButton::WidgetButton(Type type, QWidget *parent)
     : ButtonBase(type),
       QWidget(parent)
@@ -739,7 +877,7 @@ WidgetButton::WidgetButton(Type type, QWidget *parent)
 void
 WidgetButton::onClick(const Qt::MouseButton &btn)
 {
-    switch (type())
+    switch (buttonType())
     {
     case Close: window()->close(); break;
     case Minimize: window()->showMinimized(); break;

@@ -92,6 +92,7 @@ public:
     bool drawToolBoxTab(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
     bool drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
+    bool drawColumnViewGrip(const QStyleOption *option, QPainter *painter, const QWidget *widget = 0) const;
 
     /* complex controls */
     bool drawToolButton(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = 0) const;

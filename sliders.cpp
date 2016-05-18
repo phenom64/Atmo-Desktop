@@ -529,25 +529,25 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     static QMap<quint64, QPixmap> s_pixMap;
     if (!s_pixMap.contains(thing))
     {
-        QPixmap pix(qMax<int>(8, dConf.progressbars.stripeSize), s);
-        pix.fill(Qt::transparent);
-        QPainter p(&pix);
-        QLinearGradient lg(pix.rect().topLeft(), pix.rect().bottomLeft());
+        QImage img(qMax<int>(8, dConf.progressbars.stripeSize), s, QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter p(&img);
+        QLinearGradient lg(img.rect().topLeft(), img.rect().bottomLeft());
         lg.setStops(Settings::gradientStops(dConf.progressbars.gradient, h));
-        p.fillRect(pix.rect(), lg);
+        p.fillRect(img.rect(), lg);
         if (dConf.progressbars.stripeSize)
         {
             QColor stripe(opt->palette.color(QPalette::Base));
-            const int fourthW(pix.width()/4);
-            const int fourthH(pix.height()/4);
-            const int w(pix.width());
-            const int h(pix.height());
+            const int fourthW(img.width()/4);
+            const int fourthH(img.height()/4);
+            const int w(img.width());
+            const int h(img.height());
             const int topRight[] = { w-fourthW,0, w,0, w,fourthH };
             const int main[] = { 0,0, fourthW,0, w,h-fourthH, w,h, w-fourthW,h, 0,fourthH };
             const int bottomLeft[] = { 0,h-fourthH, fourthW,h, 0,h };
             p.setPen(Qt::NoPen);
 
-            QLinearGradient grad(pix.rect().topLeft(), pix.rect().bottomLeft());
+            QLinearGradient grad(img.rect().topLeft(), img.rect().bottomLeft());
             grad.setStops(Settings::gradientStops(dConf.progressbars.gradient, stripe));
 
             p.setBrush(grad);
@@ -565,9 +565,10 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
             t.translate(d, d);
             t.rotate(90);
             t.translate(-d, -d);
-            pix = pix.transformed(t);
+            img = img.transformed(t);
         }
-        s_pixMap.insert(thing, pix);
+//        FX::expblur(img, 6);
+        s_pixMap.insert(thing, QPixmap::fromImage(img));
     }
 
     static QMap<quint64, int> s_busyMap;

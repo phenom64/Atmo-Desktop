@@ -60,7 +60,32 @@ Style::drawSplitter(const QStyleOption *option, QPainter *painter, const QWidget
     if (dConf.uno.enabled)
     if (widget && !qobject_cast<const QToolBar *>(widget->parentWidget()))
     if (option->rect.width() == 1 || option->rect.height() == 1)
+    {
         painter->fillRect(option->rect, QColor(0, 0, 0, dConf.shadows.opacity));
+        return true;
+    }
+    if (option->rect.height() < option->rect.width())
+    {
+        const int sz = option->rect.height();
+        QRect r(0, 0, sz, sz);
+        r.moveCenter(option->rect.center());
+        GFX::drawHandle(painter, r, true);
+    }
+    else
+    {
+        const int sz = option->rect.width();
+        QRect r(0, 0, sz, sz);
+        r.moveCenter(option->rect.center());
+        GFX::drawHandle(painter, r, false);
+    }
+
+    return true;
+}
+
+bool
+Style::drawColumnViewGrip(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    GFX::drawHandle(painter, option->rect.shrinked(3), false);
     return true;
 }
 

@@ -240,6 +240,8 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
     const bool safari(Ops::isSafariTabBar(bar));
     if (selected && !safari && !(bar && bar->documentMode()) && !dConf.tabs.regular)
         fg = Ops::opposingRole(fg);
+    if (dConf.tabs.invDocCol && opt->documentMode && !Ops::isSafariTabBar(bar) && !selected)
+        fg = Ops::opposingRole(fg);
 
     const Qt::TextElideMode elide = (Qt::TextElideMode)styleHint(SH_TabBar_ElideMode, opt, widget);
     drawText(tr, painter, opt->text, opt, Qt::AlignCenter, fg, elide, selected, selected);
@@ -266,6 +268,8 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     const int level = selected ? 0 : (bar ? Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())) : 0);
 
     QColor c = opt->palette.color(/*widget?widget->backgroundRole():*/QPalette::Button);
+    if (dConf.tabs.invDocCol && opt->documentMode && !Ops::isSafariTabBar(bar) && !selected)
+        c = opt->palette.color(widget ? widget->foregroundRole() : QPalette::ButtonText);
     if (dConf.differentInactive && WindowHelpers::isActiveWindow(widget))
         c = c.darker(110);
 
@@ -350,6 +354,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     const TabPos pos = beforeSelected?BeforeSelected:selected?Selected:AfterSelected;
     if (opt->documentMode)
     {
+        lg.setStops(Settings::gradientStops(dConf.tabs.gradient, c));
         Mask::Tab::drawTab((TabStyle)dConf.tabs.docStyle, pos, r, painter, widget, lg, opt, level, WindowHelpers::inUno(widget));
     }
     else
@@ -611,9 +616,19 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     bool isDark(false);
     if (doc)
     {
-        QWidget *d(widget->window());
-        const QPalette pal(d->palette());
-        isDark = Color::lum(pal.color(d->foregroundRole())) > Color::lum(pal.color(d->backgroundRole()));
+        if (dConf.tabs.invDocCol)
+        {
+            if (selected)
+                isDark = Color::lum(option->palette.color(QPalette::ButtonText)) > Color::lum(option->palette.color(QPalette::Button));
+            else
+                isDark = Color::lum(option->palette.color(QPalette::Button)) > Color::lum(option->palette.color(QPalette::ButtonText));
+        }
+        else
+        {
+            QWidget *d(widget->window());
+            const QPalette pal(d->palette());
+            isDark = Color::lum(pal.color(d->foregroundRole())) > Color::lum(pal.color(d->backgroundRole()));
+        }
     }
     else if (bar)
     {
@@ -626,6 +641,9 @@ Style::drawTabCloser(const QStyleOption *option, QPainter *painter, const QWidge
     FX::colorizePixmap(tmp, QColor(cc, cc, cc, 127));
     QPixmap tmp2(pix);
     QPalette::ColorRole role(doc ? QPalette::WindowText : QPalette::ButtonText);
+
+    if (dConf.tabs.invDocCol && doc && !Ops::isSafariTabBar(bar) && !selected)
+        role = QPalette::Button;
 
     if (!doc && hover && !dConf.tabs.regular)
         role = QPalette::Highlight;

@@ -320,10 +320,10 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
         else
             GFX::drawWindowBg(&pt, w, opt->palette.color(QPalette::Window), pix.rect(), w->mapTo(w->window(), QPoint()));
         pt.end();
-        p->fillPath(tabPath(s, maskAdjusted(rect, opt->shape), opt->shape), pix);
+        p->fillPath(tabPath(s, maskAdjusted(rect.adjusted(-!vert, -vert, !vert, vert), opt->shape), opt->shape), pix);
     }
-    if (!south)
-        drawMask(p, r, s, pos, lg, opt->shape);
+    if (!south || (dConf.tabs.invDocCol && pos != Selected))
+        drawMask(p, r, s, pos, pos == Selected||!dConf.tabs.invDocCol ? lg : b, opt->shape);
     const QColor shadow = Color::mid(Qt::black, opt->palette.color(QPalette::Highlight), Steps-hover, hover);
     drawShadow(p, r, s, pos, shadow, opt->shape);
 }

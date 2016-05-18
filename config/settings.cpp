@@ -78,6 +78,7 @@ static const char *s_key[] = {
     "tabs.closerrnd",
     "tabs.docwidth",
     "tabs.invertdocumode",
+    "tabs.invertdocucolor",
 
     "uno",
     "uno.gradient",
@@ -207,7 +208,8 @@ static const char *s_description[] = {
     /*"tabs.closebuttonside"*/      "Side of the tab the close button should be on, 0 = Left, 1 = Right",
     /*"tabs.closerrnd"*/            "Roundness of tab close button",
     /*"tabs.docwidth"*/             "Width/height of document mode tabbar tabs, leave blank or set to 0 for default content based size.",
-    /*"tabs.invertDocumode"*/       "Invert (upside down) document mode tabs like safari tabs.",
+    /*"tabs.invertdocumode"*/       "Invert (upside down) document mode tabs like safari tabs.",
+    /*"tabs.invertdocucolor"*/      "Invert color of inactive document mode tabs",
 
     /*"uno"*/                       "If the head of the window should be integrated into one area a'la Mac Os",
     /*"uno.gradient"*/              "Gradient of the UNO area",
@@ -337,6 +339,7 @@ static const QVariant s_default[] = {
     0,
     16,
     0,
+    false,
     false,
 
     true,
@@ -708,11 +711,12 @@ Settings::readPalette()
 {
     if (!paletteSettings())
         return;
-    for (int g = 0; g < QPalette::NColorGroups; ++g)
-    {
+    QMap<QPalette::ColorRole, QColor > map;
+//    for (int g = 0; g < QPalette::NColorGroups; ++g)
+//    {
         for (int r = 0; r < QPalette::NColorRoles; ++r)
         {
-            const QColor c = readPaletteColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r);
+            const QColor c = readPaletteColor(QPalette::Active/*(QPalette::ColorGroup)g*/, (QPalette::ColorRole)r);
             if (c.isValid())
             {
                 if (!conf.palette)
@@ -727,9 +731,45 @@ Settings::readPalette()
                 }
                 return;
             }
-            conf.palette->setColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, c);
+//            conf.palette->setColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, c);
+            map.insert((QPalette::ColorRole)r, c);
         }
-    }
+//    }
+        if (conf.palette)
+        {
+            if (map.contains(QPalette::Window) && map.contains(QPalette::Button))
+            {
+                *conf.palette = QPalette(map.take(QPalette::Button), map.take(QPalette::Window));
+                QMapIterator<QPalette::ColorRole, QColor> it(map);
+                while (it.hasNext())
+                {
+                    it.next();
+                    const QPalette::ColorRole role = it.key();
+                    const QColor active = it.value();
+                    conf.palette->setColor(QPalette::Active, role, active);
+
+                    int r,g,b,a;
+                    active.getRgb(&r,&g,&b,&a);
+                    if (dConf.differentInactive)
+                    {
+                        const QColor inactive = QColor((127+r)/2, (127+g)/2, (127+b)/2, a);
+                        conf.palette->setColor(QPalette::Inactive, role, inactive);
+                    }
+                    else
+                        conf.palette->setColor(QPalette::Inactive, role, active);
+                    const QColor disabled = QColor((127*2+r)/3, (127*2+g)/3, (127*2+b)/3, a);
+                    conf.palette->setColor(QPalette::Disabled, role, disabled);
+                }
+            }
+            else
+            {
+                delete conf.palette;
+                conf.palette = 0;
+                if (instance()->m_paletteSettings)
+                    delete instance()->m_paletteSettings;
+                instance()->m_paletteSettings = 0;
+            }
+        }
 }
 
 QSettings
@@ -875,6 +915,7 @@ Settings::read()
     conf.tabs.closeRnd          = readInt(Tabcloserrnd);
     conf.tabs.docWidth          = readInt(Tabdocwidth);
     conf.tabs.invDoc            = readBool(Tabinvdoc);
+    conf.tabs.invDocCol         = readBool(Tabinvdoccol);
     //uno
     conf.uno.enabled            = readBool(Unoenabled);
     conf.uno.gradient           = stringToGrad(readString(Unograd));
