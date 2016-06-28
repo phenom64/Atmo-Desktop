@@ -90,7 +90,7 @@ public:
         WindowIconMask =                1<<4,
         EmbeddedButtonsMask=            1<<5,
         IsActiveWindowMask =            1<<6,
-        OpacityMask =                   0x0000f000,
+        OpacityMask =                   0x0000ff00,
         UnoHeightMask =                 0x00ff0000, //the height of the head is never more then 255 right? ..right?
         ButtonsMask =                   0x0f000000, //enough long as we dont have more then 15 buttons styles
         FrameMask =                     0xf0000000,  //same here... long as we dont set framesize over 15, unsure if this is enough....

@@ -46,7 +46,7 @@ public:
     void reconfigure(ReconfigureFlags flags);
     void prePaintWindow(KWin::EffectWindow* w, KWin::WindowPrePaintData& data, int time);
     void paintWindow(KWin::EffectWindow* w, int mask, QRegion region, KWin::WindowPaintData& data);
-    virtual int requestedEffectChainPosition() const { return 5; }
+    virtual int requestedEffectChainPosition() const { return 0; }
 
 private:
     enum { TopLeft = 0, TopRight, BottomRight, BottomLeft, NTex };

@@ -846,7 +846,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
     if (!dConf.uno.enabled)
 //    if (WindowData *data = WindowData::memory(w->window()->winId(), w->window()))
     {
-        const quint32 wid = w->isWindow() ? w->winId() : w->window()->winId();
+        const quint32 wid = w->isWindow() ? XHandler::windowId(w) : XHandler::windowId(w->window());
         XHandler::getDecoBorders(l,r,t,b, wid);
         offset += QPoint(0, t);
     }
@@ -896,10 +896,10 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
             parent = parent->parentWidget();
         }
     }
-//    if (XHandler::opacity() < 1.0f)
-//    {
-//        p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-//        p->fillRect(rect, QColor(0,0,0,XHandler::opacity()*255.0f));
-//        p->setCompositionMode(QPainter::CompositionMode_SourceOver);
-//    }
+    if (XHandler::opacity() < 0xff && !dConf.uno.enabled)
+    {
+        p->setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        p->fillRect(rect, QColor(0,0,0,XHandler::opacity()));
+        p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    }
 }

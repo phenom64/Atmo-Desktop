@@ -5,6 +5,7 @@
 #include <QLayout>
 #include <QMainWindow>
 #include "windowdata.h"
+#include "xhandler.h"
 #include <QWidgetAction>
 
 using namespace DSP;
@@ -109,7 +110,7 @@ ToolbarHelpers::adjustMargins(qulonglong toolbar)
             && !win->parentWidget())
     {
         tb->layout()->setContentsMargins(0, 0, 0, 0);
-        WindowData *d = WindowData::memory(win->winId(), win);
+        WindowData *d = WindowData::memory(XHandler::windowId(win), win);
         int m(0);
         if (d)
             m = d->value<uint>(WindowData::RightEmbedSize, 0);

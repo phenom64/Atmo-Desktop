@@ -124,7 +124,7 @@ Style::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *wi
     const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
     QColor bgc(option->palette.color(bg));
     if (widget && !widget->property("DSP_hasmenuarrow").toBool())
-        bgc.setAlpha(XHandler::opacity()*255.0f);
+        bgc.setAlpha(XHandler::opacity());
 
 //    painter->save();
 //    painter->setRenderHint(QPainter::Antialiasing);

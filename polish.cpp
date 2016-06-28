@@ -54,25 +54,42 @@
 #include "stylelib/macmenu.h"
 #endif
 
+#if QT_VERSION >= 0x050000
+#include <QWindow>
+#endif
 using namespace DSP;
 
 static void applyBlur(QWidget *widget)
 {
     unsigned int d(0);
-    XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+    XHandler::setXProperty<unsigned int>(XHandler::windowId(widget), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
 }
 
 void
 Style::applyTranslucency(QWidget *widget)
 {
-//    qDebug() << "applyTranslucency" << widget;
+//    return;
+//    qDebug() << "applyTranslucency" << widget << widget->testAttribute(Qt::WA_WState_Created);
+//#if 0
+#if QT_VERSION >= 0x050000
+    widget->setAttribute(Qt::WA_TranslucentBackground);
+    widget->setAttribute(Qt::WA_NoSystemBackground);
+    if (QWindow *win = widget->windowHandle())
+    {
+        QSurfaceFormat format = win->format();
+        format.setAlphaBufferSize(8);
+        win->destroy(); //apparently if we destroy and then set format we actually get a 32 bit window...
+        win->setFormat(format);
+        win->create();
+    }
+#endif
+//#endif
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
     const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
     if (wasVisible)
         widget->hide();
-//    widget->setParent(0); // Create TopLevel-Widget
-//    widget->setAttribute(Qt::WA_NoSystemBackground, true);
+    widget->setAttribute(Qt::WA_NoSystemBackground);
     widget->setAttribute(Qt::WA_TranslucentBackground);
     widget->setWindowIcon(icn);
     widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
@@ -160,12 +177,12 @@ Style::polish(QWidget *widget)
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())
                 Handlers::Window::addCompactMenu(widget);
-#if 0
-#if QT_VERSION < 0x050000
-            if (XHandler::opacity() < 1.0f && !widget->testAttribute(Qt::WA_TranslucentBackground))
+//#if 0
+//#if QT_VERSION < 0x050000
+            if (XHandler::opacity() < 0xff /*&& !widget->testAttribute(Qt::WA_TranslucentBackground)*/)
                 applyTranslucency(widget);
-#endif
-#endif
+//#endif
+//#endif
             if (dConf.lockDocks)
                 Handlers::Dock::manage(widget);
             Handlers::Window::manage(widget);
@@ -212,14 +229,14 @@ Style::polish(QWidget *widget)
         }
         else if (qobject_cast<QDialog *>(widget))
         {
-#if 0
-#if QT_VERSION < 0x050000
+//#if 0
+//#if QT_VERSION < 0x050000
             if (!dConf.uno.enabled
-                    && XHandler::opacity() < 1.0f
-                    && !widget->testAttribute(Qt::WA_TranslucentBackground))
+                    && XHandler::opacity() < 0xff
+                    /*&& !widget->testAttribute(Qt::WA_TranslucentBackground)*/)
                 applyTranslucency(widget);
-#endif
-#endif
+//#endif
+//#endif
             Handlers::Window::manage(widget);
         }
         const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint)
@@ -368,10 +385,10 @@ Style::polish(QWidget *widget)
         widget->setBackgroundRole(QPalette::Base);
         installFilter(widget);
         ShadowHandler::manage(widget);
-        if (XHandler::opacity() < 1.0f)
+        if (XHandler::opacity() < 0xff)
         {
             unsigned int d(0);
-            XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+            XHandler::setXProperty<unsigned int>(XHandler::windowId(widget), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
         }
     }
     else if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(widget))

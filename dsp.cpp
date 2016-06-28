@@ -67,7 +67,7 @@ protected:
         if (!w->isWindow() || !titleEvent || w->parentWidget())
             return false;
 
-        if (XHandler::opacity() < 1.0f
+        if (XHandler::opacity() < 0xff
                 && !w->testAttribute(Qt::WA_TranslucentBackground)
                 && !w->testAttribute(Qt::WA_WState_Created)
                 && !w->internalWinId()
@@ -89,7 +89,7 @@ Style::Style() : QCommonStyle()
     GFX::generateData();
 #if 0
 #if QT_VERSION >= 0x050000
-    if (XHandler::opacity() < 1.0f)
+    if (XHandler::opacity() < 0xff)
         qApp->installEventFilter(&t);
 #endif
 #endif

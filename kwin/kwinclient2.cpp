@@ -225,6 +225,8 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_blingEnabled(false)
     , m_icon(false)
     , m_buttonManager(0)
+    , m_opacity(0xff)
+    , m_uno(true)
 {
     if (s_factory)
         setParent(s_factory);
@@ -331,7 +333,7 @@ Deco::border()
 void
 Deco::maximizedChanged(const bool max)
 {
-    const int m = max||!m_wd||m_wd->value<bool>(WindowData::Uno, false) ? 0 : border();
+    const int m = max||m_uno ? 0 : border();
     setBorders(QMargins(m, titleBar().height(), m, m));
 }
 
@@ -387,7 +389,8 @@ Deco::updateData()
         m_contAware         = m_wd->value<bool>(WindowData::ContAware, false);
         m_icon              = m_wd->value<bool>(WindowData::WindowIcon, false);
         m_buttonStyle       = m_wd->value<int>(WindowData::Buttons);
-        m_shadowOpacity     = m_wd->value<int>(WindowData::ShadowOpacity);
+        m_opacity           = m_wd->value<int>(WindowData::Opacity);
+        m_uno               = m_wd->value<bool>(WindowData::Uno, false);
 
         if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embedder)
             m_embedder = new EmbedHandler(this);
@@ -395,8 +398,7 @@ Deco::updateData()
             removeEmbedder();
 
         setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
-        const bool uno = m_wd->value<bool>(WindowData::Uno, false);
-        if (!uno)
+        if (!m_uno)
         {
             setBorders(QMargins(border(),titleHeight(),border(),border()));
             if (m_grip)
@@ -533,7 +535,6 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     painter->save();
     //bg
     bool needPaintBg(true);
-    const bool uno = m_wd && m_wd->value<bool>(WindowData::Uno, false);
     if (m_wd && m_wd->lock())
     {
         painter->setBrushOrigin(titleBar().topLeft());
@@ -541,13 +542,13 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         if (!img.isNull())
         {
             QRect r = rect();
-            if (uno)
+            if (m_uno)
                 r = titleBar();
             painter->fillRect(r, img);
             needPaintBg = false;
         }
         m_wd->unlock();
-        if (!uno && !m_winGradient.isEmpty())
+        if (!m_uno && !m_winGradient.isEmpty())
         {
             const bool hor = m_wd->value<bool>(WindowData::Horizontal, false);
             QLinearGradient lg(rect().topLeft(), hor ? rect().topRight() : rect().bottomLeft());
@@ -565,6 +566,14 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         else
             painter->fillRect(titleBar(), client().data()->palette().color(QPalette::Window));
     }
+
+    if (m_opacity != 0xff && !m_uno)
+    {
+        painter->setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        painter->fillRect(rect(), QColor(0,0,0,m_opacity));
+        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    }
+
     if (m_separator)
         painter->fillRect(0, titleHeight()-1, titleBar().width(), 1, QColor(0, 0, 0, m_shadowOpacity));
     if (m_contAware)
@@ -659,7 +668,6 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         }
 
     }
-
     //buttons
     if (m_leftButtons)
         m_leftButtons->paint(painter, repaintArea);

@@ -10,6 +10,7 @@
 #include <QDebug>
 #include "gfx.h"
 #include "handlers.h"
+#include "xhandler.h"
 
 using namespace DSP;
 
@@ -320,6 +321,12 @@ Mask::Tab::drawTab(const TabStyle s, const TabPos pos, QRect r, QPainter *p, con
         else
             GFX::drawWindowBg(&pt, w, opt->palette.color(QPalette::Window), pix.rect(), w->mapTo(w->window(), QPoint()));
         pt.end();
+        if (XHandler::opacity() < 0xff)
+        {
+            p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+            p->fillPath(tabPath(s, maskAdjusted(rect.adjusted(-!vert, -vert, !vert, vert), opt->shape), opt->shape), QColor(0,0,0,/*XHandler::opacity()**/255));
+            p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
         p->fillPath(tabPath(s, maskAdjusted(rect.adjusted(-!vert, -vert, !vert, vert), opt->shape), opt->shape), pix);
     }
     if (!south || (dConf.tabs.invDocCol && pos != Selected))

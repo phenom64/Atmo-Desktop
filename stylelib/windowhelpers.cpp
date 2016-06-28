@@ -71,7 +71,7 @@ WindowHelpers::updateWindowData(qulonglong window)
     if (!win || !win->isWindow())
         return;
 
-    WindowData *data = WindowData::memory(win->winId(), win, true);
+    WindowData *data = WindowData::memory(XHandler::windowId(win), win, true);
     if (!data)
         return;
 //    qDebug() << "WindowHelpers::updateWindowData" << window;
@@ -128,7 +128,7 @@ WindowHelpers::updateWindowData(qulonglong window)
     data->setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
     data->setValue<bool>(WindowData::Uno, dConf.uno.enabled);
     data->setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
-    data->setValue<int>(WindowData::Opacity, XHandler::opacity()*255.0f);
+    data->setValue<int>(WindowData::Opacity, XHandler::opacity());
     data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
     data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
     data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity);
@@ -155,7 +155,7 @@ WindowHelpers::updateWindowData(qulonglong window)
 unsigned int
 WindowHelpers::getHeadHeight(QWidget *win, bool &separator)
 {
-    WindowData *d = WindowData::memory(win->winId(), win); //guaranteed by caller method
+    WindowData *d = WindowData::memory(XHandler::windowId(win), win); //guaranteed by caller method
     int h = d->value<int>(WindowData::TitleHeight);
     if (!h)
         h = 25;
@@ -221,7 +221,7 @@ WindowHelpers::unoHeight(QWidget *win, bool includeClientPart, bool includeTitle
         height += instance()->m_uno.value(win, 0);
     if (!includeTitleBar)
         return height;
-    WindowData *data = WindowData::memory(win->winId(), win);
+    WindowData *data = WindowData::memory(XHandler::windowId(win), win);
     if (data)
         return height + data->value<int>(WindowData::TitleHeight);
     return height;
@@ -249,7 +249,7 @@ WindowHelpers::dataChanged(QDBusMessage msg)
     for (int i = 0; i < widgets.count(); ++i)
     {
         QWidget *w(widgets.at(i));
-        if (w->isWindow() && w->winId() == winId)
+        if (w->isWindow() && XHandler::windowId(w) == winId)
         {
             WindowData *data = WindowData::memory(winId, w);
             w->setProperty(s_active, data->value<bool>(WindowData::IsActiveWindow));
@@ -300,16 +300,10 @@ WindowHelpers::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *da
 //        pt.setCompositionMode(QPainter::CompositionMode_Overlay);
         pt.drawTiledPixmap(img.rect(), noise);
     }
-    pt.end();
-
-    if (XHandler::opacity() < 1.0f)
+    if (XHandler::opacity() < 0xff)
     {
-        QImage copy(img);
-        img.fill(Qt::transparent);
-        pt.begin(&img);
-        pt.drawImage(img.rect(), copy);
         pt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        pt.fillRect(img.rect(), QColor(0, 0, 0, XHandler::opacity()*255.0f));
-        pt.end();
+        pt.fillRect(img.rect(), QColor(0, 0, 0, XHandler::opacity()));
     }
+    pt.end();
 }

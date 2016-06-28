@@ -18,6 +18,10 @@
 //#include "fixx11h.h"
 #endif
 
+#if QT_VERSION > 0x050000
+#include <QWindow>
+#endif
+
 using namespace DSP;
 
 static char *atoms[XHandler::ValueCount] =
@@ -372,7 +376,7 @@ XHandler::compositingActive()
 #endif
 }
 
-float
+int
 XHandler::opacity()
 {
 //    if (compositingActive())
@@ -502,4 +506,14 @@ XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWi
         left = right = top = bottom = 0;
     if (data)
         freeData(data);
+}
+
+WId
+XHandler::windowId(const QWidget *w)
+{
+#if QT_VERSION > 0x050000
+    return w->windowHandle() ? w->windowHandle()->winId() : w->winId();
+#else
+    return w->winId();
+#endif
 }

@@ -174,7 +174,7 @@ public:
     {
         QString appName, iconTheme;
         App app;
-        float opacity;
+        int opacity;
         QStringList blackList, iconPaths;
         bool removeTitleBars, hackDialogs, compactMenu, splitterExt, balloonTips, lockDocks, differentInactive, dfmHacks, animateStack, animateScroll, simpleArrows;
         quint8 titlePos, arrowSize, baseSize, frameRnd;

@@ -70,7 +70,7 @@ public:
     static void deleteXProperty(const XWindow w, const Value v);
     static void mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow win, bool resize = false, XWindow dest = 0);
     static bool compositingActive();
-    static float opacity();
+    static int opacity();
     static XPixmap x11Pixmap(const QImage &qtImg);
     static void freePix(const XPixmap pixmap);
     static void getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id);
@@ -82,6 +82,7 @@ public:
     static void pressEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button);
     static void releaseEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button);
     static void doubleClickEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button);
+    static WId windowId(const QWidget *w);
 
 protected:
     static void changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems);

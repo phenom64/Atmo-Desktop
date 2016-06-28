@@ -851,7 +851,7 @@ Settings::read()
 {
     conf.baseSize               = 24;
     //globals
-    conf.opacity                = 1.0f/*readFloat(Opacity)/100.0f*/;
+    conf.opacity                = readInt(Opacity)*2.55f;
     conf.blackList              = readStringList(Blacklist);
 //    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
 //        conf.opacity = 1.0f;

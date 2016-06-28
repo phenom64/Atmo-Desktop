@@ -134,7 +134,7 @@ TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
     //you probably need some 30 years of lol if youre clicking faster then 75 ms)
     if (clickSpeed > 75 && clickSpeed < 300)
     {
-        if (WindowData *data = WindowData::memory(window()->winId(), window()))
+        if (WindowData *data = WindowData::memory(XHandler::windowId(window()), window()))
         if (uint deco = data->decoId())
             XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
         m_time = QX11Info::appTime()/*e->timestamp()*/;
@@ -158,10 +158,10 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
 //#endif
     if (e->button() == Qt::LeftButton)
     {
-        XHandler::mwRes(e->pos(), e->globalPos(), window()->winId());
+        XHandler::mwRes(e->pos(), e->globalPos(), XHandler::windowId(window()));
         return;
     }
-    if (WindowData *data = WindowData::memory(window()->winId(), window()))
+    if (WindowData *data = WindowData::memory(XHandler::windowId(window()), window()))
     if (uint deco = data->decoId())
         XHandler::pressEvent(e->globalPos(), deco, e->button());
 }
@@ -170,7 +170,7 @@ void
 TitleWidget::wheelEvent(QWheelEvent *e)
 {
     e->accept();
-    if (WindowData *data = WindowData::memory(window()->winId(), window()))
+    if (WindowData *data = WindowData::memory(XHandler::windowId(window()), window()))
     if (uint deco = data->decoId())
         XHandler::wheelEvent(deco, e->delta()>0);
 }
@@ -285,7 +285,7 @@ TitleWidget::embed()
     if (!shouldEmbed() || m_toolBar->layout()->count()<3)
         return;
 
-    WindowData *data = WindowData::memory(m_toolBar->window()->winId(), m_toolBar->window());
+    WindowData *data = WindowData::memory(XHandler::windowId(m_toolBar->window()), m_toolBar->window());
     if (!data)
         return;
 
@@ -353,7 +353,7 @@ TitleWidget::unembed()
         deleteLater();
         return;
     }
-    if (WindowData *data = WindowData::memory(win->winId(), win))
+    if (WindowData *data = WindowData::memory(XHandler::windowId(win), win))
     {
         data->setValue<bool>(WindowData::EmbeddedButtons, false);
         data->setValue<uint>(WindowData::TitleHeight, 25);
@@ -463,7 +463,7 @@ TitleWidget::dataChanged(QDBusMessage msg)
     for (int i = 0; i < widgets.count(); ++i)
     {
         QWidget *w(widgets.at(i));
-        if (w->isWindow() && w->winId() == winId)
+        if (w->isWindow() && XHandler::windowId(w) == winId)
         {
             QList<QToolBar *> toolBars(w->findChildren<QToolBar *>());
             for (int i = 0; i < toolBars.count(); ++i)

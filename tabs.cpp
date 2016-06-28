@@ -75,7 +75,7 @@ Style::drawSafariTab(const QStyleOptionTab *opt, QPainter *painter, const QTabBa
         QPainter pt(&pix);
         Handlers::Window::drawUnoPart(&pt, pix.rect(), bar, bar->mapTo(bar->window(), r.topLeft()));
         pt.end();
-        if (XHandler::opacity() < 1.0f)
+        if (XHandler::opacity() < 0xff)
         {
             const QPainter::CompositionMode mode(painter->compositionMode());
             painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -374,7 +374,7 @@ static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, cons
     QRect r(rect.isValid()?rect: bar?bar->rect():dev->rect());
     if (Ops::isUnoTabBar(bar))
     {
-        if (XHandler::opacity() < 1.0f)
+        if (XHandler::opacity() < 0xff)
         {
             p->setCompositionMode(QPainter::CompositionMode_DestinationOut);
             p->fillRect(r, Qt::black);

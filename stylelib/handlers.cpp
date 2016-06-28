@@ -363,7 +363,7 @@ ToolBar::eventFilter(QObject *o, QEvent *e)
 
 static void applyMask(QWidget *widget)
 {
-    if (XHandler::opacity() < 1.0f)
+    if (XHandler::opacity() < 0xff)
     {
         widget->clearMask();
         if (!widget->windowFlags().testFlag(Qt::FramelessWindowHint))
@@ -373,7 +373,7 @@ static void applyMask(QWidget *widget)
             ShadowHandler::manage(widget);
         }
         unsigned int d(0);
-        XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+        XHandler::setXProperty<unsigned int>(XHandler::windowId(widget), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
     }
     else
     {
@@ -484,8 +484,8 @@ Window::eventFilter(QObject *o, QEvent *e)
             QPainter p(w);
             p.setPen(Qt::NoPen);
             QColor bgColor(w->palette().color(w->backgroundRole()));
-            if (XHandler::opacity() < 1.0f)
-                bgColor.setAlpha(XHandler::opacity()*255.0f);
+            if (XHandler::opacity() < 0xff)
+                bgColor.setAlpha(XHandler::opacity());
             p.setBrush(bgColor);
             p.setRenderHint(QPainter::Antialiasing);
             p.drawRoundedRect(w->rect(), 4, 4);
@@ -498,22 +498,14 @@ Window::eventFilter(QObject *o, QEvent *e)
             QPainter p(w);
             if (dConf.uno.enabled)
             {
-                if (XHandler::opacity() < 1.0f
+                if (XHandler::opacity() < 0xff
                         && qobject_cast<QMainWindow *>(w))
                     p.setClipRegion(paintRegion(static_cast<QMainWindow *>(w)));
-
             }
             GFX::drawWindowBg(&p, w, bgColor, w->rect());
-//            if (WindowData *data = WindowData::memory(w->winId(), w))
-//            {
-                QRect line(0, WindowHelpers::unoHeight(w), w->width(), 1);
-                if (dConf.uno.enabled)
-//                {
-//                    if (!data->value<bool>(WindowData::Separator, true))
-//                        line.translate(0, 1);
-                    p.fillRect(line, QColor(255, 255, 255, dConf.shadows.illumination));
-//                }
-//            }
+            QRect line(0, WindowHelpers::unoHeight(w), w->width(), 1);
+            if (dConf.uno.enabled)
+                p.fillRect(line, QColor(255, 255, 255, dConf.shadows.illumination));
             p.end();
         }
         return false;
@@ -554,11 +546,11 @@ Window::eventFilter(QObject *o, QEvent *e)
             w->setWindowFlags(w->windowFlags() | Qt::FramelessWindowHint);
             w->setVisible(true);
 
-            if (XHandler::opacity() < 1.0f)
+            if (XHandler::opacity() < 0xff)
             {
                 w->setAttribute(Qt::WA_TranslucentBackground);
                 unsigned int d(0);
-                XHandler::setXProperty<unsigned int>(w->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+                XHandler::setXProperty<unsigned int>(XHandler::windowId(w), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
             }
 
             int y(p->mapToGlobal(p->rect().topLeft()).y());
@@ -652,7 +644,7 @@ bool
 Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
 {
     QWidget *win(w->window());
-    WindowData *data = WindowData::memory(win->winId(), win);
+    WindowData *data = WindowData::memory(XHandler::windowId(win), win);
     if (!data)
         return false;
 
@@ -724,7 +716,7 @@ Drag::eventFilter(QObject *o, QEvent *e)
     if (!cd)
         return false;
 
-    XHandler::mwRes(w->mapTo(w->window(), me->pos()), me->globalPos(), w->window()->winId());
+    XHandler::mwRes(w->mapTo(w->window(), me->pos()), me->globalPos(), XHandler::windowId(w->window()));
     return false;
 }
 
@@ -807,7 +799,7 @@ ScrollWatcher::updateWin(QWidget *mainWin)
                 else
                     tb->update();
             }
-    if (WindowData *wd = WindowData::memory(win->winId(), win))
+    if (WindowData *wd = WindowData::memory(XHandler::windowId(win), win))
 //        wd->sync();
         QMetaObject::invokeMethod(wd, "sync", Qt::QueuedConnection);
 }
@@ -820,7 +812,7 @@ QSharedMemory
         m = s_mem.value(win);
     else
     {
-        m = new QSharedMemory(QString::number(win->winId()), win);
+        m = new QSharedMemory(QString::number(XHandler::windowId(win)), win);
         s_mem.insert(win, m);
     }
     if (!m->isAttached())
@@ -1108,7 +1100,7 @@ Balloon::updateShadow()
         data[i] = pix[i];
     for (int i = 8; i < 12; ++i)
         data[i] = s_padding;
-    XHandler::setXProperty<XHandler::XPixmap>(winId(), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
+    XHandler::setXProperty<XHandler::XPixmap>(XHandler::windowId(this), XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, data, 12);
 }
 
 void
