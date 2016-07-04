@@ -820,8 +820,9 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
     if (!w)
         return;
 
-    if (w->autoFillBackground())
+    if (w->autoFillBackground() /*&& XHandler::opacity() == 0xff*/)
         return;
+
     if (!w->isWindow())
     {
         QWidget *parent = w->parentWidget();
@@ -829,7 +830,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
         {
             if (parent->isWindow())
                 break;
-            if (parent->autoFillBackground())
+            if (parent->autoFillBackground() /*&& XHandler::opacity() == 0xff*/)
             {
                 p->fillRect(w->rect(), parent->palette().color(parent->backgroundRole()));
                 return;
@@ -860,11 +861,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
         QRect wr(rect);
         if (!w->isWindow())
             wr = QRect(w->mapFrom(w->window(), QPoint()), w->window()->size());
-//        qDebug() << l << t << r << b << w->isWindow() << w << wr;
         wr.adjust(-l, -t, r, b);
-//        qDebug() << wr << rect << w->rect() << (p->device() == (QPaintDevice *)w) << p->brushOrigin();
-//        const QPoint bo = p->brushOrigin();
-//        p->setBrushOrigin(l, t);
         QLinearGradient lg(wr.topLeft(), wr.bottomLeft());
         if (dConf.windows.hor)
             lg = QLinearGradient(wr.topLeft(), wr.topRight());
@@ -876,7 +873,6 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
         p->setCompositionMode(QPainter::CompositionMode_Overlay);
         p->fillRect(rect, lg);
         p->setCompositionMode(mode);
-//        p->setBrushOrigin(bo);
     }
 
     if (!w->isWindow())
@@ -899,7 +895,7 @@ GFX::drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &
     if (XHandler::opacity() < 0xff && !dConf.uno.enabled)
     {
         p->setCompositionMode(QPainter::CompositionMode_DestinationIn);
-        p->fillRect(rect, QColor(0,0,0,XHandler::opacity()));
+        p->fillRect(w->rect(), QColor(0,0,0,XHandler::opacity()));
         p->setCompositionMode(QPainter::CompositionMode_SourceOver);
     }
 }

@@ -68,32 +68,37 @@ static void applyBlur(QWidget *widget)
 void
 Style::applyTranslucency(QWidget *widget)
 {
-//    return;
-//    qDebug() << "applyTranslucency" << widget << widget->testAttribute(Qt::WA_WState_Created);
-//#if 0
-#if QT_VERSION >= 0x050000
-    widget->setAttribute(Qt::WA_TranslucentBackground);
-    widget->setAttribute(Qt::WA_NoSystemBackground);
-    if (QWindow *win = widget->windowHandle())
-    {
-        QSurfaceFormat format = win->format();
-        format.setAlphaBufferSize(8);
-        win->destroy(); //apparently if we destroy and then set format we actually get a 32 bit window...
-        win->setFormat(format);
-        win->create();
-    }
-#endif
-//#endif
+    if (!widget->isWindow())
+        return;
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
     const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
     if (wasVisible)
         widget->hide();
-    widget->setAttribute(Qt::WA_NoSystemBackground);
     widget->setAttribute(Qt::WA_TranslucentBackground);
+    widget->setAttribute(Qt::WA_NoSystemBackground);
+#if QT_VERSION >= 0x050000
+    if (QWindow *win = widget->windowHandle())
+    {
+        QSurfaceFormat format = win->format();
+        if (format.alphaBufferSize() != 8)
+        {
+            format.setAlphaBufferSize(8);
+            win->destroy(); //apparently if we destroy and then set format we actually get a 32 bit window... this however messes w/ QWidget::winId()
+            win->setFormat(format);
+            win->create();
+//            qDebug() << win->winId() << widget->winId() << "asdf";
+            QEvent winIdChange(QEvent::WinIdChange);
+            QCoreApplication::sendEvent(widget, &winIdChange);
+            QCoreApplication::processEvents();
+//            qDebug() << win->winId() << widget->winId();
+        }
+    }
+#endif
     widget->setWindowIcon(icn);
     widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
     widget->setVisible(wasVisible);
+    applyBlur(widget);
 }
 
 void
@@ -231,10 +236,12 @@ Style::polish(QWidget *widget)
         {
 //#if 0
 //#if QT_VERSION < 0x050000
-            if (!dConf.uno.enabled
-                    && XHandler::opacity() < 0xff
-                    /*&& !widget->testAttribute(Qt::WA_TranslucentBackground)*/)
-                applyTranslucency(widget);
+            if (XHandler::opacity() < 0xff)
+            {
+                if (!dConf.uno.enabled)
+                    applyTranslucency(widget);
+                applyBlur(widget);
+            }
 //#endif
 //#endif
             Handlers::Window::manage(widget);
@@ -249,6 +256,8 @@ Style::polish(QWidget *widget)
         if (widget->testAttribute(Qt::WA_TranslucentBackground)
                 || (qobject_cast<QDialog *>(widget) && !(widget->windowFlags() & Qt::FramelessWindowHint)))
             applyBlur(widget);
+        if (qobject_cast<QMenu *>(widget))
+            widget->setWindowFlags(widget->windowFlags() | Qt::FramelessWindowHint);
     }
 
     //main if segment for all widgets

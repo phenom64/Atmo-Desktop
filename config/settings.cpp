@@ -853,8 +853,8 @@ Settings::read()
     //globals
     conf.opacity                = readInt(Opacity)*2.55f;
     conf.blackList              = readStringList(Blacklist);
-//    if (conf.blackList.contains(conf.m_appName) || conf.app == KWin)
-//        conf.opacity = 1.0f;
+    if (conf.blackList.contains(conf.appName) || conf.app == KWin)
+        conf.opacity = 0xff;
     conf.removeTitleBars        = false/*readBool(Removetitle)*/;
     conf.titlePos               = readInt(Titlepos);
     conf.hackDialogs            = readBool(Hackdialogs);

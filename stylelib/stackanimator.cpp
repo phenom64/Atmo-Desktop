@@ -124,7 +124,6 @@ StackAnimator::currentChanged(int i)
         animate();
         m_timer->start(20);
     }
-
 }
 
 void
