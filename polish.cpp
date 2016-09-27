@@ -78,6 +78,7 @@ Style::applyTranslucency(QWidget *widget)
     widget->setAttribute(Qt::WA_TranslucentBackground);
     widget->setAttribute(Qt::WA_NoSystemBackground);
 #if QT_VERSION >= 0x050000
+    if (widget->testAttribute(Qt::WA_WState_Created))
     if (QWindow *win = widget->windowHandle())
     {
         QSurfaceFormat format = win->format();
@@ -256,7 +257,9 @@ Style::polish(QWidget *widget)
         if (widget->testAttribute(Qt::WA_TranslucentBackground)
                 || (qobject_cast<QDialog *>(widget) && !(widget->windowFlags() & Qt::FramelessWindowHint)))
             applyBlur(widget);
-        if (qobject_cast<QMenu *>(widget))
+        if (dConf.app == Settings::Konversation
+                && qobject_cast<QMenu *>(widget)
+                && !(widget->windowFlags() & Qt::FramelessWindowHint))
             widget->setWindowFlags(widget->windowFlags() | Qt::FramelessWindowHint);
     }
 
@@ -469,11 +472,20 @@ Style::polish(QWidget *widget)
 //        }
         if (frame->inherits("KMultiTabBarInternal"))
         {
-            frame->setContentsMargins(2,2,2,2);
-//            frame->setFrameShadow(QFrame::Sunken);
-//            frame->setFrameShape(QFrame::StyledPanel);
+            frame->setContentsMargins(4,4,4,4);
             installFilter(frame);
-//            frame->setContentsMargins(0, 0, 0, 0);
+
+            frame->setFrameShadow(QFrame::Sunken);
+            frame->setFrameShape(QFrame::StyledPanel);
+            frame->setAutoFillBackground(true);
+            QPalette pal = frame->palette();
+            QColor macBg = Color::mid(pal.color(QPalette::Window), pal.color(QPalette::Highlight), 10, 1);
+            macBg = Color::mid(macBg, pal.color(QPalette::WindowText), 10, 1);
+            pal.setColor(QPalette::Window, macBg);
+            frame->setPalette(pal);
+//            frame->setBackgroundRole(QPalette::WindowText);
+//            frame->setForegroundRole(QPalette::Window);
+            Overlay::manage(frame, dConf.shadows.opacity);
         }
         else if (widget->inherits("QTipLabel")) //tooltip
         {

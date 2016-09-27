@@ -110,10 +110,13 @@ ToolbarHelpers::adjustMargins(qulonglong toolbar)
             && !win->parentWidget())
     {
         tb->layout()->setContentsMargins(0, 0, 0, 0);
-        WindowData *d = WindowData::memory(XHandler::windowId(win), win);
+        WindowData d = WindowData::memory(XHandler::windowId(win), win);
         int m(0);
-        if (d)
-            m = d->value<uint>(WindowData::RightEmbedSize, 0);
+        if (d && d.lock())
+        {
+            m = d->rightEmbedSize;
+            d.unlock();
+        }
         tb->QWidget::setContentsMargins(0, 0, tb->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
     }
     else if (tb->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)

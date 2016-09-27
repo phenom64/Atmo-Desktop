@@ -23,7 +23,7 @@ public:
 protected:
     explicit WindowHelpers(QObject *parent = 0);
     static bool scheduleWindow(const qulonglong w);
-    static unsigned int getHeadHeight(QWidget *win, bool &separator);
+    static unsigned int getHeadHeight(QWidget *win, bool &separator, const int dataHeight);
     static void unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data);
 
 signals:

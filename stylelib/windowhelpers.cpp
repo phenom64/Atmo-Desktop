@@ -5,6 +5,7 @@
 #include "macmenu.h"
 #include "xhandler.h"
 #include "fx.h"
+#include "titlewidget.h"
 #include <QMainWindow>
 #include <QToolBar>
 #include <QMenuBar>
@@ -31,11 +32,11 @@ WindowHelpers::WindowHelpers(QObject *parent)
     : QObject(parent)
 {
 #if HASDBUS
-    static const QString service("org.kde.dsp.kwindeco"),
-            interface("org.kde.dsp.deco"),
-            path("/DSPDecoAdaptor");
-    QDBusInterface *iface = new QDBusInterface(service, path, interface);
-    iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
+//    static const QString service("org.kde.dsp.kwindeco"),
+//            interface("org.kde.dsp.deco"),
+//            path("/DSPDecoAdaptor");
+//    QDBusInterface *iface = new QDBusInterface(service, path, interface);
+//    iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
 #endif
 }
 
@@ -71,92 +72,81 @@ WindowHelpers::updateWindowData(qulonglong window)
     if (!win || !win->isWindow())
         return;
 
-    WindowData *data = WindowData::memory(XHandler::windowId(win), win, true);
-    if (!data)
-        return;
-//    qDebug() << "WindowHelpers::updateWindowData" << window;
-
-    QPalette pal(win->palette());
-    if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify
-        pal = QApplication::palette();
-    if (dConf.uno.enabled)
+    WindowData data = WindowData::memory(XHandler::windowId(win), win, true);
+    if (data && data.lock())
     {
-        bool separator(true);
-        const unsigned int height = getHeadHeight(win, separator);
-        if (dConf.differentInactive)
+        QPalette pal(win->palette());
+        if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole()))) //im looking at you spotify
+            pal = QApplication::palette();
+        if (dConf.uno.enabled)
         {
-            if (isActiveWindow(win))
+            bool separator(true);
+            const unsigned int height = getHeadHeight(win, separator, data->titleHeight);
+            if (dConf.differentInactive)
             {
-                pal.setColor(QPalette::Active, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::black, 10, 1));
-                pal.setColor(QPalette::Active, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::black, 10, 1));
-                pal.setCurrentColorGroup(QPalette::Active);
+                if (isActiveWindow(win))
+                {
+                    pal.setColor(QPalette::Active, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::black, 10, 1));
+                    pal.setColor(QPalette::Active, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::black, 10, 1));
+                    pal.setCurrentColorGroup(QPalette::Active);
+                }
+                else
+                {
+                    pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
+                    pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
+                    pal.setCurrentColorGroup(QPalette::Inactive);
+                }
             }
-            else
-            {
-                pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
-                pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
-                pal.setCurrentColorGroup(QPalette::Inactive);
-            }
+            int width(0);
+            unoBg(win, width, height, pal, data->imageData);
+            data->imageWidth = width;
+            data->imageHeight = height;
+            data->separator = separator;
+            data->unoHeight = height;
         }
-        int width(0);
-        if (data->lock())
+        else
         {
-            unoBg(win, width, height, pal, data->imageData());
-            data->setImageSize(width, height);
-            data->unlock();
-        }
-        data->setValue<bool>(WindowData::Separator, separator);
-        data->setValue<int>(WindowData::UnoHeight, height);
-    }
-    else
-    {
-//        const int th = data->value<int>(WindowData::TitleHeight, 0);
-        if (data->lock())
-        {
-            QImage img(data->imageData(), GFX::noise(true).width(), GFX::noise(true).height(), QImage::Format_ARGB32_Premultiplied);
+            QImage img(data->imageData, GFX::noise(true).width(), GFX::noise(true).height(), QImage::Format_ARGB32_Premultiplied);
             img.fill(Qt::transparent);
             QPainter p(&img);
             p.drawTiledPixmap(img.rect(), GFX::noise(true));
             p.end();
-            data->setImageSize(img.width(), img.height());
-            data->unlock();
+            data->imageWidth = img.width();
+            data->imageHeight = img.height();
+            data->separator = false;
+            data.setWindowGradient(dConf.windows.gradient);
         }
-        data->setWindowGradient(dConf.windows.gradient);
-        data->setValue<bool>(WindowData::Separator, false);
+        data->winIcon           = dConf.deco.icon;
+        data->contAware         = dConf.uno.enabled&&dConf.uno.contAware;
+        data->uno               = dConf.uno.enabled;
+        data->hor               = dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor;
+        data->opacity           = XHandler::opacity();
+        data->buttons           = dConf.deco.buttons;
+        data->frame             = dConf.deco.frameSize;
+        data->shadowOpacity     = dConf.shadows.opacity;
+        data->illumination      = dConf.shadows.illumination;
+        data->textBevelOpacity  = dConf.shadows.onTextOpacity;
+        data->followDecoShadow  = dConf.toolbtn.shadow;
+        data->closeColor        = dConf.deco.close;
+        data->maxColor          = dConf.deco.max;
+        data->minColor          = dConf.deco.min;
+        data->fgColor           = pal.color(win->foregroundRole()).rgba();
+        data->bgColor           = pal.color(win->backgroundRole()).rgba();
+//        if (win->findChild<TitleWidget *>())
+//            data->titleHeight = 6;
+        data.setButtonGradient(dConf.toolbtn.gradient);
+        data.unlock();
+        QMetaObject::invokeMethod(win, "update", Qt::QueuedConnection);
+        emit instance()->windowDataChanged(win);
+        data.sync();
     }
-    data->setValue<bool>(WindowData::WindowIcon, dConf.deco.icon);
-    data->setValue<bool>(WindowData::ContAware, dConf.uno.enabled&&dConf.uno.contAware);
-    data->setValue<bool>(WindowData::Uno, dConf.uno.enabled);
-    data->setValue<bool>(WindowData::Horizontal, dConf.uno.enabled?dConf.uno.hor:dConf.windows.hor);
-    data->setValue<int>(WindowData::Opacity, XHandler::opacity());
-    data->setValue<int>(WindowData::Buttons, dConf.deco.buttons);
-    data->setValue<int>(WindowData::Frame, dConf.deco.frameSize);
-    data->setValue<int>(WindowData::ShadowOpacity, dConf.shadows.opacity);
-    data->setValue<int>(WindowData::Illumination, dConf.shadows.illumination);
-    data->setValue<int>(WindowData::TextBevOpacity, dConf.shadows.onTextOpacity);
-    data->setValue<int>(WindowData::FollowDecoShadow, dConf.toolbtn.shadow);
-    data->setCloseColor(QColor::fromRgba(dConf.deco.close));
-    data->setMaxColor(QColor::fromRgba(dConf.deco.max));
-    data->setMinColor(QColor::fromRgba(dConf.deco.min));
-    data->setFg(pal.color(win->foregroundRole()));
-    data->setBg(pal.color(win->backgroundRole()));
-    data->setButtonGradient(dConf.toolbtn.gradient);
-//    win->update();
-    QMetaObject::invokeMethod(win, "update", Qt::QueuedConnection);
-//    if (TitleWidget *w = win->findChild<TitleWidget *>())
-//        w->update();
-//    data->setProperty("DSP_ATTACHED", true);
-//    qDebug() << "WindowHelpers::updateWindowData" << win << win->winId() << data->value<bool>(WindowData::Uno, false) << data->key() << data->errorString() << data->isAttached();
-    emit instance()->windowDataChanged(win);
-    data->sync();
 }
 
 
 unsigned int
-WindowHelpers::getHeadHeight(QWidget *win, bool &separator)
+WindowHelpers::getHeadHeight(QWidget *win, bool &separator, const int dataHeight)
 {
-    WindowData *d = WindowData::memory(XHandler::windowId(win), win); //guaranteed by caller method
-    int h = d->value<int>(WindowData::TitleHeight);
+    int h = dataHeight;
     if (!h)
         h = 25;
     if (!h)
@@ -221,9 +211,14 @@ WindowHelpers::unoHeight(QWidget *win, bool includeClientPart, bool includeTitle
         height += instance()->m_uno.value(win, 0);
     if (!includeTitleBar)
         return height;
-    WindowData *data = WindowData::memory(XHandler::windowId(win), win);
-    if (data)
-        return height + data->value<int>(WindowData::TitleHeight);
+    WindowData data = WindowData::memory(XHandler::windowId(win), win);
+    if (data && data.lock())
+    {
+//        WindowDataLocker locker(data);
+        int h = height + data->titleHeight;
+        data.unlock();
+        return h;
+    }
     return height;
 }
 
@@ -235,28 +230,33 @@ WindowHelpers::isActiveWindow(const QWidget *w)
     if (!w)
         return true;
     QWidget *win = w->window();
-    if (!win->property(s_active).isValid())
-        return true;
-    return (win->property(s_active).toBool());
+    return win->isActiveWindow();
+//    if (!win->property(s_active).isValid())
+//        return true;
+//    return (win->property(s_active).toBool());
 }
 
 #if HASDBUS
 void
 WindowHelpers::dataChanged(QDBusMessage msg)
 {
-    uint winId = msg.arguments().at(0).toUInt();
-    QList<QWidget *> widgets = qApp->allWidgets();
-    for (int i = 0; i < widgets.count(); ++i)
-    {
-        QWidget *w(widgets.at(i));
-        if (w->isWindow() && XHandler::windowId(w) == winId)
-        {
-            WindowData *data = WindowData::memory(winId, w);
-            w->setProperty(s_active, data->value<bool>(WindowData::IsActiveWindow));
-            updateWindowDataLater(w);
-            break;
-        }
-    }
+//    uint winId = msg.arguments().at(0).toUInt();
+//    QList<QWidget *> widgets = qApp->allWidgets();
+//    for (int i = 0; i < widgets.count(); ++i)
+//    {
+//        QWidget *w(widgets.at(i));
+//        if (w->isWindow() && XHandler::windowId(w) == winId)
+//        {
+//            WindowData data = WindowData::memory(winId, w);
+//            if (data && data.lock())
+//            {
+//                w->setProperty(s_active, data->isActiveWin);
+//                data.unlock();
+//            }
+//            updateWindowDataLater(w);
+//            break;
+//        }
+//    }
 }
 #endif
 

@@ -2,8 +2,9 @@
 #define WINDOWDATA_H
 
 #include "../config/settings.h"
-#include <QSharedMemory>
+//#include <QSharedMemory>
 #include <QDebug>
+#include <QPointer>
 
 #if HASDBUS
 #include <QDBusAbstractAdaptor>
@@ -11,247 +12,255 @@
 #include <QDBusMessage>
 #endif
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <stdio.h>
+#include <QSystemSemaphore>
+
 //class QImage;
 
 namespace DSP
 {
 
-class WindowData;
-class ClientData;
-class DecoData;
-class SharedDataAdaptorManager;
-class SharedDataAdaptor;
-#if 0
+class SharedWindowData;
 
-class SharedDataAdaptorManager : public QObject
+//QSharedMemory doesnt work between qt4 and qt5 apps for some reason,
+//below a minimal shm implementation
+class Q_DECL_EXPORT SharedMemory
 {
-    Q_OBJECT
 public:
-    static SharedDataAdaptorManager *instance();
-    void updateData(quint32 win);
-    void emitWindowActiveChanged(quint32 win, bool active);
-    void emitDataChanged(quint32 win);
-
-protected:
-    SharedDataAdaptorManager(QObject *parent = 0);
-    ~SharedDataAdaptorManager();
-
-private:
-    static SharedDataAdaptorManager *s_instance;
-    SharedDataAdaptor *m_adaptor;
-};
-
-class SharedDataAdaptor : public QDBusAbstractAdaptor
-{
-    Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.kde.dsp.sharedmemory")
-
-public:
-    SharedDataAdaptor(SharedDataAdaptorManager *parent);
-
-public slots:
-    Q_NOREPLY void updateData(quint32 win) { m_manager->updateData(win); }
-
-signals:
-     void windowActiveChanged(quint32 win, bool active);
-     void dataChanged(quint32 win);
-
-private:
-     SharedDataAdaptorManager *m_manager;
-};
-
-#endif
-
-class Q_DECL_EXPORT WindowData : public QSharedMemory
-{
-    Q_OBJECT
-    friend class DecoData;
-    friend class ClientData;
-    /// Convenience class for functions returning values
-    /// so one doesnt have to store the return val in a var
-    /// and then return that
-    class MemoryLocker
+    SharedMemory(const QString &key)
+        : m_keyString(key)
+        , m_key(key.toUInt())
+        , m_sem(key, 1, QSystemSemaphore::Create)
+        , m_isLocked(false)
+        , m_isAttached(false)
+        , m_data(0)
+    {}
+    virtual ~SharedMemory() { detach(); }
+    const inline bool isLocked() const { return m_isLocked; }
+    const inline bool isAttached() const { return m_isAttached; }
+    inline void *data() { return m_data; }
+    const inline int size() const { return m_size; }
+    const inline void *constData() const { return m_data; }
+    bool lock()
     {
-    public:
-        MemoryLocker(QSharedMemory *m);
-        ~MemoryLocker();
-        inline const bool lockObtained() const { return m_lock; }
-    private:
-        QSharedMemory *m_mem;
-        bool m_lock;
-    };
-
-public:
-    enum ValueMask {     //data is a 32 bit integer
-        SeparatorMask =                 1<<0,       //first 8 bits reserved for booleans...
-        ContAwareMask =                 1<<1,
-        UnoMask =                       1<<2,
-        HorizontalMask =                1<<3,
-        WindowIconMask =                1<<4,
-        EmbeddedButtonsMask=            1<<5,
-        IsActiveWindowMask =            1<<6,
-        OpacityMask =                   0x0000ff00,
-        UnoHeightMask =                 0x00ff0000, //the height of the head is never more then 255 right? ..right?
-        ButtonsMask =                   0x0f000000, //enough long as we dont have more then 15 buttons styles
-        FrameMask =                     0xf0000000,  //same here... long as we dont set framesize over 15, unsure if this is enough....
-        TitleHeightMask =               0x000000ff,
-        ShadowOpacityMask =             0x0000fe00,
-        LeftEmbedSizeMask =             0x00fe0000,
-        RightEmbedSizeMask=             0xff000000,
-        FollowDecoShadowMask=           0x0000000f,
-        IlluminationMask =              0xff000000,
-        TextBevOpacityMask =            0x00ff0000,
-    };
-    enum ValueType {
-        Separator = 0,
-        ContAware,
-        Uno,
-        Horizontal,
-        WindowIcon,
-        EmbeddedButtons,
-        IsActiveWindow,
-        Opacity,
-        UnoHeight,
-        Buttons,
-        Frame,
-        TitleHeight,
-        ShadowOpacity,
-        LeftEmbedSize,
-        RightEmbedSize,
-        FollowDecoShadow,
-        Illumination,
-        TextBevOpacity
-    };
-    enum SharedValue { //when data cast to unsigned int ptr
-        BgColor = 3, //first ones reserved for data
-        FgColor,
-        MinColor,
-        MaxColor,
-        CloseColor,
-        ToolBtnGradientSize,
-        ToolBtnGradient,
-        ToolBtnGradientEnd = ToolBtnGradient+32,
-        WindowGradientSize,
-        WindowGradient,
-        WindowGradientEnd = WindowGradient+32,
-        DecoID,
-        ImageWidth,
-        ImageHeight,
-        ImageData
-    };
-
-    typedef quint32 Type;
-    template<typename T> void setValue(const Type type, const T value)
+        if (m_isLocked)
+            return false;
+        if (m_sem.acquire())
+        {
+            m_isLocked = true;
+            return true;
+        }
+        m_isLocked = false;
+        return false;
+    }
+    bool unlock()
     {
+        if (m_isLocked && m_sem.release())
+        {
+            m_isLocked = false;
+            return true;
+        }
+        m_isLocked = false;
+        return false;
+    }
+    bool create(const quint32 size)
+    {
+        m_size = size;
+        const int shmid = shmget(m_key, m_size, IPC_CREAT | IPC_EXCL /*| IPC_NOWAIT*/ | 0600);
+        if (shmid == -1)
+        {
+            qDebug() << "SharedMemory::create(): unable to create shared memory segment for key" << m_key;
+            return false;
+        }
+        if ((m_data = shmat(shmid, NULL, 0)) == (char *) -1)
+        {
+            qDebug() << "SharedMemory::create(): unable to attach shared memory segment for key" << m_key;
+            return false;
+        }
         if (lock())
         {
-            quint32 *d = static_cast<quint32 *>(data());
-            switch (type)
-            {
-            case Separator:
-            case ContAware:
-            case Uno:
-            case Horizontal:
-            case WindowIcon:
-            case EmbeddedButtons:
-            case IsActiveWindow:    d[0] ^= (-value ^ d[0]) & (1 << type); break; //just boolean vals...
-            case Opacity:           d[0] = (d[0] & ~OpacityMask) | ((value << 8) & OpacityMask); break;
-            case UnoHeight:         d[0] = (d[0] & ~UnoHeightMask) | ((value << 16) & UnoHeightMask); break;
-            case Buttons:           d[0] = (d[0] & ~ButtonsMask) | (((value + 1) << 24) & ButtonsMask); break;
-            case Frame:             d[0] = (d[0] & ~FrameMask) | ((value << 28) & FrameMask); break;
-            case TitleHeight:       d[1] = (d[1] & ~TitleHeightMask) | (value & TitleHeightMask); break;
-            case ShadowOpacity:     d[1] = (d[1] & ~ShadowOpacityMask) | ((value << 8) & ShadowOpacityMask); break;
-            case LeftEmbedSize:     d[1] = (d[1] & ~LeftEmbedSizeMask) | ((value << 16) & LeftEmbedSizeMask); break;
-            case RightEmbedSize:    d[1] = (d[1] & ~RightEmbedSizeMask) | ((value << 24) & RightEmbedSizeMask); break;
-            case FollowDecoShadow:  d[2] = (d[2] & ~FollowDecoShadowMask) | (value & FollowDecoShadowMask); break;
-            case Illumination:      d[2] = (d[2] & ~IlluminationMask) | ((value<<24) & IlluminationMask); break;
-            case TextBevOpacity:    d[2] = (d[2] & ~TextBevOpacityMask) | ((value<<16) & TextBevOpacityMask); break;
-            default: break;
-            }
+            memset(data(), 0, size);
             unlock();
         }
+        return true;
     }
-
-    template<typename T> T value(const Type type, const T defaultVal = T())
+    bool attach()
     {
-        MemoryLocker locker(this);
-        if (locker.lockObtained())
+        int shmid = shmget(m_key, 0, 0600);
+        if ((m_data = shmat(shmid, NULL, 0)) == (char *) -1)
         {
-            quint32 *d = static_cast<quint32 *>(data());
-            switch (type)
-            {
-            case Separator:
-            case ContAware:
-            case Uno:
-            case Horizontal:
-            case WindowIcon:
-            case EmbeddedButtons:
-            case IsActiveWindow:    return (T)(d[0] & (1 << type));
-            case Opacity:           return (T)((d[0] & OpacityMask) >> 8);
-            case UnoHeight:         return (T)((d[0] & UnoHeightMask) >> 16);
-            case Buttons:           return (T)(((d[0] & ButtonsMask) >> 24) - 1);
-            case Frame:             return (T)((d[0] & FrameMask) >> 28);
-            case TitleHeight:       return (T)(d[1] & TitleHeightMask);
-            case ShadowOpacity:     return (T)((d[1] & ShadowOpacityMask) >> 8);
-            case LeftEmbedSize:     return (T)((d[1] & LeftEmbedSizeMask) >> 16);
-            case RightEmbedSize:    return (T)((d[1] & RightEmbedSizeMask) >> 24);
-            case FollowDecoShadow:  return (T)(d[2] & FollowDecoShadowMask);
-            case Illumination:      return (T)(d[2] & IlluminationMask) >> 24;
-            case TextBevOpacity:    return (T)(d[2] & TextBevOpacityMask) >> 16;
-            default:                return T();
-            }
+            qDebug() << "SharedMemory::attach(): unable to attach shared memory segment for key" << m_key;
+            return false;
         }
-        return defaultVal;
+
+        struct shmid_ds shmid_ds;
+        if (!shmctl(shmid, IPC_STAT, &shmid_ds))
+            m_size = (int)shmid_ds.shm_segsz;
+        else
+            return false;
+        m_isAttached = true;
+        return true;
     }
-    static WindowData *memory(const quint32 wid, QObject *parent, const bool create = false);
+    bool detach()
+    {
+        if (!m_isAttached)
+            return false;
+        if (-1 == shmdt(m_data))
+            return false;
+        m_data = 0;
+        m_size = 0;
 
-    bool isEmpty();
+        struct shmid_ds shmid_ds;
+        int id = shmget(m_key, 0, 0600);
+        shmctl(id, IPC_STAT, &shmid_ds);
+        if (shmid_ds.shm_nattch == 0)
+        if (-1 == shmctl(id, IPC_RMID, &shmid_ds))
+        switch (errno)
+        {
+        case EINVAL:
+            break;
+        default:
+            return false;
+        }
+        m_key = 0;
+        m_isAttached = false;
+        return true;
+    }
+private:
+    void *m_data;
+    bool m_isLocked, m_isAttached;
+    QString m_keyString;
+    key_t m_key;
+    int m_size;
+    QSystemSemaphore m_sem;
+};
 
-    const QColor bg();
-    void setBg(const QColor &c);
+template <typename T>
+class Q_DECL_EXPORT TypedSharedMemory : public SharedMemory
+{
+public:
+    TypedSharedMemory(const QString &key) : SharedMemory(key), m_winId(key.toUInt()) {}
+    inline bool create(){ return SharedMemory::create(sizeof(T)); }
+    inline T *data() { return static_cast<T *>(SharedMemory::data()); }
+    const inline T *constData() const { return static_cast<const T *>(SharedMemory::constData()); }
+    quint32 m_winId;
+};
 
-    const QColor fg();
-    void setFg(const QColor &c);
+typedef struct Q_DECL_EXPORT _DataStruct
+{
+    bool
+    separator,
+    contAware,
+    uno,
+    hor,
+    winIcon,
+    embedButtons,
+    isActiveWin;
 
-    const QColor minColor();
-    void setMinColor(const QColor &c);
+    quint8
+    opacity,
+    unoHeight,
+    frame,
+    titleHeight,
+    shadowOpacity,
+    leftEmbedSize,
+    rightEmbedSize,
+    followDecoShadow,
+    illumination,
+    textBevelOpacity,
+    toolBtnGradientStopCount,
+    windowGradientStopCount;
 
-    const QColor maxColor();
-    void setMaxColor(const QColor &c);
+    qint8 buttons;
 
-    const QColor closeColor();
-    void setCloseColor(const QColor &c);
+    quint32
+    bgColor,
+    fgColor,
+    closeColor,
+    minColor,
+    maxColor,
+    decoId,
+    imageWidth,
+    imageHeight,
+    toolBtnGradientStops[32],
+    windowGradientStops[32];
 
-    const quint32 decoId();
-    void setDecoId(const quint32 id);
+    uchar imageData[2048*256*4];
+} DataStruct;
 
-    const Gradient buttonGradient();
+template <typename T>
+class Pointer
+{
+public:
+    Pointer(T *data = 0) : m_data(data) {}
+    T *data() const { return m_data; }
+    operator bool () const { return m_data; }
+
+protected:
+    T *m_data;
+};
+
+class Q_DECL_EXPORT DataStructSharedMemory : public QObject, public SharedMemory
+{
+    Q_OBJECT
+public:
+    DataStructSharedMemory(const QString &key, QObject *parent = 0) : QObject(parent), SharedMemory(key), m_winId(key.toUInt()) {}
+    inline bool create(){ return SharedMemory::create(sizeof(DataStruct)); }
+    inline DataStruct *data() { return static_cast<DataStruct *>(SharedMemory::data()); }
+    const inline DataStruct *constData() const { return static_cast<const DataStruct *>(SharedMemory::constData()); }
+    quint32 m_winId;
+};
+
+class Q_DECL_EXPORT WindowData : public Pointer<DataStructSharedMemory>
+{
+public:
+    static WindowData memory(const quint32 wid, QObject *parent, const bool create = false);
+    inline DataStruct *operator -> () { return dataStruct(); }
+    inline WindowData &operator = (const WindowData &other) { m_data = other.m_data; return *this; }
+    inline bool lock() { return data()&&data()->lock(); }
+    inline bool unlock() { return data()&&data()->unlock(); }
+    inline bool attach() { return data()&&data()->attach(); }
+    inline bool detach() { return data()&&data()->detach(); }
+    inline bool create() { return data()&&data()->create(); }
+    const inline bool isAttached() const { return data()&&data()->isAttached(); }
+    DataStruct *dataStruct() const { return data() ? data()->data() : 0; }
+
+    static Gradient dataToGradient(const quint32 *data, const int stops);
+    const Gradient buttonGradient()
+    {
+        const DataStruct *d = dataStruct();
+        return dataToGradient(d->toolBtnGradientStops, d->toolBtnGradientStopCount);
+    }
+    const Gradient windowGradient()
+    {
+        const DataStruct *d = dataStruct();
+        return dataToGradient(d->windowGradientStops, d->windowGradientStopCount);
+    }
     void setButtonGradient(const Gradient g);
-
-    const Gradient windowGradient();
     void setWindowGradient(const Gradient g);
 
     const QImage image() const;
 
-    //this should be passed to the QImage constructor...
-    uchar *imageData();
-    const uchar *constImageData() const;
+    inline const quint32 winId() const { return data() ? data()->m_winId : 0; }
 
-    void setImageSize(const int w, const int h);
-    const QSize imageSize() const;
-
-    inline const quint32 winId() const { return m_winId; }
-    static QList<WindowData *> instances();
-
-public slots:
     void sync();
 
 protected:
-    WindowData(const QString &key, QObject *parent, quint32 id = 0);
-    ~WindowData();
+//    explicit WindowData(const QString &key) : Pointer(new DataStructSharedMemory(key)) {}
+    explicit WindowData(DataStructSharedMemory *data) : Pointer<DataStructSharedMemory>(data) {}
+    WindowData() : Pointer<DataStructSharedMemory>() {}
+};
 
-private:
-    quint32 m_winId;
+class WindowDataLocker
+{
+public:
+    WindowDataLocker(WindowData data) : data(data) { lockObtained = data.lock(); }
+    ~WindowDataLocker() { data.unlock(); }
+    bool lockObtained;
+    WindowData data;
 };
 
 } //namespace

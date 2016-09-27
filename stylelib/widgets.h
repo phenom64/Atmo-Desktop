@@ -98,12 +98,12 @@ public:
     typedef QList<ButtonBase *> Buttons;
     static ButtonGroupBase *buttonGroup(const quint64 window);
     static void cleanUp(const quint64 window);
-    Buttons buttons() { return m_buttons; }
+    inline Buttons &buttons() { return m_buttons; }
     void clearCache();
     void setColors(const QColor &bg, const QColor &fg, const QColor &min = QColor(), const QColor &max = QColor(), const QColor &close = QColor());
     void configure(const int shadowOpacity, const int shadowIllumination, const ButtonBase::ButtonStyle buttonStyle, const ShadowStyle shadowStyle, const Gradient &grad);
-    void addButton(ButtonBase *button) { m_buttons << button; }
-    void removeButton(ButtonBase *button) { m_buttons.removeOne(button); }
+    void addButton(ButtonBase *button) { buttons() << button; }
+    void removeButton(ButtonBase *button) { buttons().removeOne(button); }
 
 protected:
     ButtonGroupBase(const quint64 window);

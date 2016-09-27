@@ -114,6 +114,7 @@ public:
     const int titleHeight() const;
     void setTitleHeight(const int h);
     const int border();
+    const quint32 winId() const { return client().data()->windowId(); }
 //    QSharedData<KDecoration2::DecorationShadow> shadow() const;
 
 public slots:
@@ -128,11 +129,13 @@ public slots:
 
     void updateData();
 
+signals:
+    void dataChanged();
+
 protected slots:
     void widthChanged(const int width);
     void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
-    void dataDestroyed() { if (sender() == m_wd) m_wd = 0; }
     void maximizedChanged(const bool max);
 
 protected:
@@ -143,14 +146,11 @@ protected:
 
     void checkForDataFromWindowClass();
     void updateBgPixmap();
-    WindowData *getShm();
+    WindowData getShm();
     void paintBevel(QPainter *painter, const int bgLum);
     void paintBling(QPainter *painter, const QRect &r);
     const QRect titleTextArea() const;
     const QPainterPath blingPath(const quint8 style, const QRectF &r, const int radius) const;
-
-    const QColor bgColor() const;
-    const QColor fgColor() const;
 
     void wheelEvent(QWheelEvent *event);
 
@@ -160,16 +160,15 @@ private:
     KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
     ButtonGroupBase *m_buttonManager;
     EmbedHandler *m_embedder;
-    QPixmap m_pix, m_bevelCorner[3], *m_bling;
+    QPixmap m_pix, m_bevelCorner[3], *m_bling, m_bgPix;
     QSharedMemory *m_mem;
-    QColor m_bg, m_fg, m_textBg, m_textFg;
-    Gradient m_gradient;
+    QColor m_bg, m_fg, m_textBg, m_textFg, m_minColor, m_maxColor, m_closeColor;
+    Gradient m_gradient, m_buttonGradient, m_windowGradient;
     QGradientStops m_winGradient;
-    WindowData *m_wd; 
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
-    quint8 m_illumination, m_textBevOpacity, m_shadowOpacity, m_opacity, m_uno;
-    bool m_separator, m_isHovered, m_contAware, m_blingEnabled, m_icon, m_isDark;
+    quint8 m_illumination, m_textBevOpacity, m_shadowOpacity, m_opacity, m_uno, m_titleHeight;
+    bool m_separator, m_isHovered, m_contAware, m_blingEnabled, m_icon, m_isDark, m_hor, m_embedButtons, m_followDecoShadow;
 };
 
 class DecoAdaptor;

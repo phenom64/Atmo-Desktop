@@ -44,6 +44,8 @@ OverlayHandler::manage(Overlay *o)
 {
     o->window()->removeEventFilter(instance());
     o->window()->installEventFilter(instance());
+    o->parentWidget()->removeEventFilter(instance());
+    o->parentWidget()->installEventFilter(instance());
     if (!s_overLays.contains(o))
         s_overLays << o;
     connect(o, SIGNAL(destroyed()), instance(), SLOT(overlayDeleted()));
@@ -64,7 +66,11 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
         return false;
     if (o->isWidgetType())
     {
-        if (e->type() == QEvent::LayoutRequest)
+        if (e->type() == QEvent::LayoutRequest
+                || e->type() == QEvent::ShowToParent
+                || e->type() == QEvent::HideToParent
+                || e->type() == QEvent::Show
+                || e->type() == QEvent::Hide)
             for (int i = 0; i < s_overLays.count(); ++i)
                 QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
         return false;
@@ -348,18 +354,21 @@ Overlay::updateOverlay()
             continue;
 
         const bool splitter = isSplitter(w, (Position)i);
-        const bool statusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] != Top);
+        const bool statusBar(Ops::isOrInsideA<QStatusBar *>(w) && l[i] == Bottom);
 //        const bool tabBar(qobject_cast<QTabBar *>(w) && static_cast<QTabBar *>(w)->documentMode() && l[i] == Top);
-        const bool inUno = dConf.uno.enabled && WindowHelpers::unoHeight(w->window()) >= w->mapTo(w->window(), QPoint()).y();
-        if ( statusBar || splitter || inUno )
+        const int unoHeight = WindowHelpers::unoHeight(w->window());
+        const bool inUno = l[i] == Top && dConf.uno.enabled && unoHeight >= w->mapTo(w->window(), QPoint(0, w->height())).y();
+        if (statusBar || splitter || inUno)
         {
             removeSide(l[i]);
         }
         else if (Overlay *o = overlay(w, true))
         {
-            int (QWidget::*widthOrHeight)() const = (position[i]==West||position[i]==East) ? &Overlay::width : &Overlay::height;
-            if ((o->sides() & wl[i]) && (o->*widthOrHeight)() >= (this->*widthOrHeight)())
+            QWidget *p = o->m_frame;
+            int (QWidget::*widthOrHeight)() const = (l[i]==Top||l[i]==Bottom) ? &QWidget::width : &QWidget::height;
+            if ((p->*widthOrHeight)() >= (m_frame->*widthOrHeight)())
             {
+                o->addSide(wl[i]);
                 removeSide(l[i]);
             }
             else
@@ -374,14 +383,7 @@ Overlay::updateOverlay()
         }
     }
 
-    if (m_sides == All) //if we want a full frame,,, we can just use a full frame.... right?
-    {
-        hide();
-        deleteLater();
-        return;
-    }
-
-    QRect winRect = m_frame->window()->rect();
+    const QRect &winRect = m_frame->window()->rect();
     if (frameGeo.top() <= winRect.top())
         removeSide(Top);
     if (frameGeo.left() <= winRect.left())
@@ -390,6 +392,13 @@ Overlay::updateOverlay()
         removeSide(Bottom);
     if (frameGeo.right() >= winRect.right())
         removeSide(Right);
+
+    if (m_sides == All) //if we want a full frame,,, we can just use a full frame.... right?
+    {
+        hide();
+        deleteLater();
+        return;
+    }
 
     raise();
     update();

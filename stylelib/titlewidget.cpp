@@ -134,9 +134,13 @@ TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
     //you probably need some 30 years of lol if youre clicking faster then 75 ms)
     if (clickSpeed > 75 && clickSpeed < 300)
     {
-        if (WindowData *data = WindowData::memory(XHandler::windowId(window()), window()))
-        if (uint deco = data->decoId())
+        WindowData data = WindowData::memory(XHandler::windowId(window()), window());
+        if (data && data.lock())
+        {
+            const uint deco = data->decoId;
+            data.unlock();
             XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
+        }
         m_time = QX11Info::appTime()/*e->timestamp()*/;
     }
 }
@@ -161,18 +165,26 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
         XHandler::mwRes(e->pos(), e->globalPos(), XHandler::windowId(window()));
         return;
     }
-    if (WindowData *data = WindowData::memory(XHandler::windowId(window()), window()))
-    if (uint deco = data->decoId())
+    WindowData data = WindowData::memory(XHandler::windowId(window()), window());
+    if (data && data.lock())
+    {
+        const uint deco = data->decoId;
+        data.unlock();
         XHandler::pressEvent(e->globalPos(), deco, e->button());
+    }
 }
 
 void
 TitleWidget::wheelEvent(QWheelEvent *e)
 {
     e->accept();
-    if (WindowData *data = WindowData::memory(XHandler::windowId(window()), window()))
-    if (uint deco = data->decoId())
+    WindowData data = WindowData::memory(XHandler::windowId(window()), window());
+    if (data && data.lock())
+    {
+        const uint deco = data->decoId;
+        data.unlock();
         XHandler::wheelEvent(deco, e->delta()>0);
+    }
 }
 
 bool
@@ -285,7 +297,7 @@ TitleWidget::embed()
     if (!shouldEmbed() || m_toolBar->layout()->count()<3)
         return;
 
-    WindowData *data = WindowData::memory(XHandler::windowId(m_toolBar->window()), m_toolBar->window());
+    WindowData data = WindowData::memory(XHandler::windowId(m_toolBar->window()), m_toolBar->window());
     if (!data)
         return;
 
@@ -313,22 +325,26 @@ TitleWidget::embed()
         m_action = m_toolBar->insertWidget(a, this);
     if (m_action)
         m_action->setVisible(true);
-    ToolbarHelpers::fixSpacerLater(m_toolBar, data->value<uint>(WindowData::LeftEmbedSize));
-    ToolbarHelpers::adjustMarginsLater(m_toolBar);
-
     bool dataChanged(false);
-    if (!data->value<bool>(WindowData::EmbeddedButtons, false))
+    if (data.lock())
     {
-        data->setValue<bool>(WindowData::EmbeddedButtons, true);
-        dataChanged = true;
-    }
-    if (data->value<uint>(WindowData::TitleHeight, 0) != 6)
-    {
-        data->setValue<uint>(WindowData::TitleHeight, 6);
-        dataChanged = true;
+        ToolbarHelpers::fixSpacerLater(m_toolBar, data->leftEmbedSize);
+
+        ToolbarHelpers::adjustMarginsLater(m_toolBar);
+        if (!data->embedButtons)
+        {
+            data->embedButtons = true;
+            dataChanged = true;
+        }
+        if (data->titleHeight != 6)
+        {
+            data->titleHeight = 6;
+            dataChanged = true;
+        }
+        data.unlock();
     }
     if (dataChanged)
-        data->sync();
+        data.sync();
     m_toolBar->installEventFilter(this);
 }
 
@@ -353,11 +369,13 @@ TitleWidget::unembed()
         deleteLater();
         return;
     }
-    if (WindowData *data = WindowData::memory(XHandler::windowId(win), win))
+    WindowData data = WindowData::memory(XHandler::windowId(win), win);
+    if (data && data.lock())
     {
-        data->setValue<bool>(WindowData::EmbeddedButtons, false);
-        data->setValue<uint>(WindowData::TitleHeight, 25);
-        data->sync();
+        data->embedButtons = false;
+        data->titleHeight = 25;
+        data.unlock();
+        data.sync();
     }
     if (m_action)
         m_action->setVisible(false);

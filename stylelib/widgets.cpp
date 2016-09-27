@@ -32,6 +32,8 @@ ButtonBase::ButtonBase(const Type type, ButtonGroupBase *group)
     , m_shadowStyle(dConf.toolbtn.shadow)
     , m_gradient(dConf.toolbtn.gradient)
     , m_group(group)
+    , m_fg(Qt::black)
+    , m_bg(Qt::white)
 {
     if (group)
         group->addButton(this);
@@ -160,10 +162,10 @@ ButtonBase::processMouseEvent(QMouseEvent *e)
 void
 ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
 {
-    const int /*fgLum(Color::luminosity(color(Fg))),*/ bgLum(Color::lum(color(Bg)));
+    const int /*fgLum(Color::luminosity(m_fg)),*/ bgLum(Color::lum(m_bg));
     const float rat(isActive()?1.5f:0.5f);
     if (m_buttonStyle && m_buttonStyle != FollowToolBtn)
-        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, color(Bg).value()), c.alpha());
+        c.setHsv(c.hue(), qBound<int>(0, (float)c.saturation()*rat, 255), qMax(isActive()?127:0, m_bg.value()), c.alpha());
     switch (m_buttonStyle)
     {
     case Yosemite:
@@ -283,8 +285,8 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
     {
 //        r.adjust(2, 2, -2, -2);
         r.shrink(2);
-        const int bgLum = Color::lum(color(Bg));
-        const int fgLum = Color::lum(color(Fg));
+        const int bgLum = Color::lum(m_bg);
+        const int fgLum = Color::lum(m_fg);
         p.setBrush(QColor(255, 255, 255, m_shadowIllumination));
         p.drawEllipse(r.translated(0, 1));
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
@@ -315,8 +317,8 @@ ButtonBase::drawBase(QColor c, QPainter &p, QRect &r) const
         p.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
         //button color
-        const int bgLum = Color::lum(color(Bg));
-        const int fgLum = Color::lum(color(Fg));
+        const int bgLum = Color::lum(m_bg);
+        const int fgLum = Color::lum(m_fg);
         const bool dark = fgLum > bgLum;
         const quint8 rgb = dark ? 0 : 255;
         const quint8 a = dark ? fgLum - bgLum : bgLum - fgLum;
@@ -445,7 +447,7 @@ ButtonBase::paintCloseButton(QPainter &p)
             const bool anton = m_buttonStyle == Anton;
 //            if (anton)
 //                rect.translate(0,1);
-            drawBase(isActive()?m_color:color(Bg), pt, rect);
+            drawBase(isActive()?m_color:m_bg, pt, rect);
             if (m_buttonStyle == MagPie || anton)
             {
                 QColor c = color(isActive()?Fg:Mid);
@@ -458,7 +460,7 @@ ButtonBase::paintCloseButton(QPainter &p)
             }
             else if (isHovered())
             {
-                pt.setBrush(color(Fg));
+                pt.setBrush(m_fg);
                 QRect r(QPoint(), QSize(4, 4));
                 r.moveCenter(rect.center());
                 pt.drawEllipse(r);
@@ -508,7 +510,7 @@ ButtonBase::paintMaxButton(QPainter &p)
             const bool anton = m_buttonStyle == Anton;
 //            if (anton)
 //                rect.translate(0,1);
-            drawBase(isActive()?m_color:color(Bg), pt, rect);
+            drawBase(isActive()?m_color:m_bg, pt, rect);
             if (m_buttonStyle == MagPie || anton)
             {
                 QColor c = color(isActive()?Fg:Mid);
@@ -521,10 +523,10 @@ ButtonBase::paintMaxButton(QPainter &p)
             }
             else if (isHovered())
             {
-                pt.setBrush(color(Fg));
+                pt.setBrush(m_fg);
                 QRect r(QPoint(), QSize(4, 4));
                 r.moveCenter(rect.center());
-                pt.setPen(QPen(color(Fg), 2.0f));
+                pt.setPen(QPen(m_fg, 2.0f));
                 if (isMaximized())
                 {
                     pt.translate(0.5f, 0.5f);
@@ -584,7 +586,7 @@ ButtonBase::paintMinButton(QPainter &p)
             const bool anton = m_buttonStyle == Anton;
 //            if (anton)
 //                rect.translate(0,1);
-            drawBase(isActive()?m_color:color(Bg), pt, rect);
+            drawBase(isActive()?m_color:m_bg, pt, rect);
             if (m_buttonStyle == MagPie || anton)
             {
                 QColor c = color(isActive()?Fg:Mid);
@@ -599,8 +601,8 @@ ButtonBase::paintMinButton(QPainter &p)
             {
                 QRect r(QPoint(), QSize(4, 4));
                 r.moveCenter(rect.center());
-                pt.setBrush(color(Fg));
-                pt.setPen(QPen(color(Fg), 2.0f));
+                pt.setBrush(m_fg);
+                pt.setPen(QPen(m_fg, 2.0f));
                 int x1, y1, x2, y2;
                 r.getRect(&x1, &y1, &x2, &y2);
                 int halfY(y1+(y2/2));
@@ -616,11 +618,11 @@ ButtonBase::paintMinButton(QPainter &p)
 void
 ButtonBase::paintOnAllDesktopsButton(QPainter &p)
 {
-    const bool all(onAllDesktops());
-    const QColor c(color(Mid));
     const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
+        const bool all(onAllDesktops());
+        const QColor c(color(Mid));
         QPixmap pix(buttonRect().size());
         const int s(pix.width()/8);
         const QPen pen(c, s*2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
@@ -636,7 +638,7 @@ ButtonBase::paintOnAllDesktopsButton(QPainter &p)
         if (!all)
             pt.drawLine(x+w/2, y, x+w/2, y+h);
         pt.end();
-        p.drawTiledPixmap(buttonRect(), FX::sunkenized(pix.rect(), pix, isDark(), isDark()?m_shadowOpacity:m_shadowIllumination));
+//        p.drawTiledPixmap(buttonRect(), FX::sunkenized(pix.rect(), pix, isDark(), isDark()?m_shadowOpacity:m_shadowIllumination));
         m_bgPix.insert(check, FX::sunkenized(pix.rect(), pix, isDark(), isDark()?m_shadowOpacity:m_shadowIllumination));
     }
     p.drawTiledPixmap(buttonRect(), m_bgPix.value(check));
@@ -645,10 +647,10 @@ ButtonBase::paintOnAllDesktopsButton(QPainter &p)
 void
 ButtonBase::paintWindowMenuButton(QPainter &p)
 {
-    const QColor c(color(Mid));
     const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
+        const QColor c(color(Mid));
         QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         const int s(pix.width()/8);
@@ -677,10 +679,10 @@ ButtonBase::paintApplicationMenuButton(QPainter &p)
 void
 ButtonBase::paintKeepAboveButton(QPainter &p)
 {
-    const QColor c(color(keepAbove()?Highlight:Mid));
     const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
+        const QColor c(color(keepAbove()?Highlight:Mid));
         QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         const int s(pix.width()/8);
@@ -706,10 +708,10 @@ ButtonBase::paintKeepAboveButton(QPainter &p)
 void
 ButtonBase::paintKeepBelowButton(QPainter &p)
 {
-    const QColor c(color(keepBelow()?Highlight:Mid));
     const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
+        const QColor c(color(keepBelow()?Highlight:Mid));
         QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         const int s(pix.width()/8);
@@ -735,10 +737,10 @@ ButtonBase::paintKeepBelowButton(QPainter &p)
 void
 ButtonBase::paintShadeButton(QPainter &p)
 {
-    const QColor c(color(shade()?Highlight:Mid));
     const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
+        const QColor c(color(shade()?Highlight:Mid));
         QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         const int s(pix.width()/8);
@@ -760,10 +762,10 @@ ButtonBase::paintShadeButton(QPainter &p)
 void
 ButtonBase::paintQuickHelpButton(QPainter &p)
 {
-    const QColor c(color(Mid));
     const quint64 check(state());
     if (!m_bgPix.contains(check))
     {
+        const QColor c(color(Mid));
         QPixmap pix(buttonRect().size());
         pix.fill(Qt::transparent);
         const int s(pix.height()/8);
@@ -822,6 +824,11 @@ ButtonGroupBase::ButtonGroupBase(const quint64 window) : m_window(window)
 void
 ButtonGroupBase::setColors(const QColor &bg, const QColor &fg, const QColor &min, const QColor &max, const QColor &close)
 {
+    if (!bg.isValid() || !fg.isValid())
+    {
+//        qDebug() << "attempting to set invalid colors" << bg << fg;
+        return;
+    }
     for (int i = 0; i < buttons().size(); ++i)
     {
         ButtonBase *button = buttons().at(i);
@@ -865,8 +872,8 @@ ButtonGroupBase::clearCache()
 ////////////////////////////////////////////////////////////////////////////////////////
 
 WidgetButton::WidgetButton(Type type, QWidget *parent)
-    : ButtonBase(type),
-      QWidget(parent)
+    : ButtonBase(type)
+    , QWidget(parent)
 {
     setAttribute(Qt::WA_Hover);
     setFixedSize(16, 16);

@@ -278,8 +278,8 @@ GFX::drawClickable(ShadowStyle s,
             if (grad->start().y() == grad->finalStop().y())
                 hor = true;
         }
-        if (w && w->parentWidget() && qobject_cast<QVBoxLayout *>(w->parentWidget()->layout()))
-            hor = true;
+//        if (w && w->parentWidget() && qobject_cast<QVBoxLayout *>(w->parentWidget()->layout()))
+//            hor = true;
         QLinearGradient lg(r.topLeft(), hor ? r.topRight() : r.bottomLeft());
         lg.setColorAt(0, QColor(0, 0, 0, dConf.shadows.opacity));
         lg.setColorAt(1, QColor(255, 255, 255, dConf.shadows.illumination));

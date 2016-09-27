@@ -58,14 +58,6 @@ public:
     explicit EmbeddedWidget(Deco *d, const Side s = Left);
 
     const QPoint topLeft() const;
-    void setButtonShadowOpacity(const int o);
-    void setButtonShadowIlluminationOpacity(const int o);
-    void setButtonStyle(ButtonBase::ButtonStyle style);
-    void setButtonShadow(const ShadowStyle ss);
-    void setCloseColor(const QColor &c);
-    void setMinColor(const QColor &c);
-    void setMaxColor(const QColor &c);
-    void setGradient(const Gradient &g);
     void cleanUp();
 
 protected:
@@ -92,14 +84,7 @@ public:
     explicit EmbedHandler(Deco *d);
     ~EmbedHandler();
     void repaint();
-    void setButtonShadowOpacity(const int o);
-    void setButtonShadowIlluminationOpacity(const int o);
-    void setButtonStyle(ButtonBase::ButtonStyle style);
-    void setButtonShadow(const ShadowStyle ss);
-    void setCloseColor(const QColor &c);
-    void setMinColor(const QColor &c);
-    void setMaxColor(const QColor &c);
-    void setGradient(const Gradient g);
+    void setUpdatesEnabled(bool enabled);
 
 private:
     Deco *m_deco;
@@ -124,7 +109,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *e) { processMouseEvent(e); update();/*QWidget::mouseReleaseEvent(e);*/ }
 
     //pure virtuals from buttonbase
-    const QColor color(const ColorRole &c = Fg) const;
+//    const QColor color(const ColorRole &c = Fg) const;
     const bool isDark() const;
     const bool isMaximized() const;
     const bool isActive() const;

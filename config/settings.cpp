@@ -895,7 +895,7 @@ Settings::read()
     conf.toolbtn.flat           = readBool(Toolbtnflat);
     conf.toolbtn.morph          = readBool(Toolbtnmorph);
     conf.toolbtn.normal         = readBool(Toolbtnnormal);
-    conf.toolbtn.mask           = readBool(Toolbtnmask)&&!(conf.toolbtn.shadow==Carved||conf.toolbtn.shadow==SemiCarved);
+    conf.toolbtn.mask           = readBool(Toolbtnmask)||(conf.toolbtn.shadow==Carved||conf.toolbtn.shadow==SemiCarved);
     //inputs
     conf.input.rnd              = qMin<quint8>(MaxRnd, readInt(Inputrnd));
     conf.input.unoRnd           = qMin<quint8>(MaxRnd, readInt(Inputunornd));

@@ -45,7 +45,7 @@ private:
     KwinClient *m_client;
 };
 
-class WindowData;
+class SharedWindowData;
 class KwinClient : public KDecoration
 {
     Q_OBJECT
@@ -122,7 +122,7 @@ private:
     Buttons m_buttons;
     QSharedMemory *m_mem;
     Gradient m_gradient;
-    WindowData *m_wd;
+    SharedWindowData *m_wd;
 };
 
 class AdaptorManager : public QObject

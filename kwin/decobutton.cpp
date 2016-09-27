@@ -182,7 +182,6 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
         hide();
         return;
     }
-
     setFocusPolicy(Qt::NoFocus);
 //    setFixedSize(48, 16);
 //    KDecoration2::DecoratedClient *c = m_deco->client().data();
@@ -203,31 +202,46 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
     if (s == Right)
         connect(d->client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &EmbeddedWidget::updatePosition);
 
+    connect(m_deco, SIGNAL(dataChanged()), this, SLOT(update()));
     show();
 }
 
 void
 EmbeddedWidget::cleanUp()
 {
-    if (m_hasBeenShown)
-    if (WindowData *d = m_deco->m_wd)
+    if (!m_hasBeenShown)
+        return;
+
+    WindowData d = WindowData::memory(m_deco->winId(), m_deco);
+    if (d && d.lock())
     {
-        d->setValue<uint>(m_side == Left ? WindowData::LeftEmbedSize : WindowData::RightEmbedSize, 0);
-        AdaptorManager::instance()->dataChanged(m_deco->client().data()->windowId());
+        if (m_side == Left)
+            d->leftEmbedSize = 0;
+        if (m_side == Right)
+            d->rightEmbedSize = 0;
+        d.unlock();
     }
+    AdaptorManager::instance()->dataChanged(m_deco->winId());
 }
 
 void
 EmbeddedWidget::showEvent(QShowEvent *e)
 {
     QWidget::showEvent(e);
-    if (!m_hasBeenShown)
-    if (WindowData *d = m_deco->m_wd)
+    if (m_hasBeenShown)
+        return;
+
+    WindowData d = WindowData::memory(m_deco->winId(), m_deco);
+    if (d && d.lock())
     {
-        d->setValue<uint>(m_side == Left ? WindowData::LeftEmbedSize : WindowData::RightEmbedSize, width()+8);
-        AdaptorManager::instance()->dataChanged(m_deco->client().data()->windowId());
-        m_hasBeenShown = true;
+        if (m_side == Left)
+            d->leftEmbedSize = width()+8;
+        if (m_side == Right)
+            d->rightEmbedSize = width()+8;
+        d.unlock();
     }
+    AdaptorManager::instance()->dataChanged(m_deco->winId());
+    m_hasBeenShown = true;
 }
 
 const QPoint
@@ -245,7 +259,7 @@ EmbeddedWidget::updatePosition()
 void
 EmbeddedWidget::restack()
 {
-    if (XHandler::XWindow windowId = m_deco->client().data()->windowId())
+    if (XHandler::XWindow windowId = m_deco->winId())
         XHandler::restack(winId(), windowId);
     else
         hide();
@@ -255,15 +269,8 @@ void
 EmbeddedWidget::paintEvent(QPaintEvent *e)
 {
     QPainter p(this);
-    WindowData *d = m_deco->m_wd;
-    if (d && d->lock())
-    {
-        p.setBrushOrigin(-(topLeft()+QPoint(0, m_deco->titleHeight())));
-        const QImage img = d->image();
-        if (!img.isNull())
-            p.fillRect(rect(), img);
-        d->unlock();
-    }
+    p.setBrushOrigin(-(topLeft()+QPoint(0, m_deco->titleHeight())));
+    p.fillRect(rect(), m_deco->m_bgPix);
     p.end();
 }
 
@@ -329,6 +336,12 @@ void
 EmbedHandler::repaint()
 {
     RUN(EW->repaint();)
+}
+
+void
+EmbedHandler::setUpdatesEnabled(bool enabled)
+{
+    RUN(EW->setUpdatesEnabled(enabled);)
 }
 
 
@@ -400,25 +413,25 @@ EmbeddedButton::isDark() const
     return Color::lum(color(ButtonBase::Fg)) > Color::lum(color(ButtonBase::Bg));
 }
 
-const QColor
-EmbeddedButton::color(const ColorRole &c) const
-{
-    const Deco *d = const_cast<const Deco *>(const_cast<EmbeddedButton *>(this)->decoration());
-    if (c == Mid)
-    {
-        const QColor &fg = d->fgColor();
-        const QColor &bg = d->bgColor();
-        const bool dark(Color::lum(fg) > Color::lum(bg));
-        return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
-    }
-    if (c == ButtonBase::Highlight)
-        return d->client().data()->palette().color(QPalette::Highlight);
-    if (c == ButtonBase::Fg)
-        return d->fgColor();
-    if (c == ButtonBase::Bg)
-        return d->bgColor();
-    return QColor();
-}
+//const QColor
+//EmbeddedButton::color(const ColorRole &c) const
+//{
+//    const Deco *d = const_cast<const Deco *>(const_cast<EmbeddedButton *>(this)->decoration());
+//    if (c == Mid)
+//    {
+//        const QColor &fg = d->fgColor();
+//        const QColor &bg = d->bgColor();
+//        const bool dark(Color::lum(fg) > Color::lum(bg));
+//        return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
+//    }
+//    if (c == ButtonBase::Highlight)
+//        return d->client().data()->palette().color(QPalette::Highlight);
+//    if (c == ButtonBase::Fg)
+//        return d->fgColor();
+//    if (c == ButtonBase::Bg)
+//        return d->bgColor();
+//    return QColor();
+//}
 
 void
 EmbeddedButton::hoverChanged()

@@ -332,15 +332,15 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
 
     const QPen pen(painter->pen());
 
-    if (opt->orientation == Qt::Horizontal)
-    {
-        QRect top(opt->rect);
-        top.setHeight(1);
-        if (Overlay *o = Overlay::overlay(widget?widget->parentWidget():0))
-        if (o->sides() & Top)
-            top.translate(0, 1);
-        painter->fillRect(top, QColor(255,255,255,dConf.shadows.illumination));
-    }
+//    if (opt->orientation == Qt::Horizontal)
+//    {
+//        QRect top(opt->rect);
+//        top.setHeight(1);
+//        if (Overlay *o = Overlay::overlay(widget?widget->parentWidget():0))
+//        if (o->sides() & Top)
+//            top.translate(0, 1);
+//        painter->fillRect(top, QColor(255,255,255,dConf.shadows.illumination));
+//    }
     painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
     painter->drawLine(opt->rect.bottomLeft(), opt->rect.bottomRight());
     if (!(widget && opt->rect.right() == widget->rect().right()) || opt->orientation == Qt::Vertical)

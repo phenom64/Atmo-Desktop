@@ -210,7 +210,6 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_mem(0)
     , m_noise(0)
     , m_separator(true)
-    , m_wd(0)
     , m_grip(0)
     , m_buttonStyle(0)
     , m_isHovered(false)
@@ -227,6 +226,12 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_buttonManager(0)
     , m_opacity(0xff)
     , m_uno(true)
+    , m_fg(Qt::black)
+    , m_bg(Qt::white)
+    , m_hor(false)
+    , m_embedButtons(false)
+    , m_followDecoShadow(false)
+    , m_titleHeight(0)
 {
     if (s_factory)
         setParent(s_factory);
@@ -259,14 +264,12 @@ Deco::init()
     m_illumination = 127;
     m_textBevOpacity = 127;
 
-    if (const uint id = client().data()->windowId())
+    int shadowOpacity = dConf.shadows.opacity;
+    if (const uint id = winId())
     {
         AdaptorManager::instance()->addDeco(this);
         m_buttonStyle = dConf.deco.buttons;
-        if (m_wd = getShm())
-            m_buttonStyle = m_wd->value<int>(WindowData::Buttons, m_buttonStyle);
-        else
-            checkForDataFromWindowClass();
+        checkForDataFromWindowClass();
         ShadowHandler::installShadows(id);
     }
     else
@@ -275,7 +278,7 @@ Deco::init()
     m_leftButtons = new KDecoration2::DecorationButtonGroup(this);
     m_leftButtons->setSpacing(4);
     QVector<KDecoration2::DecorationButtonType> lb = settings()->decorationButtonsLeft();
-    int shadowOpacity = m_wd&&!m_wd->isEmpty()?m_wd->value<int>(WindowData::ShadowOpacity):dConf.shadows.opacity;
+
     if (!shadowOpacity)
         shadowOpacity = 127;
     for (int i = 0; i < lb.count(); ++i)
@@ -298,8 +301,6 @@ Deco::init()
 
     if (client().data()->isResizeable() && !m_grip)
         m_grip = new Grip(this);
-    if (m_wd && m_wd->value<bool>(WindowData::EmbeddedButtons) && !m_embedder)
-        m_embedder = new EmbedHandler(this);
 
     if (m_blingEnabled)
     {
@@ -327,13 +328,18 @@ Deco::recalculate()
 const int
 Deco::border()
 {
-    return 6;
+    bool max(false);
+    if (!client().isNull())
+        max = client().data()->isMaximized();
+    const int m = max||m_uno ? 0 : 6;
+    return m;
 }
 
 void
 Deco::maximizedChanged(const bool max)
 {
-    const int m = max||m_uno ? 0 : border();
+    Q_UNUSED(max)
+    const int m = border();
     setBorders(QMargins(m, titleBar().height(), m, m));
 }
 
@@ -358,118 +364,121 @@ Deco::setButtonsVisible(const bool visible)
 }
 
 WindowData
-*Deco::getShm()
+Deco::getShm()
 {
-    WindowData *data = WindowData::memory(client().data()->windowId(), this);
-    if (!data)
-        return 0;
-//    connect(m_wd, &WindowData::dataChanged, this, &Deco::updateData);
-    connect(data, &QObject::destroyed, this, &Deco::dataDestroyed);
-    if (data->isEmpty())
+    WindowData data = WindowData::memory(winId(), this);
+    if (data && data.lock())
     {
-        data->setValue<bool>(WindowData::Separator, true);
-        data->setValue<bool>(WindowData::Uno, true);
+        if (!data->imageHeight)
+        {
+            data->separator = true;
+            data->uno = true;
+        }
+        if (!data->titleHeight)
+            data->titleHeight = titleHeight();
+        data.unlock();
     }
-    data->setValue<int>(WindowData::TitleHeight, titleHeight());
-    activeChanged(true);
+//    activeChanged(true);
     return data;
 }
 
 void
 Deco::updateData()
 {
-    if (!m_wd)
-        m_wd = getShm();
-    if (m_wd)
+    WindowData data = getShm();
+    bool winDataChanged(false);
+    if (data && data.lock())
     {
-        m_illumination      = m_wd->value<uint>(WindowData::Illumination, 127);
-        m_textBevOpacity    = m_wd->value<uint>(WindowData::TextBevOpacity, 127);
-        m_separator         = m_wd->value<bool>(WindowData::Separator, true);
-        m_shadowOpacity     = m_wd->value<uint>(WindowData::ShadowOpacity, 127);
-        m_contAware         = m_wd->value<bool>(WindowData::ContAware, false);
-        m_icon              = m_wd->value<bool>(WindowData::WindowIcon, false);
-        m_buttonStyle       = m_wd->value<int>(WindowData::Buttons);
-        m_opacity           = m_wd->value<int>(WindowData::Opacity);
-        m_uno               = m_wd->value<bool>(WindowData::Uno, false);
+        m_illumination      = data->illumination;
+        m_textBevOpacity    = data->textBevelOpacity;
+        m_separator         = data->separator;
+        m_shadowOpacity     = data->shadowOpacity;
+        m_contAware         = data->contAware;
+        m_icon              = data->winIcon;
+        m_buttonStyle       = data->buttons;
+        m_opacity           = data->opacity;
+        m_uno               = data->uno;
+        m_hor               = data->hor;
+        m_embedButtons      = data->embedButtons;
+        m_titleHeight       = data->titleHeight;
+        m_bg                = QColor::fromRgba(data->bgColor);
+        m_fg                = QColor::fromRgba(data->fgColor);
+        m_minColor          = QColor::fromRgba(data->minColor);
+        m_maxColor          = QColor::fromRgba(data->maxColor);
+        m_closeColor        = QColor::fromRgba(data->closeColor);
+        m_buttonGradient    = data.buttonGradient();
+        m_windowGradient    = data.windowGradient();
+        m_bgPix             = QPixmap::fromImage(data.image());
 
-        if (m_wd->value<bool>(WindowData::EmbeddedButtons, false) && !m_embedder)
-            m_embedder = new EmbedHandler(this);
-        else if (!m_wd->value<bool>(WindowData::EmbeddedButtons, false) && m_embedder)
-            removeEmbedder();
+        data->decoId        = client().data()->decorationId();
+        data.unlock();
 
-        setTitleHeight(m_wd->value<int>(WindowData::TitleHeight, 0));
-        if (!m_uno)
-        {
-            setBorders(QMargins(border(),titleHeight(),border(),border()));
-            if (m_grip)
-            {
-                m_grip->deleteLater();
-                m_grip = 0;
-            }
-            m_winGradient = Settings::gradientStops(m_wd->windowGradient());
-            if (m_bevel != 1)
-            {
-                m_bevel = 1;
-                for (int i = 0; i < 3; ++i)
-                    m_bevelCorner[i] = QPixmap();
-            }
-        }
-
-        const QColor &bg = m_wd->bg();
-        if (bg.alpha() == 0xff)
-            m_bg = bg;
-        else
-            m_bg = client().data()->palette().color(QPalette::Window);
-
-        const QColor &fg = m_wd->fg();
-        if (fg.alpha() == 0xff)
-            m_fg = fg;
-        else
-            m_fg = client().data()->palette().color(QPalette::WindowText);
-
-        m_buttonManager->setColors(m_bg, m_fg, m_wd->minColor(), m_wd->maxColor(), m_wd->closeColor());
-        m_buttonManager->configure(m_shadowOpacity, m_illumination, m_buttonStyle, m_wd->value<int>(WindowData::FollowDecoShadow), m_wd->buttonGradient());
-        for (int i = 0; i < m_buttonManager->buttons().size(); ++i)
-        {
-            Button *button = static_cast<Button *>(m_buttonManager->buttons().at(i));
-            button->updateGeometry();
-        }
-        m_buttonManager->clearCache();
-
-//        const bool buttonShouldBeVisible();
-        if (m_embedder)
-            m_embedder->repaint();
-        if (m_leftButtons)
-        {
-            if (m_buttonStyle == ButtonBase::Anton)
-                m_leftButtons->setSpacing(-2);
-        }
-        if (m_rightButtons)
-        {
-            if (m_buttonStyle == ButtonBase::Anton)
-                m_rightButtons->setSpacing(-2);
-        }
-
-        if (m_blingEnabled)
-        {
-            Ops::swap<QColor>(m_bg, m_fg);
-            if (m_bling)
-            {
-                delete [] m_bling;
-                m_bling = 0;
-            }
-        }
-        setButtonsVisible(titleBar().height() > 6);
-        m_wd->setDecoId(client().data()->decorationId());
         m_tries = 0;
-        recalculate();
+        winDataChanged = true;
     }
     else
     {
         if (++m_tries < 4)
             QTimer::singleShot(250, this, SLOT(updateData()));
     }
+
+    if (m_embedButtons && !m_embedder)
+        m_embedder = new EmbedHandler(this);
+    else if (!m_embedButtons && m_embedder)
+        removeEmbedder();
+
+    setTitleHeight(m_titleHeight);
+    setButtonsVisible(!m_embedder);
+
+    if (!m_uno)
+    {
+        setBorders(QMargins(border(),titleHeight(),border(),border()));
+        if (m_grip)
+        {
+            m_grip->deleteLater();
+            m_grip = 0;
+        }
+        m_winGradient = Settings::gradientStops(m_windowGradient);
+        if (m_bevel != 1)
+        {
+            m_bevel = 1;
+            for (int i = 0; i < 3; ++i)
+                m_bevelCorner[i] = QPixmap();
+        }
+    }
+
+    m_buttonManager->setColors(m_bg, m_fg, m_minColor, m_maxColor, m_closeColor);
+    m_buttonManager->configure(m_shadowOpacity, m_illumination, m_buttonStyle, m_followDecoShadow, m_buttonGradient);
+    for (int i = 0; i < m_buttonManager->buttons().size(); ++i)
+    {
+        Button *button = static_cast<Button *>(m_buttonManager->buttons().at(i));
+        button->updateGeometry();
+    }
+    m_buttonManager->clearCache();
+    if (m_leftButtons)
+    {
+        if (m_buttonStyle == ButtonBase::Anton)
+            m_leftButtons->setSpacing(-2);
+    }
+    if (m_rightButtons)
+    {
+        if (m_buttonStyle == ButtonBase::Anton)
+            m_rightButtons->setSpacing(-2);
+    }
+
+    if (m_blingEnabled)
+    {
+        Ops::swap<QColor>(m_bg, m_fg);
+        if (m_bling)
+        {
+            delete [] m_bling;
+            m_bling = 0;
+        }
+    }
+//    recalculate();
     update();
+    if (winDataChanged)
+        emit dataChanged();
 }
 
 void
@@ -516,13 +525,8 @@ Deco::activeChanged(const bool active)
 {
 //    update();
 //    AdaptorManager::instance()->windowChanged(client().data()->windowId(), active);
-    if (m_wd)
-    {
-        m_wd->setValue<bool>(WindowData::IsActiveWindow, active);
-        AdaptorManager::instance()->dataChanged(client().data()->windowId());
-    }
     if (m_grip)
-        m_grip->setColor(Color::mid(fgColor(), bgColor(), 1, 2));;
+        m_grip->setColor(Color::mid(m_fg, m_bg, 1, 2));;
     ShadowHandler::installShadows(client().data()->windowId(), active);
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
@@ -535,29 +539,24 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     painter->save();
     //bg
     bool needPaintBg(true);
-    if (m_wd && m_wd->lock())
+    painter->setBrushOrigin(titleBar().topLeft());
+    if (!m_bgPix.isNull())
     {
-        painter->setBrushOrigin(titleBar().topLeft());
-        const QImage img = m_wd->image();
-        if (!img.isNull())
-        {
-            QRect r = rect();
-            if (m_uno)
-                r = titleBar();
-            painter->fillRect(r, img);
-            needPaintBg = false;
-        }
-        m_wd->unlock();
-        if (!m_uno && !m_winGradient.isEmpty())
-        {
-            const bool hor = m_wd->value<bool>(WindowData::Horizontal, false);
-            QLinearGradient lg(rect().topLeft(), hor ? rect().topRight() : rect().bottomLeft());
-            lg.setStops(m_winGradient);
-            painter->setCompositionMode(QPainter::CompositionMode_Overlay);
-            painter->fillRect(rect(), lg);
-            painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
-            needPaintBg = false;
-        }
+        QRect r = rect();
+        if (m_uno)
+            r = titleBar();
+        painter->drawTiledPixmap(r, m_bgPix);
+        needPaintBg = false;
+    }
+    if (!m_uno && !m_winGradient.isEmpty())
+    {
+        const bool hor = m_hor;
+        QLinearGradient lg(rect().topLeft(), hor ? rect().topRight() : rect().bottomLeft());
+        lg.setStops(m_winGradient);
+        painter->setCompositionMode(QPainter::CompositionMode_Overlay);
+        painter->fillRect(rect(), lg);
+        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        needPaintBg = false;
     }
     if (needPaintBg)
     {
@@ -582,15 +581,15 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             m_mem = new QSharedMemory(QString::number(client().data()->windowId()), this);
         if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
         {
-            const uchar *data(reinterpret_cast<const uchar *>(m_mem->constData()));
+            const uchar *idata(reinterpret_cast<const uchar *>(m_mem->constData()));
             painter->drawImage(QPoint(0, 0),
-                               QImage(data, titleBar().width(), m_wd->value<int>(WindowData::UnoHeight), QImage::Format_ARGB32_Premultiplied),
+                               QImage(idata, titleBar().width(), titleHeight(), QImage::Format_ARGB32_Premultiplied),
                                titleBar());
             m_mem->unlock();
         }
     }
-    const int bgLum(Color::lum(bgColor()));
-    const bool isDark(Color::lum(fgColor()) > bgLum);
+    const int bgLum(Color::lum(m_bg));
+    const bool isDark(Color::lum(m_fg) > bgLum);
     if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal() && !client().data()->isMaximized())
         paintBevel(painter, m_illumination/*bgLum*/);
     if (m_blingEnabled)
@@ -634,7 +633,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
 
         static const QString character[] = { " :: ", QString(" %1 ").arg(QChar(0x2013)), " - " };
         bool needPaint(true);
-        painter->setPen(fgColor());
+        painter->setPen(m_fg);
         for (int i = 0; i < 3; ++i)
             if (text.contains(character[i]))
             {
@@ -646,14 +645,14 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
                 QRect rightTextRect(textRect.adjusted(painter->fontMetrics().width(leftText), 0, 0, 0));
 
                 painter->drawText(leftTextRect, Qt::AlignCenter|Qt::TextHideMnemonic, leftText);
-                painter->setPen(Color::mid(fgColor(), bgColor(), 2, 1));
+                painter->setPen(Color::mid(m_fg, m_bg, 2, 1));
                 painter->drawText(rightTextRect, Qt::AlignCenter|Qt::TextHideMnemonic, rightText);
                 break;
             }
 
         if (needPaint)
         {
-            painter->setPen(fgColor());
+            painter->setPen(m_fg);
             painter->drawText(textRect, Qt::AlignCenter|Qt::TextHideMnemonic, text);
         }
 
@@ -755,7 +754,7 @@ Deco::paintBling(QPainter *painter, const QRect &r)
             tmp = tmp.copy(0,0,tmp.width()-8, tmp.height()-8);
             p.begin(&tmp);
             p.setRenderHint(QPainter::Antialiasing);
-            const QColor c = bgColor();
+            const QColor c = m_bg;
             QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
             lg.setColorAt(0, Color::mid(c, Qt::white, 2, 2));
             lg.setColorAt(1, Color::mid(c, Qt::black, 2, 1));
@@ -788,7 +787,7 @@ Deco::paintBling(QPainter *painter, const QRect &r)
 
     //        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
 
-            const QColor c = bgColor();
+            const QColor c = m_bg;
             QLinearGradient lg(rect.topLeft(), rect.bottomLeft());
             lg.setColorAt(0, Color::mid(c, Qt::white, 2, 2));
             lg.setColorAt(1, Color::mid(c, Qt::black, 2, 1));
@@ -850,27 +849,15 @@ Deco::blingPath(const quint8 style, const QRectF &r, const int radius) const
     return path;
 }
 
-const QColor
-Deco::bgColor() const
-{
-    return m_bg;
-}
-
-const QColor
-Deco::fgColor() const
-{
-    return m_fg;
-}
-
 void
 Deco::updateBgPixmap()
 {
     QRect r(0, 0, 1, titleHeight());
     QLinearGradient lg(r.topLeft(), r.bottomLeft());
     if (!m_gradient.isEmpty())
-        lg.setStops(DSP::Settings::gradientStops(m_gradient, bgColor()));
+        lg.setStops(DSP::Settings::gradientStops(m_gradient, m_bg));
     else
-        lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(bgColor(), Qt::white, 4, 1)) << QGradientStop(1, Color::mid(bgColor(), Qt::black, 4, 1)));
+        lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(m_bg, Qt::white, 4, 1)) << QGradientStop(1, Color::mid(m_bg, Qt::black, 4, 1)));
 
     QPixmap p(GFX::noise().size().width(), r.height());
     p.fill(Qt::transparent);

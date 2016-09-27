@@ -618,6 +618,12 @@ Window::eventFilter(QObject *o, QEvent *e)
         GFX::generateData();
         return false;
     }
+    case QEvent::ActivationChange:
+    {
+        if (w->isWindow())
+            WindowHelpers::updateWindowDataLater(w);
+        return false;
+    }
 //    case QEvent::WindowTitleChange:
 //    {
 //        if (TitleWidget *w = o->findChild<TitleWidget *>())
@@ -644,13 +650,10 @@ bool
 Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
 {
     QWidget *win(w->window());
-    WindowData *data = WindowData::memory(XHandler::windowId(win), win);
-    if (!data)
-        return false;
-
     const int clientUno = WindowHelpers::unoHeight(win);
     if (!clientUno)
         return false;
+
     if (const QToolBar *tb = qobject_cast<const QToolBar *>(w))
         if (tb->geometry().top() > clientUno)
             return false;
@@ -661,14 +664,15 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget()) //weird case where mainwindow is embedded in another window
         return false;
 
-    offset.ry() += data->value<int>(WindowData::TitleHeight, 0);
-    if (data->lock())
+    WindowData data = WindowData::memory(XHandler::windowId(win), win);
+    if (data && data.lock())
     {
+        offset.ry() += data->titleHeight;
         QPoint bo(p->brushOrigin());
         p->setBrushOrigin(-offset);
-        p->fillRect(r, data->image());
+        p->fillRect(r, data.image());
         p->setBrushOrigin(bo);
-        data->unlock();
+        data.unlock();
     }
     const QPoint tl = w->mapTo(win, QPoint(0, 0));
     if (dConf.uno.contAware && tl.y() < clientUno)
@@ -799,9 +803,11 @@ ScrollWatcher::updateWin(QWidget *mainWin)
                 else
                     tb->update();
             }
-    if (WindowData *wd = WindowData::memory(XHandler::windowId(win), win))
+    WindowData wd = WindowData::memory(XHandler::windowId(win), win);
 //        wd->sync();
-        QMetaObject::invokeMethod(wd, "sync", Qt::QueuedConnection);
+//        QMetaObject::invokeMethod(wd, "sync", Qt::QueuedConnection);
+    if (wd)
+        wd.sync();
 }
 
 QSharedMemory
