@@ -288,7 +288,6 @@ Style::drawTree(const QStyleOption *option, QPainter *painter, const QWidget *wi
             fgc = option->palette.color(QPalette::Highlight);
         else
         {
-
             fgc = option->palette.color(fg);
             if (!dConf.views.treelines)
                 fgc = Color::mid(fgc, option->palette.color(bg), 2, 1);

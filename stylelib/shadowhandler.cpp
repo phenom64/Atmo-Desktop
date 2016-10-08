@@ -36,19 +36,33 @@ ShadowHandler
     return m_instance;
 }
 
+void
+ShadowHandler::showShadow(QWidget *w)
+{
+    if (w->isWindow()
+            && w->testAttribute(Qt::WA_WState_Created)
+            && w->internalWinId())
+        ShadowHandler::installShadows(XHandler::windowId(w));
+}
+
+void
+ShadowHandler::showShadow(qulonglong widget)
+{
+    if (QWidget *w = Ops::getChild<QWidget *>(widget))
+        showShadow(w);
+}
+
 bool
 ShadowHandler::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e || !o->isWidgetType())
         return false;
-    if (e->type() == QEvent::Show)
-    {
-        QWidget *w = static_cast<QWidget *>(o);
-        if (w->isWindow()
-                && w->testAttribute(Qt::WA_WState_Created)
-                && w->internalWinId())
-            ShadowHandler::installShadows(XHandler::windowId(w));
-    }
+    if (e->type() == QEvent::Show
+            || e->type() == QEvent::WinIdChange
+            || e->type() == QEvent::Create
+            || e->type() == QEvent::ShowWindowRequest
+            || e->type() == QEvent::WindowStateChange)
+        showShadow(static_cast<QWidget *>(o));
     return false;
 }
 
@@ -135,6 +149,14 @@ ShadowHandler::manage(QWidget *w)
     w->removeEventFilter(instance());
     if (w->isWindow())
         w->installEventFilter(instance());
+//    if (w->isVisible())
+//    {
+//        w->hide();
+//        QMetaObject::invokeMethod(w, "show", Qt::QueuedConnection);
+//    }
+//    QMetaObject::invokeMethod(m_instance, "showShadow", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)w));
+//    if (w->testAttribute(Qt::WA_WState_Created))
+//        installShadows(w->winId(), false);
 }
 
 void

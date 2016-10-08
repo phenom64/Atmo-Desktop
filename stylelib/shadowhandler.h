@@ -10,6 +10,7 @@ namespace DSP
 {
 class Q_DECL_EXPORT ShadowHandler : public QObject
 {
+//    Q_OBJECT
 public:
     static XHandler::XPixmap *shadows(bool active);
     static void installShadows(WId w, bool active = false);
@@ -18,6 +19,9 @@ public:
     static void release(QWidget *w);
     static void removeDelete();
     static ShadowHandler *instance();
+//public slots:
+    void showShadow(QWidget *w);
+    void showShadow(qulonglong widget);
 protected:
     bool eventFilter(QObject *, QEvent *);
 private:

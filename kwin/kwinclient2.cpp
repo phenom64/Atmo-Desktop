@@ -299,7 +299,7 @@ Deco::init()
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
 
-    if (client().data()->isResizeable() && !m_grip)
+    if (client().data()->isResizeable() && client().data()->windowId() && !m_grip)
         m_grip = new Grip(this);
 
     if (m_blingEnabled)

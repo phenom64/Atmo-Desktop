@@ -252,6 +252,8 @@ Style::polish(QWidget *widget)
         if (widget->windowType() == Qt::Popup
                 || widget->windowType() == Qt::ToolTip
                 || widget->windowType() == Qt::Dialog
+                || widget->windowType() == Qt::Tool
+                || widget->inherits("BE::Panel")
                 || isFrameLessMainWindow)
             ShadowHandler::manage(widget);
         if (widget->testAttribute(Qt::WA_TranslucentBackground)
@@ -580,9 +582,9 @@ Style::polish(QApplication *app)
 }
 
 void
-Style::polishSlot(QWidget *widget)
+Style::polishSlot(qulonglong w)
 {
-    if (QTabBar *tabBar = qobject_cast<QTabBar *>(widget))
+    if (QTabBar *tabBar = Ops::getChild<QTabBar *>(w))
     {
         bool docMode = tabBar->documentMode();
         QTabWidget *tw(0);

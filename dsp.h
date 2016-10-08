@@ -182,7 +182,7 @@ protected:
     void polishLater(QWidget *widget);
 
 protected slots:
-    void polishSlot(QWidget *widget);
+    void polishSlot(qulonglong w);
 
 private:
     StyleComplexControl m_cc[CCSize];

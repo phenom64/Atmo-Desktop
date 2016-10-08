@@ -315,5 +315,5 @@ Style::drawText(const QRect &r,
 void
 Style::polishLater(QWidget *widget)
 {
-    QMetaObject::invokeMethod(this, "polishSlot", Qt::QueuedConnection, Q_ARG(QWidget *, widget));
+    QMetaObject::invokeMethod(this, "polishSlot", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)widget));
 }
