@@ -141,6 +141,7 @@ protected slots:
 protected:
     void setButtonsVisible(const bool visible);
     void recalculate();
+    void reconfigure();
     void hoverEnter();
     void hoverLeave();
 

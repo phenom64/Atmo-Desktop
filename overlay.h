@@ -15,6 +15,7 @@ class OverlayHandler : public QObject
 {
     Q_OBJECT
 public:
+    OverlayHandler();
     static OverlayHandler *instance();
     static void manage(Overlay *o);
 

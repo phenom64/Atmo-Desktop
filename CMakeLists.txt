@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-option(QT5BUILD "build for qt5" OFF)
+option(QT5BUILD "build for qt5" ON)
 option(DEBUG "verbose debugging messages in output" OFF)
 
 if (DEBUG)

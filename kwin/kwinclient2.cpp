@@ -265,6 +265,10 @@ Deco::init()
     m_textBevOpacity = 127;
 
     int shadowOpacity = dConf.shadows.opacity;
+
+    if (!shadowOpacity)
+        shadowOpacity = 127;
+
     if (const uint id = winId())
     {
         AdaptorManager::instance()->addDeco(this);
@@ -275,22 +279,6 @@ Deco::init()
     else
         updateBgPixmap();
 
-    m_leftButtons = new KDecoration2::DecorationButtonGroup(this);
-    m_leftButtons->setSpacing(4);
-    QVector<KDecoration2::DecorationButtonType> lb = settings()->decorationButtonsLeft();
-
-    if (!shadowOpacity)
-        shadowOpacity = 127;
-    for (int i = 0; i < lb.count(); ++i)
-        if (Button *b = Button::create(lb.at(i), this, m_leftButtons))
-            m_leftButtons->addButton(b);
-    m_rightButtons = new KDecoration2::DecorationButtonGroup(this);
-    m_rightButtons->setSpacing(4);
-    QVector<KDecoration2::DecorationButtonType> rb = settings()->decorationButtonsRight();
-    for (int i = 0; i < rb.count(); ++i)
-        if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
-            m_rightButtons->addButton(b);
-
     m_buttonManager->configure(shadowOpacity, m_illumination, m_buttonStyle, 0, Gradient());
     m_buttonManager->setColors(m_bg, m_fg);
     m_buttonManager->clearCache();
@@ -298,6 +286,10 @@ Deco::init()
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
+
+    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this](){reconfigure();});
+    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this](){reconfigure();});
+    connect(settings().data(), &KDecoration2::DecorationSettings::fontChanged, this, [this](){update();});
 
     if (client().data()->isResizeable() && client().data()->windowId() && !m_grip)
         m_grip = new Grip(this);
@@ -312,7 +304,30 @@ Deco::init()
         }
     }
     recalculate();
-    QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
+    reconfigure();
+}
+
+void
+Deco::reconfigure()
+{
+    if (m_leftButtons)
+        delete m_leftButtons;
+    m_leftButtons = new KDecoration2::DecorationButtonGroup(this);
+    m_leftButtons->setSpacing(4);
+    QVector<KDecoration2::DecorationButtonType> lb = settings()->decorationButtonsLeft();
+
+    for (int i = 0; i < lb.count(); ++i)
+        if (Button *b = Button::create(lb.at(i), this, m_leftButtons))
+            m_leftButtons->addButton(b);
+    if (m_rightButtons)
+        delete m_rightButtons;
+    m_rightButtons = new KDecoration2::DecorationButtonGroup(this);
+    m_rightButtons->setSpacing(4);
+    QVector<KDecoration2::DecorationButtonType> rb = settings()->decorationButtonsRight();
+    for (int i = 0; i < rb.count(); ++i)
+        if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
+            m_rightButtons->addButton(b);
+    widthChanged(client().data()->width());
 }
 
 void

@@ -31,6 +31,11 @@ using namespace DSP;
 OverlayHandler *OverlayHandler::s_instance = 0;
 static QList<Overlay *> s_overLays;
 
+OverlayHandler::OverlayHandler()
+{
+    qApp->installEventFilter(this);
+}
+
 OverlayHandler
 *OverlayHandler::instance()
 {
@@ -42,10 +47,10 @@ OverlayHandler
 void
 OverlayHandler::manage(Overlay *o)
 {
-    o->window()->removeEventFilter(instance());
-    o->window()->installEventFilter(instance());
-    o->parentWidget()->removeEventFilter(instance());
-    o->parentWidget()->installEventFilter(instance());
+//    o->window()->removeEventFilter(instance());
+//    o->window()->installEventFilter(instance());
+//    o->parentWidget()->removeEventFilter(instance());
+//    o->parentWidget()->installEventFilter(instance());
     if (!s_overLays.contains(o))
         s_overLays << o;
     connect(o, SIGNAL(destroyed()), instance(), SLOT(overlayDeleted()));
@@ -70,9 +75,11 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
                 || e->type() == QEvent::ShowToParent
                 || e->type() == QEvent::HideToParent
                 || e->type() == QEvent::Show
-                || e->type() == QEvent::Hide)
+                || e->type() == QEvent::Hide
+                || e->type() == QEvent::ZOrderChange)
             for (int i = 0; i < s_overLays.count(); ++i)
-                QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
+                if (s_overLays.at(i)->window() == static_cast<QWidget *>(o)->window())
+                    QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
         return false;
     }
     return false;
@@ -185,6 +192,9 @@ Overlay::Overlay(QWidget *parent, int opacity)
     OverlayHandler::manage(this);
     setAttribute(Qt::WA_TransparentForMouseEvents);
     m_frame->installEventFilter(this);  //m_frame guaranteed by manage()
+    QList<QWidget *> kids = m_frame->findChildren<QWidget *>();
+    for (int i = 0; i < kids.count(); ++i)
+        kids.at(i)->installEventFilter(this);
     raise();
 }
 
@@ -200,7 +210,6 @@ Overlay::paintEvent(QPaintEvent *)
     if (!isVisible())
         return;
 
-    raise();
     QPainter p(this);
 #define FOCUS 0
 #if FOCUS
@@ -252,6 +261,11 @@ Overlay::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e || !o->isWidgetType())
         return false;
+    if (e->type() == QEvent::ZOrderChange)
+    {
+        raise();
+        return true;
+    }
     if (o == m_frame)
     {
         switch (e->type())

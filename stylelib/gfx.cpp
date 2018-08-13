@@ -590,7 +590,7 @@ GFX::drawHandle(QPainter *p, const QRect &r, const bool hor)
 {
     if (hor)
     {
-        for (int i = r.top()+1; i < r.bottom(); i+=3)
+        for (int i = r.top()+2; i < r.bottom(); i+=3)
         {
             const QRect rect(r.left(), i, r.width(), 1);
             p->fillRect(rect, QColor(0,0,0,dConf.shadows.opacity));
@@ -599,7 +599,7 @@ GFX::drawHandle(QPainter *p, const QRect &r, const bool hor)
     }
     else
     {
-        for (int i = r.left()+1; i < r.right(); i+=3)
+        for (int i = r.left()+2; i < r.right(); i+=3)
         {
             const QRect rect(i, r.top(), 1, r.height());
             p->fillRect(rect, QColor(0,0,0,dConf.shadows.opacity));

@@ -9,6 +9,7 @@
 #include "settings.h"
 #include <iostream>     // std::cout, std::endl
 #include <iomanip>      // std::setw
+#include <QIcon>
 
 enum Task { WriteDefaults = 0, Edit, IconPaths, PrintIconThemes, PrintInfo, ListVars, ShadowInfo, GenHighlight, Invalid };
 
