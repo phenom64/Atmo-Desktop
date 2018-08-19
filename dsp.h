@@ -160,6 +160,8 @@ public:
     typedef bool (Style::*EventFilter)(QObject *o, QEvent *e);
     typedef QRect (Style::*SubControlRect)(const QStyleOptionComplex *, SubControl, const QWidget *) const;
 
+    static QWidget *fromDevice(QPaintDevice *d);
+
 protected:
 #define TESTOPT(_STATE_) static inline bool is##_STATE_(const QStyleOption *opt) { return opt->state & State_##_STATE_; }
     TESTOPT(Sunken) TESTOPT(MouseOver) TESTOPT(Selected) TESTOPT(Active) TESTOPT(Enabled) TESTOPT(HasFocus) TESTOPT(On)

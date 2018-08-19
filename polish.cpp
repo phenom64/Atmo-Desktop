@@ -70,6 +70,7 @@ Style::applyTranslucency(QWidget *widget)
 {
     if (!widget->isWindow())
         return;
+
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
     const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
@@ -99,7 +100,8 @@ Style::applyTranslucency(QWidget *widget)
     widget->setWindowIcon(icn);
     widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
     widget->setVisible(wasVisible);
-    applyBlur(widget);
+    if (dConf.app != Settings::Konsole && dConf.app != Settings::Yakuake)
+        applyBlur(widget);
 }
 
 void
@@ -109,6 +111,7 @@ Style::polish(QWidget *widget)
         return;
 
     QCommonStyle::polish(widget);
+
 #if DEBUG
 //    if (widget->parentWidget())
 //        qDebug() << "polishing widget:" << widget << "with parentWidget:" << widget->parentWidget();
@@ -299,6 +302,7 @@ Style::polish(QWidget *widget)
     }
     else if (QComboBox *cBox = qobject_cast<QComboBox *>(widget))
     {
+        cBox->setMaximumHeight(dConf.baseSize+GFX::shadowMargin(dConf.input.shadow)*2);
         if (!cBox->isEditable())
         {
             Anim::Basic::manage(cBox);
@@ -370,6 +374,7 @@ Style::polish(QWidget *widget)
             {
                 view->viewport()->setBackgroundRole(QPalette::Window);
                 view->viewport()->setForegroundRole(QPalette::WindowText);
+                view->viewport()->setAutoFillBackground(false);
             }
         }
         if (dConf.views.traditional)
@@ -397,8 +402,12 @@ Style::polish(QWidget *widget)
     }
     else if (qobject_cast<QMenu *>(widget))
     {
-        if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-            applyTranslucency(widget);
+//        qDebug() << widget->windowType();
+//        if (!widget->parentWidget())
+//        {
+            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
+                applyTranslucency(widget);
+//        }
         widget->setMouseTracking(true);
         widget->setAttribute(Qt::WA_Hover);
         widget->setForegroundRole(QPalette::Text);
@@ -574,7 +583,6 @@ Style::polish(QPalette &p)
     if (dConf.palette)
         p = *dConf.palette;
 
-//    qApp->setPalette(p);
     GFX::generateData();
 }
 
@@ -584,6 +592,13 @@ Style::polish(QApplication *app)
     QCommonStyle::polish(app);
     if (app && dConf.palette)
         app->setPalette(*dConf.palette);
+    else if (app)
+    {
+        QPalette p = app->palette();
+        for (int i = 0; i <= QPalette::Background; ++i)
+            p.setColor(QPalette::Inactive, QPalette::ColorRole(i), p.color(QPalette::Active, QPalette::ColorRole(i)));
+        qApp->setPalette(p);
+    }
     GFX::generateData();
 }
 

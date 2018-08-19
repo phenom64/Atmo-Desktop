@@ -30,6 +30,7 @@ public:
     static void drawTab(const QRect &r, QPainter *p, const TabPos t, QPainterPath *path = 0);
     static void drawTabBarShadow(QPainter *p, QRect r);
     static inline QPixmap noise(const bool bg = false) { return s_noise[bg]; }
+    static QPixmap noisePix(const qint8 style, const QString &fileName = QString());
     static void drawClickable(ShadowStyle s,
                               QRect r,
                               QPainter *p,
@@ -51,7 +52,6 @@ public:
     static void drawWindowBg(QPainter *p, const QWidget *w, const QColor &bg, const QRect &rect, QPoint offset = QPoint());
 
 protected:
-    static QPixmap noisePix(const qint8 style, const QString &fileName = QString());
     static void initShadows();
     static void initTabs();
 

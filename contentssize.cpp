@@ -252,9 +252,8 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     case CT_LineEdit:
     {
         QSize sz(contentsSize);
+        sz.setHeight(dConf.baseSize);
         sz+=QSize(GFX::shadowMargin(dConf.input.shadow)*2, pixelMetric(PM_DefaultFrameWidth, opt, widget));
-        if (sz.height() < dConf.baseSize)
-            sz.setHeight(dConf.baseSize);
         return sz;
     }
     case CT_SpinBox:
@@ -330,14 +329,13 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     {
         const QStyleOptionComboBox *box = qstyleoption_cast<const QStyleOptionComboBox *>(opt);
         if (!box)
-            return contentsSize+QSize(16, 0);
+            return contentsSize/*+QSize(16, 0)*/;
         if (box->editable)
         {
             QSize sz(contentsSize);
             int add(dConf.input.rnd?dConf.input.rnd/2:0);
+            sz.setHeight(dConf.baseSize);
             sz+=QSize(add*2+40, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
-            if (sz.height() < dConf.baseSize)
-                sz.setHeight(dConf.baseSize);
             return sz;
         }
 

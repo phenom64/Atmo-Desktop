@@ -47,6 +47,9 @@ protected:
     virtual const bool keepBelow() const;
     virtual const bool shade() const;
     void onClick(const Qt::MouseButton &button) {}
+
+private:
+    Deco *m_decoration;
 };
 
 class EmbeddedWidget : public QWidget

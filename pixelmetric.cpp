@@ -144,7 +144,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
             return 2;
         if (Overlay::overlay(widget))
             return 0;
-        if (qobject_cast<const QLineEdit *>(widget) || widget->isWindow())
+        if (qobject_cast<const QLineEdit *>(widget) || qobject_cast<const QComboBox *>(widget) || widget->isWindow())
             return 0;
         if (qobject_cast<const QCalendarWidget *>(widget))
             return 2;

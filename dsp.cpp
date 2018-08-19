@@ -147,7 +147,8 @@ Style::drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPain
     }
 }
 
-static QWidget *fromDevice(QPaintDevice *d)
+QWidget
+*Style::fromDevice(QPaintDevice *d)
 {
     if (d->devType() == QInternal::Widget)
         return static_cast<QWidget *>(d);
@@ -308,7 +309,10 @@ Style::drawText(const QRect &r,
         text = QFontMetrics(f).elidedText(text, elide, r.width(), Qt::TextShowMnemonic);
     if (bold)
         p->setFont(f);
-    drawItemText(p, r, flags, opt->palette, isEnabled(opt), text, textRole);
+    QPalette pal = opt->palette;
+    if (isEnabled(opt))
+        pal.setCurrentColorGroup(QPalette::Active);
+    drawItemText(p, r, flags, pal, isEnabled(opt), text, textRole);
     p->setFont(font);
 }
 

@@ -170,7 +170,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         GFX::drawArrow(painter, fgColor, down.translated(hor?1:0, hor?0:1), hor?East:South, 7, Qt::AlignCenter, fgColor.alpha() == 0xff);
 
         const QPen pen(painter->pen());
-        const bool inView((area && area->viewport()->autoFillBackground() && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
+        const bool inView((area /*&& area->viewport()->autoFillBackground()*/ && area->frameShape() == QFrame::StyledPanel && area->frameShadow() == QFrame::Sunken)
                           || qobject_cast<const QTextEdit *>(area)
                           || (widget && widget->parentWidget() && widget->parentWidget()->inherits("KTextEditor::ViewPrivate"))); // I hate application specific hacks! what the fuck is kateview anyway?
         for (int i = 0; i < 2; ++i)

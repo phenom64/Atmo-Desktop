@@ -704,6 +704,8 @@ Settings::writePalette()
     for (int g = 0; g < QPalette::NColorGroups; ++g)
         for (int r = 0; r < QPalette::NColorRoles; ++r)
             writePaletteColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, pal.color((QPalette::ColorGroup)g, (QPalette::ColorRole)r));
+    qDebug() << s->fileName();
+    s->sync();
 }
 
 void

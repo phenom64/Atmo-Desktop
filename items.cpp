@@ -156,6 +156,13 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
 //    if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
 //        return true;
+    if (!widget)
+    {
+        QWidget *w = fromDevice(painter->device());
+        if (w)
+            widget = w->parentWidget();
+    }
+
     bool sunken(isSelected(option));
     bool hover(isMouseOver(option));
     if (opt && !sunken && !isMouseOver(option) && opt->backgroundBrush != Qt::NoBrush)
@@ -168,12 +175,12 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
 
     const QAbstractItemView *abstractView = qobject_cast<const QAbstractItemView *>(widget);
     const QWidget *vp(abstractView?abstractView->viewport():0);
-    const bool full(vp && vp->rect().x() == option->rect.x() && vp->rect().right() <= option->rect.right());
+    const bool full(vp && vp->width() == option->rect.width());
     bool selectRows(abstractView&&abstractView->selectionBehavior()==QAbstractItemView::SelectRows);
     if (selectRows)
         selectRows = !opt || opt->decorationPosition == QStyleOptionViewItem::Left;
 
-    QColor h(option->palette.color(QPalette::Highlight));
+    QColor h(option->palette.color(QPalette::Active, QPalette::Highlight));
     if (!sunken)
         h.setAlpha(64);
 
@@ -187,10 +194,16 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
 
     QRect rect(option->rect);
     Sides sides(All);
-    if (!dConf.views.traditional && (full || (sunken && selectRows)))
+    const QListView *list = qobject_cast<const QListView *>(abstractView);
+    if (!dConf.views.traditional && ((full || (sunken && selectRows) || (list && list->inherits("KFilePlacesView")))))
         sides &= ~(Right|Left);
 
-    if (opt)
+
+    bool checkSides = true;
+    if (list)
+        checkSides = list->viewMode() == QListView::ListMode;
+
+    if (opt && checkSides)
     switch (opt->viewItemPosition)
     {
     case QStyleOptionViewItemV4::Beginning:     sides &= ~Right;        break;
@@ -318,7 +331,7 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
     if (opt->sortIndicator)
         bg = QPalette::Highlight;
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-    const QColor b(opt->palette.color(bg));
+    const QColor b(opt->palette.color(isEnabled(opt) ? QPalette::Active : QPalette::Disabled, bg));
     lg.setStops(DSP::Settings::gradientStops(dConf.views.headerGradient, b));
     if (dConf.views.traditional)
     {
@@ -373,7 +386,10 @@ Style::drawHeaderLabel(const QStyleOption *option, QPainter *painter, const QWid
     }
     const QFontMetrics fm(painter->fontMetrics());
     const QString text(fm.elidedText(opt->text, Qt::ElideRight, tr.width(), Qt::TextShowMnemonic));
-    drawItemText(painter, tr, opt->textAlignment, opt->palette, opt->state & State_Enabled, text, fg);
+    QPalette pal = opt->palette;
+    if (isEnabled(opt))
+        pal.setCurrentColorGroup(QPalette::Active);
+    drawItemText(painter, tr, opt->textAlignment, pal, opt->state & State_Enabled, text, fg);
     painter->restore();
     return true;
 }

@@ -64,6 +64,16 @@ Style::eventFilter(QObject *o, QEvent *e)
             qDebug() << w << w->parentWidget();
     }
 #endif
+    case QEvent::MouseButtonPress:
+    {
+        if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(w))
+        {
+            QMouseEvent *me = static_cast<QMouseEvent *>(e);
+            if (!menuBar->actionAt(me->pos()))
+                XHandler::mwRes(me->pos(), me->globalPos(), menuBar->winId());
+        }
+        break;
+    }
     case QEvent::Hide:
     {
         if (dConf.uno.enabled && (qobject_cast<QTabBar *>(w) || qobject_cast<QMenuBar*>(w)))

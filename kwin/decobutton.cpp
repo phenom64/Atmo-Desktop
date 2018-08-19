@@ -29,6 +29,7 @@ Button::Button(QObject *parent, const QVariantList &args)
     , ButtonBase((ButtonBase::Type)args.at(0).value<KDecoration2::DecorationButtonType>(),
                  static_cast<Deco *>(args.at(1).value<KDecoration2::Decoration*>())->m_buttonManager)
 {
+    m_decoration = static_cast<Deco *>(args.at(1).value<KDecoration2::Decoration*>());
     setGeometry(QRect(QPoint(0, 0), buttonSize()));
 }
 
@@ -36,6 +37,7 @@ Button::Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObjec
     : KDecoration2::DecorationButton(type, decoration, parent)
     , ButtonBase((ButtonBase::Type)type, decoration->m_buttonManager)
 {
+    m_decoration = decoration;
     setGeometry(QRect(QPoint(0, 0), buttonSize()));
 }
 
@@ -70,6 +72,10 @@ Button
 const QSize
 Button::buttonSize() const
 {
+//    if (buttonType() == ApplicationMenu)
+//    {
+//        return QSize();
+//    }
     if (buttonStyle() == ButtonBase::Anton)
     {
         if (buttonType() == ButtonBase::Close)
@@ -82,6 +88,22 @@ Button::buttonSize() const
 void
 Button::paint(QPainter *painter, const QRect &repaintArea)
 {
+//    if (buttonType() == ApplicationMenu)
+//    {
+//        if (!geometry().isValid())
+//        {
+//            qreal w = QFontMetrics(painter->font()).boundingRect("Menu").width()+12;
+//            setGeometry(QRectF(0.0, 0.0, w, m_decoration->titleHeight()));
+//        }
+//        const QPen &saved = painter->pen();
+//        const bool aa = painter->testRenderHint(QPainter::Antialiasing);
+//        painter->setPen(m_decoration->m_textFg);
+//        painter->setRenderHint(QPainter::Antialiasing);
+//        painter->drawText(geometry(), Qt::AlignCenter, "Menu");
+//        painter->setPen(saved);
+//        painter->setRenderHint(QPainter::Antialiasing, aa);
+//        return;
+//    }
     ButtonBase::paint(*painter);
 }
 

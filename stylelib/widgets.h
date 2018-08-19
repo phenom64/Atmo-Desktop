@@ -43,7 +43,7 @@ public:
     void unhover() { m_hasMouse = false; m_hoverLock = false; hoverChanged(); }
     void hover();
     inline const Type buttonType() const { return m_type; }
-    ButtonGroupBase *group() { return group(); }
+    ButtonGroupBase *group() { return m_group; }
 
 protected:
     quint64 state() const;

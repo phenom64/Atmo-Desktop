@@ -88,7 +88,7 @@ public:
     class Data
     {
     public:
-        int noise, btnStyle;
+        int noise, btnStyle, illumination, noiseStyle;
         Gradient grad;
         QColor bg, fg;
         bool separator, icon;
@@ -100,6 +100,8 @@ public:
             fg = d.fg;
             separator = d.separator;
             btnStyle = d.btnStyle;
+            illumination = d.illumination;
+            noiseStyle = d.noiseStyle;
             icon = d.icon;
         }
         static void addDataForWinClass(const QString &winClass, QSettings &s);
@@ -168,7 +170,7 @@ private:
     QGradientStops m_winGradient;
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
-    quint8 m_illumination, m_textBevOpacity, m_shadowOpacity, m_opacity, m_uno, m_titleHeight;
+    quint8 m_illumination, m_textBevOpacity, m_shadowOpacity, m_opacity, m_uno, m_titleHeight, m_noiseStyle;
     bool m_separator, m_isHovered, m_contAware, m_blingEnabled, m_icon, m_isDark, m_hor, m_embedButtons, m_followDecoShadow;
 };
 

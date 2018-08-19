@@ -117,6 +117,8 @@ Deco::Data::addDataForWinClass(const QString &winClass, QSettings &s)
     d.separator = s.value("separator", true).toBool();
     d.btnStyle = s.value("btnstyle", -2).toInt();
     d.icon = s.value("icon", false).toBool();
+    d.illumination = s.value("illumination", 63).toInt();
+    d.noiseStyle = s.value("noiseStyle", 0).toInt();
     Data::s_data.insert(winClass, d);
 }
 
@@ -152,6 +154,8 @@ Deco::Data::decoData(const QString &winClass, Deco *d)
     d->m_noise = data.noise;
     d->m_separator = data.separator;
     d->m_icon = data.icon;
+    d->m_illumination = data.illumination;
+    d->m_noiseStyle = data.noiseStyle;
     if (data.btnStyle != -2)
         d->m_buttonStyle = data.btnStyle;
     d->recalculate();
@@ -232,6 +236,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_embedButtons(false)
     , m_followDecoShadow(false)
     , m_titleHeight(0)
+    , m_noiseStyle(0)
 {
     if (s_factory)
         setParent(s_factory);
@@ -279,9 +284,6 @@ Deco::init()
     else
         updateBgPixmap();
 
-    m_buttonManager->configure(shadowOpacity, m_illumination, m_buttonStyle, 0, Gradient());
-    m_buttonManager->setColors(m_bg, m_fg);
-    m_buttonManager->clearCache();
     connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
@@ -327,6 +329,9 @@ Deco::reconfigure()
     for (int i = 0; i < rb.count(); ++i)
         if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
             m_rightButtons->addButton(b);
+    m_buttonManager->configure(m_shadowOpacity, m_illumination, m_buttonStyle, 0, Gradient());
+    m_buttonManager->setColors(m_bg, m_fg);
+    m_buttonManager->clearCache();
     widthChanged(client().data()->width());
 }
 
@@ -337,7 +342,7 @@ Deco::recalculate()
     if (m_bling)
         delete [] m_bling;
     m_bling = 0;
-    update();
+    reconfigure();
 }
 
 const int
@@ -723,11 +728,11 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
         pt.drawEllipse(tmp.rect().translated(0, m_bevel));
         pt.end();
 
-        QImage tmp2 = tmp;
-        FX::expblur(tmp, 2);
-        pt.begin(&tmp);
-        pt.drawImage(0,0,tmp2);
-        pt.end();
+//        QImage tmp2 = tmp;
+//        FX::expblur(tmp, 1);
+//        pt.begin(&tmp);
+//        pt.drawImage(0,0,tmp2);
+//        pt.end();
         m_bevelCorner[0] = QPixmap::fromImage(tmp.copy(QRect(0, 0, size, size)));
         m_bevelCorner[1] = QPixmap::fromImage(tmp.copy(QRect(size+1, 0, size, size)));
         m_bevelCorner[2] = QPixmap::fromImage(tmp.copy(size, 0, 1, 4));
@@ -858,6 +863,7 @@ Deco::blingPath(const quint8 style, const QRectF &r, const int radius) const
         path.quadTo(x+w-rad, y+h, x+w-rad, y+(h/2.0f));
         path.quadTo(x+w-rad, y, x+w, y);
         path.closeSubpath();
+        break;
     }
     default: break;
     }
@@ -874,16 +880,17 @@ Deco::updateBgPixmap()
     else
         lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(m_bg, Qt::white, 4, 1)) << QGradientStop(1, Color::mid(m_bg, Qt::black, 4, 1)));
 
-    QPixmap p(GFX::noise().size().width(), r.height());
+    const QPixmap noisePix = GFX::noisePix(m_noiseStyle);
+    QPixmap p(noisePix.size().width(), r.height());
     p.fill(Qt::transparent);
     QPainter pt(&p);
     pt.fillRect(p.rect(), lg);
     if (m_noise)
     {
-        QPixmap noise(GFX::noise().size());
+        QPixmap noise(noisePix.size());
         noise.fill(Qt::transparent);
         QPainter ptt(&noise);
-        ptt.drawTiledPixmap(noise.rect(), GFX::noise());
+        ptt.drawTiledPixmap(noise.rect(), noisePix);
         ptt.setCompositionMode(QPainter::CompositionMode_DestinationIn);
         ptt.fillRect(noise.rect(), QColor(0, 0, 0, m_noise*2.55f));
         ptt.end();
