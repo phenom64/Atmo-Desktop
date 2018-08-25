@@ -11,6 +11,8 @@ if (QT5BUILD)
 
     execute_process(COMMAND kf5-config --install module OUTPUT_VARIABLE MODULEPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+    find_package(dbusmenu-qt5)
+
 #     find_path(EFFECTS_H kwineffects.h PATH_SUFFIXES kf5)
 #     
 #     if (EFFECTS_H)
@@ -41,11 +43,15 @@ if (QT5BUILD)
 
     set(SRCS
         kwinclient2.cpp
-        decobutton.cpp)
+        decobutton.cpp
+        menubar.cpp
+        xcbatoms.cpp)
     set(HDRS
         kwinclient2.h
         decobutton.h
-        decoadaptor.h)
+        decoadaptor.h
+        menubar.h
+        xcbatoms.h)
 
     ### build library
     add_library(dspdecoration MODULE ${SRCS} ${HDRS})
@@ -66,6 +72,12 @@ if (QT5BUILD)
     if (QTDBUS_FOUND)
         target_link_libraries(dspdecoration PUBLIC Qt5::DBus)
     endif (QTDBUS_FOUND)
+
+    if (dbusmenu-qt5_FOUND)
+        target_link_libraries(dspdecoration PUBLIC dbusmenu-qt5)
+        add_definitions(-DHASDBUSMENU=1)
+    endif (dbusmenu-qt5_FOUND)
+
     if (XCB_FOUND)
         target_link_libraries(dspdecoration PUBLIC Qt5::X11Extras XCB::XCB)
     else (XCB_FOUND)

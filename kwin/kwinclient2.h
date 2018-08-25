@@ -76,6 +76,8 @@ class Grip;
 class EmbedHandler;
 class ButtonGroup;
 class ButtonGroupBase;
+class MenuBar;
+
 class Deco : public KDecoration2::Decoration
 {
     friend class Button;
@@ -91,7 +93,7 @@ public:
         int noise, btnStyle, illumination, noiseStyle;
         Gradient grad;
         QColor bg, fg;
-        bool separator, icon;
+        bool separator, icon, menubar;
         void operator =(const Data &d)
         {
             noise = d.noise;
@@ -103,6 +105,7 @@ public:
             illumination = d.illumination;
             noiseStyle = d.noiseStyle;
             icon = d.icon;
+            menubar = d.menubar;
         }
         static void addDataForWinClass(const QString &winClass, QSettings &s);
         static void readWindowData();
@@ -171,7 +174,21 @@ private:
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
     quint8 m_illumination, m_textBevOpacity, m_shadowOpacity, m_opacity, m_uno, m_titleHeight, m_noiseStyle;
-    bool m_separator, m_isHovered, m_contAware, m_blingEnabled, m_icon, m_isDark, m_hor, m_embedButtons, m_followDecoShadow;
+    bool m_separator
+    , m_isHovered
+    , m_contAware
+    , m_blingEnabled
+    , m_icon
+    , m_isDark
+    , m_hor
+    , m_embedButtons
+    , m_followDecoShadow
+    , m_showMenuBar;
+#if HASDBUSMENU
+    MenuBar *m_menuBar;
+    friend class MenuBar;
+    friend class MenuBarItem;
+#endif
 };
 
 class DecoAdaptor;

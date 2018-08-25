@@ -1,6 +1,7 @@
 #include "kwinclient2.h"
 #include "decobutton.h"
 #include "decoadaptor.h"
+#include "menubar.h"
 #include "../stylelib/color.h"
 #include "../stylelib/xhandler.h"
 #include "../stylelib/shadowhandler.h"
@@ -38,12 +39,18 @@
 
 #include <QSettings>
 #include <QDir>
+#include <QMenu>
 #include <QWindow>
 #include <qmath.h>
 
 #include <QDebug>
 #if HASXCB
 #include <QX11Info>
+#include <xcbatoms.h>
+#endif
+
+#if HASDBUSMENU
+#include <dbusmenuimporter.h>
 #endif
 
 //K_PLUGIN_FACTORY_WITH_JSON(
@@ -119,6 +126,7 @@ Deco::Data::addDataForWinClass(const QString &winClass, QSettings &s)
     d.icon = s.value("icon", false).toBool();
     d.illumination = s.value("illumination", 63).toInt();
     d.noiseStyle = s.value("noiseStyle", 0).toInt();
+    d.menubar = s.value("menubar", false).toBool();
     Data::s_data.insert(winClass, d);
 }
 
@@ -156,6 +164,7 @@ Deco::Data::decoData(const QString &winClass, Deco *d)
     d->m_icon = data.icon;
     d->m_illumination = data.illumination;
     d->m_noiseStyle = data.noiseStyle;
+    d->m_showMenuBar = data.menubar;
     if (data.btnStyle != -2)
         d->m_buttonStyle = data.btnStyle;
     d->recalculate();
@@ -237,6 +246,10 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     , m_followDecoShadow(false)
     , m_titleHeight(0)
     , m_noiseStyle(0)
+    , m_showMenuBar(false)
+    #if HASDBUSMENU
+    , m_menuBar(0)
+    #endif
 {
     if (s_factory)
         setParent(s_factory);
@@ -305,6 +318,21 @@ Deco::init()
             m_bling = 0;
         }
     }
+
+#if HASDBUSMENU
+//    _KDE_NET_WM_APPMENU_OBJECT_PATH(STRING) = "/MenuBar/1"
+//    _KDE_NET_WM_APPMENU_SERVICE_NAME(STRING) = ":1.60"
+
+    if (m_showMenuBar)
+    {
+        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().data()->windowId());
+        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().data()->windowId());
+
+        if (objectPath && serviceName)
+            m_menuBar = new MenuBar(this, serviceName.toString(), objectPath.toString());
+    }
+#endif
+
     recalculate();
     reconfigure();
 }
@@ -495,7 +523,7 @@ Deco::updateData()
             m_bling = 0;
         }
     }
-//    recalculate();
+    recalculate();
     update();
     if (winDataChanged)
         emit dataChanged();
@@ -534,6 +562,15 @@ Deco::widthChanged(const int width)
         const int add = (m_buttonStyle == ButtonBase::Anton) * 2;
         m_leftButtons->setPos(QPoint((borders().left() ? borders().left() : 6)+add, client().data()->isModal()?2:4));
     }
+#if HASDBUSMENU
+    if (m_menuBar)
+    {
+        qreal x = 8.0;
+        if (m_leftButtons)
+            x += m_leftButtons->geometry().width();
+        m_menuBar->setPos(QPointF(x, 0.0));
+    }
+#endif
     if (m_rightButtons)
         m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+(borders().right() ? borders().right() : 6))), client().data()->isModal()?2:4));
     setTitleBar(QRect(borders().left(), 0, width, titleHeight()));
@@ -608,28 +645,20 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             m_mem->unlock();
         }
     }
-    const int bgLum(Color::lum(m_bg));
-    const bool isDark(Color::lum(m_fg) > bgLum);
+
     if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal() && !client().data()->isMaximized())
         paintBevel(painter, m_illumination/*bgLum*/);
     if (m_blingEnabled)
         paintBling(painter, titleTextArea());
 
-#if 0
-    //shape
-    if (!client().data()->isModal())
-        Render::shapeCorners(painter, Top|Right|Left);
-#endif
     //text
-
     const bool paintText(titleBar().height() > 19);
 
+    QFont f(painter->font());
     if (paintText)
     {
-
         if (client().data()->isActive())
         {
-            QFont f(painter->font());
             f.setBold(true);
             painter->setFont(f);
         }
@@ -646,36 +675,12 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         }
         if (client().data()->isActive() && m_textBevOpacity)
         {
-            const int rgb(isDark?0:255);
+            const int rgb(m_isDark?0:255);
             painter->setPen(QColor(rgb, rgb, rgb, m_textBevOpacity));
             painter->drawText(textRect.translated(0, 1), Qt::AlignCenter|Qt::TextHideMnemonic, text);
         }
-
-        static const QString character[] = { " :: ", QString(" %1 ").arg(QChar(0x2013)), " - " };
-        bool needPaint(true);
         painter->setPen(m_fg);
-        for (int i = 0; i < 3; ++i)
-            if (text.contains(character[i]))
-            {
-                needPaint = false;
-                QString leftText(text.mid(0, text.lastIndexOf(character[i])));
-                QString rightText(text.mid(text.lastIndexOf(character[i])));
-
-                QRect leftTextRect(textRect.adjusted(0, 0, -painter->fontMetrics().width(rightText), 0));
-                QRect rightTextRect(textRect.adjusted(painter->fontMetrics().width(leftText), 0, 0, 0));
-
-                painter->drawText(leftTextRect, Qt::AlignCenter|Qt::TextHideMnemonic, leftText);
-                painter->setPen(Color::mid(m_fg, m_bg, 2, 1));
-                painter->drawText(rightTextRect, Qt::AlignCenter|Qt::TextHideMnemonic, rightText);
-                break;
-            }
-
-        if (needPaint)
-        {
-            painter->setPen(m_fg);
-            painter->drawText(textRect, Qt::AlignCenter|Qt::TextHideMnemonic, text);
-        }
-
+        painter->drawText(textRect, Qt::AlignCenter|Qt::TextHideMnemonic, text);
         //icon
         if (m_icon)
         {
@@ -687,11 +692,17 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         }
 
     }
+    f.setBold(false);
+    painter->setFont(f);
     //buttons
     if (m_leftButtons)
         m_leftButtons->paint(painter, repaintArea);
     if (m_rightButtons)
         m_rightButtons->paint(painter, repaintArea);
+#if HASDBUSMENU
+    if (m_menuBar)
+        m_menuBar->paint(painter, repaintArea);
+#endif
 
     painter->restore();
 }
