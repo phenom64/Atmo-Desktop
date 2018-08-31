@@ -297,7 +297,7 @@ Deco::init()
     else
         updateBgPixmap();
 
-    connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &Deco::widthChanged);
+    connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, [this](){updateLayout();});
     connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
     connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
@@ -360,7 +360,7 @@ Deco::reconfigure()
     m_buttonManager->configure(m_shadowOpacity, m_illumination, m_buttonStyle, 0, Gradient());
     m_buttonManager->setColors(m_bg, m_fg);
     m_buttonManager->clearCache();
-    widthChanged(client().data()->width());
+    updateLayout();
 }
 
 void
@@ -540,12 +540,13 @@ Deco::checkForDataFromWindowClass()
 const int
 Deco::titleHeight() const
 {
-    return titleBar().height();
+    return m_titleHeight;
 }
 
 void
 Deco::setTitleHeight(const int h)
 {
+    m_titleHeight = h;
     QRect tb(titleBar());
     tb.setHeight(h);
     setTitleBar(tb);
@@ -555,25 +556,32 @@ Deco::setTitleHeight(const int h)
 }
 
 void
-Deco::widthChanged(const int width)
+Deco::updateLayout()
 {
+    const int width = rect().width()-borders().left()-borders().right();
+    int leftBorder = borders().left() ? borders().left() : 6;
+    int rightBorder = borders().right() ? borders().right() : 6;
+    int leftWidgetSize = leftBorder, rightWidgetSize = rightBorder;
     if (m_leftButtons)
     {
         const int add = (m_buttonStyle == ButtonBase::Anton) * 2;
-        m_leftButtons->setPos(QPoint((borders().left() ? borders().left() : 6)+add, client().data()->isModal()?2:4));
+        m_leftButtons->setPos(QPoint(leftBorder+add, client().data()->isModal()?2:4));
+        leftWidgetSize += m_leftButtons->geometry().width();
     }
 #if HASDBUSMENU
     if (m_menuBar)
     {
-        qreal x = 8.0;
-        if (m_leftButtons)
-            x += m_leftButtons->geometry().width();
-        m_menuBar->setPos(QPointF(x, 0.0));
+        m_menuBar->setPos(QPointF(leftWidgetSize+8, 2.0));
+        leftWidgetSize += m_menuBar->geometry().width();
     }
 #endif
     if (m_rightButtons)
-        m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+(borders().right() ? borders().right() : 6))), client().data()->isModal()?2:4));
-    setTitleBar(QRect(borders().left(), 0, width, titleHeight()));
+    {
+        m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+rightBorder)), client().data()->isModal()?2:4));
+        rightWidgetSize += m_rightButtons->geometry().width()+8;
+    }
+    setTitleBar(QRect(borders().left(), 0, width-borders().right(), m_titleHeight));
+    m_textRect = QRect(QPoint(leftWidgetSize+8*2, 0), QPoint(width-borders().right()-rightWidgetSize, titleHeight()));
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 
@@ -662,34 +670,39 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             f.setBold(true);
             painter->setFont(f);
         }
+        int flags = Qt::AlignCenter|Qt::TextHideMnemonic;
 
         QString text(client().data()->caption());
-        QRect textRect(painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text));
-        int maxW(titleBar().width());
-        if (m_leftButtons && m_rightButtons)
-            maxW = titleBar().width()-(qMax(m_leftButtons->geometry().width(), m_rightButtons->geometry().width())*2);
-        if (painter->fontMetrics().width(text) > maxW)
+        QRect textRect(painter->fontMetrics().boundingRect(titleBar(), flags, text));
+        const int iconPad = m_icon*20;
+        if (m_textRect.x()+iconPad > textRect.x())
         {
-            text = painter->fontMetrics().elidedText(text, Qt::ElideRight, maxW, Qt::TextShowMnemonic);
-            textRect = painter->fontMetrics().boundingRect(titleBar(), Qt::AlignCenter|Qt::TextHideMnemonic, text);
+            textRect.moveLeft(m_textRect.left()+iconPad);
+//            flags &= ~Qt::AlignHCenter;
+//            flags |= Qt::AlignLeft;
         }
+
+        if (m_icon)
+        {
+
+            QRect ir(QPoint(), QSize(16, 16));
+            ir.moveTop(titleBar().top()+(titleBar().height()/2-ir.height()/2));
+            ir.moveLeft(textRect.left()-20);
+            client().data()->icon().paint(painter, ir, Qt::AlignCenter, client().data()->isActive()?QIcon::Active:QIcon::Disabled);
+        }
+        if (textRect.right() > m_textRect.right())
+            textRect.setRight(m_textRect.right());
+        text = painter->fontMetrics().elidedText(text, Qt::ElideRight, m_textRect.width()-iconPad, flags);
         if (client().data()->isActive() && m_textBevOpacity)
         {
             const int rgb(m_isDark?0:255);
             painter->setPen(QColor(rgb, rgb, rgb, m_textBevOpacity));
-            painter->drawText(textRect.translated(0, 1), Qt::AlignCenter|Qt::TextHideMnemonic, text);
+            painter->drawText(textRect.translated(0, 1), flags, text);
         }
         painter->setPen(m_fg);
-        painter->drawText(textRect, Qt::AlignCenter|Qt::TextHideMnemonic, text);
+        painter->drawText(textRect, flags, text);
         //icon
-        if (m_icon)
-        {
-            QRect ir(QPoint(), QSize(16, 16));
-            ir.moveTop(titleBar().top()+(titleBar().height()/2-ir.height()/2));
-            ir.moveRight(textRect.left()-4);
-            if (ir.left() > m_leftButtons->geometry().width())
-                client().data()->icon().paint(painter, ir, Qt::AlignCenter, client().data()->isActive()?QIcon::Active:QIcon::Disabled);
-        }
+
 
     }
     f.setBold(false);
@@ -973,6 +986,15 @@ void
 Deco::hoverLeave()
 {
     m_isHovered = false;
+//#if HASDBUSMENU
+//    if (m_menuBar && !m_menuBar->hasShownMenues())
+//    {
+//        m_menuBar->stopMousePolling();
+//        QVector<QPointer<KDecoration2::DecorationButton> > kids = m_menuBar->buttons();
+//        for (int i = 0; i < kids.count(); ++i)
+//            static_cast<MenuBarItem *>(kids.at(i).data())->hoverLeave();
+//    }
+//#endif
     if (m_leftButtons)
         for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
         {

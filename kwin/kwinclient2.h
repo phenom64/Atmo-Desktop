@@ -138,7 +138,7 @@ signals:
     void dataChanged();
 
 protected slots:
-    void widthChanged(const int width);
+    void updateLayout();
     void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
     void maximizedChanged(const bool max);
@@ -173,6 +173,7 @@ private:
     QGradientStops m_winGradient;
     Grip *m_grip;
     int m_prevLum, m_noise, m_buttonStyle, m_tries, m_bevel;
+    QRect m_textRect;
     quint8 m_illumination, m_textBevOpacity, m_shadowOpacity, m_opacity, m_uno, m_titleHeight, m_noiseStyle;
     bool m_separator
     , m_isHovered

@@ -44,7 +44,7 @@ MenuBar::MenuBar(Deco *deco, const QString &service, const QString &path)
 {
     setSpacing(8);
     connect(importer, &DBusMenuImporter::menuUpdated, this, &MenuBar::menuUpdated);
-    connect(importer, &DBusMenuImporter::menuReadyToBeShown, this, &MenuBar::menuUpdated);
+//    connect(importer, &DBusMenuImporter::menuReadyToBeShown, this, &MenuBar::menuUpdated);
     QMetaObject::invokeMethod(importer, "updateMenu", Qt::QueuedConnection);
     connect(timer, &QTimer::timeout, this, &MenuBar::pollMouse);
 }
@@ -59,7 +59,24 @@ MenuBar::menuUpdated()
         addButton(new MenuBarItem(this, buttons().count()));
     if (active >= buttons().count())
         active = 0;
-    deco->widthChanged(deco->client().data()->width());
+    QMetaObject::invokeMethod(deco, "updateLayout", Qt::QueuedConnection);
+}
+
+void
+MenuBar::paint(QPainter *painter, const QRect &repaintArea)
+{
+    const QPen pen = painter->pen();
+    const QBrush brush = painter->brush();
+
+    painter->setPen(QColor(0,0,0,63));
+    QLinearGradient grad(0, geometry().top(), 0, geometry().height());
+    grad.setStops(QGradientStops() << QGradientStop(0.0, QColor(0,0,0,31)) << QGradientStop(1.0, Qt::transparent));
+    painter->setBrush(grad);
+    painter->drawRoundedRect(geometry().translated(0.5, 0.5).adjusted(0,0,-1,-1), 2.0, 2.0);
+    painter->setPen(pen);
+    painter->setBrush(brush);
+
+    KDecoration2::DecorationButtonGroup::paint(painter, repaintArea);
 }
 
 static void findActsRecursive(QList<QAction *> &acts, QMenu *menu, const QString matchText = QString())
@@ -205,7 +222,7 @@ MenuBarItem::paint(QPainter *painter, const QRect &repaintArea)
     if (!hasGeo)
     {
         QRect geo = painter->fontMetrics().boundingRect(QRect(), Qt::TextHideMnemonic, text()).adjusted(-2, 0, 2, 0);
-        geo.setHeight(m->deco->titleBar().height());
+        geo.setHeight(m->deco->titleBar().height()-4);
         setGeometry(geo);
         hasGeo = true;
         QMetaObject::invokeMethod(m->deco, "updateLayout", Qt::QueuedConnection);
@@ -215,7 +232,11 @@ MenuBarItem::paint(QPainter *painter, const QRect &repaintArea)
     {
         QColor bg = m->deco->client().data()->palette().color(QPalette::WindowText);
         bg.setAlpha(31);
-        painter->fillRect(geometry(), bg);
+        const QBrush brush = painter->brush();
+        painter->setBrush(bg);
+        painter->setPen(Qt::NoPen);
+        painter->drawRoundedRect(geometry(), 2.0, 2.0);
+        painter->setBrush(brush);
     }
     if (m->deco->client().data()->isActive() && m->deco->m_textBevOpacity)
     {
@@ -245,6 +266,22 @@ MenuBarItem::hoverEnterEvent(QHoverEvent *event)
     KDecoration2::DecorationButton::hoverEnterEvent(event);
 //    QMetaObject::invokeMethod(m, "updateMenu", Qt::QueuedConnection);
     hoverEnter();
+}
+
+void
+MenuBarItem::hoverLeave()
+{
+//    if (!m->hasShownMenues())
+//        m->stopMousePolling();
+
+//    update();
+}
+
+void
+MenuBarItem::hoverLeaveEvent(QHoverEvent *event)
+{
+    KDecoration2::DecorationButton::hoverLeaveEvent(event);
+    hoverLeave();
 }
 
 QMenu

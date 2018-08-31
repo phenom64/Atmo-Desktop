@@ -23,6 +23,7 @@ public:
     void startMousePolling();
     void stopMousePolling();
     QAction *actionFromText(const QString &text) const;
+    void paint(QPainter *painter, const QRect &repaintArea);
 
     Deco *deco;
     DBusMenuImporter *importer;
@@ -58,8 +59,12 @@ public:
     bool hasGeo;
     int idx;
     void hoverEnter();
+    void hoverLeave();
+
 protected:
     void hoverEnterEvent(QHoverEvent *event);
+    void hoverLeaveEvent(QHoverEvent *event);
+
 protected slots:
     virtual void click();
 };

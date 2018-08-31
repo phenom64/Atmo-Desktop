@@ -32,6 +32,8 @@ OverlayHandler *OverlayHandler::s_instance = 0;
 static QList<Overlay *> s_overLays;
 
 OverlayHandler::OverlayHandler()
+    : QObject()
+    , m_hasScheduled(false)
 {
     qApp->installEventFilter(this);
 }
@@ -64,6 +66,25 @@ OverlayHandler::overlayDeleted()
         s_overLays.removeOne(o);
 }
 
+void
+OverlayHandler::scheduleUpdate()
+{
+    if (m_hasScheduled)
+        return;
+
+    m_hasScheduled = true;
+    QMetaObject::invokeMethod(this, "updateOverlays", Qt::QueuedConnection);
+}
+
+void
+OverlayHandler::updateOverlays()
+{
+    for (int i = 0; i < s_overLays.count(); ++i)
+//        if (s_overLays.at(i)->window() == static_cast<QWidget *>(o)->window())
+            QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
+    m_hasScheduled = false;
+}
+
 bool
 OverlayHandler::eventFilter(QObject *o, QEvent *e)
 {
@@ -77,9 +98,7 @@ OverlayHandler::eventFilter(QObject *o, QEvent *e)
                 || e->type() == QEvent::Show
                 || e->type() == QEvent::Hide
                 || e->type() == QEvent::ZOrderChange)
-            for (int i = 0; i < s_overLays.count(); ++i)
-                if (s_overLays.at(i)->window() == static_cast<QWidget *>(o)->window())
-                    QMetaObject::invokeMethod(s_overLays.at(i), "updateOverlay", Qt::QueuedConnection);
+            scheduleUpdate();
         return false;
     }
     return false;

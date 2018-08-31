@@ -21,11 +21,14 @@ public:
 
 protected:
     bool eventFilter(QObject *, QEvent *);
+    void scheduleUpdate();
 
 protected slots:
     void overlayDeleted();
+    void updateOverlays();
 
 private:
+    bool m_hasScheduled;
     static OverlayHandler *s_instance;
 };
 
