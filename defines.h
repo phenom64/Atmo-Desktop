@@ -17,4 +17,8 @@
 #define DEBUG 0
 #endif
 
+#ifndef HASKF5
+#define HASKF5 0
+#endif
+
 #endif //DEFINES_H

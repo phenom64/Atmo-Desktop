@@ -81,7 +81,7 @@ WindowData::memory(const quint32 wid, QObject *parent, const bool create)
     if (!m)
         m = new DataStructSharedMemory(QString::number(wid), parent);
 
-    qDebug() << "WindowData::memory(const quint32 wid, QObject *parent, const bool create)";
+//    qDebug() << "WindowData::memory(const quint32 wid, QObject *parent, const bool create)";
     WindowData data(m);
     if (data.isAttached() || data.attach())
         return data;

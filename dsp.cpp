@@ -31,6 +31,10 @@
 #include <QToolBox>
 #include <QStyleFactory>
 
+#if HASKF5
+#include <KWindowSystem>
+#endif
+
 using namespace DSP;
 
 QStringList
@@ -98,6 +102,10 @@ Style::Style() : QCommonStyle()
         qDebug() << dConf.iconTheme << "found, trying to apply...";
         QIcon::setThemeName(dConf.iconTheme);
     }
+
+//#if HASKF5
+//    connect(KWindowSystem::self(), &KWindowSystem::windowAdded, this, &Style::kf5WindowAdded);
+//#endif
 }
 
 Style::~Style()
