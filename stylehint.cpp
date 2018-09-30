@@ -2,6 +2,7 @@
 #include <QStyleOptionTabV3>
 #include <QApplication>
 #include <QMainWindow>
+#include <QDialog>
 
 #include "dsp.h"
 #include "stylelib/ops.h"
@@ -13,6 +14,15 @@ using namespace DSP;
 int
 Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const
 {
+    //stylehint is apparently called before the window is created and we need
+    //to apply transluceny *before* window is created as in to ensure qt creates
+    //a rgba window
+    if (dConf.opacity != 0xff
+            && w
+            && !w->testAttribute(Qt::WA_WState_Created)
+            && ((qobject_cast<const QMainWindow *>(w) && !w->parentWidget())
+            || qobject_cast<const QDialog *>(w)))
+        applyTranslucency(const_cast<QWidget *>(w));
     switch (sh)
     {
     case SH_TabBar_SelectMouseType: return QEvent::MouseButtonRelease;

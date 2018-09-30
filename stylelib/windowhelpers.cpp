@@ -283,7 +283,7 @@ WindowHelpers::unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *da
     }
     const unsigned int n(dConf.uno.noise);
     w = (hor?win->width():(n?GFX::noise().width():1));
-    QImage img(data, w, h, QImage::Format_ARGB32);
+    QImage img(data, w, h, QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::transparent);
     QPainter pt(&img);
     pt.fillRect(img.rect(), b);

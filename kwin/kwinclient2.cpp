@@ -319,11 +319,11 @@ Deco::init()
         }
     }
 
-#if HASDBUSMENU
+#if HASDBUSMENU && HASXCB
 //    _KDE_NET_WM_APPMENU_OBJECT_PATH(STRING) = "/MenuBar/1"
 //    _KDE_NET_WM_APPMENU_SERVICE_NAME(STRING) = ":1.60"
 
-    if (m_showMenuBar)
+    if (QX11Info::isPlatformX11() && m_showMenuBar)
     {
         Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().data()->windowId());
         Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().data()->windowId());

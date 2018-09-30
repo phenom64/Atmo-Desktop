@@ -53,10 +53,6 @@ Style::layoutSpacingAndMargins(const QWidget *w)
 int
 Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
-    if (dConf.opacity != 0xff
-            && ((qobject_cast<const QMainWindow *>(widget) && !widget->parentWidget())
-            || qobject_cast<const QDialog *>(widget)))
-        applyTranslucency(const_cast<QWidget *>(widget));
     switch (metric)
     {
     case PM_LayoutHorizontalSpacing:

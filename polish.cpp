@@ -64,9 +64,6 @@ using namespace DSP;
 
 static void applyBlur(QWidget *widget)
 {
-    if (dConf.app == Settings::Konsole
-            || dConf.app == Settings::Yakuake)
-        return;
     unsigned int d(0);
     XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
 }
@@ -74,6 +71,7 @@ static void applyBlur(QWidget *widget)
 void
 Style::applyTranslucency(QWidget *widget)
 {
+//    qDebug() << "applyTranslucency" << widget << widget->testAttribute(Qt::WA_WState_Created);
     if (!widget->isWindow()
             || widget->testAttribute(Qt::WA_WState_Created)
             || dConf.app == Settings::Konsole
@@ -188,6 +186,10 @@ Style::polish(QWidget *widget)
     }
     if (widget->isWindow())
     {
+        if (dConf.opacity != 0xff && !widget->testAttribute(Qt::WA_WState_Created))
+        {
+            applyTranslucency(widget);
+        }
         if (qobject_cast<QMainWindow *>(widget))
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())
@@ -244,16 +246,6 @@ Style::polish(QWidget *widget)
         }
         else if (qobject_cast<QDialog *>(widget))
         {
-//#if 0
-//#if QT_VERSION < 0x050000
-//            if (XHandler::opacity() < 0xff)
-//            {
-//                if (!dConf.uno.enabled)
-//                    applyTranslucency(widget);
-//                applyBlur(widget);
-//            }
-//#endif
-//#endif
             Handlers::Window::manage(widget);
         }
         const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint)
@@ -265,9 +257,9 @@ Style::polish(QWidget *widget)
                 || widget->inherits("BE::Panel")
                 || isFrameLessMainWindow)
             ShadowHandler::manage(widget);
-        if (widget->testAttribute(Qt::WA_TranslucentBackground)
-                || (qobject_cast<QDialog *>(widget) && !(widget->windowFlags() & Qt::FramelessWindowHint)))
-            applyBlur(widget);
+//        if (widget->testAttribute(Qt::WA_TranslucentBackground)
+//                || (qobject_cast<QDialog *>(widget) && !(widget->windowFlags() & Qt::FramelessWindowHint)))
+//            applyBlur(widget);
         if (dConf.app == Settings::Konversation
                 && qobject_cast<QMenu *>(widget)
                 && !(widget->windowFlags() & Qt::FramelessWindowHint))
