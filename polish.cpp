@@ -71,12 +71,15 @@ static void applyBlur(QWidget *widget)
 void
 Style::applyTranslucency(QWidget *widget)
 {
-//    qDebug() << "applyTranslucency" << widget << widget->testAttribute(Qt::WA_WState_Created);
     if (!widget->isWindow()
             || widget->testAttribute(Qt::WA_WState_Created)
+//            || widget->parentWidget()
             || dConf.app == Settings::Konsole
-            || dConf.app == Settings::Yakuake)
+            || dConf.app == Settings::Yakuake
+            || widget->inherits("QComboBoxPrivateContainer"))
         return;
+
+    qDebug() << "applyTranslucency" << widget << widget->parentWidget();
 
     const QIcon icn = widget->windowIcon();
     const bool wasVisible= widget->isVisible();
@@ -186,7 +189,12 @@ Style::polish(QWidget *widget)
     }
     if (widget->isWindow())
     {
-        if (dConf.opacity != 0xff && !widget->testAttribute(Qt::WA_WState_Created))
+        if (dConf.opacity != 0xff
+                && !widget->testAttribute(Qt::WA_WState_Created)
+                && (qobject_cast<QDialog *>(widget)
+                || qobject_cast<QMainWindow *>(widget)
+                || qobject_cast<QMenu *>(widget)
+                || widget->inherits("QTipLabel")))
         {
             applyTranslucency(widget);
         }
