@@ -8,6 +8,7 @@
 #include "stylelib/ops.h"
 #include "config/settings.h"
 #include "defines.h"
+#include "stylelib/handlers.h"
 
 using namespace DSP;
 
@@ -20,9 +21,17 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
     if (dConf.opacity != 0xff
             && w
             && !w->testAttribute(Qt::WA_WState_Created)
+            && !w->testAttribute(Qt::WA_TranslucentBackground)
             && ((qobject_cast<const QMainWindow *>(w) && !w->parentWidget())
             || qobject_cast<const QDialog *>(w)))
-        applyTranslucency(const_cast<QWidget *>(w));
+    {
+        QWidget *widget = const_cast<QWidget *>(w);
+        Handlers::Window::applyTranslucency(widget);
+        if (w->internalWinId())
+            Handlers::Window::applyBlur(widget);
+        Style *s = const_cast<Style *>(this);
+        s->installFilter(widget);
+    }
     switch (sh)
     {
     case SH_TabBar_SelectMouseType: return QEvent::MouseButtonRelease;

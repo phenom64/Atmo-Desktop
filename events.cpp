@@ -64,6 +64,12 @@ Style::eventFilter(QObject *o, QEvent *e)
             qDebug() << w << w->parentWidget();
     }
 #endif
+    case QEvent::DynamicPropertyChange:
+    {
+        if (w->isWindow() && w->testAttribute(Qt::WA_TranslucentBackground))
+            Handlers::Window::applyBlur(w);
+        break;
+    }
     case QEvent::MouseButtonPress:
     {
         if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(w))
@@ -323,6 +329,8 @@ Style::showEvent(QObject *o, QEvent *e)
     if (!o->isWidgetType())
         return QCommonStyle::eventFilter(o, e);
     QWidget *w(static_cast<QWidget *>(o));
+    if (w->isWindow() && w->testAttribute(Qt::WA_TranslucentBackground))
+        Handlers::Window::applyBlur(w);
     if (qobject_cast<QMenuBar*>(w))
     {
         if (dConf.uno.enabled)

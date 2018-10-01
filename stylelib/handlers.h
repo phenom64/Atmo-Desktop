@@ -76,6 +76,9 @@ public:
     static void addCompactMenu(QWidget *w);
     static bool drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset = QPoint());
 
+    static void applyTranslucency(QWidget *widget);
+    static void applyBlur(QWidget *widget);
+
 public slots:
     void updateDecoBg(QWidget *w);
 

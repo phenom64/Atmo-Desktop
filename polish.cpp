@@ -62,56 +62,6 @@
 #endif
 using namespace DSP;
 
-static void applyBlur(QWidget *widget)
-{
-    unsigned int d(0);
-    XHandler::setXProperty<unsigned int>(widget->winId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
-}
-
-void
-Style::applyTranslucency(QWidget *widget)
-{
-    if (!widget->isWindow()
-            || widget->testAttribute(Qt::WA_WState_Created)
-//            || widget->parentWidget()
-            || dConf.app == Settings::Konsole
-            || dConf.app == Settings::Yakuake
-            || widget->inherits("QComboBoxPrivateContainer"))
-        return;
-
-    qDebug() << "applyTranslucency" << widget << widget->parentWidget();
-
-    const QIcon icn = widget->windowIcon();
-    const bool wasVisible= widget->isVisible();
-    const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
-    if (wasVisible)
-        widget->hide();
-    widget->setAttribute(Qt::WA_TranslucentBackground);
-    widget->setAttribute(Qt::WA_NoSystemBackground);
-//#if QT_VERSION >= 0x050000
-//    if (widget->testAttribute(Qt::WA_WState_Created))
-//    if (QWindow *win = widget->windowHandle())
-//    {
-//        QSurfaceFormat format = win->format();
-//        if (format.alphaBufferSize() != 8)
-//        {
-//            qDebug() << "DSP: Warning! applying translucency to already created window" << widget;
-//            format.setAlphaBufferSize(8);
-//            win->destroy(); //apparently if we destroy and then set format we actually get a 32 bit window... this however messes w/ QWidget::winId()
-//            win->setFormat(format);
-//            win->create();
-//            QEvent winIdChange(QEvent::WinIdChange);
-//            QCoreApplication::sendEvent(widget, &winIdChange);
-//            QCoreApplication::processEvents();
-//        }
-//    }
-//#endif
-    widget->setWindowIcon(icn);
-    widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
-    widget->setVisible(wasVisible);
-    applyBlur(widget);
-}
-
 void
 Style::polish(QWidget *widget)
 {
@@ -191,13 +141,17 @@ Style::polish(QWidget *widget)
     {
         if (dConf.opacity != 0xff
                 && !widget->testAttribute(Qt::WA_WState_Created)
+                && !widget->testAttribute(Qt::WA_TranslucentBackground)
                 && (qobject_cast<QDialog *>(widget)
                 || qobject_cast<QMainWindow *>(widget)
                 || qobject_cast<QMenu *>(widget)
                 || widget->inherits("QTipLabel")))
         {
-            applyTranslucency(widget);
+            Handlers::Window::applyTranslucency(widget);
         }
+//        if (widget->internalWinId()
+//                && widget->testAttribute(Qt::WA_TranslucentBackground))
+//            applyBlur(widget);
         if (qobject_cast<QMainWindow *>(widget))
         {
             if (dConf.compactMenu && widget->findChild<QMenuBar *>())
@@ -506,8 +460,8 @@ Style::polish(QWidget *widget)
         }
         else if (widget->inherits("QTipLabel")) //tooltip
         {
-            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
-                applyTranslucency(widget);
+//            if (!widget->testAttribute(Qt::WA_TranslucentBackground))
+//                applyTranslucency(widget);
 
             ShadowHandler::manage(widget);
             if (dConf.balloonTips)

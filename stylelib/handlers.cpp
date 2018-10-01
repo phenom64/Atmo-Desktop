@@ -430,6 +430,35 @@ Window
 }
 
 void
+Window::applyBlur(QWidget *widget)
+{
+    unsigned int d(0);
+    XHandler::setXProperty<unsigned int>(widget->internalWinId(), XHandler::_KDE_NET_WM_BLUR_BEHIND_REGION, XHandler::Long, &d);
+}
+
+void
+Window::applyTranslucency(QWidget *widget)
+{
+    if (!widget
+            || !widget->isWindow()
+            || widget->testAttribute(Qt::WA_WState_Created)             //qt5 doesnt recreate windows
+            || widget->testAttribute(Qt::WA_TranslucentBackground)      //translucency already applied
+            || widget->inherits("QComboBoxPrivateContainer"))
+        return;
+
+    const QIcon icn = widget->windowIcon();
+    const bool wasVisible= widget->isVisible();
+    const bool wasMoved = widget->testAttribute(Qt::WA_Moved);
+    if (wasVisible)
+        widget->hide();
+    widget->setAttribute(Qt::WA_TranslucentBackground);
+    widget->setAttribute(Qt::WA_NoSystemBackground);
+    widget->setWindowIcon(icn);
+    widget->setAttribute(Qt::WA_Moved, wasMoved); // https://bugreports.qt-project.org/browse/QTBUG-34108
+    widget->setVisible(wasVisible);
+}
+
+void
 Window::addCompactMenu(QWidget *w)
 {
     if (instance()->m_menuWins.contains(w)
