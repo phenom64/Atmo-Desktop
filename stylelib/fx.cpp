@@ -470,7 +470,7 @@ FX::stretched(QImage img, const QColor &c)
     enum ImageType { Fg = 0, Bg }; //fg is the actual image, bg is the blurred one we use as reference for the most contrasting channel
 
     pixels[1] = reinterpret_cast<QRgb *>(bg.bits());
-    double rgbCount[3] = { 0.0d, 0.0d, 0.0d };
+    double rgbCount[3] = { 0.0, 0.0, 0.0 };
     int (*rgba[4])(QRgb rgb) = { qRed, qGreen, qBlue, qAlpha };
     int cVal[2][4] = {{ 0, 0, 0, 0 }, {0, 0, 0, 0}};
 

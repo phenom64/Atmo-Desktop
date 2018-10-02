@@ -109,7 +109,9 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     if (isSelected)
         bgc = Color::mid(bgc, opt->palette.color(fg), 2, 1);
 //    QColor sc = Color::mid(bgc, opt->palette.color(QPalette::Highlight), 2, 1);
-    const int hl = Anim::Tabs::level(bar, bar->tabAt(opt->rect.center()));
+    int hl = 0;
+    if (bar)
+        hl = Anim::Tabs::level(bar, bar->tabAt(opt->rect.center()));
 //    if (opt->ENABLED && !(opt->state & State_On) && bar)
 //        bgc = Color::mid(bgc, sc, Steps-hl, hl);
     QLinearGradient lg;
