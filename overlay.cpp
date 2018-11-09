@@ -127,21 +127,6 @@ static QLayout *layoutFor(QLayout *l, const QWidget *w)
     return 0;
 }
 
-static int visibleKids(const QLayout *l)
-{
-    int count(0);
-    if (l)
-    for (int i = 0; i < l->count(); ++i)
-    {
-        QLayoutItem *item = l->itemAt(i);
-        if (item->widget() && item->widget()->isVisible())
-            ++count;
-        if (item->layout())
-            count += visibleKids(item->layout());
-    }
-    return count;
-}
-
 static QList<const QWidget *> s_unsupported;
 
 bool
@@ -230,9 +215,7 @@ Overlay::paintEvent(QPaintEvent *)
         return;
 
     QPainter p(this);
-#define FOCUS 0
-#if FOCUS
-    if (m_hasFocus)
+    if (m_hasFocus && dConf.uno.overlay > 1)
     {
         p.setBrush(Qt::NoBrush);
         p.translate(0.5f, 0.5f);
@@ -250,8 +233,6 @@ Overlay::paintEvent(QPaintEvent *)
         return;
     }
 
-#endif
-#undef FOCUS
     p.setPen(QPen(QColor(0, 0, 0, m_alpha), 1));
     p.setBrush(Qt::NoBrush);
     QRect r(rect());
@@ -315,6 +296,16 @@ Overlay::eventFilter(QObject *o, QEvent *e)
             resize(m_frame->size());
             setMask(mask());
             return false;
+        case QEvent::FocusIn:
+            m_hasFocus = true;
+            setMask(mask());
+            update();
+            break;
+        case QEvent::FocusOut:
+            m_hasFocus = false;
+            setMask(mask());
+            update();
+            break;
         default:
             return false;
         }

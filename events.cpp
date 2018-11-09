@@ -72,6 +72,9 @@ Style::eventFilter(QObject *o, QEvent *e)
     }
     case QEvent::MouseButtonPress:
     {
+#if DEBUG
+        qDebug() << "widget mousepressed:" << w;
+#endif
         if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(w))
         {
             QMouseEvent *me = static_cast<QMouseEvent *>(e);
@@ -329,6 +332,11 @@ Style::showEvent(QObject *o, QEvent *e)
     if (!o->isWidgetType())
         return QCommonStyle::eventFilter(o, e);
     QWidget *w(static_cast<QWidget *>(o));
+
+#if DEBUG
+    qDebug() << "widget shown:" << w;
+#endif
+
     if (w->isWindow() && w->testAttribute(Qt::WA_TranslucentBackground))
         Handlers::Window::applyBlur(w);
     if (qobject_cast<QMenuBar*>(w))

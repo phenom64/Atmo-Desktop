@@ -387,13 +387,14 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     case CT_ProgressBar:
     {
         QSize sz(contentsSize);
+        int margin = 8;
         const QStyleOptionProgressBarV2 *bar = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
         const bool hor(!bar || bar->orientation==Qt::Horizontal);
         if (bar && dConf.progressbars.textPos == 1)
         {
             const quint16 add = bar->fontMetrics.width(bar->text);
             if (hor)
-                sz.rwidth() += add;
+                sz.rwidth() += add + margin;
             else
                 sz.rheight() += add;
             return sz;
@@ -404,7 +405,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             sz.setWidth(dConf.baseSize);
 
         if (hor)
-            sz.rwidth() += dConf.progressbars.rnd;
+            sz.rwidth() += dConf.progressbars.rnd + margin;
         else
             sz.rheight() += dConf.progressbars.rnd;
         return sz;

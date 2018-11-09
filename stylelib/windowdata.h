@@ -5,6 +5,7 @@
 //#include <QSharedMemory>
 #include <QDebug>
 #include <QPointer>
+#include "defines.h"
 
 #if HASDBUS
 #include <QDBusAbstractAdaptor>
@@ -72,12 +73,16 @@ public:
         const int shmid = shmget(m_key, m_size, IPC_CREAT | IPC_EXCL /*| IPC_NOWAIT*/ | 0600);
         if (shmid == -1)
         {
+#if DEBUG
             qDebug() << "SharedMemory::create(): unable to create shared memory segment for key" << m_key;
+#endif
             return false;
         }
         if ((m_data = shmat(shmid, NULL, 0)) == (char *) -1)
         {
+#if DEBUG
             qDebug() << "SharedMemory::create(): unable to attach shared memory segment for key" << m_key;
+#endif
             return false;
         }
         if (lock())
@@ -92,7 +97,9 @@ public:
         int shmid = shmget(m_key, 0, 0600);
         if ((m_data = shmat(shmid, NULL, 0)) == (char *) -1)
         {
+#if DEBUG
             qDebug() << "SharedMemory::attach(): unable to attach shared memory segment for key" << m_key;
+#endif
             return false;
         }
 

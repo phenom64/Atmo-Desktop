@@ -184,7 +184,8 @@ private:
     , m_hor
     , m_embedButtons
     , m_followDecoShadow
-    , m_showMenuBar;
+    , m_showMenuBar
+    , m_hasSharedMem;
 #if HASDBUSMENU
     MenuBar *m_menuBar;
     friend class MenuBar;

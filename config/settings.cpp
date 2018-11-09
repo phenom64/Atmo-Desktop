@@ -352,7 +352,7 @@ static const QVariant s_default[] = {
     QStringList(),
     10,
     2,
-    true,
+    0,
 
     false,
     "0:5, 1:-5",
@@ -929,7 +929,7 @@ Settings::read()
     conf.uno.contAware          = readStringList(Unocont).contains(QFileInfo(qApp->applicationFilePath()).fileName());
     conf.uno.opacity            = readFloat(Unoopacity)/100.0f;
     conf.uno.blur               = readInt(Unocontblur);
-    conf.uno.overlay            = readBool(Unooverlay);
+    conf.uno.overlay            = readInt(Unooverlay);
     //windows when not uno
     conf.windows.gradient       = stringToGrad(readString(Wingrad));
     conf.windows.noise          = readInt(Winnoise);

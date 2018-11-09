@@ -243,10 +243,10 @@ public:
             QString noiseFile;
             Gradient gradient;
             Tint tint;
-            quint8 noise, blur;
+            quint8 noise, blur, overlay;
             qint8 noiseStyle;
             float opacity;
-            bool enabled, hor, contAware, overlay;
+            bool enabled, hor, contAware;
         } uno;
         struct windows
         {

@@ -489,17 +489,17 @@ Window::eventFilter(QObject *o, QEvent *e)
     {
     case QEvent::MouseButtonPress:
     {
-        if (w->isWindow() && !qobject_cast<QDialog *>(w))
-            return false;
-        QMouseEvent *me(static_cast<QMouseEvent *>(e));
-        if (QTabBar *tb = qobject_cast<QTabBar *>(w))
-            if (tb->tabAt(me->pos()) != -1)
-                return false;
-        if (w->cursor().shape() != Qt::ArrowCursor
-                || QApplication::overrideCursor()
-                || w->mouseGrabber()
-                || me->button() != Qt::LeftButton)
-            return false;
+//        if (w->isWindow() && !qobject_cast<QDialog *>(w))
+//            return false;
+//        QMouseEvent *me(static_cast<QMouseEvent *>(e));
+//        if (QTabBar *tb = qobject_cast<QTabBar *>(w))
+//            if (tb->tabAt(me->pos()) != -1)
+//                return false;
+//        if (w->cursor().shape() != Qt::ArrowCursor
+//                || QApplication::overrideCursor()
+//                || w->mouseGrabber()
+//                || me->button() != Qt::LeftButton)
+//            return false;
         return false;
     }
     case QEvent::Paint:
@@ -735,10 +735,16 @@ Drag::manage(QWidget *w)
 bool
 Drag::eventFilter(QObject *o, QEvent *e)
 {
-    if (!o || !e || !o->isWidgetType() || e->type() != QEvent::MouseButtonPress || QApplication::overrideCursor() || QWidget::mouseGrabber())
+    if (!o
+            || !e
+            || !o->isWidgetType()
+            || e->type() != QEvent::MouseButtonPress
+            || QApplication::overrideCursor()
+            || QWidget::mouseGrabber())
         return false;
     QWidget *w(static_cast<QWidget *>(o));
-    if (w->cursor().shape() != Qt::ArrowCursor)
+    if (w->cursor().shape() != Qt::ArrowCursor
+            || !w->isActiveWindow())
         return false;
     QMouseEvent *me(static_cast<QMouseEvent *>(e));
     if (!w->rect().contains(me->pos()) || me->button() != Qt::LeftButton)

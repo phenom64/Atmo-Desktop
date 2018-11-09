@@ -250,6 +250,7 @@ Deco::Deco(QObject *parent, const QVariantList &args)
     #if HASDBUSMENU
     , m_menuBar(0)
     #endif
+    , m_hasSharedMem(false)
 {
     if (s_factory)
         setParent(s_factory);
@@ -335,6 +336,7 @@ Deco::init()
 
     recalculate();
     reconfigure();
+    updateData();
 }
 
 void
@@ -358,7 +360,7 @@ Deco::reconfigure()
         if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
             m_rightButtons->addButton(b);
     m_buttonManager->configure(m_shadowOpacity, m_illumination, m_buttonStyle, 0, Gradient());
-    m_buttonManager->setColors(m_bg, m_fg);
+    m_buttonManager->setColors(m_bg, m_fg, m_minColor, m_maxColor, m_closeColor);
     m_buttonManager->clearCache();
     updateLayout();
 }
@@ -457,6 +459,7 @@ Deco::updateData()
         m_buttonGradient    = data.buttonGradient();
         m_windowGradient    = data.windowGradient();
         m_bgPix             = QPixmap::fromImage(data.image());
+        m_hasSharedMem      = true;
 
         data->decoId        = client().data()->decorationId();
         data.unlock();
