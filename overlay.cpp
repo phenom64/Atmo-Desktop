@@ -298,13 +298,17 @@ Overlay::eventFilter(QObject *o, QEvent *e)
             return false;
         case QEvent::FocusIn:
             m_hasFocus = true;
+            repaint();
             setMask(mask());
             update();
+            m_frame->update();
             break;
         case QEvent::FocusOut:
             m_hasFocus = false;
+            repaint();
             setMask(mask());
             update();
+            m_frame->update();
             break;
         default:
             return false;

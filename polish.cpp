@@ -329,12 +329,12 @@ Style::polish(QWidget *widget)
             pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
             widget->setPalette(pal);
 
-            if (view->inherits("KFilePlacesView"))
-            {
-                view->viewport()->setBackgroundRole(QPalette::Window);
-                view->viewport()->setForegroundRole(QPalette::WindowText);
-                view->viewport()->setAutoFillBackground(false);
-            }
+//            if (view->inherits("KFilePlacesView"))
+//            {
+//                view->viewport()->setBackgroundRole(QPalette::Window);
+//                view->viewport()->setForegroundRole(QPalette::WindowText);
+//                view->viewport()->setAutoFillBackground(false);
+//            }
         }
         if (dConf.views.traditional)
         {
