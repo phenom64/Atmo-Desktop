@@ -926,7 +926,7 @@ Settings::read()
     conf.uno.noiseFile          = readString(Unonoisefile);
     conf.uno.noiseStyle         = readInt(Unonoisestyle);
     conf.uno.hor                = readBool(Unohor);
-    conf.uno.contAware          = readStringList(Unocont).contains(QFileInfo(qApp->applicationFilePath()).fileName());
+    conf.uno.contAware          = false/*readStringList(Unocont).contains(QFileInfo(qApp->applicationFilePath()).fileName())*/;
     conf.uno.opacity            = readFloat(Unoopacity)/100.0f;
     conf.uno.blur               = readInt(Unocontblur);
     conf.uno.overlay            = readInt(Unooverlay);
