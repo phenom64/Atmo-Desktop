@@ -37,6 +37,7 @@ static const char *s_key[] = {
     "deco.buttons",
     "deco.icon",
     "deco.shadowsize",
+    "deco.shadowrnd",
     "deco.framesize",
     "deco.embedded",
     "deco.mincolor",
@@ -168,6 +169,7 @@ static const char *s_description[] = {
     /*"deco.buttons"*/              "Style of the Min|Max|Close buttons, Sunken = 0, Etched = 1, Raised = 2, Yosemite = 3, Carved = 4, Rect = 5",
     /*"deco.icon"*/                 "Wheter or not the deco client should paint an icon in the titlebar",
     /*"deco.shadowsize"*/           "Size of the windowshadow for active window, inactive windows will have a smaller",
+    /*"deco.shadowrnd"*/            "Roundness applied to the shadow",
     /*"deco.framesize"*/            "Size of borders for the decoration, not yet implemented in the kde5 deco",
     /*"deco.embedded"*/             "CSD-a-like bullshit that embeds crap in the title area, will cause trouble, do not use",
     /*"deco.mincolor"*/             "Color of minimize button #RRGGBB",
@@ -299,6 +301,7 @@ static const QVariant s_default[] = {
     0,
     true,
     32,
+    5,
     0,
     false,
     "#FFC05E",
@@ -876,6 +879,7 @@ Settings::read()
     conf.deco.buttons           = readInt(Decobuttons);
     conf.deco.icon              = readBool(Decoicon);
     conf.deco.shadowSize        = readInt(Decoshadowsize);
+    conf.deco.shadowRnd         = readInt(Decoshadowrnd);
     conf.deco.frameSize         = readInt(Decoframe);
     conf.deco.embed             = readBool(Decoembedded);
     conf.deco.min               = readColor(Decomincolor);

@@ -57,6 +57,7 @@ public:
         Decobuttons,
         Decoicon,
         Decoshadowsize,
+        Decoshadowrnd,
         Decoframe,
         Decoembedded,
         Decomincolor,
@@ -181,7 +182,7 @@ public:
         QPalette *palette;
         struct deco
         {
-            quint8 buttons, shadowSize, frameSize;
+            quint8 buttons, shadowSize, shadowRnd, frameSize;
             bool icon, embed;
             uint min, max, close;
         } deco;

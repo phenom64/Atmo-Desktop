@@ -114,7 +114,7 @@ XHandler::XPixmap
         const quint32 sd[4] = { size*0.5f, size*0.7f, size*0.9f, size*0.7f };
         p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
         p.setBrush(Qt::black);
-        p.drawRoundedRect(img.rect().adjusted(sd[3], sd[0], -sd[1], -sd[2]), 5, 5);
+        p.drawRoundedRect(img.rect().adjusted(sd[3], sd[0], -sd[1], -sd[2]), dConf.deco.shadowRnd, dConf.deco.shadowRnd);
         p.end();
 
         for (int i = 0; i < 12; ++i)
