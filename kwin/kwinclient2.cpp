@@ -19,9 +19,6 @@
 #include <KConfigGroup>
 #include <KColorUtils>
 #include <KSharedConfig>
-#include <KPluginFactory>
-
-#include <KSharedConfig>
 #include <KCModule>
 
 #include <KWindowInfo>
@@ -61,37 +58,39 @@
 //    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
 //)
 
-class DSPDecoFactory;
 static DSPDecoFactory *s_factory(0);
-class DSPDecoFactory : public KPluginFactory
+DSPDecoFactory::DSPDecoFactory()
 {
-    Q_OBJECT
-    Q_INTERFACES(KPluginFactory)
-    Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE "dsp.json")
-public:
-    explicit DSPDecoFactory()
-    {
-        registerPlugin<DSP::Deco>();
-        registerPlugin<DSP::Button>(QStringLiteral("button"));
-        registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
-        DSP::Deco::Data::readWindowData();
-//        DSP::SharedDataAdaptorManager::instance();
-        DSP::Settings::read();
-        DSP::XHandler::init();
-        DSP::ShadowHandler::removeDelete();
-        DSP::GFX::generateData();
-        if (!s_factory)
-            s_factory = this;
-    }
-    ~DSPDecoFactory() { if (s_factory == this) s_factory = 0; }
+    registerPlugin<DSP::Deco>();
+    registerPlugin<DSP::Button>(QStringLiteral("button"));
+    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
+    DSP::Deco::Data::readWindowData();
+    //        DSP::SharedDataAdaptorManager::instance();
+    DSP::Settings::read();
+    DSP::XHandler::init();
+    DSP::ShadowHandler::removeDelete();
+    DSP::GFX::generateData();
+    QTimer::singleShot(2000, this, SLOT(shapeCorners()));
+    if (!s_factory)
+        s_factory = this;
+}
+DSPDecoFactory::~DSPDecoFactory()
+{
+    if (s_factory == this)
+        s_factory = 0;
+}
 
-//protected:
-//    QObject *create(const char *iface, QWidget *parentWidget, QObject *parent, const QVariantList &args, const QString &keyword)
-//    {
-//        qDebug() << iface << parentWidget << parent << args << keyword;
-//        return KPluginFactory::create(iface, parentWidget, parent, args, keyword);
-//    }
-};
+void
+DSPDecoFactory::shapeCorners()
+{
+    static const QString destination("org.kde.KWin");
+    static const QString path("/ShapeCorners");
+    static const QString interface("org.kde.kwin");
+    static const QString method("setRoundness");
+    QDBusMessage msg = QDBusMessage::createMethodCall(destination, path, interface, method);
+    msg << dConf.deco.shadowRnd;
+    QDBusConnection::sessionBus().send(msg);
+}
 
 namespace DSP
 {
@@ -293,6 +292,8 @@ Deco::init()
         AdaptorManager::instance()->addDeco(this);
         m_buttonStyle = dConf.deco.buttons;
         checkForDataFromWindowClass();
+//        QMetaObject::invokeMethod(this, "checkForDataFromWindowClass", Qt::QueuedConnection);
+        QTimer::singleShot(1000, this, &Deco::checkForDataFromWindowClass); //spotify libreoffice... sets the windowclass late
         ShadowHandler::installShadows(id);
     }
     else
@@ -319,20 +320,6 @@ Deco::init()
             m_bling = 0;
         }
     }
-
-#if HASDBUSMENU && HASXCB
-//    _KDE_NET_WM_APPMENU_OBJECT_PATH(STRING) = "/MenuBar/1"
-//    _KDE_NET_WM_APPMENU_SERVICE_NAME(STRING) = ":1.60"
-
-    if (QX11Info::isPlatformX11() && m_showMenuBar)
-    {
-        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().data()->windowId());
-        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().data()->windowId());
-
-        if (objectPath && serviceName)
-            m_menuBar = new MenuBar(this, serviceName.toString(), objectPath.toString());
-    }
-#endif
 
     recalculate();
     reconfigure();
@@ -527,6 +514,7 @@ Deco::updateData()
         }
     }
     recalculate();
+    updateBgPixmap();
     update();
     if (winDataChanged)
         emit dataChanged();
@@ -535,9 +523,22 @@ Deco::updateData()
 void
 Deco::checkForDataFromWindowClass()
 {
+    if (m_hasSharedMem)
+        return;
     KWindowInfo info(client().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
     Data::decoData(info.windowClassClass(), this);
     updateBgPixmap();
+
+#if HASDBUSMENU && HASXCB
+    if (QX11Info::isPlatformX11() && m_showMenuBar && !m_menuBar)
+    {
+        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().data()->windowId());
+        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().data()->windowId());
+
+        if (objectPath && serviceName)
+            m_menuBar = new MenuBar(this, serviceName.toString(), objectPath.toString());
+    }
+#endif
 }
 
 const int

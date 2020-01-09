@@ -94,7 +94,7 @@ XHandler::XPixmap
     {
         int size(dConf.deco.shadowSize);
         if (!active)
-            size/=2;
+            size -= 6;
 
         XHandler::XPixmap data[12];
 

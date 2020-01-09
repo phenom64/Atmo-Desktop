@@ -8,14 +8,38 @@
 #include <QVariant>
 #include <QDebug>
 #include <netwm_def.h>
+#include <KPluginFactory>
 #include "../config/settings.h"
 #include "../stylelib/windowdata.h"
 namespace KDecoration2 { class DecorationButtonGroup; }
 class WindowData;
 class QPixmap;
 class QSharedMemory;
+
+class DSPDecoFactory;
+class DSPDecoFactory : public KPluginFactory
+{
+    Q_OBJECT
+    Q_INTERFACES(KPluginFactory)
+    Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE "dsp.json")
+public:
+    explicit DSPDecoFactory();
+    ~DSPDecoFactory();
+
+protected slots:
+    void shapeCorners();
+
+//protected:
+//    QObject *create(const char *iface, QWidget *parentWidget, QObject *parent, const QVariantList &args, const QString &keyword)
+//    {
+//        qDebug() << iface << parentWidget << parent << args << keyword;
+//        return KPluginFactory::create(iface, parentWidget, parent, args, keyword);
+//    }
+};
+
 namespace DSP
 {
+
 class ConfigModule : public KCModule
 {
     Q_OBJECT
@@ -142,6 +166,7 @@ protected slots:
     void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
     void maximizedChanged(const bool max);
+    void checkForDataFromWindowClass();
 
 protected:
     void setButtonsVisible(const bool visible);
@@ -150,7 +175,6 @@ protected:
     void hoverEnter();
     void hoverLeave();
 
-    void checkForDataFromWindowClass();
     void updateBgPixmap();
     WindowData getShm();
     void paintBevel(QPainter *painter, const int bgLum);

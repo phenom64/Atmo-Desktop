@@ -698,7 +698,8 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     {
         offset.ry() += data->titleHeight;
         QPoint bo(p->brushOrigin());
-        p->setBrushOrigin(-offset);
+        if (!qobject_cast<const QStatusBar *>(w))
+            p->setBrushOrigin(-offset);
         p->fillRect(r, data.image());
         p->setBrushOrigin(bo);
         data.unlock();
