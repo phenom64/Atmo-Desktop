@@ -237,3 +237,16 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
     GFX::drawArrow(painter, c, down, South, dConf.arrowSize, Qt::AlignTop|(ltr?Qt::AlignLeft:Qt::AlignRight), enabled && (box && box->minimum() != box->value()));
     return true;
 }
+
+bool
+Style::drawRubberBand(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if (!option)
+        return false;
+
+    QColor c = option->palette.color(QPalette::Highlight);
+    c.setAlpha(63);
+
+    GFX::drawClickable(Raised, option->rect, painter, c, 5, Steps);
+    return true;
+}
