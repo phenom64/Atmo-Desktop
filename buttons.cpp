@@ -476,7 +476,6 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
     if (!opt)
         return true;
 
-
     static const bool isFlat(dConf.toolbtn.flat);
     static const quint8 sm = GFX::shadowMargin(dConf.toolbtn.shadow);
 
@@ -534,7 +533,7 @@ Style::drawToolButtonLabel(const QStyleOption *option, QPainter *painter, const 
         ir.setRight(hor?ir.left()+opt->iconSize.width():opt->rect.right());
         mr.setLeft(hor?ir.right():opt->rect.left());
     }
-    if (!multiTab && opt->toolButtonStyle == Qt::ToolButtonTextBesideIcon)
+    if (!multiTab && opt->toolButtonStyle == Qt::ToolButtonTextBesideIcon && !opt->text.isEmpty())
     {
         if (hor)
         {
