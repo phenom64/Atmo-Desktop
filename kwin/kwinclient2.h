@@ -193,6 +193,7 @@ private:
     QPixmap m_pix, m_bevelCorner[3], *m_bling, m_bgPix;
     QSharedMemory *m_mem;
     QColor m_bg, m_fg, m_textBg, m_textFg, m_minColor, m_maxColor, m_closeColor;
+    QFont m_font;
     Gradient m_gradient, m_buttonGradient, m_windowGradient;
     QGradientStops m_winGradient;
     Grip *m_grip;

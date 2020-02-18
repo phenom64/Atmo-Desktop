@@ -306,7 +306,9 @@ Deco::init()
 
     connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this](){reconfigure();});
     connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this](){reconfigure();});
-    connect(settings().data(), &KDecoration2::DecorationSettings::fontChanged, this, [this](){update();});
+    connect(settings().data(), &KDecoration2::DecorationSettings::fontChanged, this, [this](){ m_font = settings().data()->font(); update();});
+
+    m_font = settings().data()->font();
 
     if (client().data()->isResizeable() && client().data()->windowId() && !m_grip)
         m_grip = new Grip(this);
@@ -607,6 +609,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         return;
     painter->save();
     //bg
+    painter->setFont(m_font);
     bool needPaintBg(true);
     painter->setBrushOrigin(titleBar().topLeft());
     if (!m_bgPix.isNull())

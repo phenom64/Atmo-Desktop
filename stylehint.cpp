@@ -44,7 +44,7 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
         const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
         if (Ops::isSafariTabBar(tabBar))
             return Qt::AlignLeft;
-        if ((tab && tab->documentMode) || (tabBar && tabBar->documentMode()))
+        if ((tab && tab->documentMode && !tabBar) || (tabBar && tabBar->documentMode()))
             return Qt::AlignLeft;
         return Qt::AlignCenter;
     }
