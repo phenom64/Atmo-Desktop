@@ -46,6 +46,7 @@ Style::eventFilter(QObject *o, QEvent *e)
         return (this->*m_ev[e->type()])(o, e);
 
     QWidget *w(static_cast<QWidget *>(o));
+
     switch (e->type())
     {
 #if DEBUG
@@ -157,7 +158,7 @@ Style::eventFilter(QObject *o, QEvent *e)
 bool
 Style::paintEvent(QObject *o, QEvent *e)
 {
-    /* for some reason KTabWidget is an idiot and
+    /* for some reason KTabWidget
      * doesnt use the style at all for painting, only
      * for the tabBar apparently (that inside the
      * KTabWidget) so we simply override the painting
@@ -193,6 +194,16 @@ Style::paintEvent(QObject *o, QEvent *e)
 //            return true;
 //        }
         return false;
+    }
+    else if (w->inherits("DolphinUrlNavigator"))
+    {
+//        auto inTb = [] (QWidget *wd)->bool { QWidget *w2 = wd; while(w2->parentWidget()) {if (qobject_cast<QToolBar *>(w2)) return true; w2 = w2->parentWidget();} return false;};
+//        if (inTb(w))
+//        {
+            QPainter p(w);
+            GFX::drawClickable(Sunken, w->rect(), &p, QBrush(), dConf.toolbtn.rnd);
+            return false;
+//        }
     }
     else if (o->property("DSP_konsoleTabBarParent").toBool())
     {

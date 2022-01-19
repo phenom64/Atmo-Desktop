@@ -324,8 +324,8 @@ Style::polish(QWidget *widget)
             //some views paint w/ button background on some items w/o setting text color (ktelepathy contacts list for example...)
             QPalette pal(widget->palette());
             const bool dark(Color::lum(pal.color(QPalette::Base)) < Color::lum(pal.color(QPalette::Text)));
-            QColor (QColor::*function)(int) const = dark?&QColor::lighter:&QColor::darker;
-            pal.setColor(QPalette::Button, (pal.color(QPalette::Base).*function)(120));
+//            QColor (QColor::*lightDark)(int i) const = dark?&QColor::lighter:&QColor::darker;
+            pal.setColor(QPalette::Button, dark ? pal.color(QPalette::Base).lighter(120) : pal.color(QPalette::Base).darker(120));
             pal.setColor(QPalette::ButtonText, pal.color(QPalette::Text));
             widget->setPalette(pal);
 
@@ -471,7 +471,20 @@ Style::polish(QWidget *widget)
     else if (widget->inherits("KUrlNavigator"))
     {
         if (widget->parentWidget() && widget->parentWidget()->size() == widget->size())
-            widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be an idiot... oh well
+            widget->parentWidget()->setAutoFillBackground(false); //gwenview kurlnavigator parent seems to be... oh well
+//        auto inTb = [] (QWidget *wd)
+//        {
+//            QWidget *w2 = wd;
+//            while(w2->parentWidget())
+//            {
+//                if (qobject_cast<QToolBar *>(w2))
+//                    return true;
+//                w2 = w2->parentWidget();
+//            }
+//            return false;
+//        };
+        if (widget->inherits("DolphinUrlNavigator"))
+            installFilter(widget); //only needed for navs in toolbars
     }
     else if (widget->inherits("KTabWidget"))
     {
