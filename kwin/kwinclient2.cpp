@@ -275,9 +275,9 @@ void
 Deco::init()
 {
     KDecoration2::Decoration::init();
-    m_buttonManager = ButtonGroupBase::buttonGroup(client().data()->windowId());
+    m_buttonManager = ButtonGroupBase::buttonGroup(client().toStrongRef().data()->windowId());
     setBorders(QMargins(0, 0, 0, 0));
-    setTitleHeight(client().data()->isModal()?20:25);
+    setTitleHeight(client().toStrongRef().data()->isModal()?20:25);
     m_bevel = 1;
     m_illumination = 127;
     m_textBevOpacity = 127;
@@ -299,10 +299,10 @@ Deco::init()
     else
         updateBgPixmap();
 
-    connect(client().data(), &KDecoration2::DecoratedClient::widthChanged, this, [this](){updateLayout();});
-    connect(client().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
-    connect(client().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
-    connect(client().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
+    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::widthChanged, this, [this](){updateLayout();});
+    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
+    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
+    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
 
     connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this](){reconfigure();});
     connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this](){reconfigure();});
@@ -310,7 +310,7 @@ Deco::init()
 
     m_font = settings().data()->font();
 
-    if (client().data()->isResizeable() && client().data()->windowId() && !m_grip)
+    if (client().toStrongRef().data()->isResizeable() && client().toStrongRef().data()->windowId() && !m_grip)
         m_grip = new Grip(this);
 
     if (m_blingEnabled)
@@ -598,7 +598,7 @@ Deco::activeChanged(const bool active)
 //    AdaptorManager::instance()->windowChanged(client().data()->windowId(), active);
     if (m_grip)
         m_grip->setColor(Color::mid(m_fg, m_bg, 1, 2));;
-    ShadowHandler::installShadows(client().data()->windowId(), active);
+    ShadowHandler::installShadows(client().toStrongRef().data()->windowId(), active);
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 
@@ -635,7 +635,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         if (!m_pix.isNull())
             painter->drawTiledPixmap(titleBar(), m_pix);
         else
-            painter->fillRect(titleBar(), client().data()->palette().color(QPalette::Window));
+            painter->fillRect(titleBar(), client().toStrongRef().data()->palette().color(QPalette::Window));
     }
 
     if (m_opacity != 0xff && !m_uno)
@@ -650,7 +650,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     if (m_contAware)
     {
         if (!m_mem)
-            m_mem = new QSharedMemory(QString::number(client().data()->windowId()), this);
+            m_mem = new QSharedMemory(QString::number(client().toStrongRef().data()->windowId()), this);
         if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
         {
             const uchar *idata(reinterpret_cast<const uchar *>(m_mem->constData()));
@@ -661,7 +661,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         }
     }
 
-    if ((!dConf.deco.frameSize || client().data()->isMaximized()) && !client().data()->isModal() && !client().data()->isMaximized())
+    if ((!dConf.deco.frameSize || client().toStrongRef().data()->isMaximized()) && !client().toStrongRef().data()->isModal() && !client().data()->isMaximized())
         paintBevel(painter, m_illumination/*bgLum*/);
     if (m_blingEnabled)
         paintBling(painter, titleTextArea());
@@ -672,14 +672,14 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     QFont f(painter->font());
     if (paintText)
     {
-        if (client().data()->isActive())
+        if (client().toStrongRef().data()->isActive())
         {
             f.setBold(true);
             painter->setFont(f);
         }
         int flags = Qt::AlignCenter|Qt::TextHideMnemonic;
 
-        QString text(client().data()->caption());
+        QString text(client().toStrongRef().data()->caption());
         QRect textRect(painter->fontMetrics().boundingRect(titleBar(), flags, text));
         const int iconPad = m_icon*20;
         if (m_textRect.x()+iconPad > textRect.x())
@@ -695,12 +695,12 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
             QRect ir(QPoint(), QSize(16, 16));
             ir.moveTop(titleBar().top()+(titleBar().height()/2-ir.height()/2));
             ir.moveLeft(textRect.left()-20);
-            client().data()->icon().paint(painter, ir, Qt::AlignCenter, client().data()->isActive()?QIcon::Active:QIcon::Disabled);
+            client().toStrongRef().data()->icon().paint(painter, ir, Qt::AlignCenter, client().toStrongRef().data()->isActive()?QIcon::Active:QIcon::Disabled);
         }
         if (textRect.right() > m_textRect.right())
             textRect.setRight(m_textRect.right());
         text = painter->fontMetrics().elidedText(text, Qt::ElideRight, m_textRect.width()-iconPad, flags);
-        if (client().data()->isActive() && m_textBevOpacity)
+        if (client().toStrongRef().data()->isActive() && m_textBevOpacity)
         {
             const int rgb(m_isDark?0:255);
             painter->setPen(QColor(rgb, rgb, rgb, m_textBevOpacity));
@@ -731,9 +731,9 @@ void
 Deco::paintBevel(QPainter *painter, const int bgLum)
 {
 //#if 0
+    static const int size(5);
     if (m_bevelCorner[0].isNull() || m_prevLum != bgLum)
     {
-        static const int size(5);
         m_prevLum = bgLum;
         for (int i = 0; i < 2; ++i)
         {
@@ -771,6 +771,29 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
     painter->drawPixmap(QRect(rect().topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
     painter->drawPixmap(QRect(rect().topRight()-QPoint(m_bevelCorner[1].width()-1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
     painter->drawTiledPixmap(rect().adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(rect().height()-4)), m_bevelCorner[2]);
+
+    static QPixmap cornerErase[2];
+    if (cornerErase[0].isNull())
+    {
+        QImage c(size*2+1, size*2+1, QImage::Format_ARGB32_Premultiplied);
+        c.fill(Qt::transparent);
+        QPainter p(&c);
+        p.setBrush(Qt::black);
+        p.setPen(Qt::NoPen);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.fillRect(c.rect(), Qt::black);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
+        p.drawEllipse(c.rect());
+        p.end();
+        cornerErase[0] = QPixmap::fromImage(c.copy(QRect(0, 0, size, size)));
+        cornerErase[1] = QPixmap::fromImage(c.copy(QRect(size+1, 0, size, size)));
+    }
+    const QPainter::CompositionMode mode = painter->compositionMode();
+    painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
+    painter->drawPixmap(QRect(rect().topLeft(), cornerErase[0].size()), cornerErase[0]);
+    painter->drawPixmap(QRect(rect().topRight()-QPoint(cornerErase[1].width()-1, 0), cornerErase[1].size()), cornerErase[1]);
+    painter->setCompositionMode(mode);
+
 //#endif
 }
 
