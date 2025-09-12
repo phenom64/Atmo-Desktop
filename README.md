@@ -39,7 +39,7 @@ Tested on SynOS Canora Beta 2 (Ubuntu/Debian base) with Qt 5.
 ## 🚀 Build & Install
 
 ```
-git clone https://github.com/your-user/atmo-desktop.git
+git clone https://github.com/phenom64/atmo-desktop.git
 cd atmo-desktop
 mkdir -p build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr
