@@ -10,14 +10,16 @@ public:
         : KCModule(parent, args)
     {
         auto *lay = new QVBoxLayout(this);
-        auto *lbl = new QLabel(tr("Atmo (NSE) – Settings stub\nThis module will expose common options in a future release."), this);
+        auto *lbl = new QLabel(tr("Atmo (NSE) – Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), this);
         lbl->setWordWrap(true);
         lay->addWidget(lbl);
+        auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), this);
+        lay->addWidget(btn);
         setLayout(lay);
+        connect(btn, &QPushButton::clicked, this, [this]{ QProcess::startDetached("atmo_manager"); });
     }
 };
 
 K_PLUGIN_FACTORY_WITH_JSON(KCMAtmoFactory, "kcm_atmo.json", registerPlugin<KCMAtmo>();)
 
 #include "kcm_atmo.moc"
-

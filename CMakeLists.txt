@@ -173,6 +173,7 @@ install(FILES ${CMAKE_SOURCE_DIR}/NSE.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/s
 # Optional components
 option(BUILD_EXAMPLES "Build example applications" OFF)
 option(BUILD_KCM "Build Plasma System Settings KCM (stub)" OFF)
+option(BUILD_MANAGER "Build Atmo Framework Manager app" ON)
 
 # Optional compile-time tuning
 option(ATMO_ENABLE_NATIVE_OPTIMIZATIONS "Enable -march=native (or /arch:...)" OFF)
@@ -237,4 +238,8 @@ if (BUILD_KCM)
     else ()
         message(STATUS "KCM not built: KF5KCMUtils not found")
     endif ()
+endif ()
+
+if (BUILD_MANAGER)
+    add_subdirectory(manager)
 endif ()
