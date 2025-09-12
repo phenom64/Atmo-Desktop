@@ -156,9 +156,12 @@ public:
 
         // Settings tab layout with splitter
         auto *split = new QSplitter(settingsTab);
-        auto *left = new QTreeWidget(split);
-        left->setHeaderHidden(true);
-        auto *rightStack = new QStackedWidget(split);
+        auto *left = new QTreeWidget(); left->setHeaderHidden(true); left->setMinimumWidth(180);
+        auto *scroll = new QScrollArea(); scroll->setWidgetResizable(true);
+        auto *rightStack = new QStackedWidget(); rightStack->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        scroll->setWidget(rightStack);
+        split->addWidget(left); split->addWidget(scroll);
+        split->setStretchFactor(0,0); split->setStretchFactor(1,1);
         auto *settingsLay = new QVBoxLayout(settingsTab);
         settingsLay->addWidget(split);
 
@@ -204,7 +207,12 @@ private:
     static QString prettyLabelFor(Settings::Key k){ return QString::fromLatin1(Settings::description(k)); }
 
     QWidget* createPage(const QString &cat){
-        QWidget *w = new QWidget; auto *lay = new QFormLayout(w); lay->setLabelAlignment(Qt::AlignRight);
+        QWidget *w = new QWidget; auto *lay = new QFormLayout(w);
+        lay->setLabelAlignment(Qt::AlignRight);
+        lay->setRowWrapPolicy(QFormLayout::WrapLongRows);
+        lay->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
+        lay->setFormAlignment(Qt::AlignTop | Qt::AlignLeft);
+        w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         for (int i=0;i<Settings::Keycount;++i){
             Settings::Key k = static_cast<Settings::Key>(i);
             QString name = Settings::key(k);
@@ -226,7 +234,7 @@ private:
                 }
             }
             QString labelText = prettyLabelFor(k);
-            auto *lab = new QLabel(labelText);
+            auto *lab = new QLabel(labelText); lab->setWordWrap(true); lab->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
             lab->setToolTip(QString("%1\nKey: %2\nDefault: %3").arg(labelText).arg(QString::fromLatin1(Settings::key(k))).arg(Settings::defaultValue(k).toString()));
             ed->setToolTip(QString::fromLatin1(Settings::description(k)));
             lay->addRow(lab, ed);
