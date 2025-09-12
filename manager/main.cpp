@@ -34,6 +34,9 @@
 #include <QHBoxLayout>
 #include <QVariant>
 #include <QMap>
+#include <QStandardPaths>
+#include <QFile>
+#include <QDir>
 
 #include "../config/settings.h"
 
@@ -146,9 +149,9 @@ public:
 
         auto *tabs = new QTabWidget(central);
         QWidget *settingsTab = new QWidget(tabs);
-        QWidget *colorsTab = new QWidget(tabs);
+        QWidget *defaultsTab = new QWidget(tabs);
         tabs->addTab(settingsTab, "Settings");
-        tabs->addTab(colorsTab, "Colours");
+        tabs->addTab(defaultsTab, "Defaults");
         mainLay->addWidget(tabs);
 
         // Settings tab layout with splitter
@@ -162,31 +165,43 @@ public:
         // Bottom buttons
         auto *btnLay = new QHBoxLayout();
         QPushButton *btnDemo = new QPushButton("Demo", central);
-        QPushButton *btnWrite = new QPushButton("Write", central);
+        QPushButton *btnWrite = new QPushButton("Apply", central);
+        QPushButton *btnRevert = new QPushButton("Revert to Defaults", central);
         QPushButton *btnClose = new QPushButton("Close", central);
         btnLay->addStretch();
         btnLay->addWidget(btnDemo);
         btnLay->addWidget(btnWrite);
+        btnLay->addWidget(btnRevert);
         btnLay->addWidget(btnClose);
         mainLay->addLayout(btnLay);
         setCentralWidget(central);
 
         // Build variable editors grouped by prefix
         buildEditors(left, rightStack);
+        buildDefaultsPage(defaultsTab);
 
         connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){ if(!cur) return; rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt());});
         connect(btnDemo, &QPushButton::clicked, this, &ManagerWindow::showDemo);
         connect(btnClose, &QPushButton::clicked, this, &QWidget::close);
         connect(btnWrite, &QPushButton::clicked, this, &ManagerWindow::writeConfig);
+        connect(btnRevert, &QPushButton::clicked, this, &ManagerWindow::revertDefaults);
     }
 
 private:
     QMap<Settings::Key, VarEditor> m_editors;
+    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr;
 
     QString categoryOf(const QString &key) const{
         if (!key.contains('.')) return QStringLiteral("General");
         return key.left(key.indexOf('.'));
     }
+
+    static QString prettyCategory(const QString &c){
+        static QMap<QString, QString> map{{"deco","Decoration"},{"pushbtn","Push Button"},{"toolbtn","Toolbar Button"},{"input","Input Fields"},{"tabs","Tabs"},{"uno","UNO"},{"menues","Menus"},{"sliders","Sliders"},{"scrollers","Scroll Bars"},{"views","Views"},{"progressbars","Progress Bars"},{"windows","Windows"},{"shadows","Shadows"}};
+        if (c=="General") return c; return map.value(c, c.left(1).toUpper()+c.mid(1));
+    }
+
+    static QString prettyLabelFor(Settings::Key k){ return QString::fromLatin1(Settings::description(k)); }
 
     QWidget* createPage(const QString &cat){
         QWidget *w = new QWidget; auto *lay = new QFormLayout(w); lay->setLabelAlignment(Qt::AlignRight);
@@ -210,7 +225,11 @@ private:
                     auto *le = new QLineEdit; le->setText(cur.toString()); ed=le; type="string";
                 }
             }
-            lay->addRow(QString::fromLatin1(Settings::key(k)), ed);
+            QString labelText = prettyLabelFor(k);
+            auto *lab = new QLabel(labelText);
+            lab->setToolTip(QString("%1\nKey: %2\nDefault: %3").arg(labelText).arg(QString::fromLatin1(Settings::key(k))).arg(Settings::defaultValue(k).toString()));
+            ed->setToolTip(QString::fromLatin1(Settings::description(k)));
+            lay->addRow(lab, ed);
             m_editors.insert(k, {k, ed, type});
         }
         return w;
@@ -230,21 +249,34 @@ private:
         for (const QString &cat : keys){
             QWidget *page = createPage(cat);
             stack->addWidget(page);
-            auto *it = new QTreeWidgetItem(QStringList() << (cat=="General"?"General":cat.left(1).toUpper()+cat.mid(1)));
+            auto *it = new QTreeWidgetItem(QStringList() << prettyCategory(cat));
             it->setData(0, Qt::UserRole, idx++);
             tree->addTopLevelItem(it);
         }
         if (tree->topLevelItemCount()>0){ tree->setCurrentItem(tree->topLevelItem(0)); }
     }
 
+    void buildDefaultsPage(QWidget *page){
+        auto *v = new QVBoxLayout(page);
+        auto *tw = new QTreeWidget(page);
+        tw->setColumnCount(3); tw->setHeaderLabels({"Setting","Default","Description"});
+        for (int i=0;i<Settings::Keycount;++i){
+            Settings::Key k = static_cast<Settings::Key>(i);
+            auto *it = new QTreeWidgetItem({QString::fromLatin1(Settings::key(k)), Settings::defaultValue(k).toString(), QString::fromLatin1(Settings::description(k))});
+            tw->addTopLevelItem(it);
+        }
+        tw->header()->setSectionResizeMode(QHeaderView::ResizeToContents); tw->header()->setStretchLastSection(true);
+        v->addWidget(new QLabel("Defaults are sourced from the installed template NSE.conf. Use Revert to restore."));
+        v->addWidget(tw);
+    }
+
 private slots:
     void showDemo(){
-        QDialog dlg(this);
-        dlg.setWindowTitle("Atmo Demo Preview");
-        QVBoxLayout *v = new QVBoxLayout(&dlg);
-        v->addWidget(makePreview(&dlg));
-        dlg.resize(700, 480);
-        dlg.exec();
+        writeConfig(); // persist then re-read
+        Settings::read();
+        if (!m_demoDialog){ m_demoDialog = new QDialog(this); m_demoDialog->setWindowTitle("Atmo Demo Preview"); QVBoxLayout *v = new QVBoxLayout(m_demoDialog); m_preview = makePreview(m_demoDialog); v->addWidget(m_preview); m_demoDialog->resize(700,480);} 
+        if (QStyle *s = QStyleFactory::create("Atmo")) m_demoDialog->setStyle(s);
+        repolishPreview(); m_demoDialog->show();
     }
 
     void writeConfig(){
@@ -258,8 +290,15 @@ private slots:
             else setVal = ((QLineEdit*)ve.widget)->text();
             Settings::writeVal(ve.key, setVal);
         }
-        QMessageBox::information(this, "Atmo", "Settings written to NSE.conf. Some apps may need restart to apply.");
+        Settings::read(); if (m_demoDialog) repolishPreview();
+        QMessageBox::information(this, "Atmo", "Settings applied. Some apps may need restart to reflect changes.");
     }
+
+    void repolishPreview(){ if (!m_preview) return; auto *st = m_preview->style(); QList<QWidget*> ws = m_preview->findChildren<QWidget*>(); ws << m_preview; for (QWidget *w : ws){ st->unpolish(w); st->polish(w); w->update(); } }
+
+    bool copyDefaultNSEConf(){ const QString userDir = QDir::homePath()+"/.config/NSE"; QDir().mkpath(userDir); const QString userFile=userDir+"/NSE.conf"; const QString tmpl = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf")); if (tmpl.isEmpty()) return false; QFile::remove(userFile); return QFile::copy(tmpl, userFile);} 
+
+    void revertDefaults(){ if (!copyDefaultNSEConf()){ QMessageBox::warning(this, "Atmo", "Could not locate default template. Falling back to internal defaults."); Settings::writeDefaults(); } Settings::read(); for (auto it=m_editors.begin(); it!=m_editors.end(); ++it){ const VarEditor &ve = it.value(); QVariant cur = Settings::readVal(ve.key); if (ve.type=="bool") ((QCheckBox*)ve.widget)->setChecked(cur.toBool()); else if (ve.type=="int") ((QSpinBox*)ve.widget)->setValue(cur.toInt()); else if (ve.type=="float") ((QDoubleSpinBox*)ve.widget)->setValue(cur.toDouble()); else if (ve.type=="stringlist") ((QLineEdit*)ve.widget)->setText(cur.toStringList().join(", ")); else if (ve.type=="gradient") ((GradientEditor*)ve.widget)->setFromString(cur.toString()); else ((QLineEdit*)ve.widget)->setText(cur.toString()); } if (m_demoDialog) repolishPreview(); QMessageBox::information(this, "Atmo", "Defaults restored."); }
 };
 
 int main(int argc, char **argv)
