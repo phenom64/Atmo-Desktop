@@ -1,12 +1,33 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QMenuBar>
 #include <QDebug>
 #include <QPainter>
 #include <QStyleOption>
 #include <QStyleOptionMenuItem>
 #include <QStyleOptionViewItem>
-#include <QStyleOptionViewItemV2>
-#include <QStyleOptionViewItemV3>
-#include <QStyleOptionViewItemV4>
+#include <QStyleOptionViewItem>
+#include <QStyleOptionViewItem>
+#include <QStyleOptionViewItem>
 #include <QAbstractItemView>
 #include <QMenu>
 #include <QTreeView>
@@ -14,14 +35,14 @@
 #include <QTableView>
 #include <QApplication>
 
-#include "dsp.h"
-#include "stylelib/ops.h"
-#include "stylelib/color.h"
+#include "nse.h"
+#include "atmolib/ops.h"
+#include "atmolib/color.h"
 #include "config/settings.h"
-#include "stylelib/gfx.h"
+#include "atmolib/gfx.h"
 #include "overlay.h"
 
-using namespace DSP;
+using namespace NSE;
 
 bool
 Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -88,7 +109,7 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         bg = QPalette::Highlight;
 
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.menues.itemGradient, pal.color(bg)));
+        lg.setStops(NSE::Settings::gradientStops(dConf.menues.itemGradient, pal.color(bg)));
 
         Sides sides(All);
         if (!isMenuBar)
@@ -153,8 +174,8 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
 {
     if (!option)
         return true;
-    const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
-//    if (dConf.app == DSP::Settings::Konversation && widget && widget->inherits("ViewTree"))
+    const QStyleOptionViewItem *opt = qstyleoption_cast<const QStyleOptionViewItem *>(option);
+//    if (dConf.app == NSE::Settings::Konversation && widget && widget->inherits("ViewTree"))
 //        return true;
     if (!widget)
     {
@@ -188,7 +209,7 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (sunken)
     {
         QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.views.itemGradient, h));
+        lg.setStops(NSE::Settings::gradientStops(dConf.views.itemGradient, h));
         brush = lg;
     }
 
@@ -206,9 +227,9 @@ Style::drawViewItemBg(const QStyleOption *option, QPainter *painter, const QWidg
     if (opt && checkSides)
     switch (opt->viewItemPosition)
     {
-    case QStyleOptionViewItemV4::Beginning:     sides &= ~Right;        break;
-    case QStyleOptionViewItemV4::End:           sides &= ~Left;         break;
-    case QStyleOptionViewItemV4::Middle:        sides &= ~(Right|Left); break;
+    case QStyleOptionViewItem::Beginning:     sides &= ~Right;        break;
+    case QStyleOptionViewItem::End:           sides &= ~Left;         break;
+    case QStyleOptionViewItem::Middle:        sides &= ~(Right|Left); break;
     default: break;
     }
     GFX::drawClickable(sunken?dConf.views.itemShadow:-1, rect, painter, brush, dConf.views.itemRnd, 0, sides);
@@ -219,11 +240,11 @@ bool
 Style::drawViewItem(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     drawViewItemBg(option, painter, widget);
-    const QStyleOptionViewItemV4 *opt = qstyleoption_cast<const QStyleOptionViewItemV4 *>(option);
+    const QStyleOptionViewItem *opt = qstyleoption_cast<const QStyleOptionViewItem *>(option);
     if (!opt)
         return true;
 
-    if (opt->features & QStyleOptionViewItemV2::HasCheckIndicator)
+    if (opt->features & QStyleOptionViewItem::HasCheckIndicator)
     {
         QStyleOptionButton btn;
 //        btn.QStyleOption::operator =(*option);
@@ -332,7 +353,7 @@ Style::drawHeaderSection(const QStyleOption *option, QPainter *painter, const QW
         bg = QPalette::Highlight;
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
     const QColor b(opt->palette.color(isEnabled(opt) ? QPalette::Active : QPalette::Disabled, bg));
-    lg.setStops(DSP::Settings::gradientStops(dConf.views.headerGradient, b));
+    lg.setStops(NSE::Settings::gradientStops(dConf.views.headerGradient, b));
     if (dConf.views.traditional)
     {
         if (opt->sortIndicator)

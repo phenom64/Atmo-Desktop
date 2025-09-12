@@ -1,14 +1,35 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include "kwinclient2.h"
 #include "decobutton.h"
 #include "decoadaptor.h"
 #include "menubar.h"
-#include "../stylelib/color.h"
-#include "../stylelib/xhandler.h"
-#include "../stylelib/shadowhandler.h"
-#include "../stylelib/gfx.h"
-#include "../stylelib/fx.h"
-#include "../stylelib/macros.h"
-#include "../stylelib/ops.h"
+#include "../atmolib/color.h"
+#include "../atmolib/xhandler.h"
+#include "../atmolib/shadowhandler.h"
+#include "../atmolib/gfx.h"
+#include "../atmolib/fx.h"
+#include "../atmolib/macros.h"
+#include "../atmolib/ops.h"
 
 #include <KDecoration2/DecoratedClient>
 #include <KDecoration2/DecorationButtonGroup>
@@ -53,23 +74,23 @@
 //K_PLUGIN_FACTORY_WITH_JSON(
 //    DSPDecoFactory,
 //    "dsp.json",
-//    registerPlugin<DSP::Deco>();
-//    registerPlugin<DSP::Button>(QStringLiteral("button"));
-//    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
+//    registerPlugin<NSE::Deco>();
+//    registerPlugin<NSE::Button>(QStringLiteral("button"));
+//    registerPlugin<NSE::ConfigModule>(QStringLiteral("kcmodule"));
 //)
 
 static DSPDecoFactory *s_factory(0);
 DSPDecoFactory::DSPDecoFactory()
 {
-    registerPlugin<DSP::Deco>();
-    registerPlugin<DSP::Button>(QStringLiteral("button"));
-    registerPlugin<DSP::ConfigModule>(QStringLiteral("kcmodule"));
-    DSP::Deco::Data::readWindowData();
-    //        DSP::SharedDataAdaptorManager::instance();
-    DSP::Settings::read();
-    DSP::XHandler::init();
-    DSP::ShadowHandler::removeDelete();
-    DSP::GFX::generateData();
+    registerPlugin<NSE::Deco>();
+    registerPlugin<NSE::Button>(QStringLiteral("button"));
+    registerPlugin<NSE::ConfigModule>(QStringLiteral("kcmodule"));
+    NSE::Deco::Data::readWindowData();
+    //        NSE::SharedDataAdaptorManager::instance();
+    NSE::Settings::read();
+    NSE::XHandler::init();
+    NSE::ShadowHandler::removeDelete();
+    NSE::GFX::generateData();
     QTimer::singleShot(2000, this, SLOT(shapeCorners()));
     if (!s_factory)
         s_factory = this;
@@ -92,7 +113,7 @@ DSPDecoFactory::shapeCorners()
     QDBusConnection::sessionBus().send(msg);
 }
 
-namespace DSP
+namespace NSE
 {
 
 ConfigModule::ConfigModule(QWidget *parent, const QVariantList &args) : KCModule(parent, args)
@@ -118,7 +139,7 @@ Deco::Data::addDataForWinClass(const QString &winClass, QSettings &s)
     if (bgColor.size() == QString("0xffffffff").size() && bgColor.startsWith("0x")) //old format
         d.bg = QColor::fromRgba(bgColor.toUInt(0, 16));
 
-    d.grad = DSP::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
+    d.grad = NSE::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
     d.noise = s.value("noise", 20).toUInt();
     d.separator = s.value("separator", true).toBool();
     d.btnStyle = s.value("btnstyle", -2).toInt();
@@ -133,8 +154,8 @@ void
 Deco::Data::readWindowData()
 {
     s_data.clear();
-    static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
-    QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
+    static const QString confPath(QString("%1/.config/NSE").arg(QDir::homePath()));
+    QSettings s(QString("%1/NSEdeco.conf").arg(confPath), QSettings::IniFormat);
     bool hasDefault(false);
     foreach (const QString winClass, s.childGroups())
     {
@@ -184,14 +205,14 @@ AdaptorManager
 AdaptorManager::AdaptorManager()
 {
     m_adaptor = new DecoAdaptor(this);
-    QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
-    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
+    QDBusConnection::sessionBus().registerService("com.syndromatic.atmo.kwindeco");
+    QDBusConnection::sessionBus().registerObject("/NSEDecoAdaptor", this);
 }
 
 AdaptorManager::~AdaptorManager()
 {
-    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
-    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
+    QDBusConnection::sessionBus().unregisterService("com.syndromatic.atmo.kwindeco");
+    QDBusConnection::sessionBus().unregisterObject("/NSEDecoAdaptor");
     s_instance = 0;
     m_adaptor = 0;
 }
@@ -930,7 +951,7 @@ Deco::updateBgPixmap()
     QRect r(0, 0, 1, titleHeight());
     QLinearGradient lg(r.topLeft(), r.bottomLeft());
     if (!m_gradient.isEmpty())
-        lg.setStops(DSP::Settings::gradientStops(m_gradient, m_bg));
+        lg.setStops(NSE::Settings::gradientStops(m_gradient, m_bg));
     else
         lg.setStops(QGradientStops() << QGradientStop(0, Color::mid(m_bg, Qt::white, 4, 1)) << QGradientStop(1, Color::mid(m_bg, Qt::black, 4, 1)));
 
@@ -1131,7 +1152,7 @@ Grip::paintEvent(QPaintEvent *)
     p.drawPixmap(rect(), m_pix);
 }
 
-} //DSP
+} //NSE
 
 /*
  * Required for the K_PLUGIN_FACTORY_WITH_JSON vtable

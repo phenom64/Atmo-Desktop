@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include "settings.h"
 #include <QSettings>
 #include <QFileInfo>
@@ -7,9 +28,11 @@
 #include <QPalette>
 #include <QDebug>
 #include <QUrl>
+#include <QStandardPaths>
+#include <QFile>
 #include "../namespace.h"
 
-using namespace DSP;
+using namespace NSE;
 
 Settings::Conf Settings::conf;
 Settings *Settings::s_instance(0);
@@ -157,12 +180,12 @@ static const char *s_description[] = {
     /*"maxarrowsize"*/              "Maximum allowed size in pixels for any arrows thats drawn",
     /*"simpleArrows"*/              "Use, simple triangles as arrows.",
     /*"balloontips"*/               "Draw tooltips as comic a like balloons",
-    /*"palette"*/                   "Palette to be used (filename, no suffix), this should only be used in presets, not directly in dsp.conf",
+    /*"palette"*/                   "Palette to be used (filename, no suffix), this should only be used in presets, not directly in NSE.conf",
     /*"animatestack"*/              "Animate when the topmost widget in a stack changes, ie: when the active tab changes",
     /*"animatescroll"*/             "Smooth scrolling globally, known to cause trouble in certain cases, mainly dolphin",
     /*"lockdocks"*/                 "Locks the docks, removes the titlebar from them, cant float or close. Toggles with Ctrl+Alt+D",
     /*"differentinactive"*/         "Makes the UNO part of inactive windows shaded, a'la Mac Os, also, if the toolbuttons are set to Yosemite shadow style, this changes the toolbutton appearance for inactive windows slightly",
-    /*"icontheme"*/                 "Icontheme to use, must exist in one of the icontheme pats and must have a index.theme file in it, only read for presets, not global dsp.conf.",
+    /*"icontheme"*/                 "Icontheme to use, must exist in one of the icontheme pats and must have a index.theme file in it, only read for presets, not global NSE.conf.",
     /*"iconpaths"*/                 "Extra paths where to look for icons, ~ means $HOME, stringlist.",
     /*"framernd"*/                  "Roundness for frames in general, groupboxes, sunken frames... raised frames etc.",
 
@@ -217,7 +240,7 @@ static const char *s_description[] = {
     /*"uno.gradient"*/              "Gradient of the UNO area",
     /*"uno.tinthue"*/               "Hue to tint the UNO area with",
     /*"uno.noisefactor"*/           "How much noise the UNO area should have",
-    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/dsp/, so a place a file with the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
+    /*"uno.noisefile"*/             "Filename to use, files are loaded from ~/.local/share/data/NSE/, so a place a file with the name filename.png and set this to filename.png and set uno.noisestyle to -1. Image must be tileable and smaller then 0.5 megapixel.",
     /*"uno.noisestyle"*/            "Style of the noise on the UNO area, 0 = Generic, 1 = Brushed Metal",
     /*"uno.horizontal"*/            "Whether the UNO area gradient should be horizontal instead of Vertical",
     /*"uno.contentaware"*/          "Yosemite alike content aware toolbars, *very* experimental and expensive, veeery fast cpus/gfx cards should be fine",
@@ -268,7 +291,7 @@ static const char *s_description[] = {
 
     /*"windows.gradient"*/          "Gradient for windows",
     /*"windows.noisefactor"*/       "How much noise to use on the window background",
-    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/dsp/, so place a file with the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
+    /*"windows.noisefile"*/         "Filename to use, files are loaded from ~/.local/share/data/NSE/, so place a file with the name filename.png and set this to filename.png and set windows.noisestyle to -1. Image must be tileable",
     /*"windows.noisestyle"*/        "Style of the noise painted on the window background, 0 = Generic, 1 = Brushed Metal",
     /*"windows.horizontal"*/        "Whether the gradient set on windows should be horizontal instead of vertical",
 
@@ -471,14 +494,14 @@ const char
 
 static const QString confPath()
 {
-    static const QString cp = QString("%1/.config/dsp").arg(QDir::homePath());
+    static const QString cp = QString("%1/.config/NSE").arg(QDir::homePath());
     return cp;
 }
 
 static const QString getPreset(QSettings *s, const QString &appName)
 {
-    if (qApp->arguments().contains("--dsppreset"))
-        if (int i = qApp->arguments().indexOf("--dsppreset")+1)
+    if (qApp->arguments().contains("--nsepreset"))
+        if (int i = qApp->arguments().indexOf("--nsepreset")+1)
             if (i < qApp->arguments().count())
                 return qApp->arguments().at(i);
 
@@ -542,8 +565,18 @@ Settings::Settings() : m_settings(0), m_presetSettings(0), m_paletteSettings(0),
         conf.app = Unspecific;
 
     const QDir settingsDir(confPath());
-    QString settingsFileName("dsp");
-    m_settings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName)), QSettings::IniFormat);
+    if (!settingsDir.exists())
+        QDir().mkpath(confPath());
+    QString settingsFileName("NSE");
+    const QString settingsFilePath = settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName));
+    if (!QFileInfo::exists(settingsFilePath))
+    {
+        // Try to provision defaults from system share path: share/atmo/NSE.conf
+        const QString defaultConf = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf"));
+        if (!defaultConf.isEmpty())
+            QFile::copy(defaultConf, settingsFilePath);
+    }
+    m_settings = new QSettings(settingsFilePath, QSettings::IniFormat);
     const QString preset(getPreset(m_settings, conf.appName));
     const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
     if (!preset.isEmpty())
@@ -560,7 +593,7 @@ Settings::Settings() : m_settings(0), m_presetSettings(0), m_paletteSettings(0),
             }
         }
         else
-            qDebug() << "DSP: unable to load preset or preset doesnt exist:" << preset;
+            qDebug() << "NSE: unable to load preset or preset doesnt exist:" << preset;
     }
 }
 

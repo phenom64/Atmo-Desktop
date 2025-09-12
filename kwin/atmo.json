@@ -1,0 +1,17 @@
+{
+    "KPlugin": {
+        "Id": "com.syndromatic.atmo",
+        "Name": "Atmo",
+        "Description": "Atmo KWin decoration by Syndromatic Ltd.",
+        "Version": "1.0",
+        "License": "GPLv2+",
+        "EnabledByDefault": true,
+        "Authors": [
+            { "Name": "Syndromatic Ltd." }
+        ]
+    },
+    "org.kde.kdecoration2": {
+        "blur": false,
+        "kcmodule": true
+    }
+}

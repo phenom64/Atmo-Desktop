@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 
 #include <QStyleOption>
 #include <QStyleOptionFrame>
@@ -12,15 +33,15 @@
 #include <QPainter>
 #include <QSpinBox>
 
-#include "dsp.h"
-#include "stylelib/gfx.h"
+#include "nse.h"
+#include "atmolib/gfx.h"
 #include "overlay.h"
-#include "stylelib/ops.h"
-#include "stylelib/color.h"
-#include "stylelib/animhandler.h"
+#include "atmolib/ops.h"
+#include "atmolib/color.h"
+#include "atmolib/animhandler.h"
 #include "config/settings.h"
 
-using namespace DSP;
+using namespace NSE;
 
 bool
 Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -47,7 +68,7 @@ Style::drawLineEdit(const QStyleOption *option, QPainter *painter, const QWidget
         if (isInactive)
             c.setAlpha(127);
         QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
+        lg.setStops(NSE::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
 
@@ -102,7 +123,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         if (dConf.pushbtn.tint.second > -1)
             bgc = Color::mid(bgc, dConf.pushbtn.tint.first, 100-dConf.pushbtn.tint.second, dConf.pushbtn.tint.second);
         QLinearGradient lg(frameRect.topLeft(), frameRect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
+        lg.setStops(NSE::Settings::gradientStops(dConf.pushbtn.gradient, bgc));
 
         QRect main(opt->rect);
         if (ltr)
@@ -117,7 +138,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
         else
             hc = Color::mid(bgc, fgc, 10, 1);
         QLinearGradient lga(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lga.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, hc));
+        lga.setStops(NSE::Settings::gradientStops(dConf.pushbtn.gradient, hc));
 
         GFX::drawClickable(dConf.pushbtn.shadow, arrowRect, painter, lga, dConf.pushbtn.rnd, hl, All & ~(ltr?Left:Right), option, widget);
         const quint8 m(GFX::shadowMargin(dConf.pushbtn.shadow));
@@ -147,7 +168,7 @@ Style::drawComboBox(const QStyleOptionComplex *option, QPainter *painter, const 
             if (dConf.input.tint.second > -1)
                 c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
             QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());
-            lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
+            lg.setStops(NSE::Settings::gradientStops(dConf.input.gradient, c));
             brush = QBrush(lg);
         }
         GFX::drawClickable(dConf.input.shadow, opt->rect, painter, brush, dConf.input.rnd, 0, All, option, widget);
@@ -219,7 +240,7 @@ Style::drawSpinBox(const QStyleOptionComplex *option, QPainter *painter, const Q
         if (dConf.input.tint.second > -1)
             c = Color::mid(c, dConf.input.tint.first, 100-dConf.input.tint.second, dConf.input.tint.second);
         QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.input.gradient, c));
+        lg.setStops(NSE::Settings::gradientStops(dConf.input.gradient, c));
         mask = QBrush(lg);
     }
 

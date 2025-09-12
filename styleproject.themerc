@@ -1,8 +1,0 @@
-[Misc]
-Name=StyleProject
-Name[x-test]=xxStyleProjectxx
-#ConfigPage=kstyle_styleproject_config
-Comment=Style for qt4
-Comment[x-test]=xxStyle for qt4xx
-[KDE]
-WidgetStyle=StyleProject

@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QPainter>
 #include <QStyleOption>
 #include <QDebug>
@@ -5,7 +26,7 @@
 #include <QMainWindow>
 #include <QStyleOptionGroupBox>
 #include <QStyleOptionDockWidget>
-#include <QStyleOptionDockWidgetV2>
+#include <QStyleOptionDockWidget>
 #include <QCheckBox>
 #include <QMenuBar>
 #include <QMap>
@@ -13,16 +34,16 @@
 #include <QDockWidget>
 #include <QAbstractScrollArea>
 
-#include "dsp.h"
-#include "stylelib/gfx.h"
-#include "stylelib/ops.h"
-#include "stylelib/color.h"
-#include "stylelib/handlers.h"
+#include "nse.h"
+#include "atmolib/gfx.h"
+#include "atmolib/ops.h"
+#include "atmolib/color.h"
+#include "atmolib/handlers.h"
 #include "overlay.h"
 #include "config/settings.h"
-#include "stylelib/xhandler.h"
+#include "atmolib/xhandler.h"
 
-using namespace DSP;
+using namespace NSE;
 
 bool
 Style::drawStatusBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -123,7 +144,7 @@ Style::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *wi
 {
     const QPalette::ColorRole bg(Ops::bgRole(widget, QPalette::Base));
     QColor bgc(option->palette.color(bg));
-    if (widget && !widget->property("DSP_hasmenuarrow").toBool())
+    if (widget && !widget->property("NSE_hasmenuarrow").toBool())
         bgc.setAlpha(XHandler::opacity());
 
 //    painter->save();
@@ -131,7 +152,7 @@ Style::drawMenu(const QStyleOption *option, QPainter *painter, const QWidget *wi
 //    painter->setPen(Qt::NoPen);
 //    painter->setBrush(bgc);
     Sides sides(All);
-    if (widget && widget->property("DSP_SHAPETOP").toBool())
+    if (widget && widget->property("NSE_SHAPETOP").toBool())
         sides &= ~Top;
 
     QLinearGradient lg(option->rect.topLeft(), option->rect.bottomLeft());

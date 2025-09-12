@@ -1,6 +1,27 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QTableWidget>
 #include <QPainter>
-#include <QStyleOptionTabWidgetFrameV2>
+#include <QStyleOptionTabWidgetFrame>
 #include <QStyleOptionToolButton>
 #include <QMainWindow>
 #include <QToolBar>
@@ -20,22 +41,22 @@
 #include <QScrollBar>
 #include <QHeaderView>
 
-#include "dsp.h"
-#include "stylelib/xhandler.h"
-#include "stylelib/ops.h"
-#include "stylelib/handlers.h"
+#include "nse.h"
+#include "atmolib/xhandler.h"
+#include "atmolib/ops.h"
+#include "atmolib/handlers.h"
 #include "config/settings.h"
 #include "overlay.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/shadowhandler.h"
-#include "stylelib/windowhelpers.h"
+#include "atmolib/animhandler.h"
+#include "atmolib/shadowhandler.h"
+#include "atmolib/windowhelpers.h"
 
 #include "defines.h"
 #if HASDBUS
-#include "stylelib/macmenu.h"
+#include "atmolib/macmenu.h"
 #endif
 
-using namespace DSP;
+using namespace NSE;
 
 bool
 Style::eventFilter(QObject *o, QEvent *e)
@@ -140,7 +161,7 @@ Style::eventFilter(QObject *o, QEvent *e)
         if (qobject_cast<QMainWindow *>(w))
         {
             if (QWidget *center = static_cast<QMainWindow *>(w)->centralWidget())
-                if (center->property("DSP_center").toBool())
+                if (center->property("NSE_center").toBool())
                 {
                     if (w->isFullScreen())
                         center->setContentsMargins(0,0,0,0);
@@ -173,7 +194,7 @@ Style::paintEvent(QObject *o, QEvent *e)
         QTabBar *tb = w->findChild<QTabBar *>();
         if (!tb)
             return false;
-        QStyleOptionTabBarBaseV2 opt;
+        QStyleOptionTabBarBase opt;
         opt.rect = tb->geometry();
         opt.fontMetrics = w->fontMetrics();
         opt.documentMode = true;
@@ -187,7 +208,7 @@ Style::paintEvent(QObject *o, QEvent *e)
 //        {
 //            QTabWidget *tabWidget = static_cast<QTabWidget *>(o);
 //            QPainter p(tabWidget);
-//            QStyleOptionTabWidgetFrameV2 opt;
+//            QStyleOptionTabWidgetFrame opt;
 //            opt.initFrom(tabWidget);
 //            drawTabWidget(&opt, &p, tabWidget);
 //            p.end();
@@ -205,14 +226,14 @@ Style::paintEvent(QObject *o, QEvent *e)
             return false;
 //        }
     }
-    else if (o->property("DSP_konsoleTabBarParent").toBool())
+    else if (o->property("NSE_konsoleTabBarParent").toBool())
     {
         QWidget *w = static_cast<QWidget *>(o);
         QTabBar *tb = w->findChild<QTabBar *>();
         if (!tb || !tb->documentMode())
             return false;
 
-        QStyleOptionTabBarBaseV2 opt;
+        QStyleOptionTabBarBase opt;
         const QPoint tl = tb->mapFrom(w, QPoint());
         opt.rect = QRect(tl, w->size()+QSize(qAbs(tl.x()), 0));
         opt.rect.setHeight(tb->height());
@@ -229,7 +250,7 @@ Style::paintEvent(QObject *o, QEvent *e)
 //        QRect r(w->rect());
 //        const bool hor(w->width()>w->height());
 //        QLinearGradient lg(r.topLeft(), !hor?r.topRight():r.bottomLeft());
-//        lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
+//        lg.setStops(NSE::Settings::gradientStops(dConf.tabs.gradient, w->palette().color(QPalette::Button)));
 //        p.fillRect(r, lg);
 //        p.end();
 //        qDebug() << w->property("qproperty-position") << w->parentWidget()->property("qproperty-position");
@@ -254,7 +275,7 @@ Style::paintEvent(QObject *o, QEvent *e)
     {
         QAbstractButton *btn = static_cast<QAbstractButton *>(w);
         QPainter p(w);
-        QStyleOptionTabV3 opt;
+        QStyleOptionTab opt;
         opt.initFrom(w);
         opt.text = btn->text();
         if (btn->isChecked())
@@ -268,7 +289,7 @@ Style::paintEvent(QObject *o, QEvent *e)
     else if (w->inherits("KateTabBar"))
     {
         QPainter p(w);
-        QStyleOptionTabBarBaseV2 opt;
+        QStyleOptionTabBarBase opt;
         opt.initFrom(w);
         opt.tabBarRect = w->rect();
         const bool reg = dConf.tabs.regular;
@@ -277,7 +298,7 @@ Style::paintEvent(QObject *o, QEvent *e)
         dConf.tabs.regular = reg;
         return true;
     }
-    else if (w->property("DSP_center").toBool())
+    else if (w->property("NSE_center").toBool())
     {
         QPainter p(w);
         GFX::drawClickable(Raised, w->rect(), &p, w->palette().color(QPalette::Window), 6);
@@ -306,7 +327,7 @@ Style::paintEvent(QObject *o, QEvent *e)
             return false;
         w->removeEventFilter(this);
         QCoreApplication::sendEvent(o, e);
-        QStyleOptionTabBarBaseV2 opt;
+        QStyleOptionTabBarBase opt;
         opt.initFrom(w);
         QPainter p(w);
         drawTabBar(&opt, &p, w);

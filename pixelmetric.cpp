@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QLineEdit>
 #include <QTabBar>
 #include <QStyleOption>
@@ -20,16 +41,16 @@
 #include <QCalendarWidget>
 //#include <QToolBar>
 
-#include "dsp.h"
+#include "nse.h"
 #include "overlay.h"
-#include "stylelib/ops.h"
+#include "atmolib/ops.h"
 #include "config/settings.h"
-#include "stylelib/gfx.h"
-#include "stylelib/macros.h"
-//#include "stylelib/handlers.h"
-//#include "stylelib/windowdata.h"
+#include "atmolib/gfx.h"
+#include "atmolib/macros.h"
+//#include "atmolib/handlers.h"
+//#include "atmolib/windowdata.h"
 
-using namespace DSP;
+using namespace NSE;
 
 int
 Style::layoutSpacingAndMargins(const QWidget *w)
@@ -82,7 +103,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
     {
 //        const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
-//        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
+//        const QStyleOptionTab *tab = qstyleoption_cast<const QStyleOptionTab *>(option);
 //        if (tab && (!bar || !bar->expanding()))
 //        {
 //            const QString s(tab->text);
@@ -136,7 +157,7 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         }
         if (widget && widget->parentWidget() && widget->parentWidget()->inherits("NavigationBar")) //qupzilla "toolbar" splitter
             return 8;
-        return (dConf.uno.enabled && dConf.app != DSP::Settings::Eiskalt && qobject_cast<const QMainWindow *>(widget?widget->window():0)) ? 1 : 6;
+        return (dConf.uno.enabled && dConf.app != NSE::Settings::Eiskalt && qobject_cast<const QMainWindow *>(widget?widget->window():0)) ? 1 : 6;
     }
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:

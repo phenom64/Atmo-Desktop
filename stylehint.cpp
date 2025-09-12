@@ -1,16 +1,37 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QTabBar>
-#include <QStyleOptionTabV3>
+#include <QStyleOptionTab>
 #include <QApplication>
 #include <QMainWindow>
 #include <QDialog>
 
-#include "dsp.h"
-#include "stylelib/ops.h"
+#include "nse.h"
+#include "atmolib/ops.h"
 #include "config/settings.h"
 #include "defines.h"
-#include "stylelib/handlers.h"
+#include "atmolib/handlers.h"
 
-using namespace DSP;
+using namespace NSE;
 
 int
 Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyleHintReturn *shret) const
@@ -41,7 +62,7 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
         if (dConf.tabs.regular)
             return Qt::AlignLeft;
         const QTabBar *tabBar = qobject_cast<const QTabBar *>(w);
-        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
+        const QStyleOptionTab *tab = qstyleoption_cast<const QStyleOptionTab *>(opt);
         if (Ops::isSafariTabBar(tabBar))
             return Qt::AlignLeft;
         if ((tab && tab->documentMode && !tabBar) || (tabBar && tabBar->documentMode()))
@@ -54,7 +75,7 @@ Style::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget *w, QStyle
         //vertical tabs elided text gets somewhy calculated from the HORIZONTAL FKN SIZE??!?!?!? REALLY?!?!?!?!?!?!?!
         if (!opt || !w)
             return Qt::ElideNone;
-        return isVertical(qstyleoption_cast<const QStyleOptionTabV3 *>(opt), qobject_cast<const QTabBar *>(w))?Qt::ElideNone:Qt::ElideRight;
+        return isVertical(qstyleoption_cast<const QStyleOptionTab *>(opt), qobject_cast<const QTabBar *>(w))?Qt::ElideNone:Qt::ElideRight;
     case SH_ScrollBar_MiddleClickAbsolutePosition: return true;
     case SH_ScrollBar_ScrollWhenPointerLeavesControl: return true;
     case SH_ItemView_PaintAlternatingRowColorsForEmptyArea: return true;

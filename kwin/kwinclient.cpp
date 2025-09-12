@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <kwindowinfo.h>
 #include <QPainter>
 #include <QHBoxLayout>
@@ -10,13 +31,13 @@
 #include <QDir>
 
 #include "kwinclient.h"
-#include "../stylelib/ops.h"
-#include "../stylelib/shadowhandler.h"
-#include "../stylelib/gfx.h"
-#include "../stylelib/color.h"
+#include "../atmolib/ops.h"
+#include "../atmolib/shadowhandler.h"
+#include "../atmolib/gfx.h"
+#include "../atmolib/color.h"
 #include "../config/settings.h"
-#include "../stylelib/xhandler.h"
-#include "../stylelib/windowdata.h"
+#include "../atmolib/xhandler.h"
+#include "../atmolib/windowdata.h"
 
 #if !defined(QT_NO_DBUS)
 #include "decoadaptor.h"
@@ -29,7 +50,7 @@
 
 ///-------------------------------------------------------------------
 
-using namespace DSP;
+using namespace NSE;
 
 DButton::DButton(const ButtonBase::Type &t, KwinClient *client)
     : ButtonBase(t)
@@ -141,8 +162,8 @@ static void addDataForWinClass(const QString &winClass, QSettings &s)
 static void readWindowData()
 {
     KwinClient::Data::s_data.clear();
-    static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
-    QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
+    static const QString confPath(QString("%1/.config/NSE").arg(QDir::homePath()));
+    QSettings s(QString("%1/NSEdeco.conf").arg(confPath), QSettings::IniFormat);
     bool hasDefault(false);
     foreach (const QString winClass, s.childGroups())
     {
@@ -188,14 +209,14 @@ AdaptorManager::AdaptorManager()
     GFX::makeNoise();
     readWindowData();
     new DecoAdaptor(this);
-    QDBusConnection::sessionBus().registerService("org.kde.dsp.kwindeco");
-    QDBusConnection::sessionBus().registerObject("/DSPDecoAdaptor", this);
+    QDBusConnection::sessionBus().registerService("com.syndromatic.atmo.kwindeco");
+    QDBusConnection::sessionBus().registerObject("/NSEDecoAdaptor", this);
 }
 
 AdaptorManager::~AdaptorManager()
 {
-    QDBusConnection::sessionBus().unregisterService("org.kde.dsp.kwindeco");
-    QDBusConnection::sessionBus().unregisterObject("/DSPDecoAdaptor");
+    QDBusConnection::sessionBus().unregisterService("com.syndromatic.atmo.kwindeco");
+    QDBusConnection::sessionBus().unregisterObject("/NSEDecoAdaptor");
     s_instance = 0;
 }
 
@@ -685,11 +706,11 @@ KwinClient::paint(QPainter &p)
         p.setClipRegion(QRegion(widget()->rect())-QRegion(tr));
         p.fillRect(widget()->rect(), widget()->palette().color(QPalette::Window));
         p.setPen(widget()->palette().color(QPalette::WindowText));
-        p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "DSP");
+        p.drawText(p.clipBoundingRect(), Qt::AlignCenter, "NSE");
         p.setClipping(false);
     }
 //    else if (!isModal() && m_compositingActive)
-//        GFX::shapeCorners(&p, DSP::All);
+//        GFX::shapeCorners(&p, NSE::All);
 
     for (int i = 0; i < m_buttons.count(); ++i)
         m_buttons.at(i)->paint(p);

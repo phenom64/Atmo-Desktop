@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QMenu>
 #include <QStyleOptionMenuItem>
 #include <QDebug>
@@ -13,11 +34,11 @@
 #include <QAbstractItemView>
 #include <QProgressBar>
 
-#include "dsp.h"
-#include "stylelib/ops.h"
-#include "stylelib/gfx.h"
+#include "nse.h"
+#include "atmolib/ops.h"
+#include "atmolib/gfx.h"
 #include "config/settings.h"
-#include "stylelib/handlers.h"
+#include "atmolib/handlers.h"
 
 /** enum ContentsType {
     CT_PushButton,
@@ -49,7 +70,7 @@
     CT_CustomBase = 0xf0000000
 }; */
 
-using namespace DSP;
+using namespace NSE;
 
 static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, QSize cs)
 {
@@ -109,7 +130,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     }
     case CT_TabBarTab:
     {
-        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
+        const QStyleOptionTab *tab = qstyleoption_cast<const QStyleOptionTab *>(opt);
         if (!tab)
             break;
 
@@ -176,7 +197,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                         sz.setWidth(qBound(32, docTabSize, (((bar->width()&~1)-32)/bar->count())-1));
                 }
             }
-            if (tab->position != QStyleOptionTabV3::Middle)
+            if (tab->position != QStyleOptionTab::Middle)
             {
                 sz.rwidth() += !vertical * TabDocModePadding;
                 sz.rheight() += vertical * TabDocModePadding;
@@ -361,7 +382,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         static const int sm = GFX::shadowMargin(dConf.views.itemShadow) * 2 + 2;
         sz.rheight() += sm;
 #if 0
-        const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
+        const QStyleOptionViewItem *item = qstyleoption_cast<const QStyleOptionViewItem *>(opt);
         if (item && !item->text.isEmpty())
         {
             static const int m(2);
@@ -388,7 +409,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     {
         QSize sz(contentsSize);
         int margin = 8;
-        const QStyleOptionProgressBarV2 *bar = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
+        const QStyleOptionProgressBar *bar = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
         const bool hor(!bar || bar->orientation==Qt::Horizontal);
         if (bar && dConf.progressbars.textPos == 1)
         {

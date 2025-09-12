@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include "sizegrip.h"
 #include <QX11Info>
 #include <X11/Xlib.h>
@@ -6,13 +27,13 @@
 #include <QPainter>
 #include <QTimer>
 
-#include "../stylelib/color.h"
-#include "../stylelib/xhandler.h"
+#include "../atmolib/color.h"
+#include "../atmolib/xhandler.h"
 
 #define SZ 8
 #define SM 4
 
-using namespace DSP;
+using namespace NSE;
 
 SizeGrip::SizeGrip(KwinClient *client) : QWidget(/*client->widget()*/0), m_client(client) //if I parent the widget I get garbled painting when compositing active.... weird.
 {

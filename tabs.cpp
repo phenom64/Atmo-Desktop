@@ -1,35 +1,56 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QDebug>
 #include <QTabBar>
 #include <QTabWidget>
 #include <QStyleOption>
 #include <QStyleOptionTab>
 #include <QStyleOptionTabBarBase>
-#include <QStyleOptionTabBarBaseV2>
-#include <QStyleOptionTabV2>
-#include <QStyleOptionTabV3>
+#include <QStyleOptionTabBarBase>
+#include <QStyleOptionTab>
+#include <QStyleOptionTab>
 #include <QStyleOptionTabWidgetFrame>
-#include <QStyleOptionTabWidgetFrameV2>
+#include <QStyleOptionTabWidgetFrame>
 #include <QMainWindow>
 #include <QToolBar>
 #include <QPaintDevice>
 #include <QPainter>
 #include <QApplication>
-#include <QStyleOptionToolBoxV2>
+#include <QStyleOptionToolBox>
 #include <QToolBox>
 #include <QStatusBar>
 
-#include "dsp.h"
-#include "stylelib/ops.h"
-#include "stylelib/gfx.h"
-#include "stylelib/color.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/xhandler.h"
+#include "nse.h"
+#include "atmolib/ops.h"
+#include "atmolib/gfx.h"
+#include "atmolib/color.h"
+#include "atmolib/animhandler.h"
+#include "atmolib/xhandler.h"
 #include "config/settings.h"
-#include "stylelib/handlers.h"
-#include "stylelib/windowhelpers.h"
-#include "stylelib/fx.h"
+#include "atmolib/handlers.h"
+#include "atmolib/windowhelpers.h"
+#include "atmolib/fx.h"
 
-using namespace DSP;
+using namespace NSE;
 
 static QPixmap s_tabBarShadow;
 
@@ -147,7 +168,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
         break;
     default: break;
     }
-    lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, bgc));
+    lg.setStops(NSE::Settings::gradientStops(dConf.tabs.gradient, bgc));
     GFX::drawClickable(dConf.tabs.shadow, r, painter, lg, dConf.tabs.rnd, hl, sides, opt, bar, QPoint(), true);
     static const quint8 sm = GFX::shadowMargin(dConf.tabs.shadow);
     const QRect mask(r.sAdjusted(sm, sm, -sm, -sm));
@@ -174,7 +195,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
 bool
 Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
+    const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
     if (!opt)
         return true;
     if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
@@ -188,7 +209,7 @@ Style::drawTabShape(const QStyleOption *option, QPainter *painter, const QWidget
 }
 
 bool
-Style::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
+Style::isVertical(const QStyleOptionTab *tab, const QTabBar *bar)
 {
     QTabBar::Shape tabShape(bar ? bar->shape() : tab ? tab->shape : QTabBar::RoundedNorth);
     switch (tabShape)
@@ -206,7 +227,7 @@ Style::isVertical(const QStyleOptionTabV3 *tab, const QTabBar *bar)
 bool
 Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
+    const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
     if (!opt)
         return true;
 
@@ -257,7 +278,7 @@ Style::drawTabLabel(const QStyleOption *option, QPainter *painter, const QWidget
 bool
 Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionTabV3 *opt = qstyleoption_cast<const QStyleOptionTabV3 *>(option);
+    const QStyleOptionTab *opt = qstyleoption_cast<const QStyleOptionTab *>(option);
     if (!opt)
         return true;
     if (opt->position == QStyleOptionTab::OnlyOneTab) //if theres only one tab then thats the selected one right? right? am I missing something?
@@ -265,8 +286,8 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
 
     const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
     const bool selected = isSelected(opt);
-    const bool first = opt->position == QStyleOptionTabV3::Beginning || opt->position == QStyleOptionTabV3::OnlyOneTab;
-    const bool last = opt->position == QStyleOptionTabV3::End;
+    const bool first = opt->position == QStyleOptionTab::Beginning || opt->position == QStyleOptionTab::OnlyOneTab;
+    const bool last = opt->position == QStyleOptionTab::End;
     const int level = selected ? 0 : (bar ? Anim::Tabs::level(bar, bar->tabAt(opt->rect.topLeft())) : 0);
 
     QColor c = opt->palette.color(/*widget?widget->backgroundRole():*/QPalette::Button);
@@ -367,7 +388,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     return true;
 }
 
-static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, const QTabBar *bar, QRect rect, const bool full = false)
+static void drawDocTabBar(const QStyleOptionTabBarBase *opt, QPainter *p, const QTabBar *bar, QRect rect, const bool full = false)
 {
     if (p->device()->devType() != QInternal::Widget)
         return;
@@ -458,7 +479,7 @@ static void drawDocTabBar(const QStyleOptionTabBarBaseV2 *opt, QPainter *p, cons
 bool
 Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionTabBarBaseV2 *opt = qstyleoption_cast<const QStyleOptionTabBarBaseV2 *>(option);
+    const QStyleOptionTabBarBase *opt = qstyleoption_cast<const QStyleOptionTabBarBase *>(option);
     if (!opt)
         return true;
     if (!widget)
@@ -490,7 +511,7 @@ Style::drawTabBar(const QStyleOption *option, QPainter *painter, const QWidget *
                 painter->setClipRegion(QRegion(r) - bef);
             }
         }
-        else if (dev && dev->property("DSP_konsoleTabBarParent").toBool())
+        else if (dev && dev->property("NSE_konsoleTabBarParent").toBool())
             r = opt->rect;
         else
             r = widget?widget->rect():opt->rect;
@@ -511,11 +532,7 @@ Style::drawTabWidget(const QStyleOption *option, QPainter *painter, const QWidge
         return true;
 
     QRect rect(opt->rect);
-#if QT_VERSION < 0x050000
-    const QTabBar *tabBar = tabWidget->findChild<const QTabBar *>(); //huh? why is the tabBar() protected??
-#else
     const QTabBar *tabBar = tabWidget->tabBar();
-#endif
     Sides sides(All);
     if (tabBar)
     {
@@ -684,15 +701,15 @@ Style::drawToolBoxTab(const QStyleOption *option, QPainter *painter, const QWidg
 bool
 Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionToolBoxV2 *opt = qstyleoption_cast<const QStyleOptionToolBoxV2 *>(option);
+    const QStyleOptionToolBox *opt = qstyleoption_cast<const QStyleOptionToolBox *>(option);
     if (!opt)
         return true;
     const QPalette pal(opt->palette);
 //    QRect geo(opt->rect);
 //    QWidget *w(0);
     QRect theRect(opt->rect);
-//    const bool first(opt->position == QStyleOptionToolBoxV2::Beginning);
-    const bool last(opt->position == QStyleOptionToolBoxV2::End);
+//    const bool first(opt->position == QStyleOptionToolBox::Beginning);
+    const bool last(opt->position == QStyleOptionToolBox::End);
 //    if (const QToolBox *box = qobject_cast<const QToolBox *>(widget))
 //    {
 //        if (box->frameShadow() == QFrame::Sunken)
@@ -702,7 +719,7 @@ Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const 
             painter->setPen(QColor(0, 0, 0, dConf.shadows.opacity));
             if (option->SUNKEN || !last)
                 painter->drawLine(theRect.bottomLeft(), theRect.bottomRight());
-            if (opt->selectedPosition == QStyleOptionToolBoxV2::PreviousIsSelected)
+            if (opt->selectedPosition == QStyleOptionToolBox::PreviousIsSelected)
                 painter->drawLine(theRect.topLeft(), theRect.topRight());
             painter->setPen(saved);
             return true;
@@ -728,7 +745,7 @@ Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const 
 //        sides &= ~Bottom;
 
 //    QLinearGradient lg(theRect.topLeft(), theRect.bottomLeft());
-//    lg.setStops(DSP::Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
+//    lg.setStops(NSE::Settings::gradientStops(dConf.tabs.gradient, pal.color(QPalette::Button)));
 //    GFX::drawClickable(dConf.tabs.shadow, theRect, painter, lg, qMin<int>(opt->rect.height()/2, dConf.tabs.rnd), sides, option, w);
 //    return true;
 }
@@ -736,12 +753,12 @@ Style::drawToolBoxTabShape(const QStyleOption *option, QPainter *painter, const 
 bool
 Style::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionToolBoxV2 *opt = qstyleoption_cast<const QStyleOptionToolBoxV2 *>(option);
+    const QStyleOptionToolBox *opt = qstyleoption_cast<const QStyleOptionToolBox *>(option);
     if (!opt)
         return true;
 
     const QPalette pal(widget?widget->palette():opt->palette);
-    const bool isSelected((opt->state & State_Selected) || opt->position == QStyleOptionToolBoxV2::OnlyOneTab);
+    const bool isSelected((opt->state & State_Selected) || opt->position == QStyleOptionToolBox::OnlyOneTab);
     QRect textRect(opt->rect.adjusted(4, 0, -4, 0));
     if (!opt->icon.isNull())
     {

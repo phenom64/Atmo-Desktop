@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QPainter>
@@ -9,12 +30,12 @@
 
 #include "kwinclient.h"
 #include "factory.h"
-#include "../stylelib/xhandler.h"
-#include "../stylelib/shadowhandler.h"
+#include "../atmolib/xhandler.h"
+#include "../atmolib/shadowhandler.h"
 
-KWIN_DECORATION(DSP::Factory)
+KWIN_DECORATION(NSE::Factory)
 
-using namespace DSP;
+using namespace NSE;
 
 #if 0
 static QMap<QString, DecoData> s_data;
@@ -33,8 +54,8 @@ static void addDataForWinClass(const QString &winClass, QSettings &s)
 static void readWindowData()
 {
     s_data.clear();
-    static const QString confPath(QString("%1/.config/dsp").arg(QDir::homePath()));
-    QSettings s(QString("%1/dspdeco.conf").arg(confPath), QSettings::IniFormat);
+    static const QString confPath(QString("%1/.config/NSE").arg(QDir::homePath()));
+    QSettings s(QString("%1/NSEdeco.conf").arg(confPath), QSettings::IniFormat);
     bool hasDefault(false);
     foreach (const QString winClass, s.childGroups())
     {
@@ -147,12 +168,12 @@ Factory::Factory()
 
 //    QString string = QString("_NET_WM_CM_S%1").arg(DefaultScreen(QX11Info::display()));
 //    s_wmAtom = XInternAtom(QX11Info::display(), string.toAscii().data(), False);
-    DSP::ShadowHandler::removeDelete();
+    NSE::ShadowHandler::removeDelete();
 }
 
 Factory::~Factory()
 {
-    DSP::ShadowHandler::removeDelete();
+    NSE::ShadowHandler::removeDelete();
 //    if (this == s_instance)
 //    {
 //        s_instance = 0;

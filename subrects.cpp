@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QStylePlugin>
 #include <QWidget>
 #include <QStyleOption>
@@ -11,12 +32,12 @@
 #include <QAbstractItemView>
 #include <QMainWindow>
 #include <QGroupBox>
-#include <QStyleOptionProgressBarV2>
+#include <QStyleOptionProgressBar>
 #include <QStyleOptionDockWidget>
-#include <QStyleOptionDockWidgetV2>
+#include <QStyleOptionDockWidget>
 #include <QProgressBar>
 #include <QStyleOptionToolButton>
-#include <QStyleOptionViewItemV4>
+#include <QStyleOptionViewItem>
 #include <QComboBox>
 #include <QLayout>
 #include <QHBoxLayout>
@@ -24,14 +45,14 @@
 #include <QAbstractButton>
 #include <QLineEdit>
 
-#include "dsp.h"
-#include "stylelib/progresshandler.h"
-#include "stylelib/ops.h"
+#include "nse.h"
+#include "atmolib/progresshandler.h"
+#include "atmolib/ops.h"
 #include "config/settings.h"
-#include "stylelib/gfx.h"
+#include "atmolib/gfx.h"
 #include "overlay.h"
 
-using namespace DSP;
+using namespace NSE;
 
 QRect
 Style::subControlRect(ComplexControl cc, const QStyleOptionComplex *opt, SubControl sc, const QWidget *w) const
@@ -58,13 +79,13 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     case SE_ItemViewItemDecoration:
     case SE_ItemViewItemText:
     {
-        const QStyleOptionViewItemV4 *item = qstyleoption_cast<const QStyleOptionViewItemV4 *>(opt);
+        const QStyleOptionViewItem *item = qstyleoption_cast<const QStyleOptionViewItem *>(opt);
         if (!item)
             return QRect();
 
         const int m(2);
         QRect textRect(item->rect.adjusted(m, 0, -m, 0)), iconRect(textRect), checkRect(textRect);
-        if (item->features & QStyleOptionViewItemV2::HasCheckIndicator)
+        if (item->features & QStyleOptionViewItem::HasCheckIndicator)
         {
             int size(pixelMetric(PM_IndicatorWidth, item, widget));
             checkRect.setWidth(size);
@@ -157,7 +178,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     case SE_TabBarTabRightButton:
     case SE_TabBarTabText:
     {
-        const QStyleOptionTabV3 *tab = qstyleoption_cast<const QStyleOptionTabV3 *>(opt);
+        const QStyleOptionTab *tab = qstyleoption_cast<const QStyleOptionTab *>(opt);
         const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
         if (!tab)
             return QRect();
@@ -247,8 +268,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
                 textRect.setRight(rightRect.left());
         }
         const bool needShift = dConf.tabs.regular && !tab->documentMode && !isSelected(tab);
-        const bool last = tab->position == QStyleOptionTabV3::End;
-        const bool first = tab->position == QStyleOptionTabV3::Beginning||tab->position == QStyleOptionTabV3::OnlyOneTab;
+        const bool last = tab->position == QStyleOptionTab::End;
+        const bool first = tab->position == QStyleOptionTab::Beginning||tab->position == QStyleOptionTab::OnlyOneTab;
         const bool needPadding = !safBar && tab->documentMode;
         switch (tab->shape)
         {
@@ -371,7 +392,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_TabWidgetTabContents:
     {
-        const QStyleOptionTabWidgetFrameV2 *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrameV2 *>(opt);
+        const QStyleOptionTabWidgetFrame *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(opt);
         const QTabWidget *tw = qobject_cast<const QTabWidget *>(widget);
         QRect rect = QCommonStyle::subElementRect(r, opt, widget);
         if (tw && !tw->documentMode())
@@ -380,7 +401,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     }
     case SE_TabWidgetLayoutItem:
     {
-        const QStyleOptionTabWidgetFrameV2 *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrameV2 *>(opt);
+        const QStyleOptionTabWidgetFrame *twf = qstyleoption_cast<const QStyleOptionTabWidgetFrame *>(opt);
         const QTabWidget *tw = qobject_cast<const QTabWidget *>(widget);
         if (tw && !tw->documentMode())
             return visualRect(twf->direction, twf->rect, twf->rect.growed(4));
@@ -453,7 +474,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     case SE_ProgressBarGroove:
     case SE_ProgressBarContents:
     {
-        const QStyleOptionProgressBarV2 *bar = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
+        const QStyleOptionProgressBar *bar = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
         if (bar && dConf.progressbars.textPos)
         {
             const quint16 add = bar->fontMetrics.width(bar->text);

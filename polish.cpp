@@ -1,16 +1,37 @@
-#include "dsp.h"
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
+#include "nse.h"
 #include "overlay.h"
-#include "stylelib/ops.h"
-#include "stylelib/shadowhandler.h"
-#include "stylelib/progresshandler.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/handlers.h"
-#include "stylelib/xhandler.h"
+#include "atmolib/ops.h"
+#include "atmolib/shadowhandler.h"
+#include "atmolib/progresshandler.h"
+#include "atmolib/animhandler.h"
+#include "atmolib/handlers.h"
+#include "atmolib/xhandler.h"
 #include "config/settings.h"
-#include "stylelib/color.h"
-#include "stylelib/stackanimator.h"
+#include "atmolib/color.h"
+#include "atmolib/stackanimator.h"
 #include "defines.h"
-#include "stylelib/titlewidget.h"
+#include "atmolib/titlewidget.h"
 
 #include <QStackedWidget>
 #include <QStackedLayout>
@@ -54,13 +75,13 @@
  */
 #include "defines.h"
 #if HASDBUS
-#include "stylelib/macmenu.h"
+#include "atmolib/macmenu.h"
 #endif
 
 #if QT_VERSION >= 0x050000
 #include <QWindow>
 #endif
-using namespace DSP;
+using namespace NSE;
 
 void
 Style::polish(QWidget *widget)
@@ -175,7 +196,7 @@ Style::polish(QWidget *widget)
                 QWidget *center = win->centralWidget();
                 if (center && !qobject_cast<QTabWidget *>(center) && center->layout())
                 {
-                    center->setProperty("DSP_center", true);
+                    center->setProperty("NSE_center", true);
                     installFilter(center);
                     installFilter(win);
                     QPalette pal(center->palette());
@@ -614,9 +635,9 @@ Style::polishSlot(qulonglong w)
         if (tabBar->expanding() && !dConf.uno.enabled)
             tabBar->setExpanding(false);
 
-        if (dConf.app == DSP::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
+        if (dConf.app == NSE::Settings::Konsole && tabBar->parentWidget() && tabBar->documentMode())
         {
-            tabBar->parentWidget()->setProperty("DSP_konsoleTabBarParent", true);
+            tabBar->parentWidget()->setProperty("NSE_konsoleTabBarParent", true);
             installFilter(tabBar->parentWidget());
             disconnect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));
             connect(Handlers::Window::instance(), SIGNAL(windowDataChanged(QWidget*)), tabBar->parentWidget(), SLOT(update()));

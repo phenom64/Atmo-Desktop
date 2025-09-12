@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 
 #include <QApplication>
 #include <QDebug>
@@ -40,7 +61,7 @@ Task getTask(int argc, char *argv[])
 
 static void printShadowInfo(const int shadow)
 {
-    qDebug() << DSP::Settings::shadowDescription(shadow);
+    qDebug() << NSE::Settings::shadowDescription(shadow);
 }
 
 static const char *stylishedTypeName(const char *typeName)
@@ -60,19 +81,19 @@ static const char *stylishedTypeName(const char *typeName)
 }
 
 template<typename T>
-static void printInfo(DSP::Settings::Key k, const char *typeName)
+static void printInfo(NSE::Settings::Key k, const char *typeName)
 {
-    qDebug()  << "Description: "     << DSP::Settings::description(k)
-              << "\nValue:       "   << DSP::Settings::readVal(k).value<T>()
-              << "\nDefault:     "   << DSP::Settings::defaultValue(k).value<T>()
+    qDebug()  << "Description: "     << NSE::Settings::description(k)
+              << "\nValue:       "   << NSE::Settings::readVal(k).value<T>()
+              << "\nDefault:     "   << NSE::Settings::defaultValue(k).value<T>()
               << "\nType:        "   << stylishedTypeName(typeName);
 }
 
 static void printHelp()
 {
     qDebug()  << "Options:\n"
-              << "--writedefaults                 Write default values to dsp.conf\n"
-              << "--edit                          Open dsp.conf for editing in your default text editor\n"
+              << "--writedefaults                 Write default values to NSE.conf\n"
+              << "--edit                          Open NSE.conf for editing in your default text editor\n"
               << "--printinfo <var>               Print information about <var>\n"
               << "--listvars                      List available variables\n"
               << "--listiconpaths                 List paths where qt looks for icons\n"
@@ -83,41 +104,41 @@ static void printHelp()
 static void printVars()
 {
     int colW(0);
-    for (int i = 0; i < DSP::Settings::Keycount; ++i)
+    for (int i = 0; i < NSE::Settings::Keycount; ++i)
     {
-        int col = strlen(DSP::Settings::key((DSP::Settings::Key)i));
+        int col = strlen(NSE::Settings::key((NSE::Settings::Key)i));
         if (col > colW)
             colW = col;
     }
     colW += 4; //some nice spacing...
-    for (int i = 0; i < DSP::Settings::Keycount; ++i)
+    for (int i = 0; i < NSE::Settings::Keycount; ++i)
     {
 #if 0
         QString line;
-        line.append(DSP::Settings::key((DSP::Settings::Key)i));
+        line.append(NSE::Settings::key((NSE::Settings::Key)i));
         line.append("\t\t");
         line.append("Value: ");
-        line.append(DSP::Settings::readVal((DSP::Settings::Key)i).toString());
+        line.append(NSE::Settings::readVal((NSE::Settings::Key)i).toString());
         line.append("\t\t");
         line.append("Default: ");
-        line.append(DSP::Settings::defaultValue((DSP::Settings::Key)i).toString());
+        line.append(NSE::Settings::defaultValue((NSE::Settings::Key)i).toString());
         line.append("\t\t");
         line.append("Description: ");
-        line.append(DSP::Settings::description((DSP::Settings::Key)i));
+        line.append(NSE::Settings::description((NSE::Settings::Key)i));
         line.append("\n");
         std::cout << line.toLatin1().data();
 #endif
         std::cout << std::left
                   << std::setw(colW)
-                  << DSP::Settings::key((DSP::Settings::Key)i)
+                  << NSE::Settings::key((NSE::Settings::Key)i)
 //                  << "Value: "
 //                  << std::setw(40)
-//                  << DSP::Settings::readVal((DSP::Settings::Key)i).toString().toLatin1().data()
+//                  << NSE::Settings::readVal((NSE::Settings::Key)i).toString().toLatin1().data()
 //                  << "Default: "
 //                  << std::setw(30)
-//                  << DSP::Settings::defaultValue((DSP::Settings::Key)i).toString().toLatin1().data()
+//                  << NSE::Settings::defaultValue((NSE::Settings::Key)i).toString().toLatin1().data()
 //                  << "Description: "
-                  << DSP::Settings::description((DSP::Settings::Key)i)
+                  << NSE::Settings::description((NSE::Settings::Key)i)
                   << std::endl;
     }
     std::cout << std::endl
@@ -200,7 +221,7 @@ static void printIconPaths()
 
 static void printIconThemes()
 {
-    const QStringList themes = DSP::Settings::availableIconThemes();
+    const QStringList themes = NSE::Settings::availableIconThemes();
     std::cout << std::endl << "Available icon themes:" << std::endl << std::endl;
     for (int i = 0; i < themes.size(); ++i)
         std::cout << "\t" << QString(themes.at(i)).toLocal8Bit().data() << std::endl;
@@ -212,16 +233,16 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     switch (t)
     {
-    case WriteDefaults: DSP::Settings::writeDefaults(); break;
-    case Edit: DSP::Settings::edit(); break;
+    case WriteDefaults: NSE::Settings::writeDefaults(); break;
+    case Edit: NSE::Settings::edit(); break;
     case IconPaths: printIconPaths(); break;
     case PrintIconThemes: printIconThemes(); break;
     case PrintInfo:
     {
-        DSP::Settings::Key k = DSP::Settings::key(argv[2]);
-        if (k != DSP::Settings::Invalid)
+        NSE::Settings::Key k = NSE::Settings::key(argv[2]);
+        if (k != NSE::Settings::Invalid)
         {
-            const char *typeName = DSP::Settings::defaultValue(k).typeName();
+            const char *typeName = NSE::Settings::defaultValue(k).typeName();
             if (!qstrcmp(typeName, "QStringList"))
                 printInfo<QStringList>(k, typeName);
             else if (!qstrcmp(typeName, "QString"))

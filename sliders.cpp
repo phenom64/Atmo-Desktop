@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #include <QScrollBar>
 #include <QStyleOptionComplex>
 #include <QStyleOptionSlider>
@@ -8,23 +29,23 @@
 #include <QTextEdit>
 #include <QProgressBar>
 #include <QStyleOptionProgressBar>
-#include <QStyleOptionProgressBarV2>
+#include <QStyleOptionProgressBar>
 #include <QTextBrowser>
 #include <QApplication>
 #include <QPolygon>
 #include <QMap>
 
-#include "dsp.h"
-#include "stylelib/gfx.h"
-#include "stylelib/ops.h"
-#include "stylelib/color.h"
-#include "stylelib/progresshandler.h"
-#include "stylelib/animhandler.h"
+#include "nse.h"
+#include "atmolib/gfx.h"
+#include "atmolib/ops.h"
+#include "atmolib/color.h"
+#include "atmolib/progresshandler.h"
+#include "atmolib/animhandler.h"
 #include "config/settings.h"
 #include "overlay.h"
-#include "stylelib/fx.h"
+#include "atmolib/fx.h"
 
-using namespace DSP;
+using namespace NSE;
 
 bool
 Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -155,7 +176,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
         QColor bgColor(pal.color(QPalette::Button)), fgColor(pal.color(QPalette::ButtonText));
 
         QLinearGradient lg(0, 0, !hor*opt->rect.width(), hor*opt->rect.height());
-        lg.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
+        lg.setStops(NSE::Settings::gradientStops(dConf.scrollers.sliderGrad, bgColor));
 
         ///the background
         painter->fillRect(opt->rect, lg);
@@ -236,7 +257,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
                 pix.fill(Qt::transparent);
                 QPainter p(&pix);
                 QLinearGradient gradient(pix.rect().topLeft(), hor?pix.rect().bottomLeft():pix.rect().topRight());
-                gradient.setStops(DSP::Settings::gradientStops(dConf.scrollers.sliderGrad, pal.color(QPalette::Highlight)));
+                gradient.setStops(NSE::Settings::gradientStops(dConf.scrollers.sliderGrad, pal.color(QPalette::Highlight)));
                 p.fillRect(pix.rect(), gradient);
                 QRadialGradient rad(pix.rect().center()+QPoint(1, 1), pix.rect().width());
                 rad.setColorAt(0, QColor(255, 255, 255, 170));
@@ -337,7 +358,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     }
 
     QLinearGradient lga(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
-    lga.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
+    lga.setStops(NSE::Settings::gradientStops(dConf.sliders.grooveGrad, gbgc));
 
     QRect fill(groove), unfill(groove);
     Sides sides = All, fillSides = All;
@@ -385,7 +406,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     if (dConf.sliders.fillGroove || dConf.sliders.grooveStyle == 4)
     {
         QLinearGradient lgh(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
-        lgh.setStops(DSP::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(dConf.sliders.grooveStyle == 4 ? QPalette::Base : QPalette::Highlight)));
+        lgh.setStops(NSE::Settings::gradientStops(dConf.sliders.grooveGrad, opt->palette.color(dConf.sliders.grooveStyle == 4 ? QPalette::Base : QPalette::Highlight)));
         GFX::drawClickable(gs, fill, painter, lgh, d, 0, fillSides, option, widget);
     }
 
@@ -430,7 +451,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     {
         const int add = !(slider.width() & 1) * 1;
         QConicalGradient cg(slider.center()+QPoint(add,add), -45);
-//        cg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+//        cg.setStops(NSE::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
         const QColor light = Color::mid(bgc, Qt::white, 2, 1);
         const QColor dark = Color::mid(bgc, Qt::black, 2, 1);
         cg.setColorAt(0, light);
@@ -443,7 +464,7 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     else
     {
         QLinearGradient lg(slider.topLeft(), slider.bottomLeft());
-        lg.setStops(DSP::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
+        lg.setStops(NSE::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
         g = lg;
     }
     const ShadowStyle sliderShadow(dConf.sliders.grooveShadow==Rect?Rect:dConf.sliders.grooveShadow==-1?-1:Raised);
@@ -463,7 +484,7 @@ QRect
 Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
 {
     const QStyleOptionProgressBar *bar = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
-    const QStyleOptionProgressBarV2 *barv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(opt);
+    const QStyleOptionProgressBar *barv2 = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
     if (!bar)
         return QRect();
     if (bar->minimum == 0 && bar->maximum == 0) //busy
@@ -507,7 +528,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     if (!opt->progress && !(opt->minimum == 0 && opt->maximum == 0))
         return true;
 
-    const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
+    const QStyleOptionProgressBar *optv2 = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
     const bool hor(!optv2 || optv2->orientation == Qt::Horizontal);
     const QRect cont(progressContents(opt, widget)); //The progress indicator of a QProgressBar.
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
@@ -588,7 +609,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
 bool
 Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
-    const QStyleOptionProgressBarV2 *opt = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
+    const QStyleOptionProgressBar *opt = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
     if (!opt)
         return true;
 
@@ -617,7 +638,7 @@ bool
 Style::drawProgressBarLabel(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
     const QStyleOptionProgressBar *opt = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
-    const QStyleOptionProgressBarV2 *optv2 = qstyleoption_cast<const QStyleOptionProgressBarV2 *>(option);
+    const QStyleOptionProgressBar *optv2 = qstyleoption_cast<const QStyleOptionProgressBar *>(option);
     if (!opt || opt->text.isEmpty() || (dConf.progressbars.txtHover && !isMouseOver(opt) && !dConf.progressbars.textPos))
         return true;
 

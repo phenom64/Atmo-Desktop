@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 
 #include <QPainter>
 #include <QStyleOption>
@@ -15,18 +36,18 @@
 #include <QCheckBox>
 #include <QHBoxLayout>
 
-#include "dsp.h"
-#include "stylelib/gfx.h"
-#include "stylelib/ops.h"
-#include "stylelib/color.h"
-#include "stylelib/animhandler.h"
-#include "stylelib/shadows.h"
+#include "nse.h"
+#include "atmolib/gfx.h"
+#include "atmolib/ops.h"
+#include "atmolib/color.h"
+#include "atmolib/animhandler.h"
+#include "atmolib/shadows.h"
 #include "config/settings.h"
-#include "stylelib/handlers.h"
-#include "stylelib/masks.h"
-#include "stylelib/fx.h"
+#include "atmolib/handlers.h"
+#include "atmolib/masks.h"
+#include "atmolib/fx.h"
 
-using namespace DSP;
+using namespace NSE;
 
 bool
 Style::drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -81,7 +102,7 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
 //    else if (isEnabled(opt))
 //        bc = Color::mid(bc, sc, Steps-hl, hl);
     QLinearGradient lg(opt->rect.topLeft(), opt->rect.bottomLeft());
-    lg.setStops(DSP::Settings::gradientStops(dConf.pushbtn.gradient, bc));
+    lg.setStops(NSE::Settings::gradientStops(dConf.pushbtn.gradient, bc));
     GFX::drawClickable(dConf.pushbtn.shadow, opt->rect, painter, lg, dConf.pushbtn.rnd, hl, All, option, widget);
     return true;
 }
@@ -311,7 +332,7 @@ Style::normalButton(const QAbstractButton *btn)
     QWidget *p = btn->parentWidget();
     if (qobject_cast<QTabBar *>(p)
             || p->inherits("TabBar")
-            || p->property("DSP_konsoleTabBarParent").toBool()
+            || p->property("NSE_konsoleTabBarParent").toBool()
             || (p->autoFillBackground() && p->backgroundRole() != QPalette::Window))
         return false;
     return true;
@@ -424,9 +445,9 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
         QPainter p(&pix);
         QLinearGradient lg(pix.rect().topLeft(), hor?pix.rect().bottomLeft():pix.rect().topRight());
         if (dConf.toolbtn.mask || sunken)
-            lg.setStops(DSP::Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bc));
+            lg.setStops(NSE::Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient, bc));
         else
-            lg.setStops(DSP::Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient));
+            lg.setStops(NSE::Settings::gradientStops(sunken?dConf.toolbtn.activeGradient:dConf.toolbtn.gradient));
         p.fillRect(pix.rect(), lg);
         s_map.insert(check, pix);
     }

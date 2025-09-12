@@ -1,3 +1,24 @@
+/* This file is a part of the Atmo desktop experience framework project for SynOS .
+ * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
+ * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/**************************************************************************
+*   Based on styleproject, Copyright (C) 2013 by Robert Metsaranta        *
+*   therealestrob@gmail.com                                              *
+***************************************************************************/
 #ifndef KWINCLIENT2_H
 #define KWINCLIENT2_H
 
@@ -10,7 +31,7 @@
 #include <netwm_def.h>
 #include <KPluginFactory>
 #include "../config/settings.h"
-#include "../stylelib/windowdata.h"
+#include "../atmolib/windowdata.h"
 namespace KDecoration2 { class DecorationButtonGroup; }
 class WindowData;
 class QPixmap;
@@ -21,7 +42,7 @@ class DSPDecoFactory : public KPluginFactory
 {
     Q_OBJECT
     Q_INTERFACES(KPluginFactory)
-    Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE "dsp.json")
+    Q_PLUGIN_METADATA(IID KPluginFactory_iid FILE "atmo.json")
 public:
     explicit DSPDecoFactory();
     ~DSPDecoFactory();
@@ -37,7 +58,7 @@ protected slots:
 //    }
 };
 
-namespace DSP
+namespace NSE
 {
 
 class ConfigModule : public KCModule
@@ -224,13 +245,13 @@ class AdaptorManager : public QObject
     Q_OBJECT
 public:
     static AdaptorManager *instance();
-    inline void addDeco(DSP::Deco *d) { m_decos << d; }
-    inline void removeDeco(DSP::Deco *d) { m_decos.removeOne(d); }
+    inline void addDeco(NSE::Deco *d) { m_decos << d; }
+    inline void removeDeco(NSE::Deco *d) { m_decos.removeOne(d); }
     inline void updateData(uint win)
     {
         for (int i = 0; i < m_decos.count(); ++i)
         {
-            DSP::Deco *d = m_decos.at(i);
+            NSE::Deco *d = m_decos.at(i);
             if (d->client().data()->windowId() == win)
             {
                 d->updateData();
@@ -242,7 +263,7 @@ public:
     {
         for (int i = 0; i < m_decos.count(); ++i)
         {
-            DSP::Deco *d = m_decos.at(i);
+            NSE::Deco *d = m_decos.at(i);
             if (d->client().data()->windowId() == win)
             {
                 d->update();
@@ -259,7 +280,7 @@ protected:
 
 private:
     static AdaptorManager *s_instance;
-    QList<DSP::Deco *> m_decos;
+    QList<NSE::Deco *> m_decos;
     DecoAdaptor *m_adaptor;
 };
 
@@ -287,5 +308,5 @@ private:
     QPixmap m_pix;
 };
 
-} //DSP
+} //NSE
 #endif //KWINCLIENT2_H
