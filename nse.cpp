@@ -327,9 +327,9 @@ Style::drawText(const QRect &r,
     const QFont font = p->font();
     QFont f = p->font();
     text = QFontMetrics(f).elidedText(text, Qt::ElideNone, QWIDGETSIZE_MAX, Qt::TextShowMnemonic);
-    int regularW(QFontMetrics(f).width(text));
+    int regularW(QFontMetrics(f).horizontalAdvance(text));
     f.setBold(bold);
-    int boldW(QFontMetrics(f).width(text));
+    int boldW(QFontMetrics(f).horizontalAdvance(text));
     if (bold && regularW && boldW && (forceStretch || boldW > r.width()))
         f.setStretch(qCeil((double)regularW * 100.0f / (double)boldW));
     if (elide != Qt::ElideNone)

@@ -583,7 +583,7 @@ Style::polish(QApplication *app)
     else if (app)
     {
         QPalette p = app->palette();
-        for (int i = 0; i <= QPalette::Background; ++i)
+        for (int i = 0; i <= QPalette::Window; ++i)
             p.setColor(QPalette::Inactive, QPalette::ColorRole(i), p.color(QPalette::Active, QPalette::ColorRole(i)));
         qApp->setPalette(p);
     }

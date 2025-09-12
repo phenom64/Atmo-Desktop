@@ -6,6 +6,9 @@
         "Version": "1.0",
         "License": "GPLv2+",
         "EnabledByDefault": true,
+        "Category": "Appearance",
+        "Website": "https://syndromatic.com",
+        "BugReportUrl": "https://github.com/phenom64/Atmo-Desktop/issues",
         "Authors": [
             { "Name": "Syndromatic Ltd." }
         ]

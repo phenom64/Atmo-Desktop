@@ -31,8 +31,17 @@
 #include <iostream>     // std::cout, std::endl
 #include <iomanip>      // std::setw
 #include <QIcon>
+#include <QStandardPaths>
+#include <QFile>
+#include <QDir>
+#include <QFileInfo>
 
-enum Task { WriteDefaults = 0, Edit, IconPaths, PrintIconThemes, PrintInfo, ListVars, ShadowInfo, GenHighlight, Invalid };
+#ifndef ATMO_VERSION_STR
+#define ATMO_VERSION_STR "1.0.0"
+#endif
+static const char *ATMO_VERSION = ATMO_VERSION_STR;
+
+enum Task { WriteDefaults = 0, Edit, IconPaths, PrintIconThemes, PrintInfo, ListVars, ShadowInfo, GenHighlight, PrintVersion, NSEConfigOptions, Invalid };
 
 Task getTask(int argc, char *argv[])
 {
@@ -54,6 +63,10 @@ Task getTask(int argc, char *argv[])
             return ShadowInfo;
         if (!qstrcmp(argv[1], "--genhighlight") && argc > 2)
             return GenHighlight;
+        if (!qstrcmp(argv[1], "-v") || !qstrcmp(argv[1], "--version"))
+            return PrintVersion;
+        if (!qstrcmp(argv[1], "--nseconfig-options"))
+            return NSEConfigOptions;
 
     }
     return Invalid;
@@ -98,7 +111,9 @@ static void printHelp()
               << "--listvars                      List available variables\n"
               << "--listiconpaths                 List paths where qt looks for icons\n"
               << "--listiconthemes                List available icon themes\n"
-              << "--shadowinfo <int>              print info about shadow <int>";
+              << "--shadowinfo <int>              print info about shadow <int>\n"
+              << "--nseconfig-options             Elaborate guidance for NSE.conf\n"
+              << "-v, --version                   Print version";
 }
 
 static void printVars()
@@ -227,16 +242,74 @@ static void printIconThemes()
         std::cout << "\t" << QString(themes.at(i)).toLocal8Bit().data() << std::endl;
 }
 
+static void printHeader()
+{
+    std::cout << "Configuration tool for the Atmo Desktop Experience Framework (NSE)" << std::endl;
+    std::cout << "TM & (C) 2025. Syndromatic Ltd. All rights reserved." << std::endl;
+    std::cout << "Designed by Kavish Krishnakumar in Manchester." << std::endl << std::endl;
+}
+
+static void printNSEConfigOptions()
+{
+    std::cout << "The file" << std::endl << std::endl;
+    std::cout << "The configuration is done by editing the file ~/.config/NSE/NSE.conf.\n";
+    std::cout << "You'll need to create it (or run --writedefaults)." << std::endl << std::endl;
+    std::cout << "Variables" << std::endl << std::endl;
+    std::cout << "These all come under the [General] section in the file." << std::endl << std::endl;
+    std::cout << "opacity=100 (integer)\n  Opacity of the UNO parts of the window, 0 fully translucent, 100 fully opaque\n\n";
+    std::cout << "blacklist=smplayer (stringlist)\n  Applications that should not get translucency (e.g. video players).\n\n";
+    std::cout << "removetitlebars=false (boolean)\n  Mac-like hack to hide titlebars and show window buttons inside toolbars.\n\n";
+    std::cout << "titlepos=1 (integer)\n  Title alignment when removetitlebars=true. 0=Left 1=Center 2=Right\n\n";
+    std::cout << "hackdialogs=false (boolean)\n  Mac-like dialog alignment and appearance without titlebars.\n\n";
+    std::cout << "compactmenu=false (boolean)\n  Make the menu into a toolbutton in the toolbar.\n\n";
+    std::cout << "splitterext=false (boolean)\n  Extends tiny splitter handles when hovered to make them easier to grab.\n\n";
+    std::cout << "maxarrowsize=9 (integer)\n  Maximum size of arrows in various places.\n\n";
+    std::cout << "Window Decoration (deco.*)\n  deco.buttons=0 (integer: 0..3)\n    0=Yosemite flat, 1=Lion/Mavericks glassy, 2=Sunken, 3=Carved\n  deco.icon=false (boolean)\n  deco.shadowsize=64 (integer)\n\n";
+    std::cout << "Pushbuttons (pushbtn.*)\n  pushbtn.rnd, pushbtn.shadow, pushbtn.gradient, pushbtn.tinthue\n\n";
+    std::cout << "ToolButtons (toolbtn.*)\n  toolbtn.rnd, toolbtn.shadow, toolbtn.gradient, toolbtn.activegradient,\n  toolbtn.tinthue, toolbtn.invertactive, toolbtn.followcolors, toolbtn.flat\n\n";
+    std::cout << "Inputs (input.*)\n  input.rnd, input.shadow, input.gradient, input.tinthue\n\n";
+    std::cout << "Tabs (tabs.*)\n  tabs.safrnd, tabs.rnd, tabs.shadow, tabs.gradient, tabs.closebuttonside\n\n";
+    std::cout << "UNO (uno.*)\n  uno.gradient, uno.tinthue, uno.noisefactor, uno.noisestyle, uno.horizontal,\n  uno.contentaware, uno.contentopacity, uno.contentblurradius\n\n";
+    std::cout << "Menues (menues.*), ScrollBars (scrollers.*), Sliders (sliders.*),\n  ProgressBars (progressbars.*), Shadows (shadows.*) are similarly structured.\n\n";
+    std::cout << "For full details, see atmo_config --listvars and --printinfo <var>." << std::endl;
+}
+
+static bool copyDefaultNSEConf()
+{
+    const QString userDir = QDir::homePath() + "/.config/NSE";
+    QDir().mkpath(userDir);
+    const QString userFile = userDir + "/NSE.conf";
+    const QString templateFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf"));
+    if (templateFile.isEmpty())
+        return false;
+    // Overwrite with template defaults
+    QFile::remove(userFile);
+    return QFile::copy(templateFile, userFile);
+}
+
 int main(int argc, char *argv[])
 {
     const Task t = getTask(argc, argv);
     QApplication app(argc, argv);
+    printHeader();
     switch (t)
     {
-    case WriteDefaults: NSE::Settings::writeDefaults(); break;
+    case WriteDefaults:
+    {
+        if (!copyDefaultNSEConf())
+        {
+            qDebug() << "Falling back to internal defaults (could not locate /usr/share/atmo/NSE.conf).";
+            NSE::Settings::writeDefaults();
+        }
+        else
+            qDebug() << "Wrote default NSE.conf from template.";
+        break;
+    }
     case Edit: NSE::Settings::edit(); break;
     case IconPaths: printIconPaths(); break;
     case PrintIconThemes: printIconThemes(); break;
+    case PrintVersion: std::cout << "Atmo Config version " << ATMO_VERSION << std::endl; break;
+    case NSEConfigOptions: printNSEConfigOptions(); break;
     case PrintInfo:
     {
         NSE::Settings::Key k = NSE::Settings::key(argv[2]);

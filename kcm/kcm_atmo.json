@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Id": "com.syndromatic.atmo.kcm",
+        "Name": "Atmo",
+        "Description": "Atmo (NSE) settings module (stub)",
+        "Version": "1.0",
+        "License": "GPLv2+",
+        "Category": "Appearance",
+        "EnabledByDefault": true,
+        "Authors": [ { "Name": "Syndromatic Ltd." } ]
+    },
+    "X-KDE-FactoryName": "KCMAtmoFactory",
+    "X-KDE-ParentComponents": [
+        "kcmshell5"
+    ],
+    "ServiceTypes": [ "KCModule" ]
+}
+

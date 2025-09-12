@@ -616,7 +616,7 @@ Settings
 Gradient
 Settings::stringToGrad(const QString &string)
 {
-    const QStringList pairs(string.split(",", QString::SkipEmptyParts));
+    const QStringList pairs(string.split(",", Qt::SkipEmptyParts));
     Gradient gradient;
     if (pairs.isEmpty())
         return gradient;
