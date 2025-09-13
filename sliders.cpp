@@ -534,6 +534,57 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget));
     const QColor h(opt->palette.color(QPalette::Highlight));
 
+    // Aqua-like skeuomorphic (mirror of scrollers.style == 3)
+    if (dConf.scrollers.style == 3)
+    {
+        int sz = qMin(cont.width(), cont.height());
+        if (sz <= 0)
+            return true;
+        static QMap<quint64, QPixmap> pixMap3;
+        quint64 check = ((quint64)h.rgba()) | ((quint64)sz << 32) | ((quint64)hor << 48);
+        if (!pixMap3.contains(check))
+        {
+            QPixmap pix(sz, sz);
+            pix.fill(Qt::transparent);
+            QPainter p(&pix);
+            QLinearGradient gradient(pix.rect().topLeft(), hor ? pix.rect().bottomLeft() : pix.rect().topRight());
+            // Use progressbar gradient tinted by highlight
+            gradient.setStops(NSE::Settings::gradientStops(dConf.progressbars.gradient, h));
+            p.fillRect(pix.rect(), gradient);
+            // glossy radial overlay
+            QRadialGradient rad(pix.rect().center()+QPoint(1,1), pix.rect().width());
+            rad.setColorAt(0, QColor(255,255,255,170));
+            rad.setColorAt(1, Qt::transparent);
+            rad.setSpread(QGradient::ReflectSpread);
+            p.setCompositionMode(QPainter::CompositionMode_Overlay);
+            p.fillRect(pix.rect(), rad);
+            p.end();
+            pixMap3.insert(check, pix);
+        }
+        painter->save();
+        painter->setClipRect(groove);
+        painter->fillRect(groove, opt->palette.color(QPalette::Base));
+        painter->restore();
+        QBrush brush(pixMap3.value(check));
+        QRect c = cont.adjusted(1,1,-1,-1);
+        GFX::drawMask(c, painter, brush, dConf.progressbars.rnd);
+        const quint8 rm = GFX::shadowMargin(Raised);
+        GFX::drawShadow(Raised, c.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), qMin(c.height(), c.width())/2 + rm);
+        return true;
+    }
+
+    // Modern flat style (match scrollers.style==0)
+    if (dConf.scrollers.style == 0)
+    {
+        QRect c = cont.adjusted(2,2,-2,-2);
+        painter->save();
+        painter->setClipRect(groove);
+        painter->fillRect(groove, opt->palette.color(QPalette::Base));
+        painter->restore();
+        GFX::drawMask(c, painter, h, dConf.progressbars.rnd);
+        return true;
+    }
+
     if (dConf.progressbars.textPos)
     {
         const int sz(hor?cont.height()/3:cont.width()/3);
@@ -615,6 +666,11 @@ Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, cons
 
     const QRect groove(subElementRect(SE_ProgressBarGroove, opt, widget)); //The groove where the progress indicator is drawn in a QProgressBar.
     const bool hor(opt->orientation == Qt::Horizontal);
+    if (dConf.scrollers.style == 0)
+    {
+        painter->fillRect(groove, opt->palette.color(QPalette::Base));
+        return true;
+    }
     if (dConf.progressbars.textPos)
     {
         const int sz(hor?groove.height()/3:groove.width()/3);

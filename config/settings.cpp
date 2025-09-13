@@ -1015,6 +1015,7 @@ Settings::read()
     conf.progressbars.textPos   = readInt(Progtxtpos);
     conf.progressbars.gradient  = stringToGrad(readString(Proggrad));
     conf.progressbars.stripeSize= readInt(Progstripe);
+    
     //shadows
     conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;
     conf.shadows.illumination   = readInt(Shadowillumination)*2.55f;
