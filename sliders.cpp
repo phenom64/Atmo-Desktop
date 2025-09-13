@@ -561,18 +561,28 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
             p.end();
             pixMap3.insert(check, pix);
         }
-        QBrush brush(pixMap3.value(check));
-        QRect c = cont.adjusted(1,1,-1,-1);
+        QPixmap pix = pixMap3.value(check);
+        QBrush brush(pix);
+        QRect c = cont.adjusted(2,2,-2,-2); // shrink slightly to avoid clipping with shadows
         static QMap<quint64,int> s_busyMap3;
         const bool busy = (opt->minimum==0 && opt->maximum==0);
-        int offset = qMax<int>(dConf.progressbars.stripeSize, 8u);
-        if (s_busyMap3.contains((quint64)widget)) offset = s_busyMap3.value((quint64)widget);
+        // Use positive direction for busy, reverse for determinate
+        int step = qMax<int>(dConf.progressbars.stripeSize, 8u);
+        int shift = step;
+        if (s_busyMap3.contains((quint64)widget)) shift = s_busyMap3.value((quint64)widget);
+        int dir = busy ? +1 : -1;
+        // Wrap shift to tile size to avoid abrupt clipping at the edge
+        int tile = sz; if (tile <= 0) tile = 1;
+        shift = (shift + dir) % tile; if (shift < 0) shift += tile;
         const quint8 sm = GFX::shadowMargin(dConf.progressbars.shadow);
-        QPoint ofs((groove.x()+sm)+(hor?busy*offset:0), (groove.y()+sm)+(!hor?busy*offset:0));
+        QPoint ofs((groove.x()+sm)+(hor?shift:0), (groove.y()+sm)+(!hor?shift:0));
+        painter->save();
+        painter->setClipRect(groove);
         GFX::drawMask(c, painter, brush, dConf.progressbars.rnd, All, ofs);
+        painter->restore();
         const quint8 rm = GFX::shadowMargin(Raised);
         GFX::drawShadow(Raised, c.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), qMin(c.height(), c.width())/2 + rm);
-        s_busyMap3.insert((quint64)widget, offset?offset-1:qMax<int>(dConf.progressbars.stripeSize, 8u));
+        s_busyMap3.insert((quint64)widget, shift);
         return true;
     }
 
