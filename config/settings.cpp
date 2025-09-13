@@ -1015,6 +1015,11 @@ Settings::read()
     conf.progressbars.textPos   = readInt(Progtxtpos);
     conf.progressbars.gradient  = stringToGrad(readString(Proggrad));
     conf.progressbars.stripeSize= readInt(Progstripe);
+    // Separate style key (not part of the original key enum, read directly)
+    if (QSettings *s = settings())
+        conf.progressbars.style = s->value("progressbars.style", 1).toUInt();
+    else
+        conf.progressbars.style = 1;
     
     //shadows
     conf.shadows.opacity        = readInt(Shadowopacity)*2.55f;

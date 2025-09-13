@@ -39,6 +39,7 @@
 #include <QDir>
 
 #include "../config/settings.h"
+#include <QSettings>
 
 using namespace NSE;
 
@@ -240,6 +241,21 @@ private:
             lay->addRow(lab, ed);
             m_editors.insert(k, {k, ed, type});
         }
+        // Synthetic control for progressbars.style
+        if (cat == "progressbars"){
+            QComboBox *pbStyleBox = new QComboBox(w);
+            pbStyleBox->addItem("Modern (flat)", 0);
+            pbStyleBox->addItem("Traditional", 1);
+            pbStyleBox->addItem("Tinted", 2);
+            pbStyleBox->addItem("Aqua (skeuomorphic)", 3);
+            pbStyleBox->setCurrentIndex(dConf.progressbars.style);
+            QLabel *lab = new QLabel("Progress Bars Style");
+            lab->setToolTip("0=Modern flat, 1=Traditional, 2=Tinted, 3=Aqua skeuomorphic");
+            pbStyleBox->setToolTip(lab->toolTip());
+            lay->addRow(lab, pbStyleBox);
+            // store pointer for save
+            w->setProperty("pbStyleBox", QVariant::fromValue((void*)pbStyleBox));
+        }
         return w;
     }
 
@@ -297,6 +313,15 @@ private slots:
             else if (ve.type=="gradient") setVal = ((GradientEditor*)ve.widget)->toString();
             else setVal = ((QLineEdit*)ve.widget)->text();
             Settings::writeVal(ve.key, setVal);
+        }
+        // Save synthetic progressbars.style
+        QList<QWidget*> pages = this->findChildren<QWidget*>();
+        for (QWidget *page : pages){
+            QVariant v = page->property("pbStyleBox");
+            if (v.isValid()){
+                QComboBox *box = reinterpret_cast<QComboBox*>(v.value<void*>());
+                if (box && NSE::Settings::settings()) NSE::Settings::settings()->setValue("progressbars.style", box->currentIndex());
+            }
         }
         Settings::read(); if (m_demoDialog) repolishPreview();
         QMessageBox::information(this, "Atmo", "Settings applied. Some apps may need restart to reflect changes.");

@@ -247,6 +247,7 @@ public:
             quint8 shadow, rnd, textPos, stripeSize;
             bool txtHover;
             Gradient gradient;
+            quint8 style; // 0=Modern,1=Traditional,2=Tinted,3=Aqua
         } progressbars;
         struct shadows
         {
