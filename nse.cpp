@@ -52,6 +52,10 @@
 #include <QToolBox>
 #include <QStyleFactory>
 
+#if HASXCB || HASX11
+#include <QX11Info>
+#endif
+
 #if HASKF5
 #include <KWindowSystem>
 #endif
@@ -106,7 +110,16 @@ static TranslucencyWatcher t;
 Style::Style() : QCommonStyle()
 {
     NSE::Settings::read();
+#if HASXCB || HASX11
+    if (QX11Info::isPlatformX11())
+        XHandler::init();
+    else
+    {
+        /* running under wayland: skip X11 initialization so blur/shadow atoms remain disabled safely */
+    }
+#else
     XHandler::init();
+#endif
     init();
     assignMethods();
     GFX::generateData();

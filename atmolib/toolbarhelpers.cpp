@@ -25,9 +25,11 @@
 #include <QAction>
 #include <QLayout>
 #include <QMainWindow>
+#include <QPointer>
 #include "windowdata.h"
 #include "xhandler.h"
 #include <QWidgetAction>
+#include <QTimer>
 
 using namespace NSE;
 
@@ -49,28 +51,43 @@ ToolbarHelpers::ToolbarHelpers(QObject *parent)
 
 }
 
-static QList<QPair<qulonglong, int> > s_spacerQueue;
+static QList<QPair<QPointer<QToolBar>, int> > s_spacerQueue;
 
 void
 ToolbarHelpers::fixSpacerLater(QToolBar *toolbar, int width)
 {
-    const qulonglong tb = (qulonglong)toolbar;
-    if (!s_spacerQueue.contains(QPair<qulonglong, int>(tb, width)))
+    QPointer<QToolBar> guard(toolbar);
+    if (guard.isNull())
+        return;
+    const QPair<QPointer<QToolBar>, int> entry(guard, width);
+    if (!s_spacerQueue.contains(entry))
     {
-        s_spacerQueue << QPair<qulonglong, int>(tb, width);
-        QMetaObject::invokeMethod(ToolbarHelpers::instance(), "fixSpacer", Qt::QueuedConnection, Q_ARG(qulonglong, tb), Q_ARG(int, width));
+        s_spacerQueue << entry;
+        /* delay spacer fix with a weak pointer guard so deleted toolbars are skipped safely */
+        QTimer::singleShot(0, ToolbarHelpers::instance(), [guard, width]()
+        {
+            const QPair<QPointer<QToolBar>, int> current(guard, width);
+            if (guard.isNull())
+            {
+                s_spacerQueue.removeOne(current);
+                return;
+            }
+            ToolbarHelpers::instance()->fixSpacer(guard.data(), width);
+        });
     }
 }
 
 void
-ToolbarHelpers::fixSpacer(qulonglong toolbar, int width)
+ToolbarHelpers::fixSpacer(QToolBar *tb, int width)
 {
-    s_spacerQueue.removeOne(QPair<qulonglong, int>(toolbar, width));
-    QToolBar *tb = Ops::getChild<QToolBar *>(toolbar);
+    s_spacerQueue.removeOne(QPair<QPointer<QToolBar>, int>(tb, width));
     if (!tb
             || !qobject_cast<QMainWindow *>(tb->parentWidget())
             || tb->findChild<QTabBar *>()
             || !tb->styleSheet().isEmpty())
+        return;
+    /* avoid dereferencing first() on an empty action list during toolbar startup */
+    if (tb->actions().isEmpty())
         return;
 
     if (tb->isMovable() && width == 7)

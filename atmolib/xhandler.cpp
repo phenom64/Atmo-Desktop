@@ -63,12 +63,26 @@ static xcb_atom_t xcb_atom[XHandler::ValueCount];
 static Atom atom[XHandler::ValueCount];
 #endif
 
+/* helper guard for wayland: do not touch null xcb/x11 handles when X11 is unavailable */
+static inline bool hasX11Handle()
+{
+    if (!QX11Info::isPlatformX11())
+        return false;
+#if HASXCB
+    return QX11Info::connection();
+#elif HASX11
+    return QX11Info::display();
+#else
+    return false;
+#endif
+}
+
 
 
 void
 XHandler::init()
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 
     static bool isInited(false);
@@ -91,7 +105,7 @@ XHandler::init()
 void
 XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, const unsigned char *data, const unsigned int nitems)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
     if (!data)
         return;
@@ -111,7 +125,7 @@ XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, co
 unsigned char
 *XHandler::fetchProperty(const XWindow w, const Value v, int &n, quint32 offset, quint32 length)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return 0;
 #if HASXCB
     if (xcb_atom[v])
@@ -152,7 +166,7 @@ unsigned char
 void
 XHandler::deleteXProperty(const XWindow w, const Value v)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     if (xcb_atom[v])
@@ -169,7 +183,7 @@ XHandler::deleteXProperty(const XWindow w, const Value v)
 void
 XHandler::freeData(void *data)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     free(data);
@@ -181,7 +195,7 @@ XHandler::freeData(void *data)
 #if HASXCB
 static void xcbIndexMask(const Qt::MouseButton b, xcb_button_index_t &i, xcb_button_mask_t &m)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
     //this is rather confusing, xcb says *_2 shoudl be right click, but *_3 is rightclick....
     switch (b)
@@ -198,7 +212,7 @@ static void xcbIndexMask(const Qt::MouseButton b, xcb_button_index_t &i, xcb_but
 void
 XHandler::doubleClickEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
     pressEvent(globalPos, win, button);
     releaseEvent(globalPos, win, button);
@@ -209,7 +223,7 @@ XHandler::doubleClickEvent(const QPoint &globalPos, const XWindow win, const Qt:
 void
 XHandler::releaseEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     xcb_button_mask_t mask;
@@ -239,7 +253,7 @@ XHandler::releaseEvent(const QPoint &globalPos, const XWindow win, const Qt::Mou
 void
 XHandler::pressEvent(const QPoint &globalPos, const XWindow win, const Qt::MouseButton button)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     xcb_button_mask_t mask;
@@ -269,7 +283,7 @@ XHandler::pressEvent(const QPoint &globalPos, const XWindow win, const Qt::Mouse
 void
 XHandler::wheelEvent(const XHandler::XWindow win, const bool up)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     xcb_connection_t *connection = QX11Info::connection();
@@ -291,7 +305,7 @@ XHandler::wheelEvent(const XHandler::XWindow win, const bool up)
 void
 XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow win, bool resize, XWindow dest)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     if (!dest)
@@ -386,7 +400,7 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
 bool
 XHandler::compositingActive()
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return false;
 #if defined(HASXCB)
     static xcb_atom_t atom = 0;
@@ -429,7 +443,7 @@ XHandler::opacity()
 XHandler::XPixmap
 XHandler::x11Pixmap(const QImage &qtImg)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return 0;
     if (qtImg.isNull())
         return 0;
@@ -481,7 +495,7 @@ XHandler::x11Pixmap(const QImage &qtImg)
 void
 XHandler::freePix(const XPixmap pixmap)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     xcb_free_pixmap(QX11Info::connection(), pixmap);
@@ -493,7 +507,7 @@ XHandler::freePix(const XPixmap pixmap)
 void
 XHandler::reparent(const XWindow child, const XWindow parent)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     xcb_connection_t *c = QX11Info::connection();
@@ -507,7 +521,7 @@ XHandler::reparent(const XWindow child, const XWindow parent)
 void
 XHandler::restack(const XWindow win, const XWindow parent)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     xcb_connection_t *c = QX11Info::connection();
@@ -533,7 +547,7 @@ XHandler::restack(const XWindow win, const XWindow parent)
 void
 XHandler::move(const XWindow win, const QPoint &p)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
 #if HASXCB
     unsigned int values[2] = {p.x(), p.y()};
@@ -544,7 +558,7 @@ XHandler::move(const XWindow win, const QPoint &p)
 void
 XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWindow id)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return;
     int n(0);
     dlong *data = getXProperty<dlong>(id, _NET_FRAME_EXTENTS, n);
@@ -564,7 +578,7 @@ XHandler::getDecoBorders(int &left, int &right, int &top, int &bottom, const XWi
 WId
 XHandler::windowId(const QWidget *w)
 {
-    if (!QX11Info::isPlatformX11())
+    if (!hasX11Handle())
         return 0;
 #if QT_VERSION > 0x050000
     return w->windowHandle() ? w->windowHandle()->winId() : w->winId();

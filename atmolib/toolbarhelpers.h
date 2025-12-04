@@ -39,7 +39,7 @@ protected:
     explicit ToolbarHelpers(QObject *parent = 0);
 
 protected slots:
-    void fixSpacer(qulonglong toolbar, int width = 7);
+    void fixSpacer(QToolBar *toolbar, int width = 7);
     void adjustMargins(qulonglong toolbar);
 
 private:
