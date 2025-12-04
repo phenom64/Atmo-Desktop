@@ -45,7 +45,6 @@
 #include <QFileInfo>
 #include <QEvent>
 
-#include "../nse.h"
 #include "../atmolib/color.h"
 #include "../config/settings.h"
 #include <QSettings>
@@ -457,7 +456,8 @@ private slots:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
-    QApplication::setStyle(new NSE::Style());
+    if (QStyle *s = QStyleFactory::create("Atmo"))
+        QApplication::setStyle(s);
     ManagerWindow win; win.show();
     return app.exec();
 }

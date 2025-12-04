@@ -17,6 +17,7 @@ message(STATUS "${COLOR_YELLOW}Designed by Kavish Krishnakumar in Manchester.${C
 # bake runtime search path so installed tools (e.g. atmo_manager) find libatmo/libatmolib
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR};${CMAKE_BINARY_DIR}/atmolib")
 
 # Platform detection (lightweight)
 if(APPLE)
@@ -164,6 +165,8 @@ target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus 
 get_target_property(QMAKE Qt5::qmake IMPORTED_LOCATION)
 execute_process(COMMAND ${QMAKE} -query QT_INSTALL_PLUGINS OUTPUT_VARIABLE PLUGINPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${PLUGINPATH}/styles)
+# also install libatmo to ${LIBDIR} so helpers like atmo_manager can resolve it via RPATH
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${LIBDIR})
 
 # KWin decoration (KF5 only)
 find_package(KDecoration2)

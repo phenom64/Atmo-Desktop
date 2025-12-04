@@ -102,7 +102,7 @@ static QPainterPath tab(const QRect &r, int rnd)
 
 static const int ts(4); //tab shadow...
 
-static QPixmap s_tbs;
+static QPixmap *s_tbs(0);
 
 void
 GFX::initTabs()
@@ -158,7 +158,9 @@ GFX::initTabs()
     p.setCompositionMode(QPainter::CompositionMode_DestinationOut);
     p.fillRect(tbs.rect(), QColor(0, 0, 0, 0xff-(dConf.shadows.opacity)));
     p.end();
-    s_tbs = QPixmap::fromImage(tbs);
+    if (!s_tbs)
+        s_tbs = new QPixmap();
+    *s_tbs = QPixmap::fromImage(tbs);
     --hsz;
     hsz/=2;
     --vsz;
@@ -176,8 +178,10 @@ GFX::initTabs()
 void
 GFX::drawTabBarShadow(QPainter *p, QRect r)
 {
-    r.setHeight(s_tbs.height());
-    p->drawTiledPixmap(r, s_tbs);
+    if (!s_tbs)
+        return;
+    r.setHeight(s_tbs->height());
+    p->drawTiledPixmap(r, *s_tbs);
 }
 
 void
