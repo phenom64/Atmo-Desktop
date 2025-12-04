@@ -10,9 +10,9 @@
         "Authors": [ { "Name": "Syndromatic Ltd." } ]
     },
     "X-KDE-FactoryName": "KCMAtmoFactory",
+    "X-KDE-Library": "kcm_atmo",
     "X-KDE-ParentComponents": [
         "kcmshell5"
     ],
     "ServiceTypes": [ "KCModule" ]
 }
-

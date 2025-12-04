@@ -34,6 +34,7 @@
 #include <QKeySequence>
 #include <QMessageBox>
 #include <QPainter>
+#include <QColorDialog>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QVariant>
@@ -42,8 +43,10 @@
 #include <QFile>
 #include <QDir>
 #include <QFileInfo>
+#include <QEvent>
 
 #include "../nse.h"
+#include "../atmolib/color.h"
 #include "../config/settings.h"
 #include <QSettings>
 
@@ -202,16 +205,41 @@ public:
         mainLay->addWidget(decoBox);
 
         QGroupBox *colorBox = new QGroupBox(tr("Colors"), central);
-        QVBoxLayout *colorLay = new QVBoxLayout(colorBox);
+        QGridLayout *colorLay = new QGridLayout(colorBox);
         QLabel *colorNote = new QLabel(tr("Palette follows your system accent. Use Apply to commit changes, or open the palette file for manual tweaks."), colorBox);
         colorNote->setWordWrap(true);
-        colorLay->addWidget(colorNote);
-        QHBoxLayout *colorButtons = new QHBoxLayout();
+        colorLay->addWidget(colorNote, 0, 0, 1, 2);
+        const QList<QPair<QPalette::ColorRole, QString> > roles = {
+            qMakePair(QPalette::Window, tr("Window")),
+            qMakePair(QPalette::WindowText, tr("Window Text")),
+            qMakePair(QPalette::Base, tr("Base")),
+            qMakePair(QPalette::Text, tr("Text")),
+            qMakePair(QPalette::Button, tr("Button")),
+            qMakePair(QPalette::ButtonText, tr("Button Text")),
+            qMakePair(QPalette::Highlight, tr("Highlight"))
+        };
+        int row = 1;
+        for (const auto &pr : roles)
+        {
+            QPushButton *picker = new QPushButton(colorBox);
+            picker->setAutoFillBackground(true);
+            picker->setProperty("role", pr.first);
+            picker->setFixedHeight(28);
+            picker->setText(pr.second);
+            updateColorButton(picker, QApplication::palette().color(pr.first));
+            colorLay->addWidget(new QLabel(pr.second, colorBox), row, 0);
+            colorLay->addWidget(picker, row, 1);
+            connect(picker, &QPushButton::clicked, this, [picker]()
+            {
+                const QColor current = picker->palette().color(QPalette::Button);
+                QColor chosen = QColorDialog::getColor(current, picker, picker->text());
+                if (chosen.isValid())
+                    updateColorButton(picker, chosen);
+            });
+            ++row;
+        }
         QPushButton *openPalette = new QPushButton(tr("Open User Palette"), colorBox);
-        colorButtons->addWidget(openPalette);
-        colorButtons->addStretch();
-        colorLay->addLayout(colorButtons);
-        colorBox->setLayout(colorLay);
+        colorLay->addWidget(openPalette, row, 0, 1, 2, Qt::AlignLeft);
         mainLay->addWidget(colorBox);
 
         // Bottom buttons
@@ -228,7 +256,11 @@ public:
         mainLay->addLayout(btnLay);
         setCentralWidget(central);
 
-        connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){ if(!cur) return; rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt());});
+        connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){ if(!cur) return; rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt()); if (m_desc) m_desc->setText(cur->text(0));});
+        m_desc = new QLabel(tr("Select a category or control to see details."), central);
+        m_desc->setWordWrap(true);
+        mainLay->addWidget(m_desc);
+
         connect(btnDemo, &QPushButton::clicked, this, &ManagerWindow::showDemo);
         connect(btnClose, &QPushButton::clicked, this, &QWidget::close);
         connect(btnWrite, &QPushButton::clicked, this, &ManagerWindow::writeConfig);
@@ -242,7 +274,7 @@ public:
 
 private:
     QMap<Settings::Key, VarEditor> m_editors;
-    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr; QWidget *m_demoPreview = nullptr;
+    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr; QWidget *m_demoPreview = nullptr; QLabel *m_desc = nullptr;
 
     QString categoryOf(const QString &key) const{
         if (!key.contains('.')) return QStringLiteral("General");
@@ -250,8 +282,23 @@ private:
     }
 
     static QString prettyCategory(const QString &c){
-        static QMap<QString, QString> map{{"deco","Decoration"},{"pushbtn","Push Button"},{"toolbtn","Toolbar Button"},{"input","Input Fields"},{"tabs","Tabs"},{"uno","UNO"},{"menues","Menus"},{"sliders","Sliders"},{"scrollers","Scroll Bars"},{"views","Views"},{"progressbars","Progress Bars"},{"windows","Windows"},{"shadows","Shadows"}};
-        if (c=="General") return c; return map.value(c, c.left(1).toUpper()+c.mid(1));
+        static QMap<QString, QString> prettyNames{
+            {"General", "General"},
+            {"deco","Window Decoration"},
+            {"pushbtn","Push Buttons"},
+            {"toolbtn","Toolbar Buttons"},
+            {"input","Input Fields"},
+            {"tabs","Tabs"},
+            {"uno","Unified Titlebar (UNO)"},
+            {"menues","Menus"},
+            {"sliders","Sliders"},
+            {"scrollers","Scroll Bars"},
+            {"views","Views"},
+            {"progressbars","Progress Bars"},
+            {"windows","Windows"},
+            {"shadows","Shadows"}
+        };
+        return prettyNames.value(c, c.left(1).toUpper()+c.mid(1));
     }
 
     static QString prettyLabelFor(Settings::Key k){ return QString::fromLatin1(Settings::description(k)); }
@@ -287,6 +334,8 @@ private:
             auto *lab = new QLabel(labelText); lab->setWordWrap(true); lab->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
             lab->setToolTip(QString("%1\nKey: %2\nDefault: %3").arg(labelText).arg(QString::fromLatin1(Settings::key(k))).arg(Settings::defaultValue(k).toString()));
             ed->setToolTip(QString::fromLatin1(Settings::description(k)));
+            ed->setProperty("desc", QString::fromLatin1(Settings::description(k)));
+            ed->installEventFilter(this);
             lay->addRow(lab, ed);
             m_editors.insert(k, {k, ed, type});
         }
@@ -381,6 +430,24 @@ private slots:
 
     void repolishWidget(QWidget *root){ if (!root) return; auto *st = root->style(); QList<QWidget*> ws = root->findChildren<QWidget*>(); ws << root; for (QWidget *w : ws){ st->unpolish(w); st->polish(w); w->update(); } }
     void repolishPreview(){ repolishWidget(m_preview); repolishWidget(m_demoPreview); }
+    static void updateColorButton(QPushButton *btn, const QColor &c)
+    {
+        QPalette pal(btn->palette());
+        pal.setColor(QPalette::Button, c);
+        pal.setColor(QPalette::ButtonText, Color::lum(c) > 140 ? Qt::black : Qt::white);
+        btn->setPalette(pal);
+        btn->update();
+    }
+    bool eventFilter(QObject *o, QEvent *e) override
+    {
+        if (m_desc && (e->type() == QEvent::FocusIn || e->type() == QEvent::Enter))
+        {
+            const QString desc = o->property("desc").toString();
+            if (!desc.isEmpty())
+                m_desc->setText(desc);
+        }
+        return QMainWindow::eventFilter(o, e);
+    }
 
     bool copyDefaultNSEConf(){ const QString userDir = QDir::homePath()+"/.config/NSE"; QDir().mkpath(userDir); const QString userFile=userDir+"/NSE.conf"; const QString tmpl = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf")); if (tmpl.isEmpty()) return false; QFile::remove(userFile); return QFile::copy(tmpl, userFile);} 
 

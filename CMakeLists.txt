@@ -14,6 +14,10 @@ message(STATUS "${COLOR_GREEN}Starting NSE.AtmoFramework Builder...${COLOR_RESET
 message(STATUS "${COLOR_YELLOW}TM & (C) 2025 Syndromatic Ltd. All rights reserved.${COLOR_RESET}")
 message(STATUS "${COLOR_YELLOW}Designed by Kavish Krishnakumar in Manchester.${COLOR_RESET}")
 
+# bake runtime search path so installed tools (e.g. atmo_manager) find libatmo/libatmolib
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # Platform detection (lightweight)
 if(APPLE)
   set(PLATFORM_NAME "macOS")

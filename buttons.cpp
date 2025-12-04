@@ -36,6 +36,7 @@
 #include <QCheckBox>
 #include <QHBoxLayout>
 #include <QPainterPath>
+#include <QTime>
 
 #include "nse.h"
 #include "atmolib/gfx.h"
@@ -118,6 +119,15 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
         QPainterPath path;
         path.addRoundedRect(r, dConf.pushbtn.rnd, dConf.pushbtn.rnd);
         painter->fillPath(path, gelCylinder(r, base, sunken));
+
+        /* breathing inner glow */
+        const qint64 t = QTime::currentTime().msecsSinceStartOfDay();
+        const qreal phase = qSin(qreal(t) * 0.0085);
+        const int alpha = 200 + int(55 * phase);
+        QColor glow(base.lighter(160));
+        glow.setAlpha(alpha);
+        painter->fillPath(path, glow);
+
         painter->fillPath(path, gelShine(r));
         painter->setPen(QPen(base.darker(150), 1));
         painter->drawPath(path);

@@ -573,7 +573,7 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     // Aqua-like skeuomorphic (progressbars.style == 3)
     if (dConf.progressbars.style == 3)
     {
-        /* previous pixmap-based glossy bar replaced by dynamic Gel cylinder rendering */
+        /* GEL tube: stripes first, then gel overlay to keep them under glass */
         if (!s_progressTimer.isValid())
             s_progressTimer.start();
         const bool busy(opt->minimum==0 && opt->maximum==0);
@@ -588,44 +588,50 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
         QPainterPath path;
         path.addRoundedRect(bar, dConf.progressbars.rnd, dConf.progressbars.rnd);
 
-        /* Cylinder fill */
+        /* Layer 1: base fill */
         painter->fillPath(path, gelCylinder(bar, h));
 
-        if (busy)
-        {
-            const int stripe(qMax<int>(dConf.progressbars.stripeSize, 8u));
-            const qreal tileSpan(stripe*2.0f);
-            const qint64 elapsed(s_progressTimer.elapsed());
-            const qreal shift = qreal((elapsed/15)%int(tileSpan));
-            QColor light(h.lighter(130));
-            QColor dark(h.darker(120));
-            QLinearGradient stripeGrad(QPointF(0, 0), QPointF(tileSpan, 0));
-            stripeGrad.setSpread(QGradient::RepeatSpread);
-            stripeGrad.setColorAt(0.0, light);
-            stripeGrad.setColorAt(0.5, light);
-            stripeGrad.setColorAt(0.5, dark);
-            stripeGrad.setColorAt(1.0, dark);
-            QBrush stripeBrush(stripeGrad);
-            QTransform t;
-            t.rotate(45);
-            t.translate(-shift, 0);
-            stripeBrush.setTransform(t);
-            painter->fillPath(path, stripeBrush);
+        /* Layer 2: stripes live inside the tube */
+        const int stripe(qMax<int>(dConf.progressbars.stripeSize, 8u));
+        const qreal tileSpan(stripe*2.0f);
+        const qint64 elapsed(s_progressTimer.elapsed());
+        const qreal shift = busy ? qreal((elapsed/15)%int(tileSpan)) : 0.0f;
+        QColor light(h.lighter(130));
+        QColor dark(h.darker(120));
+        QLinearGradient stripeGrad(QPointF(0, 0), QPointF(tileSpan, 0));
+        stripeGrad.setSpread(QGradient::RepeatSpread);
+        stripeGrad.setColorAt(0.0, light);
+        stripeGrad.setColorAt(0.5, light);
+        stripeGrad.setColorAt(0.5, dark);
+        stripeGrad.setColorAt(1.0, dark);
+        QBrush stripeBrush(stripeGrad);
+        QTransform t;
+        t.rotate(45);
+        t.translate(-shift, 0);
+        stripeBrush.setTransform(t);
+        painter->fillPath(path, stripeBrush);
 
-            /* inner shadow so the stripes remain inside the tube */
-            QLinearGradient innerShadow(bar.topLeft(), bar.bottomLeft());
-            QColor innerTop(h.darker(170));
-            innerTop.setAlpha(90);
-            QColor innerBottom(innerTop);
-            innerBottom.setAlpha(120);
-            innerShadow.setColorAt(0.0, innerTop);
-            innerShadow.setColorAt(0.45, QColor(innerTop.red(), innerTop.green(), innerTop.blue(), 0));
-            innerShadow.setColorAt(0.55, QColor(innerBottom.red(), innerBottom.green(), innerBottom.blue(), 30));
-            innerShadow.setColorAt(1.0, innerBottom);
-            painter->fillPath(path, innerShadow);
+        /* subtle static stripes for determinate bars */
+        if (!busy)
+        {
+            QColor overlay(light);
+            overlay.setAlpha(40);
+            painter->fillPath(path, overlay);
         }
 
-        /* specular top shine */
+        /* inner shadow so the stripes remain inside the tube */
+        QLinearGradient innerShadow(bar.topLeft(), bar.bottomLeft());
+        QColor innerTop(h.darker(170));
+        innerTop.setAlpha(90);
+        QColor innerBottom(innerTop);
+        innerBottom.setAlpha(120);
+        innerShadow.setColorAt(0.0, innerTop);
+        innerShadow.setColorAt(0.45, QColor(innerTop.red(), innerTop.green(), innerTop.blue(), 0));
+        innerShadow.setColorAt(0.55, QColor(innerBottom.red(), innerBottom.green(), innerBottom.blue(), 30));
+        innerShadow.setColorAt(1.0, innerBottom);
+        painter->fillPath(path, innerShadow);
+
+        /* Layer 3: specular top shine */
         painter->fillPath(path, gelShine(bar));
 
         /* inner 1px stroke */

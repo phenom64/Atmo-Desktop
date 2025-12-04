@@ -26,6 +26,7 @@
 #include "atmolib/progresshandler.h"
 #include "atmolib/animhandler.h"
 #include "atmolib/handlers.h"
+#include "atmolib/windowhelpers.h"
 #include "atmolib/xhandler.h"
 #include "config/settings.h"
 #include "atmolib/color.h"
@@ -64,6 +65,7 @@
 #include <QDebug>
 #include <QCalendarWidget>
 #include <QTableView>
+#include <QTimer>
 
 #include <KWindowInfo>
 #include <KWindowSystem>
@@ -188,6 +190,8 @@ Style::polish(QWidget *widget)
             Handlers::Window::manage(widget);
             if (dConf.removeTitleBars)
                 ShadowHandler::manage(widget);
+            /* make sure UNO data refreshes after the window is mapped (winId ready) */
+            QTimer::singleShot(100, widget, [w=widget](){ WindowHelpers::updateWindowDataLater(w); });
 
 #if 0
             if (!dConf.uno.enabled)

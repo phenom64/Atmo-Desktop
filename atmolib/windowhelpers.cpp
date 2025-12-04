@@ -32,6 +32,7 @@
 #include <QMenuBar>
 #include <QImage>
 #include <QPainter>
+#include <QTimer>
 
 #if HASDBUS
 #include <QDBusInterface>
@@ -92,6 +93,12 @@ WindowHelpers::updateWindowData(qulonglong window)
     QWidget *win = Ops::getChild<QWidget *>(window);
     if (!win || !win->isWindow())
         return;
+    if (!win->isVisible() || !win->testAttribute(Qt::WA_WState_Visible))
+    {
+        /* window not exposed yet, retry once mapped to avoid stale winId */
+        QTimer::singleShot(100, win, [win](){ WindowHelpers::updateWindowDataLater(win); });
+        return;
+    }
 
     WindowData data = WindowData::memory(XHandler::windowId(win), win, true);
     if (data && data.lock())
