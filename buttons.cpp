@@ -35,6 +35,7 @@
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QHBoxLayout>
+#include <QPainterPath>
 
 #include "nse.h"
 #include "atmolib/gfx.h"
@@ -48,6 +49,39 @@
 #include "atmolib/fx.h"
 
 using namespace NSE;
+
+/* gel helpers */
+static inline QLinearGradient gelCylinder(const QRect &r, const QColor &base, const bool invert = false)
+{
+    QLinearGradient lg(r.topLeft(), r.bottomLeft());
+    if (!invert)
+    {
+        lg.setColorAt(0.0, base.lighter(150));
+        lg.setColorAt(0.5, base);
+        lg.setColorAt(0.51, base.darker(110));
+        lg.setColorAt(1.0, base.darker(130));
+    }
+    else
+    {
+        /* pressed state: flip the gradient to push light downwards */
+        lg.setColorAt(0.0, base.darker(130));
+        lg.setColorAt(0.49, base.darker(110));
+        lg.setColorAt(0.5, base);
+        lg.setColorAt(1.0, base.lighter(150));
+    }
+    return lg;
+}
+
+static inline QLinearGradient gelShine(const QRect &r)
+{
+    QLinearGradient shine(r.topLeft(), r.bottomLeft());
+    const qreal cutoff(0.4f);
+    shine.setColorAt(0.0, QColor(255, 255, 255, 180));
+    shine.setColorAt(cutoff, QColor(255, 255, 255, 20));
+    shine.setColorAt(cutoff+0.0001f, QColor(255, 255, 255, 0));
+    shine.setColorAt(1.0, QColor(255, 255, 255, 0));
+    return shine;
+}
 
 bool
 Style::drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
@@ -72,6 +106,25 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
     if (isEnabled(opt))
         hl = Anim::Basic::level(widget);
     const bool sunken = isSunken(opt);
+    const bool defaultOrFocus = (opt->features & QStyleOptionButton::DefaultButton) || (opt->state & State_HasFocus);
+
+    if (defaultOrFocus && !(opt->features & QStyleOptionButton::Flat))
+    {
+        QColor base(opt->palette.color(QPalette::Highlight));
+        QRect r(opt->rect.adjusted(1, 1, -1, -1));
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        GFX::drawShadow(dConf.pushbtn.shadow, opt->rect, painter, isEnabled(opt), dConf.pushbtn.rnd);
+        QPainterPath path;
+        path.addRoundedRect(r, dConf.pushbtn.rnd, dConf.pushbtn.rnd);
+        painter->fillPath(path, gelCylinder(r, base, sunken));
+        painter->fillPath(path, gelShine(r));
+        painter->setPen(QPen(base.darker(150), 1));
+        painter->drawPath(path);
+        painter->restore();
+        return true;
+    }
+
     if (opt->features & QStyleOptionButton::Flat)
     {
         const bool selected = isSelected(option);

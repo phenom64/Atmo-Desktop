@@ -22,12 +22,16 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QHeaderView>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
 #include <QProcess>
 #include <QDialog>
 #include <QDateEdit>
 #include <QRadioButton>
 #include <QProgressBar>
 #include <QStyleFactory>
+#include <QKeySequence>
 #include <QMessageBox>
 #include <QPainter>
 #include <QVBoxLayout>
@@ -37,7 +41,9 @@
 #include <QStandardPaths>
 #include <QFile>
 #include <QDir>
+#include <QFileInfo>
 
+#include "../nse.h"
 #include "../config/settings.h"
 #include <QSettings>
 
@@ -143,17 +149,32 @@ class ManagerWindow : public QMainWindow {
 public:
     ManagerWindow(){
         setWindowTitle("Atmo Framework Manager");
+        setMinimumSize(800, 600);
         resize(920, 640);
+
+        QMenu *fileMenu = menuBar()->addMenu(tr("File"));
+        fileMenu->addAction(tr("Quit"), this, &QWidget::close, QKeySequence::Quit);
+        QMenu *helpMenu = menuBar()->addMenu(tr("Help"));
+        helpMenu->addAction(tr("About"), this, [this]
+        {
+            QMessageBox::about(this, tr("About Atmo Framework Manager"),
+                               tr("Atmo Framework Manager\nConfigure NSE / Atmo desktop visuals.\nMac-inspired control surface with live previews."));
+        });
 
         auto *central = new QWidget(this);
         auto *mainLay = new QVBoxLayout(central);
+        mainLay->setContentsMargins(20, 20, 20, 20);
+        mainLay->setSpacing(15);
 
-        auto *tabs = new QTabWidget(central);
+        QGroupBox *generalBox = new QGroupBox(tr("General"), central);
+        QVBoxLayout *generalLay = new QVBoxLayout(generalBox);
+
+        auto *tabs = new QTabWidget(generalBox);
         QWidget *settingsTab = new QWidget(tabs);
         QWidget *defaultsTab = new QWidget(tabs);
         tabs->addTab(settingsTab, "Settings");
         tabs->addTab(defaultsTab, "Defaults");
-        mainLay->addWidget(tabs);
+        generalLay->addWidget(tabs);
 
         // Settings tab layout with splitter
         auto *split = new QSplitter(settingsTab);
@@ -165,6 +186,33 @@ public:
         split->setStretchFactor(0,0); split->setStretchFactor(1,1);
         auto *settingsLay = new QVBoxLayout(settingsTab);
         settingsLay->addWidget(split);
+
+        // Build variable editors grouped by prefix
+        buildEditors(left, rightStack);
+        buildDefaultsPage(defaultsTab);
+
+        generalBox->setLayout(generalLay);
+        mainLay->addWidget(generalBox);
+
+        QGroupBox *decoBox = new QGroupBox(tr("Decoration"), central);
+        QVBoxLayout *decoLay = new QVBoxLayout(decoBox);
+        m_preview = makePreview(decoBox);
+        decoLay->addWidget(m_preview);
+        decoBox->setLayout(decoLay);
+        mainLay->addWidget(decoBox);
+
+        QGroupBox *colorBox = new QGroupBox(tr("Colors"), central);
+        QVBoxLayout *colorLay = new QVBoxLayout(colorBox);
+        QLabel *colorNote = new QLabel(tr("Palette follows your system accent. Use Apply to commit changes, or open the palette file for manual tweaks."), colorBox);
+        colorNote->setWordWrap(true);
+        colorLay->addWidget(colorNote);
+        QHBoxLayout *colorButtons = new QHBoxLayout();
+        QPushButton *openPalette = new QPushButton(tr("Open User Palette"), colorBox);
+        colorButtons->addWidget(openPalette);
+        colorButtons->addStretch();
+        colorLay->addLayout(colorButtons);
+        colorBox->setLayout(colorLay);
+        mainLay->addWidget(colorBox);
 
         // Bottom buttons
         auto *btnLay = new QHBoxLayout();
@@ -180,20 +228,21 @@ public:
         mainLay->addLayout(btnLay);
         setCentralWidget(central);
 
-        // Build variable editors grouped by prefix
-        buildEditors(left, rightStack);
-        buildDefaultsPage(defaultsTab);
-
         connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){ if(!cur) return; rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt());});
         connect(btnDemo, &QPushButton::clicked, this, &ManagerWindow::showDemo);
         connect(btnClose, &QPushButton::clicked, this, &QWidget::close);
         connect(btnWrite, &QPushButton::clicked, this, &ManagerWindow::writeConfig);
         connect(btnRevert, &QPushButton::clicked, this, &ManagerWindow::revertDefaults);
+        connect(openPalette, &QPushButton::clicked, this, [this]
+        {
+            const QString userPalette = QDir::homePath()+"/.config/NSE/NSE.conf";
+            QProcess::startDetached("xdg-open", QStringList() << QFileInfo(userPalette).absolutePath());
+        });
     }
 
 private:
     QMap<Settings::Key, VarEditor> m_editors;
-    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr;
+    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr; QWidget *m_demoPreview = nullptr;
 
     QString categoryOf(const QString &key) const{
         if (!key.contains('.')) return QStringLiteral("General");
@@ -298,8 +347,11 @@ private slots:
     void showDemo(){
         writeConfig(); // persist then re-read
         Settings::read();
-        if (!m_demoDialog){ m_demoDialog = new QDialog(this); m_demoDialog->setWindowTitle("Atmo Demo Preview"); QVBoxLayout *v = new QVBoxLayout(m_demoDialog); m_preview = makePreview(m_demoDialog); v->addWidget(m_preview); m_demoDialog->resize(700,480);} 
-        if (QStyle *s = QStyleFactory::create("Atmo")) m_demoDialog->setStyle(s);
+        if (!m_demoDialog)
+        { 
+            m_demoDialog = new QDialog(this); m_demoDialog->setWindowTitle("Atmo Demo Preview"); QVBoxLayout *v = new QVBoxLayout(m_demoDialog); m_demoPreview = makePreview(m_demoDialog); v->addWidget(m_demoPreview); m_demoDialog->resize(700,480);
+        } 
+        m_demoDialog->setStyle(qApp->style());
         repolishPreview(); m_demoDialog->show();
     }
 
@@ -327,7 +379,8 @@ private slots:
         QMessageBox::information(this, "Atmo", "Settings applied. Some apps may need restart to reflect changes.");
     }
 
-    void repolishPreview(){ if (!m_preview) return; auto *st = m_preview->style(); QList<QWidget*> ws = m_preview->findChildren<QWidget*>(); ws << m_preview; for (QWidget *w : ws){ st->unpolish(w); st->polish(w); w->update(); } }
+    void repolishWidget(QWidget *root){ if (!root) return; auto *st = root->style(); QList<QWidget*> ws = root->findChildren<QWidget*>(); ws << root; for (QWidget *w : ws){ st->unpolish(w); st->polish(w); w->update(); } }
+    void repolishPreview(){ repolishWidget(m_preview); repolishWidget(m_demoPreview); }
 
     bool copyDefaultNSEConf(){ const QString userDir = QDir::homePath()+"/.config/NSE"; QDir().mkpath(userDir); const QString userFile=userDir+"/NSE.conf"; const QString tmpl = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf")); if (tmpl.isEmpty()) return false; QFile::remove(userFile); return QFile::copy(tmpl, userFile);} 
 
@@ -337,6 +390,7 @@ private slots:
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    QApplication::setStyle(new NSE::Style());
     ManagerWindow win; win.show();
     return app.exec();
 }

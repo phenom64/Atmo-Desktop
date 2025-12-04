@@ -2,6 +2,9 @@
 #include <KCModule>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QPushButton>
+#include <QProcess>
+#include <QFileInfo>
 
 class KCMAtmo : public KCModule {
     Q_OBJECT
@@ -16,7 +19,14 @@ public:
         auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), this);
         lay->addWidget(btn);
         setLayout(lay);
-        connect(btn, &QPushButton::clicked, this, [this]{ QProcess::startDetached("atmo_manager"); });
+        connect(btn, &QPushButton::clicked, this, [this]
+        {
+            const QString bin("/usr/bin/atmo_manager");
+            if (QFileInfo::exists(bin))
+                QProcess::startDetached(bin);
+            else
+                QProcess::startDetached("atmo_manager"); // fallback if custom path is used
+        });
     }
 };
 

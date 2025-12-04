@@ -34,6 +34,7 @@
 #include <QApplication>
 #include <QPolygon>
 #include <QMap>
+#include <QElapsedTimer>
 
 #include "nse.h"
 #include "atmolib/gfx.h"
@@ -46,6 +47,41 @@
 #include "atmolib/fx.h"
 
 using namespace NSE;
+
+/* gel helpers */
+static inline QLinearGradient gelCylinder(const QRect &r, const QColor &base, const bool invert = false)
+{
+    QLinearGradient lg(r.topLeft(), r.bottomLeft());
+    if (!invert)
+    {
+        lg.setColorAt(0.0, base.lighter(150));
+        lg.setColorAt(0.5, base);
+        lg.setColorAt(0.51, base.darker(110));
+        lg.setColorAt(1.0, base.darker(130));
+    }
+    else
+    {
+        /* pressed state: flip the gradient to push light downwards */
+        lg.setColorAt(0.0, base.darker(130));
+        lg.setColorAt(0.49, base.darker(110));
+        lg.setColorAt(0.5, base);
+        lg.setColorAt(1.0, base.lighter(150));
+    }
+    return lg;
+}
+
+static inline QLinearGradient gelShine(const QRect &r)
+{
+    QLinearGradient shine(r.topLeft(), r.bottomLeft());
+    const qreal cutoff(0.4f);
+    shine.setColorAt(0.0, QColor(255, 255, 255, 180));
+    shine.setColorAt(cutoff, QColor(255, 255, 255, 20));
+    shine.setColorAt(cutoff+0.0001f, QColor(255, 255, 255, 0));
+    shine.setColorAt(1.0, QColor(255, 255, 255, 0));
+    return shine;
+}
+
+static QElapsedTimer s_progressTimer;
 
 bool
 Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -537,52 +573,66 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     // Aqua-like skeuomorphic (progressbars.style == 3)
     if (dConf.progressbars.style == 3)
     {
-        int sz = qMin(cont.width(), cont.height());
-        if (sz <= 0)
+        /* previous pixmap-based glossy bar replaced by dynamic Gel cylinder rendering */
+        if (!s_progressTimer.isValid())
+            s_progressTimer.start();
+        const bool busy(opt->minimum==0 && opt->maximum==0);
+        QRect bar(cont.adjusted(1, 1, -1, -1));
+        if (bar.isEmpty())
             return true;
-        static QMap<quint64, QPixmap> pixMap3;
-        quint64 check = ((quint64)h.rgba()) | ((quint64)sz << 32) | ((quint64)hor << 48);
-        if (!pixMap3.contains(check))
-        {
-            QPixmap pix(sz, sz);
-            pix.fill(Qt::transparent);
-            QPainter p(&pix);
-            QLinearGradient gradient(pix.rect().topLeft(), hor ? pix.rect().bottomLeft() : pix.rect().topRight());
-            // Use progressbar gradient tinted by highlight
-            gradient.setStops(NSE::Settings::gradientStops(dConf.progressbars.gradient, h));
-            p.fillRect(pix.rect(), gradient);
-            // glossy radial overlay
-            QRadialGradient rad(pix.rect().center()+QPoint(1,1), pix.rect().width());
-            rad.setColorAt(0, QColor(255,255,255,170));
-            rad.setColorAt(1, Qt::transparent);
-            rad.setSpread(QGradient::ReflectSpread);
-            p.setCompositionMode(QPainter::CompositionMode_Overlay);
-            p.fillRect(pix.rect(), rad);
-            p.end();
-            pixMap3.insert(check, pix);
-        }
-        QPixmap pix = pixMap3.value(check);
-        QBrush brush(pix);
-        QRect c = cont.adjusted(2,2,-2,-2); // shrink slightly to avoid clipping with shadows
-        static QMap<quint64,int> s_busyMap3;
-        const bool busy = (opt->minimum==0 && opt->maximum==0);
-        // Use positive direction for busy, reverse for determinate
-        int step = qMax<int>(dConf.progressbars.stripeSize, 8u);
-        int shift = step;
-        if (s_busyMap3.contains((quint64)widget)) shift = s_busyMap3.value((quint64)widget);
-        int dir = busy ? +1 : -1;
-        // Wrap shift to tile size to avoid abrupt clipping at the edge
-        int tile = sz; if (tile <= 0) tile = 1;
-        shift = (shift + dir) % tile; if (shift < 0) shift += tile;
-        const quint8 sm = GFX::shadowMargin(dConf.progressbars.shadow);
-        QPoint ofs((groove.x()+sm)+(hor?shift:0), (groove.y()+sm)+(!hor?shift:0));
+
         painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
         painter->setClipRect(groove);
-        GFX::drawMask(c, painter, brush, dConf.progressbars.rnd, All, ofs);
+
+        QPainterPath path;
+        path.addRoundedRect(bar, dConf.progressbars.rnd, dConf.progressbars.rnd);
+
+        /* Cylinder fill */
+        painter->fillPath(path, gelCylinder(bar, h));
+
+        if (busy)
+        {
+            const int stripe(qMax<int>(dConf.progressbars.stripeSize, 8u));
+            const qreal tileSpan(stripe*2.0f);
+            const qint64 elapsed(s_progressTimer.elapsed());
+            const qreal shift = qreal((elapsed/15)%int(tileSpan));
+            QColor light(h.lighter(130));
+            QColor dark(h.darker(120));
+            QLinearGradient stripeGrad(QPointF(0, 0), QPointF(tileSpan, 0));
+            stripeGrad.setSpread(QGradient::RepeatSpread);
+            stripeGrad.setColorAt(0.0, light);
+            stripeGrad.setColorAt(0.5, light);
+            stripeGrad.setColorAt(0.5, dark);
+            stripeGrad.setColorAt(1.0, dark);
+            QBrush stripeBrush(stripeGrad);
+            QTransform t;
+            t.rotate(45);
+            t.translate(-shift, 0);
+            stripeBrush.setTransform(t);
+            painter->fillPath(path, stripeBrush);
+
+            /* inner shadow so the stripes remain inside the tube */
+            QLinearGradient innerShadow(bar.topLeft(), bar.bottomLeft());
+            QColor innerTop(h.darker(170));
+            innerTop.setAlpha(90);
+            QColor innerBottom(innerTop);
+            innerBottom.setAlpha(120);
+            innerShadow.setColorAt(0.0, innerTop);
+            innerShadow.setColorAt(0.45, QColor(innerTop.red(), innerTop.green(), innerTop.blue(), 0));
+            innerShadow.setColorAt(0.55, QColor(innerBottom.red(), innerBottom.green(), innerBottom.blue(), 30));
+            innerShadow.setColorAt(1.0, innerBottom);
+            painter->fillPath(path, innerShadow);
+        }
+
+        /* specular top shine */
+        painter->fillPath(path, gelShine(bar));
+
+        /* inner 1px stroke */
+        painter->setPen(QPen(h.darker(150), 1));
+        painter->drawPath(path);
+
         painter->restore();
-        const quint8 rm = GFX::shadowMargin(Raised);
-        GFX::drawShadow(Raised, c.adjusted(-rm, -rm, rm, rm), painter, isEnabled(opt), qMin(c.height(), c.width())/2 + rm);
-        s_busyMap3.insert((quint64)widget, shift);
         return true;
     }
 
