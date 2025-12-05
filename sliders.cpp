@@ -573,65 +573,81 @@ Style::drawProgressBarContents(const QStyleOption *option, QPainter *painter, co
     // Aqua-like skeuomorphic (progressbars.style == 3)
     if (dConf.progressbars.style == 3)
     {
-        /* GEL tube: stripes first, then gel overlay to keep them under glass */
+        /* GEL tube: draw a floating glass bar with correct shadow and stripe orientation */
         if (!s_progressTimer.isValid())
             s_progressTimer.start();
         const bool busy(opt->minimum==0 && opt->maximum==0);
-        QRect bar(cont.adjusted(1, 1, -1, -1));
-        if (bar.isEmpty())
-            return true;
+
+        QRect bar(cont.adjusted(2, 2, -2, -2));
+        if (bar.width() < 4 || bar.height() < 4)
+            bar = cont;
+        const int stripe(qMax<int>(dConf.progressbars.stripeSize, 8u));
+        const qreal tileSpan(stripe * 2.5f);
+        const qint64 elapsed(s_progressTimer.elapsed());
 
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
+
         painter->setClipRect(groove);
 
         QPainterPath path;
-        path.addRoundedRect(bar, dConf.progressbars.rnd, dConf.progressbars.rnd);
+        const int rnd(qMax(0, dConf.progressbars.rnd - 1));
+        path.addRoundedRect(bar, rnd, rnd);
 
         /* Layer 1: base fill */
         painter->fillPath(path, gelCylinder(bar, h));
 
-        /* Layer 2: stripes live inside the tube */
-        const int stripe(qMax<int>(dConf.progressbars.stripeSize, 8u));
-        const qreal tileSpan(stripe*2.0f);
-        const qint64 elapsed(s_progressTimer.elapsed());
-        const qreal shift = busy ? qreal((elapsed/15)%int(tileSpan)) : 0.0f;
-        QColor light(h.lighter(130));
+        /* Layer 2: pattern stripes */
+        QColor light(h.lighter(135));
         QColor dark(h.darker(120));
-        QLinearGradient stripeGrad(QPointF(0, 0), QPointF(tileSpan, 0));
-        stripeGrad.setSpread(QGradient::RepeatSpread);
-        stripeGrad.setColorAt(0.0, light);
-        stripeGrad.setColorAt(0.5, light);
-        stripeGrad.setColorAt(0.5, dark);
-        stripeGrad.setColorAt(1.0, dark);
-        QBrush stripeBrush(stripeGrad);
-        QTransform t;
-        t.rotate(45);
-        t.translate(-shift, 0);
-        stripeBrush.setTransform(t);
-        painter->fillPath(path, stripeBrush);
-
-        /* subtle static stripes for determinate bars */
-        if (!busy)
+        if (busy)
         {
-            QColor overlay(light);
-            overlay.setAlpha(40);
-            painter->fillPath(path, overlay);
+            // Barber pole: angled stripes with a white gap to mimic Leopard's busy bar
+            QLinearGradient stripeGrad(QPointF(0, 0), QPointF(tileSpan, 0));
+            stripeGrad.setSpread(QGradient::RepeatSpread);
+            stripeGrad.setColorAt(0.0, light);
+            stripeGrad.setColorAt(0.40, light);
+            stripeGrad.setColorAt(0.50, QColor(255, 255, 255, 210));
+            stripeGrad.setColorAt(0.60, dark);
+            stripeGrad.setColorAt(1.0, dark);
+            QBrush stripeBrush(stripeGrad);
+            QTransform t;
+            t.rotate(45);
+            t.translate(-qreal((elapsed/18) % int(tileSpan)), 0);
+            stripeBrush.setTransform(t);
+            painter->fillPath(path, stripeBrush);
+        }
+        else
+        {
+            // Determinate: vertical bands (90°) under the gloss, slowly drifting
+            QLinearGradient stripeGrad(bar.topLeft(), bar.topRight());
+            stripeGrad.setSpread(QGradient::RepeatSpread);
+            stripeGrad.setColorAt(0.0, dark);
+            stripeGrad.setColorAt(0.48, dark);
+            stripeGrad.setColorAt(0.52, light);
+            stripeGrad.setColorAt(1.0, light);
+            QBrush stripeBrush(stripeGrad);
+            QTransform t;
+            t.translate(-qreal((elapsed/90) % int(tileSpan)), 0);
+            stripeBrush.setTransform(t);
+            QColor bandTint(255, 255, 255, 30);
+            painter->fillPath(path, stripeBrush);
+            painter->fillPath(path, bandTint);
         }
 
-        /* inner shadow so the stripes remain inside the tube */
+        /* Layer 3: inner rim to keep the pattern below glass */
         QLinearGradient innerShadow(bar.topLeft(), bar.bottomLeft());
         QColor innerTop(h.darker(170));
-        innerTop.setAlpha(90);
+        innerTop.setAlpha(70);
         QColor innerBottom(innerTop);
         innerBottom.setAlpha(120);
         innerShadow.setColorAt(0.0, innerTop);
         innerShadow.setColorAt(0.45, QColor(innerTop.red(), innerTop.green(), innerTop.blue(), 0));
-        innerShadow.setColorAt(0.55, QColor(innerBottom.red(), innerBottom.green(), innerBottom.blue(), 30));
+        innerShadow.setColorAt(0.55, QColor(innerBottom.red(), innerBottom.green(), innerBottom.blue(), 40));
         innerShadow.setColorAt(1.0, innerBottom);
         painter->fillPath(path, innerShadow);
 
-        /* Layer 3: specular top shine */
+        /* Layer 4: specular top shine */
         painter->fillPath(path, gelShine(bar));
 
         /* inner 1px stroke */
@@ -742,9 +758,27 @@ Style::drawProgressBarGroove(const QStyleOption *option, QPainter *painter, cons
     }
     if (dConf.progressbars.style == 3)
     {
-        QLinearGradient lg(groove.topLeft(), hor?groove.bottomLeft():groove.topRight());
-        lg.setStops(Settings::gradientStops(dConf.input.gradient, opt->palette.color(QPalette::Base)));
-        GFX::drawClickable(dConf.progressbars.shadow, groove, painter, lg, dConf.progressbars.rnd, 0, All, option, widget);
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+
+        // Raised drop shadow keeps the bar floating instead of carved into the window
+        GFX::drawShadow(Raised, groove, painter, isEnabled(opt), dConf.progressbars.rnd);
+
+        QRect tube(groove.adjusted(1, 1, -1, -1));
+        QPainterPath path;
+        path.addRoundedRect(tube, dConf.progressbars.rnd, dConf.progressbars.rnd);
+
+        QLinearGradient lg(tube.topLeft(), hor ? tube.bottomLeft() : tube.topRight());
+        QColor base(opt->palette.color(QPalette::Base));
+        lg.setColorAt(0.0, base.lighter(120));
+        lg.setColorAt(0.5, base);
+        lg.setColorAt(1.0, base.darker(110));
+        painter->fillPath(path, lg);
+
+        // Subtle rim so the glass tube reads above the shadow
+        painter->setPen(QPen(QColor(255, 255, 255, 90), 1));
+        painter->drawPath(path);
+        painter->restore();
         return true;
     }
     if (dConf.progressbars.textPos)

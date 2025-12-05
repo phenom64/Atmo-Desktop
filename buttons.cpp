@@ -37,6 +37,7 @@
 #include <QHBoxLayout>
 #include <QPainterPath>
 #include <QTime>
+#include <QElapsedTimer>
 
 #include "nse.h"
 #include "atmolib/gfx.h"
@@ -84,6 +85,9 @@ static inline QLinearGradient gelShine(const QRect &r)
     return shine;
 }
 
+static QElapsedTimer s_focusPulseClock;
+static qint64 s_lastPulseFrame = 0;
+
 bool
 Style::drawPushButton(const QStyleOption *option, QPainter *painter, const QWidget *widget) const
 {
@@ -111,22 +115,38 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
     if (defaultOrFocus && !(opt->features & QStyleOptionButton::Flat))
     {
+        if (!s_focusPulseClock.isValid())
+            s_focusPulseClock.start();
         QColor base(opt->palette.color(QPalette::Highlight));
         QRect r(opt->rect.adjusted(1, 1, -1, -1));
+        const int radius = dConf.pushbtn.rnd;
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
-        GFX::drawShadow(dConf.pushbtn.shadow, opt->rect, painter, isEnabled(opt), dConf.pushbtn.rnd);
+        // Force an outer/raised shadow so the focused button floats instead of looking sunken
+        GFX::drawShadow(Raised, opt->rect, painter, isEnabled(opt), radius);
         QPainterPath path;
-        path.addRoundedRect(r, dConf.pushbtn.rnd, dConf.pushbtn.rnd);
+        path.addRoundedRect(r, radius, radius);
         painter->fillPath(path, gelCylinder(r, base, sunken));
 
         /* breathing inner glow */
-        const qint64 t = QTime::currentTime().msecsSinceStartOfDay();
-        const qreal phase = qSin(qreal(t) * 0.0085);
-        const int alpha = 200 + int(55 * phase);
+        const qint64 now = s_focusPulseClock.elapsed();
+        const qreal phase = qSin(qreal(now) * 0.0085);
+        const int pulseAlpha = 190 + int(65 * phase);
+        const int hoverAlpha = (255/Steps) * Anim::Basic::level(widget);
+        const int glowAlpha = qMax(pulseAlpha, hoverAlpha);
+        if (widget && now - s_lastPulseFrame > 30)
+        {
+            s_lastPulseFrame = now;
+            const_cast<QWidget *>(widget)->update(opt->rect);
+        }
         QColor glow(base.lighter(160));
-        glow.setAlpha(alpha);
+        glow.setAlpha(glowAlpha);
         painter->fillPath(path, glow);
+        if (hoverAlpha > pulseAlpha)
+        {
+            QColor glare(255, 255, 255, 80);
+            painter->fillPath(path, glare);
+        }
 
         painter->fillPath(path, gelShine(r));
         painter->setPen(QPen(base.darker(150), 1));

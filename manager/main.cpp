@@ -31,6 +31,7 @@
 #include <QRadioButton>
 #include <QProgressBar>
 #include <QStyleFactory>
+#include <QStyle>
 #include <QKeySequence>
 #include <QMessageBox>
 #include <QPainter>
@@ -38,6 +39,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QVariant>
+#include <QIcon>
 #include <QMap>
 #include <QStandardPaths>
 #include <QFile>
@@ -142,6 +144,61 @@ private:
     QTableWidget *m_table;
 };
 
+class ManagerAboutBox : public QDialog {
+    Q_OBJECT
+public:
+    explicit ManagerAboutBox(QWidget *parent = nullptr) : QDialog(parent) { setupUi(); }
+
+private:
+    void setupUi()
+    {
+        setWindowTitle(tr("About Atmo Framework Manager"));
+        setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+        setWindowFlags(windowFlags() | Qt::WindowCloseButtonHint);
+        setFixedSize(420, 260);
+
+        QVBoxLayout *layout = new QVBoxLayout(this);
+        layout->setContentsMargins(20, 20, 20, 20);
+        layout->setSpacing(6);
+        layout->setAlignment(Qt::AlignCenter);
+
+        QLabel *iconLabel = new QLabel(this);
+        QIcon icon = qApp->windowIcon();
+        QPixmap iconPixmap = icon.pixmap(72, 72);
+        if (iconPixmap.isNull())
+            iconPixmap = style()->standardIcon(QStyle::SP_DesktopIcon).pixmap(72, 72);
+        iconLabel->setPixmap(iconPixmap);
+        iconLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(iconLabel);
+        layout->addSpacing(8);
+
+        QLabel *titleLabel = new QLabel(tr("Atmo Framework Manager"), this);
+        titleLabel->setStyleSheet("font-size: 20px; font-weight: bold;");
+        titleLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(titleLabel);
+
+        QLabel *subtitleLabel = new QLabel(tr("The Syndromatic Desktop Experience."), this);
+        subtitleLabel->setStyleSheet("font-size: 14px;");
+        subtitleLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(subtitleLabel);
+
+        QString version = qApp->applicationVersion();
+        if (version.isEmpty())
+            version = QStringLiteral("1.0");
+        QLabel *versionLabel = new QLabel(tr("Version %1").arg(version), this);
+        versionLabel->setStyleSheet("font-size: 12px; color: #555;");
+        versionLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(versionLabel);
+
+        layout->addStretch();
+
+        QLabel *copyrightLabel = new QLabel(tr("™ and © 2025 Syndromatic Ltd.\nAll rights reserved."), this);
+        copyrightLabel->setStyleSheet("font-size: 12px; color: #555;");
+        copyrightLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(copyrightLabel);
+    }
+};
+
 struct VarEditor {
     Settings::Key key; QWidget *widget; QString type; // "bool", "int", "float", "string", "gradient", "stringlist"
 };
@@ -159,53 +216,85 @@ public:
         QMenu *helpMenu = menuBar()->addMenu(tr("Help"));
         helpMenu->addAction(tr("About"), this, [this]
         {
-            QMessageBox::about(this, tr("About Atmo Framework Manager"),
-                               tr("Atmo Framework Manager\nConfigure NSE / Atmo desktop visuals.\nMac-inspired control surface with live previews."));
+            if (!m_about)
+                m_about = new ManagerAboutBox(this);
+            m_about->show();
+            m_about->raise();
+            m_about->activateWindow();
         });
 
         auto *central = new QWidget(this);
         auto *mainLay = new QVBoxLayout(central);
-        mainLay->setContentsMargins(20, 20, 20, 20);
-        mainLay->setSpacing(15);
+        mainLay->setContentsMargins(18, 18, 18, 18);
+        mainLay->setSpacing(12);
 
-        QGroupBox *generalBox = new QGroupBox(tr("General"), central);
-        QVBoxLayout *generalLay = new QVBoxLayout(generalBox);
+        auto *rootSplit = new QSplitter(Qt::Horizontal, central);
+        rootSplit->setChildrenCollapsible(false);
 
-        auto *tabs = new QTabWidget(generalBox);
-        QWidget *settingsTab = new QWidget(tabs);
+        // Sidebar navigation
+        QWidget *sidebar = new QWidget(rootSplit);
+        QVBoxLayout *sideLay = new QVBoxLayout(sidebar);
+        sideLay->setContentsMargins(0, 0, 0, 0);
+        sideLay->setSpacing(6);
+        QLabel *sideLabel = new QLabel(tr("Categories"), sidebar);
+        sideLabel->setStyleSheet("font-weight: bold;");
+        auto *left = new QTreeWidget(sidebar);
+        left->setHeaderHidden(true);
+        left->setMinimumWidth(200);
+        sideLay->addWidget(sideLabel);
+        sideLay->addWidget(left);
+        rootSplit->addWidget(sidebar);
+
+        // Main content area with tabs
+        QWidget *contentPanel = new QWidget(rootSplit);
+        QVBoxLayout *contentLay = new QVBoxLayout(contentPanel);
+        contentLay->setContentsMargins(10, 0, 0, 0);
+        contentLay->setSpacing(12);
+
+        auto *tabs = new QTabWidget(contentPanel);
+        QWidget *customiseTab = new QWidget(tabs);
         QWidget *defaultsTab = new QWidget(tabs);
-        tabs->addTab(settingsTab, "Settings");
-        tabs->addTab(defaultsTab, "Defaults");
-        generalLay->addWidget(tabs);
+        tabs->addTab(customiseTab, tr("Customise"));
+        tabs->addTab(defaultsTab, tr("Defaults"));
+        contentLay->addWidget(tabs);
 
-        // Settings tab layout with splitter
-        auto *split = new QSplitter(settingsTab);
-        auto *left = new QTreeWidget(); left->setHeaderHidden(true); left->setMinimumWidth(180);
-        auto *scroll = new QScrollArea(); scroll->setWidgetResizable(true);
-        auto *rightStack = new QStackedWidget(); rightStack->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        QVBoxLayout *customiseLay = new QVBoxLayout(customiseTab);
+        customiseLay->setSpacing(10);
+        customiseLay->setContentsMargins(0, 0, 0, 0);
+
+        auto *rightStack = new QStackedWidget(customiseTab);
+        QLabel *emptyState = new QLabel(tr("Choose an option to customise your Syndromatic Desktop Experience."), rightStack);
+        emptyState->setAlignment(Qt::AlignCenter);
+        emptyState->setStyleSheet("color: #7a7a7a; font-size: 13px;");
+        rightStack->addWidget(emptyState);
+        auto *scroll = new QScrollArea(customiseTab);
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
         scroll->setWidget(rightStack);
-        split->addWidget(left); split->addWidget(scroll);
-        split->setStretchFactor(0,0); split->setStretchFactor(1,1);
-        auto *settingsLay = new QVBoxLayout(settingsTab);
-        settingsLay->addWidget(split);
 
         // Build variable editors grouped by prefix
         buildEditors(left, rightStack);
-        buildDefaultsPage(defaultsTab);
 
-        generalBox->setLayout(generalLay);
-        mainLay->addWidget(generalBox);
+        QWidget *formWrap = new QWidget(customiseTab);
+        QVBoxLayout *formLay = new QVBoxLayout(formWrap);
+        formLay->setContentsMargins(0, 0, 0, 0);
+        formLay->addWidget(scroll);
 
-        QGroupBox *decoBox = new QGroupBox(tr("Decoration"), central);
+        m_desc = new QLabel(tr("Choose an option to customise your Syndromatic Desktop Experience."), customiseTab);
+        m_desc->setWordWrap(true);
+        formLay->addWidget(m_desc);
+        customiseLay->addWidget(formWrap);
+
+        QGroupBox *decoBox = new QGroupBox(tr("Decoration"), customiseTab);
         QVBoxLayout *decoLay = new QVBoxLayout(decoBox);
         m_preview = makePreview(decoBox);
         decoLay->addWidget(m_preview);
         decoBox->setLayout(decoLay);
-        mainLay->addWidget(decoBox);
+        customiseLay->addWidget(decoBox);
 
-        QGroupBox *colorBox = new QGroupBox(tr("Colors"), central);
+        QGroupBox *colorBox = new QGroupBox(tr("Colours"), customiseTab);
         QGridLayout *colorLay = new QGridLayout(colorBox);
-        QLabel *colorNote = new QLabel(tr("Palette follows your system accent. Use Apply to commit changes, or open the palette file for manual tweaks."), colorBox);
+        QLabel *colorNote = new QLabel(tr("Colour palette follows your system accent. Use Apply to commit changes, or open the palette file for manual tweaks."), colorBox);
         colorNote->setWordWrap(true);
         colorLay->addWidget(colorNote, 0, 0, 1, 2);
         const QList<QPair<QPalette::ColorRole, QString> > roles = {
@@ -239,7 +328,17 @@ public:
         }
         QPushButton *openPalette = new QPushButton(tr("Open User Palette"), colorBox);
         colorLay->addWidget(openPalette, row, 0, 1, 2, Qt::AlignLeft);
-        mainLay->addWidget(colorBox);
+        customiseLay->addWidget(colorBox);
+
+        buildDefaultsPage(defaultsTab);
+        tabs->setCurrentWidget(customiseTab);
+
+        contentPanel->setLayout(contentLay);
+        rootSplit->addWidget(contentPanel);
+        rootSplit->setStretchFactor(0, 0);
+        rootSplit->setStretchFactor(1, 1);
+
+        mainLay->addWidget(rootSplit, 1);
 
         // Bottom buttons
         auto *btnLay = new QHBoxLayout();
@@ -255,10 +354,17 @@ public:
         mainLay->addLayout(btnLay);
         setCentralWidget(central);
 
-        connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){ if(!cur) return; rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt()); if (m_desc) m_desc->setText(cur->text(0));});
-        m_desc = new QLabel(tr("Select a category or control to see details."), central);
-        m_desc->setWordWrap(true);
-        mainLay->addWidget(m_desc);
+        connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){
+            if(!cur){
+                rightStack->setCurrentIndex(0);
+                if (m_desc) m_desc->setText(emptyState->text());
+                return;
+            }
+            rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt());
+            if (m_desc) m_desc->setText(cur->text(0));
+        });
+        left->clearSelection();
+        rightStack->setCurrentIndex(0);
 
         connect(btnDemo, &QPushButton::clicked, this, &ManagerWindow::showDemo);
         connect(btnClose, &QPushButton::clicked, this, &QWidget::close);
@@ -267,13 +373,15 @@ public:
         connect(openPalette, &QPushButton::clicked, this, [this]
         {
             const QString userPalette = QDir::homePath()+"/.config/NSE/NSE.conf";
-            QProcess::startDetached("xdg-open", QStringList() << QFileInfo(userPalette).absolutePath());
+            const QString path = QFileInfo(userPalette).absoluteFilePath();
+            if (!QProcess::startDetached("docsurf", QStringList() << path))
+                QProcess::startDetached("xdg-open", QStringList() << path);
         });
     }
 
 private:
     QMap<Settings::Key, VarEditor> m_editors;
-    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr; QWidget *m_demoPreview = nullptr; QLabel *m_desc = nullptr;
+    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr; QWidget *m_demoPreview = nullptr; QLabel *m_desc = nullptr; ManagerAboutBox *m_about = nullptr;
 
     QString categoryOf(const QString &key) const{
         if (!key.contains('.')) return QStringLiteral("General");
@@ -283,7 +391,7 @@ private:
     static QString prettyCategory(const QString &c){
         static QMap<QString, QString> prettyNames{
             {"General", "General"},
-            {"deco","Window Decoration"},
+            {"deco","Decoration"},
             {"pushbtn","Push Buttons"},
             {"toolbtn","Toolbar Buttons"},
             {"input","Input Fields"},
@@ -366,7 +474,7 @@ private:
         // Stable order
         const QStringList order = {"General","deco","pushbtn","toolbtn","input","tabs","uno","menues","sliders","scrollers","views","progressbars","windows","shadows"};
         QStringList keys = cats.keys(); for (const QString &o: order){ if (keys.removeOne(o)) keys.prepend(o); }
-        int idx = 0; tree->clear();
+        int idx = stack->count(); tree->clear();
         for (const QString &cat : keys){
             QWidget *page = createPage(cat);
             stack->addWidget(page);
@@ -374,7 +482,6 @@ private:
             it->setData(0, Qt::UserRole, idx++);
             tree->addTopLevelItem(it);
         }
-        if (tree->topLevelItemCount()>0){ tree->setCurrentItem(tree->topLevelItem(0)); }
     }
 
     void buildDefaultsPage(QWidget *page){
