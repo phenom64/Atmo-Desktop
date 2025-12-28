@@ -191,7 +191,8 @@ Style::polish(QWidget *widget)
             if (dConf.removeTitleBars)
                 ShadowHandler::manage(widget);
             /* make sure UNO data refreshes after the window is mapped (winId ready) */
-            QTimer::singleShot(100, widget, [w=widget](){ WindowHelpers::updateWindowDataLater(w); });
+            QPointer<QWidget> guard(widget);
+            QTimer::singleShot(100, widget, [guard](){ if (guard) WindowHelpers::updateWindowDataLater(guard); });
 
 #if 0
             if (!dConf.uno.enabled)
@@ -595,9 +596,9 @@ Style::polish(QApplication *app)
 }
 
 void
-Style::polishSlot(qulonglong w)
+Style::polishSlotImpl(QWidget *w)
 {
-    if (QTabBar *tabBar = Ops::getChild<QTabBar *>(w))
+    if (QTabBar *tabBar = qobject_cast<QTabBar *>(w))
     {
         bool docMode = tabBar->documentMode();
         QTabWidget *tw(0);

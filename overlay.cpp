@@ -225,7 +225,7 @@ Overlay::Overlay(QWidget *parent, int opacity)
 
 Overlay::~Overlay()
 {
-    new Restorer((qulonglong)m_frame);
+    new Restorer(m_frame);
     m_frame = 0;
 }
 
@@ -507,12 +507,12 @@ Overlay::isSplitter(QWidget *w, const Position p)
 
 //------------------------------------------------------------------------------------------------------------
 
-Restorer::Restorer(qulonglong widget)
+Restorer::Restorer(QWidget *widget)
     : QTimer()
-    , m_widget(widget)
+    , m_guard(widget)
 {
-    if (QWidget *w = Ops::getChild<QWidget *>(m_widget))
-        setParent(w);
+    if (m_guard)
+        setParent(m_guard.data());
     setSingleShot(true);
     connect(this, SIGNAL(timeout()), this, SLOT(restore()));
     start(0);
@@ -522,21 +522,20 @@ void
 Restorer::restore()
 {
     deleteLater();
-    QWidget *w = Ops::getChild<QWidget *>(m_widget);
-    if (!w)
+    if (m_guard.isNull())
         return;
 
 #if 0
     static QStyle *first = QStyleFactory::create(QStyleFactory::keys().first());
-    w->setStyle(first);
-    w->style()->unpolish(w);
-    w->style()->polish(w);
-    w->update();
-    w->updateGeometry();
-    w->setStyle(w->style());
+    m_guard->setStyle(first);
+    m_guard->style()->unpolish(m_guard);
+    m_guard->style()->polish(m_guard);
+    m_guard->update();
+    m_guard->updateGeometry();
+    m_guard->setStyle(m_guard->style());
 #endif
     //apparently this makes qt reread the pixelmetric and we get a normal frame
     //this is needed as the overlay'ed widgets have a pixelmetric framewidth of 0
     QEvent e(QEvent::StyleChange);
-    QApplication::sendEvent(w, &e);
+    QApplication::sendEvent(m_guard.data(), &e);
 }

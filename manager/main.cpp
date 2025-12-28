@@ -1,6 +1,19 @@
 /* This file is a part of the Atmo desktop experience framework project for SynOS .
  * Copyright (C) 2025 Syndromatic Ltd. All rights reserved
  * Designed by Kavish Krishnakumar in Manchester.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or 
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITH ABSOLUTELY NO WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <QApplication>
@@ -46,125 +59,195 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QEvent>
+#include <QListWidget>
+#include <QSlider>
+#include <QDialogButtonBox>
+#include <QSettings>
 
 #include "../atmolib/color.h"
 #include "../config/settings.h"
-#include <QSettings>
 
 using namespace NSE;
 
-static QWidget* makePreview(QWidget *parent)
+// --------------------------------------------------------------------------------
+//  Demo Preview Widget (for Demo Dialog)
+// --------------------------------------------------------------------------------
+static QWidget *makePreview(QWidget *parent)
 {
     QWidget *w = new QWidget(parent);
     QGridLayout *g = new QGridLayout(w);
     int r = 0;
+
     QTabWidget *tabs = new QTabWidget(w);
     tabs->addTab(new QWidget, "Tab");
     tabs->addTab(new QWidget, "View");
     g->addWidget(tabs, r++, 0, 1, 4);
+
     QLineEdit *le = new QLineEdit(w);
     le->setPlaceholderText("Text field");
     g->addWidget(le, r, 0, 1, 2);
     g->addWidget(new QPushButton("Button", w), r, 2);
     g->addWidget(new QPushButton("Button", w), r++, 3);
-    QComboBox *pop = new QComboBox(w); pop->addItems({"Pop Up Menu","One","Two"});
+
+    QComboBox *pop = new QComboBox(w);
+    pop->addItems({"Pop Up Menu", "One", "Two"});
     g->addWidget(pop, r, 0, 1, 2);
-    QComboBox *combo = new QComboBox(w); combo->addItems({"Combo Box","Alpha","Beta"});
+    QComboBox *combo = new QComboBox(w);
+    combo->addItems({"Combo Box", "Alpha", "Beta"});
+    combo->setEditable(true);
     g->addWidget(combo, r++, 2, 1, 2);
+
     QGroupBox *radios = new QGroupBox(w);
     QGridLayout *rg = new QGridLayout(radios);
     rg->addWidget(new QRadioButton("Radio"), 0, 0);
     rg->addWidget(new QRadioButton("Radio"), 1, 0);
     g->addWidget(radios, r, 2, 2, 1);
+
     QGroupBox *checks = new QGroupBox(w);
     QGridLayout *cg = new QGridLayout(checks);
     cg->addWidget(new QCheckBox("Check"), 0, 0);
     cg->addWidget(new QCheckBox("Check"), 1, 0);
     g->addWidget(checks, r, 3, 2, 1);
-    QLineEdit *search = new QLineEdit(w); search->setPlaceholderText("Search");
+
+    QLineEdit *search = new QLineEdit(w);
+    search->setPlaceholderText("Search");
     g->addWidget(search, r, 0, 1, 2);
+
     QDateEdit *date = new QDateEdit(QDate(1984, 1, 24), w);
-    date->setDisplayFormat("M/d/yyyy");
+    date->setDisplayFormat("d/M/yyyy");
     g->addWidget(date, r++, 2, 1, 2);
+
     QWidget *seg = new QWidget(w);
-    QGridLayout *sg = new QGridLayout(seg); sg->setContentsMargins(0,0,0,0);
+    QGridLayout *sg = new QGridLayout(seg);
+    sg->setContentsMargins(0, 0, 0, 0);
     sg->addWidget(new QPushButton("Test"), 0, 0);
     sg->addWidget(new QPushButton("One"), 0, 1);
     sg->addWidget(new QPushButton("Two"), 0, 2);
     g->addWidget(seg, r++, 0, 1, 2);
+
     QSlider *slider = new QSlider(Qt::Horizontal, w);
     g->addWidget(slider, r++, 0, 1, 4);
-    QProgressBar *pb1 = new QProgressBar(w); pb1->setRange(0, 100); pb1->setValue(60);
+
+    QProgressBar *pb1 = new QProgressBar(w);
+    pb1->setRange(0, 100);
+    pb1->setValue(60);
     g->addWidget(pb1, r++, 0, 1, 4);
-    QProgressBar *pb2 = new QProgressBar(w); pb2->setRange(0, 0);
+
+    QProgressBar *pb2 = new QProgressBar(w);
+    pb2->setRange(0, 0);
     g->addWidget(pb2, r++, 0, 1, 4);
+
     return w;
 }
 
-class GradientEditor : public QGroupBox {
+// --------------------------------------------------------------------------------
+//  Gradient Editor (Visual Table)
+// --------------------------------------------------------------------------------
+class GradientEditor : public QGroupBox
+{
     Q_OBJECT
 public:
-    explicit GradientEditor(QWidget *parent=nullptr) : QGroupBox("Gradient", parent) {
+    explicit GradientEditor(QWidget *parent = nullptr)
+        : QGroupBox("Gradient", parent)
+    {
         QGridLayout *gl = new QGridLayout(this);
         m_table = new QTableWidget(6, 3, this);
-        m_table->setHorizontalHeaderLabels({"Use","Position","Value"});
+        m_table->setHorizontalHeaderLabels({"Use", "Position", "Value"});
         m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-        for (int i=0;i<6;++i){
-            auto *chk = new QCheckBox(this); m_table->setCellWidget(i,0,chk);
-            auto *pos = new QDoubleSpinBox(this); pos->setRange(0.0,1.0); pos->setDecimals(2); m_table->setCellWidget(i,1,pos);
-            auto *val = new QSpinBox(this); val->setRange(-100,100); m_table->setCellWidget(i,2,val);
+        m_table->verticalHeader()->setVisible(false);
+
+        for (int i = 0; i < 6; ++i)
+        {
+            QCheckBox *chk = new QCheckBox(this);
+            m_table->setCellWidget(i, 0, chk);
+
+            QDoubleSpinBox *pos = new QDoubleSpinBox(this);
+            pos->setRange(0.0, 1.0);
+            pos->setDecimals(2);
+            pos->setSingleStep(0.1);
+            m_table->setCellWidget(i, 1, pos);
+
+            QSpinBox *val = new QSpinBox(this);
+            val->setRange(-100, 100);
+            m_table->setCellWidget(i, 2, val);
         }
-        gl->addWidget(m_table,0,0,1,3);
+        gl->addWidget(m_table, 0, 0, 1, 3);
     }
-    void setFromString(const QString &s){
-        // format: "0.0:5, 1.0:-5"
-        for (int i=0;i<6;++i){ ((QCheckBox*)m_table->cellWidget(i,0))->setChecked(false);} 
-        const auto pairs = s.split(',', Qt::SkipEmptyParts);
-        for (int i=0;i<pairs.size() && i<6; ++i){
-            auto pp = pairs.at(i).trimmed().split(':');
-            if (pp.size()!=2) continue; bool ok1=false, ok2=false;
-            double p = pp[0].toDouble(&ok1); int v = pp[1].toInt(&ok2);
-            if (!ok1||!ok2) continue;
-            ((QCheckBox*)m_table->cellWidget(i,0))->setChecked(true);
-            ((QDoubleSpinBox*)m_table->cellWidget(i,1))->setValue(p);
-            ((QSpinBox*)m_table->cellWidget(i,2))->setValue(v);
+
+    void setFromString(const QString &s)
+    {
+        // Clear all first
+        for (int i = 0; i < 6; ++i)
+            static_cast<QCheckBox *>(m_table->cellWidget(i, 0))->setChecked(false);
+
+        // Format: "0.0:5, 1.0:-5"
+        const QStringList pairs = s.split(',', Qt::SkipEmptyParts);
+        for (int i = 0; i < pairs.size() && i < 6; ++i)
+        {
+            QStringList pp = pairs.at(i).trimmed().split(':');
+            if (pp.size() != 2)
+                continue;
+
+            bool ok1 = false, ok2 = false;
+            double p = pp[0].toDouble(&ok1);
+            int v = pp[1].toInt(&ok2);
+            if (!ok1 || !ok2)
+                continue;
+
+            static_cast<QCheckBox *>(m_table->cellWidget(i, 0))->setChecked(true);
+            static_cast<QDoubleSpinBox *>(m_table->cellWidget(i, 1))->setValue(p);
+            static_cast<QSpinBox *>(m_table->cellWidget(i, 2))->setValue(v);
         }
     }
-    QString toString() const{
+
+    QString toString() const
+    {
         QStringList out;
-        for (int i=0;i<6;++i){
-            if (!((QCheckBox*)m_table->cellWidget(i,0))->isChecked()) continue;
-            double p = ((QDoubleSpinBox*)m_table->cellWidget(i,1))->value();
-            int v = ((QSpinBox*)m_table->cellWidget(i,2))->value();
-            out << QString::number(p,'f',2) + ":" + QString::number(v);
+        for (int i = 0; i < 6; ++i)
+        {
+            if (!static_cast<QCheckBox *>(m_table->cellWidget(i, 0))->isChecked())
+                continue;
+
+            double p = static_cast<QDoubleSpinBox *>(m_table->cellWidget(i, 1))->value();
+            int v = static_cast<QSpinBox *>(m_table->cellWidget(i, 2))->value();
+            out << QString::number(p, 'f', 2) + ":" + QString::number(v);
         }
         return out.join(", ");
     }
+
 private:
     QTableWidget *m_table;
 };
 
-class ManagerAboutBox : public QDialog {
+// --------------------------------------------------------------------------------
+//  About Dialog (macOS Style)
+// --------------------------------------------------------------------------------
+class ManagerAboutBox : public QDialog
+{
     Q_OBJECT
 public:
-    explicit ManagerAboutBox(QWidget *parent = nullptr) : QDialog(parent) { setupUi(); }
+    explicit ManagerAboutBox(QWidget *parent = nullptr)
+        : QDialog(parent)
+    {
+        setupUi();
+    }
 
 private:
     void setupUi()
     {
-        setWindowTitle(tr("About Atmo Framework Manager"));
+        setWindowTitle(tr("About Atmo Manager"));
         setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
         setWindowFlags(windowFlags() | Qt::WindowCloseButtonHint);
-        setFixedSize(420, 260);
+        setFixedSize(420, 280);
 
         QVBoxLayout *layout = new QVBoxLayout(this);
-        layout->setContentsMargins(20, 20, 20, 20);
-        layout->setSpacing(6);
+        layout->setContentsMargins(24, 24, 24, 24);
+        layout->setSpacing(8);
         layout->setAlignment(Qt::AlignCenter);
 
+        // Icon
         QLabel *iconLabel = new QLabel(this);
-        QIcon icon = qApp->windowIcon();
-        QPixmap iconPixmap = icon.pixmap(72, 72);
+        QPixmap iconPixmap = QIcon::fromTheme("preferences-desktop").pixmap(72, 72);
         if (iconPixmap.isNull())
             iconPixmap = style()->standardIcon(QStyle::SP_DesktopIcon).pixmap(72, 72);
         iconLabel->setPixmap(iconPixmap);
@@ -172,378 +255,503 @@ private:
         layout->addWidget(iconLabel);
         layout->addSpacing(8);
 
+        // Title
         QLabel *titleLabel = new QLabel(tr("Atmo Framework Manager"), this);
-        titleLabel->setStyleSheet("font-size: 20px; font-weight: bold;");
+        QFont titleFont = titleLabel->font();
+        titleFont.setPointSize(18);
+        titleFont.setBold(true);
+        titleLabel->setFont(titleFont);
         titleLabel->setAlignment(Qt::AlignCenter);
         layout->addWidget(titleLabel);
 
+        // Subtitle
         QLabel *subtitleLabel = new QLabel(tr("The Syndromatic Desktop Experience."), this);
-        subtitleLabel->setStyleSheet("font-size: 14px;");
         subtitleLabel->setAlignment(Qt::AlignCenter);
         layout->addWidget(subtitleLabel);
 
+        // Version (from applicationVersion)
         QString version = qApp->applicationVersion();
         if (version.isEmpty())
             version = QStringLiteral("1.0");
         QLabel *versionLabel = new QLabel(tr("Version %1").arg(version), this);
-        versionLabel->setStyleSheet("font-size: 12px; color: #555;");
+        QPalette vPal = versionLabel->palette();
+        vPal.setColor(QPalette::WindowText, vPal.color(QPalette::WindowText).darker(130));
+        versionLabel->setPalette(vPal);
         versionLabel->setAlignment(Qt::AlignCenter);
         layout->addWidget(versionLabel);
 
         layout->addStretch();
 
-        QLabel *copyrightLabel = new QLabel(tr("™ and © 2025 Syndromatic Ltd.\nAll rights reserved."), this);
-        copyrightLabel->setStyleSheet("font-size: 12px; color: #555;");
+        // Copyright
+        QLabel *copyrightLabel = new QLabel(
+            tr("™ and © 2025 Syndromatic Ltd.\nAll rights reserved.\nDesigned by Kavish Krishnakumar in Manchester."),
+            this);
         copyrightLabel->setAlignment(Qt::AlignCenter);
+        QPalette cPal = copyrightLabel->palette();
+        cPal.setColor(QPalette::WindowText, cPal.color(QPalette::WindowText).darker(130));
+        copyrightLabel->setPalette(cPal);
         layout->addWidget(copyrightLabel);
+
+        // OK button
+        QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok, this);
+        connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
+        layout->addWidget(buttonBox);
     }
 };
 
-struct VarEditor {
-    Settings::Key key; QWidget *widget; QString type; // "bool", "int", "float", "string", "gradient", "stringlist"
+// --------------------------------------------------------------------------------
+//  Variable Editor Struct
+// --------------------------------------------------------------------------------
+struct VarEditor
+{
+    Settings::Key key;
+    QWidget *widget;
+    QString type; // "bool", "int", "float", "string", "gradient", "stringlist"
 };
 
-class ManagerWindow : public QMainWindow {
+// --------------------------------------------------------------------------------
+//  Manager Window (macOS Preferences Style)
+// --------------------------------------------------------------------------------
+class ManagerWindow : public QMainWindow
+{
     Q_OBJECT
 public:
-    ManagerWindow(){
+    ManagerWindow()
+    {
+        Settings::read();
+
         setWindowTitle("Atmo Framework Manager");
-        setMinimumSize(800, 600);
-        resize(920, 640);
+        setMinimumSize(900, 680);
+        resize(980, 720);
 
+        // ---------- Menu Bar (macOS style) ----------
         QMenu *fileMenu = menuBar()->addMenu(tr("File"));
-        fileMenu->addAction(tr("Quit"), this, &QWidget::close, QKeySequence::Quit);
+        fileMenu->addAction(tr("Close"), this, &QWidget::close, QKeySequence::Close);
+
         QMenu *helpMenu = menuBar()->addMenu(tr("Help"));
-        helpMenu->addAction(tr("About"), this, [this]
-        {
-            if (!m_about)
-                m_about = new ManagerAboutBox(this);
-            m_about->show();
-            m_about->raise();
-            m_about->activateWindow();
-        });
+        helpMenu->addAction(tr("About Atmo Manager"), this, &ManagerWindow::showAbout);
 
-        auto *central = new QWidget(this);
-        auto *mainLay = new QVBoxLayout(central);
-        mainLay->setContentsMargins(18, 18, 18, 18);
-        mainLay->setSpacing(12);
+        // ---------- Central Widget ----------
+        QWidget *central = new QWidget(this);
+        setCentralWidget(central);
 
-        auto *rootSplit = new QSplitter(Qt::Horizontal, central);
-        rootSplit->setChildrenCollapsible(false);
+        // Main vertical layout (content + buttons at bottom)
+        QVBoxLayout *outerLayout = new QVBoxLayout(central);
+        outerLayout->setContentsMargins(0, 0, 0, 0);
+        outerLayout->setSpacing(0);
 
-        // Sidebar navigation
-        QWidget *sidebar = new QWidget(rootSplit);
-        QVBoxLayout *sideLay = new QVBoxLayout(sidebar);
-        sideLay->setContentsMargins(0, 0, 0, 0);
-        sideLay->setSpacing(6);
-        QLabel *sideLabel = new QLabel(tr("Categories"), sidebar);
-        sideLabel->setStyleSheet("font-weight: bold;");
-        auto *left = new QTreeWidget(sidebar);
-        left->setHeaderHidden(true);
-        left->setMinimumWidth(200);
-        sideLay->addWidget(sideLabel);
-        sideLay->addWidget(left);
-        rootSplit->addWidget(sidebar);
+        // Horizontal layout for sidebar + content
+        QWidget *mainContent = new QWidget(central);
+        QHBoxLayout *mainLayout = new QHBoxLayout(mainContent);
+        mainLayout->setContentsMargins(0, 0, 0, 0);
+        mainLayout->setSpacing(0);
 
-        // Main content area with tabs
-        QWidget *contentPanel = new QWidget(rootSplit);
-        QVBoxLayout *contentLay = new QVBoxLayout(contentPanel);
-        contentLay->setContentsMargins(10, 0, 0, 0);
-        contentLay->setSpacing(12);
+        // ---------- Sidebar (macOS Preferences Style) ----------
+        m_sidebar = new QListWidget(this);
+        m_sidebar->setIconSize(QSize(24, 24));
+        m_sidebar->setFixedWidth(200);
+        m_sidebar->setFrameShape(QFrame::NoFrame);
+        m_sidebar->setSpacing(2);
+        mainLayout->addWidget(m_sidebar);
 
-        auto *tabs = new QTabWidget(contentPanel);
-        QWidget *customiseTab = new QWidget(tabs);
-        QWidget *defaultsTab = new QWidget(tabs);
-        tabs->addTab(customiseTab, tr("Customise"));
-        tabs->addTab(defaultsTab, tr("Defaults"));
-        contentLay->addWidget(tabs);
+        // ---------- Content Area ----------
+        QWidget *contentArea = new QWidget(this);
+        QVBoxLayout *contentLayout = new QVBoxLayout(contentArea);
+        contentLayout->setContentsMargins(16, 16, 16, 16);
+        contentLayout->setSpacing(12);
 
+        // Tabs: Customise / Defaults
+        m_tabs = new QTabWidget(contentArea);
+        QWidget *customiseTab = new QWidget(m_tabs);
+        QWidget *defaultsTab = new QWidget(m_tabs);
+        m_tabs->addTab(customiseTab, tr("Customise"));
+        m_tabs->addTab(defaultsTab, tr("Defaults"));
+        contentLayout->addWidget(m_tabs, 1);
+
+        // ---------- Customise Tab Layout ----------
         QVBoxLayout *customiseLay = new QVBoxLayout(customiseTab);
-        customiseLay->setSpacing(10);
         customiseLay->setContentsMargins(0, 0, 0, 0);
+        customiseLay->setSpacing(12);
 
-        auto *rightStack = new QStackedWidget(customiseTab);
-        QLabel *emptyState = new QLabel(tr("Choose an option to customise your Syndromatic Desktop Experience."), rightStack);
+        // Stacked widget for category pages
+        m_stack = new QStackedWidget(customiseTab);
+
+        // Empty state label
+        QLabel *emptyState = new QLabel(
+            tr("Choose an option to customise your Syndromatic Desktop Experience."),
+            m_stack);
         emptyState->setAlignment(Qt::AlignCenter);
-        emptyState->setStyleSheet("color: #7a7a7a; font-size: 13px;");
-        rightStack->addWidget(emptyState);
-        auto *scroll = new QScrollArea(customiseTab);
+        emptyState->setWordWrap(true);
+        QPalette ePal = emptyState->palette();
+        ePal.setColor(QPalette::WindowText, ePal.color(QPalette::WindowText).darker(140));
+        emptyState->setPalette(ePal);
+        m_stack->addWidget(emptyState);
+
+        // Scroll area for stacked content
+        QScrollArea *scroll = new QScrollArea(customiseTab);
         scroll->setWidgetResizable(true);
         scroll->setFrameShape(QFrame::NoFrame);
-        scroll->setWidget(rightStack);
+        scroll->setWidget(m_stack);
+        customiseLay->addWidget(scroll, 1);
 
-        // Build variable editors grouped by prefix
-        buildEditors(left, rightStack);
-
-        QWidget *formWrap = new QWidget(customiseTab);
-        QVBoxLayout *formLay = new QVBoxLayout(formWrap);
-        formLay->setContentsMargins(0, 0, 0, 0);
-        formLay->addWidget(scroll);
-
-        m_desc = new QLabel(tr("Choose an option to customise your Syndromatic Desktop Experience."), customiseTab);
+        // Description label
+        m_desc = new QLabel(
+            tr("Choose an option to customise your Syndromatic Desktop Experience."),
+            customiseTab);
         m_desc->setWordWrap(true);
-        formLay->addWidget(m_desc);
-        customiseLay->addWidget(formWrap);
+        customiseLay->addWidget(m_desc);
 
-        QGroupBox *decoBox = new QGroupBox(tr("Decoration"), customiseTab);
-        QVBoxLayout *decoLay = new QVBoxLayout(decoBox);
-        m_preview = makePreview(decoBox);
-        decoLay->addWidget(m_preview);
-        decoBox->setLayout(decoLay);
-        customiseLay->addWidget(decoBox);
+        // ---------- Colours GroupBox ----------
+        QGroupBox *colourBox = new QGroupBox(tr("Colours"), customiseTab);
+        QGridLayout *colourLay = new QGridLayout(colourBox);
 
-        QGroupBox *colorBox = new QGroupBox(tr("Colours"), customiseTab);
-        QGridLayout *colorLay = new QGridLayout(colorBox);
-        QLabel *colorNote = new QLabel(tr("Colour palette follows your system accent. Use Apply to commit changes, or open the palette file for manual tweaks."), colorBox);
-        colorNote->setWordWrap(true);
-        colorLay->addWidget(colorNote, 0, 0, 1, 2);
-        const QList<QPair<QPalette::ColorRole, QString> > roles = {
-            qMakePair(QPalette::Window, tr("Window")),
-            qMakePair(QPalette::WindowText, tr("Window Text")),
-            qMakePair(QPalette::Base, tr("Base")),
-            qMakePair(QPalette::Text, tr("Text")),
-            qMakePair(QPalette::Button, tr("Button")),
-            qMakePair(QPalette::ButtonText, tr("Button Text")),
-            qMakePair(QPalette::Highlight, tr("Highlight"))
+        QLabel *colourNote = new QLabel(
+            tr("Colour palette follows your system accent. Use Apply to commit changes, "
+               "or open the palette file for manual tweaks."),
+            colourBox);
+        colourNote->setWordWrap(true);
+        colourLay->addWidget(colourNote, 0, 0, 1, 4);
+
+        const QList<QPair<QPalette::ColorRole, QString>> roles = {
+            {QPalette::Window, tr("Window")},
+            {QPalette::WindowText, tr("Window Text")},
+            {QPalette::Base, tr("Base")},
+            {QPalette::Text, tr("Text")},
+            {QPalette::Button, tr("Button")},
+            {QPalette::ButtonText, tr("Button Text")},
+            {QPalette::Highlight, tr("Highlight")}
         };
+
         int row = 1;
+        int col = 0;
         for (const auto &pr : roles)
         {
-            QPushButton *picker = new QPushButton(colorBox);
+            QPushButton *picker = new QPushButton(colourBox);
             picker->setAutoFillBackground(true);
             picker->setProperty("role", pr.first);
             picker->setFixedHeight(28);
+            picker->setMinimumWidth(100);
             picker->setText(pr.second);
-            updateColorButton(picker, QApplication::palette().color(pr.first));
-            colorLay->addWidget(new QLabel(pr.second, colorBox), row, 0);
-            colorLay->addWidget(picker, row, 1);
-            connect(picker, &QPushButton::clicked, this, [picker]()
+            updateColourButton(picker, QApplication::palette().color(pr.first));
+            m_colourPickers.append(picker);
+
+            colourLay->addWidget(picker, row, col);
+
+            connect(picker, &QPushButton::clicked, this, [this, picker]()
             {
                 const QColor current = picker->palette().color(QPalette::Button);
-                QColor chosen = QColorDialog::getColor(current, picker, picker->text());
+                QColor chosen = QColorDialog::getColor(current, this, picker->text());
                 if (chosen.isValid())
-                    updateColorButton(picker, chosen);
+                    updateColourButton(picker, chosen);
             });
-            ++row;
+
+            col++;
+            if (col >= 4)
+            {
+                col = 0;
+                row++;
+            }
         }
-        QPushButton *openPalette = new QPushButton(tr("Open User Palette"), colorBox);
-        colorLay->addWidget(openPalette, row, 0, 1, 2, Qt::AlignLeft);
-        customiseLay->addWidget(colorBox);
 
+        QPushButton *openPalette = new QPushButton(tr("Open User Palette"), colourBox);
+        connect(openPalette, &QPushButton::clicked, this, &ManagerWindow::openPaletteFile);
+        colourLay->addWidget(openPalette, row + 1, 0, 1, 2, Qt::AlignLeft);
+
+        customiseLay->addWidget(colourBox);
+
+        // ---------- Build Editors ----------
+        buildEditors();
+
+        // ---------- Defaults Tab ----------
         buildDefaultsPage(defaultsTab);
-        tabs->setCurrentWidget(customiseTab);
 
-        contentPanel->setLayout(contentLay);
-        rootSplit->addWidget(contentPanel);
-        rootSplit->setStretchFactor(0, 0);
-        rootSplit->setStretchFactor(1, 1);
+        mainLayout->addWidget(contentArea, 1);
+        outerLayout->addWidget(mainContent, 1);
 
-        mainLay->addWidget(rootSplit, 1);
+        // ---------- Bottom Buttons ----------
+        QWidget *buttonBar = new QWidget(central);
+        QHBoxLayout *btnLay = new QHBoxLayout(buttonBar);
+        btnLay->setContentsMargins(16, 12, 16, 16);
+        btnLay->setSpacing(8);
 
-        // Bottom buttons
-        auto *btnLay = new QHBoxLayout();
-        QPushButton *btnDemo = new QPushButton("Demo", central);
-        QPushButton *btnWrite = new QPushButton("Apply", central);
-        QPushButton *btnRevert = new QPushButton("Revert to Defaults", central);
-        QPushButton *btnClose = new QPushButton("Close", central);
+        QPushButton *btnDemo = new QPushButton(tr("Demo"), buttonBar);
+        QPushButton *btnApply = new QPushButton(tr("Apply"), buttonBar);
+        QPushButton *btnRevert = new QPushButton(tr("Revert to Defaults"), buttonBar);
+        QPushButton *btnClose = new QPushButton(tr("Close"), buttonBar);
+
+        // Set minimum sizes for proper button appearance
+        btnDemo->setMinimumWidth(80);
+        btnApply->setMinimumWidth(80);
+        btnRevert->setMinimumWidth(140);
+        btnClose->setMinimumWidth(80);
+
         btnLay->addStretch();
         btnLay->addWidget(btnDemo);
-        btnLay->addWidget(btnWrite);
+        btnLay->addWidget(btnApply);
         btnLay->addWidget(btnRevert);
         btnLay->addWidget(btnClose);
-        mainLay->addLayout(btnLay);
-        setCentralWidget(central);
 
-        connect(left, &QTreeWidget::currentItemChanged, this, [=](QTreeWidgetItem *cur){
-            if(!cur){
-                rightStack->setCurrentIndex(0);
-                if (m_desc) m_desc->setText(emptyState->text());
-                return;
-            }
-            rightStack->setCurrentIndex(cur->data(0, Qt::UserRole).toInt());
-            if (m_desc) m_desc->setText(cur->text(0));
-        });
-        left->clearSelection();
-        rightStack->setCurrentIndex(0);
+        outerLayout->addWidget(buttonBar);
 
+        // ---------- Connections ----------
+        connect(m_sidebar, &QListWidget::currentItemChanged, this, &ManagerWindow::showCategory);
         connect(btnDemo, &QPushButton::clicked, this, &ManagerWindow::showDemo);
-        connect(btnClose, &QPushButton::clicked, this, &QWidget::close);
-        connect(btnWrite, &QPushButton::clicked, this, &ManagerWindow::writeConfig);
+        connect(btnApply, &QPushButton::clicked, this, &ManagerWindow::writeConfig);
         connect(btnRevert, &QPushButton::clicked, this, &ManagerWindow::revertDefaults);
-        connect(openPalette, &QPushButton::clicked, this, [this]
-        {
-            const QString userPalette = QDir::homePath()+"/.config/NSE/NSE.conf";
-            const QString path = QFileInfo(userPalette).absoluteFilePath();
-            if (!QProcess::startDetached("docsurf", QStringList() << path))
-                QProcess::startDetached("xdg-open", QStringList() << path);
-        });
+        connect(btnClose, &QPushButton::clicked, this, &QWidget::close);
+
+        // Initial state
+        m_sidebar->clearSelection();
+        m_stack->setCurrentIndex(0);
     }
 
 private:
     QMap<Settings::Key, VarEditor> m_editors;
-    QWidget *m_preview = nullptr; QDialog *m_demoDialog = nullptr; QWidget *m_demoPreview = nullptr; QLabel *m_desc = nullptr; ManagerAboutBox *m_about = nullptr;
+    QListWidget *m_sidebar = nullptr;
+    QStackedWidget *m_stack = nullptr;
+    QTabWidget *m_tabs = nullptr;
+    QLabel *m_desc = nullptr;
+    QDialog *m_demoDialog = nullptr;
+    QWidget *m_demoPreview = nullptr;
+    ManagerAboutBox *m_aboutBox = nullptr;
+    QList<QPushButton *> m_colourPickers;
 
-    QString categoryOf(const QString &key) const{
-        if (!key.contains('.')) return QStringLiteral("General");
+    // ---------- Category Helpers ----------
+    static QString categoryOf(const QString &key)
+    {
+        if (!key.contains('.'))
+            return QStringLiteral("General");
         return key.left(key.indexOf('.'));
     }
 
-    static QString prettyCategory(const QString &c){
+    static QString prettyCategory(const QString &c)
+    {
         static QMap<QString, QString> prettyNames{
             {"General", "General"},
-            {"deco","Decoration"},
-            {"pushbtn","Push Buttons"},
-            {"toolbtn","Toolbar Buttons"},
-            {"input","Input Fields"},
-            {"tabs","Tabs"},
-            {"uno","Unified Titlebar (UNO)"},
-            {"menues","Menus"},
-            {"sliders","Sliders"},
-            {"scrollers","Scroll Bars"},
-            {"views","Views"},
-            {"progressbars","Progress Bars"},
-            {"windows","Windows"},
-            {"shadows","Shadows"}
+            {"deco", "Decoration"},
+            {"pushbtn", "Push Buttons"},
+            {"toolbtn", "Toolbar Buttons"},
+            {"input", "Input Fields"},
+            {"tabs", "Tabs"},
+            {"uno", "Unified Titlebar (UNO)"},
+            {"menues", "Menus"},
+            {"sliders", "Sliders"},
+            {"scrollers", "Scroll Bars"},
+            {"views", "Views"},
+            {"progressbars", "Progress Bars"},
+            {"windows", "Windows"},
+            {"shadows", "Shadows"}
         };
-        return prettyNames.value(c, c.left(1).toUpper()+c.mid(1));
+        QString name = prettyNames.value(c, c);
+        if (name == c)
+            name = name.left(1).toUpper() + name.mid(1);
+        return name;
     }
 
-    static QString prettyLabelFor(Settings::Key k){ return QString::fromLatin1(Settings::description(k)); }
+    static QString prettyLabelFor(Settings::Key k)
+    {
+        QString desc = QString::fromLatin1(Settings::description(k));
+        // British English substitutions
+        desc.replace("color", "colour", Qt::CaseInsensitive);
+        desc.replace("Color", "Colour");
+        desc.replace("customize", "customise", Qt::CaseInsensitive);
+        desc.replace("Customize", "Customise");
+        return desc;
+    }
 
-    QWidget* createPage(const QString &cat){
-        QWidget *w = new QWidget; auto *lay = new QFormLayout(w);
+    // ---------- Build Editors ----------
+    void buildEditors()
+    {
+        // Determine categories present
+        QMap<QString, QList<Settings::Key>> cats;
+        for (int i = 0; i < Settings::Keycount; ++i)
+        {
+            Settings::Key k = static_cast<Settings::Key>(i);
+            cats[categoryOf(Settings::key(k))].append(k);
+        }
+
+        // Define category order (correct order, not reversed)
+        const QStringList order = {
+            "General", "deco", "pushbtn", "toolbtn", "input", "tabs",
+            "uno", "menues", "sliders", "scrollers", "views",
+            "progressbars", "windows", "shadows"
+        };
+
+        // Build ordered list
+        QStringList orderedKeys;
+        for (const QString &o : order)
+        {
+            if (cats.contains(o))
+                orderedKeys << o;
+        }
+        // Add any remaining categories not in predefined order
+        for (const QString &k : cats.keys())
+        {
+            if (!orderedKeys.contains(k))
+                orderedKeys << k;
+        }
+
+        // Create pages
+        m_sidebar->clear();
+        int pageIdx = 1; // 0 is empty state
+
+        for (const QString &cat : orderedKeys)
+        {
+            QWidget *page = createPage(cat);
+            m_stack->addWidget(page);
+
+            QListWidgetItem *it = new QListWidgetItem(
+                QIcon::fromTheme("preferences-system"),
+                prettyCategory(cat));
+            it->setData(Qt::UserRole, pageIdx++);
+            m_sidebar->addItem(it);
+        }
+    }
+
+    QWidget *createPage(const QString &cat)
+    {
+        QWidget *page = new QWidget;
+        QFormLayout *lay = new QFormLayout(page);
         lay->setLabelAlignment(Qt::AlignRight);
         lay->setRowWrapPolicy(QFormLayout::WrapLongRows);
         lay->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
         lay->setFormAlignment(Qt::AlignTop | Qt::AlignLeft);
-        w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        for (int i=0;i<Settings::Keycount;++i){
+        lay->setContentsMargins(16, 16, 16, 16);
+        lay->setSpacing(10);
+
+        for (int i = 0; i < Settings::Keycount; ++i)
+        {
             Settings::Key k = static_cast<Settings::Key>(i);
             QString name = Settings::key(k);
-            if (categoryOf(name) != cat) continue;
+            if (categoryOf(name) != cat)
+                continue;
+
             QVariant def = Settings::defaultValue(k);
             QVariant cur = Settings::readVal(k);
-            QWidget *ed = nullptr; QString type;
-            if (def.type()==QVariant::Bool){ auto *cb = new QCheckBox; cb->setChecked(cur.toBool()); ed=cb; type="bool"; }
-            else if (def.type()==QVariant::Int){ auto *sp = new QSpinBox; sp->setRange(-9999, 9999); sp->setValue(cur.toInt()); ed=sp; type="int"; }
-            else if (def.type()==QVariant::Double){ auto *ds = new QDoubleSpinBox; ds->setRange(-1e6, 1e6); ds->setDecimals(2); ds->setValue(cur.toDouble()); ed=ds; type="float"; }
-            else if (def.type()==QVariant::StringList){ auto *le = new QLineEdit; le->setText(cur.toStringList().join(", ")); ed=le; type="stringlist"; }
-            else {
+            QWidget *ed = nullptr;
+            QString type;
+
+            if (def.type() == QVariant::Bool)
+            {
+                QCheckBox *cb = new QCheckBox;
+                cb->setChecked(cur.toBool());
+                ed = cb;
+                type = "bool";
+            }
+            else if (def.type() == QVariant::Int)
+            {
+                QSpinBox *sp = new QSpinBox;
+                sp->setRange(-9999, 9999);
+                sp->setValue(cur.toInt());
+                ed = sp;
+                type = "int";
+            }
+            else if (def.type() == QVariant::Double)
+            {
+                QDoubleSpinBox *ds = new QDoubleSpinBox;
+                ds->setRange(-1e6, 1e6);
+                ds->setDecimals(2);
+                ds->setValue(cur.toDouble());
+                ed = ds;
+                type = "float";
+            }
+            else if (def.type() == QVariant::StringList)
+            {
+                QLineEdit *le = new QLineEdit;
+                le->setText(cur.toStringList().join(", "));
+                ed = le;
+                type = "stringlist";
+            }
+            else
+            {
                 // QString: detect gradient-like keys
                 QString lname = name.toLower();
-                if (lname.endsWith("gradient") || lname.contains(".gradient")){
-                    auto *ge = new GradientEditor; ge->setFromString(cur.toString()); ed=ge; type="gradient";
-                } else {
-                    auto *le = new QLineEdit; le->setText(cur.toString()); ed=le; type="string";
+                if (lname.endsWith("gradient") || lname.contains(".gradient"))
+                {
+                    GradientEditor *ge = new GradientEditor;
+                    ge->setFromString(cur.toString());
+                    ed = ge;
+                    type = "gradient";
+                }
+                else
+                {
+                    QLineEdit *le = new QLineEdit;
+                    le->setText(cur.toString());
+                    ed = le;
+                    type = "string";
                 }
             }
+
             QString labelText = prettyLabelFor(k);
-            auto *lab = new QLabel(labelText); lab->setWordWrap(true); lab->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-            lab->setToolTip(QString("%1\nKey: %2\nDefault: %3").arg(labelText).arg(QString::fromLatin1(Settings::key(k))).arg(Settings::defaultValue(k).toString()));
+            QLabel *lab = new QLabel(labelText);
+            lab->setWordWrap(true);
+            lab->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+            lab->setToolTip(QString("Key: %1\nDefault: %2")
+                .arg(QString::fromLatin1(Settings::key(k)))
+                .arg(Settings::defaultValue(k).toString()));
+
             ed->setToolTip(QString::fromLatin1(Settings::description(k)));
             ed->setProperty("desc", QString::fromLatin1(Settings::description(k)));
             ed->installEventFilter(this);
+
             lay->addRow(lab, ed);
             m_editors.insert(k, {k, ed, type});
         }
+
         // Synthetic control for progressbars.style
-        if (cat == "progressbars"){
-            QComboBox *pbStyleBox = new QComboBox(w);
+        if (cat == "progressbars")
+        {
+            QComboBox *pbStyleBox = new QComboBox(page);
             pbStyleBox->addItem("Modern (flat)", 0);
             pbStyleBox->addItem("Traditional", 1);
             pbStyleBox->addItem("Tinted", 2);
             pbStyleBox->addItem("Aqua (skeuomorphic)", 3);
             pbStyleBox->setCurrentIndex(dConf.progressbars.style);
+
             QLabel *lab = new QLabel("Progress Bars Style");
             lab->setToolTip("0=Modern flat, 1=Traditional, 2=Tinted, 3=Aqua skeuomorphic");
             pbStyleBox->setToolTip(lab->toolTip());
+
             lay->addRow(lab, pbStyleBox);
-            // store pointer for save
-            w->setProperty("pbStyleBox", QVariant::fromValue((void*)pbStyleBox));
+            page->setProperty("pbStyleBox", QVariant::fromValue(static_cast<void *>(pbStyleBox)));
         }
-        return w;
+
+        return page;
     }
 
-    void buildEditors(QTreeWidget *tree, QStackedWidget *stack){
-        // Determine categories present
-        QMap<QString, QList<Settings::Key>> cats;
-        for (int i=0;i<Settings::Keycount;++i){
-            Settings::Key k = static_cast<Settings::Key>(i);
-            cats[categoryOf(Settings::key(k))].append(k);
-        }
-        // Stable order
-        const QStringList order = {"General","deco","pushbtn","toolbtn","input","tabs","uno","menues","sliders","scrollers","views","progressbars","windows","shadows"};
-        QStringList keys = cats.keys(); for (const QString &o: order){ if (keys.removeOne(o)) keys.prepend(o); }
-        int idx = stack->count(); tree->clear();
-        for (const QString &cat : keys){
-            QWidget *page = createPage(cat);
-            stack->addWidget(page);
-            auto *it = new QTreeWidgetItem(QStringList() << prettyCategory(cat));
-            it->setData(0, Qt::UserRole, idx++);
-            tree->addTopLevelItem(it);
-        }
-    }
+    void buildDefaultsPage(QWidget *page)
+    {
+        QVBoxLayout *v = new QVBoxLayout(page);
+        v->setContentsMargins(16, 16, 16, 16);
 
-    void buildDefaultsPage(QWidget *page){
-        auto *v = new QVBoxLayout(page);
-        auto *tw = new QTreeWidget(page);
-        tw->setColumnCount(3); tw->setHeaderLabels({"Setting","Default","Description"});
-        for (int i=0;i<Settings::Keycount;++i){
+        QLabel *note = new QLabel(
+            tr("Defaults are sourced from the installed template NSE.conf. "
+               "Use Revert to restore."),
+            page);
+        note->setWordWrap(true);
+        v->addWidget(note);
+
+        QTreeWidget *tw = new QTreeWidget(page);
+        tw->setColumnCount(3);
+        tw->setHeaderLabels({"Setting", "Default", "Description"});
+
+        for (int i = 0; i < Settings::Keycount; ++i)
+        {
             Settings::Key k = static_cast<Settings::Key>(i);
-            auto *it = new QTreeWidgetItem({QString::fromLatin1(Settings::key(k)), Settings::defaultValue(k).toString(), QString::fromLatin1(Settings::description(k))});
+            QTreeWidgetItem *it = new QTreeWidgetItem({
+                QString::fromLatin1(Settings::key(k)),
+                Settings::defaultValue(k).toString(),
+                QString::fromLatin1(Settings::description(k))
+            });
             tw->addTopLevelItem(it);
         }
-        tw->header()->setSectionResizeMode(QHeaderView::ResizeToContents); tw->header()->setStretchLastSection(true);
-        v->addWidget(new QLabel("Defaults are sourced from the installed template NSE.conf. Use Revert to restore."));
-        v->addWidget(tw);
+
+        tw->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+        tw->header()->setStretchLastSection(true);
+        v->addWidget(tw, 1);
     }
 
-private slots:
-    void showDemo(){
-        writeConfig(); // persist then re-read
-        Settings::read();
-        if (!m_demoDialog)
-        { 
-            m_demoDialog = new QDialog(this); m_demoDialog->setWindowTitle("Atmo Demo Preview"); QVBoxLayout *v = new QVBoxLayout(m_demoDialog); m_demoPreview = makePreview(m_demoDialog); v->addWidget(m_demoPreview); m_demoDialog->resize(700,480);
-        } 
-        m_demoDialog->setStyle(qApp->style());
-        repolishPreview(); m_demoDialog->show();
-    }
-
-    void writeConfig(){
-        for (auto it = m_editors.begin(); it != m_editors.end(); ++it){
-            const VarEditor &ve = it.value(); QVariant setVal;
-            if (ve.type=="bool") setVal = ((QCheckBox*)ve.widget)->isChecked();
-            else if (ve.type=="int") setVal = ((QSpinBox*)ve.widget)->value();
-            else if (ve.type=="float") setVal = ((QDoubleSpinBox*)ve.widget)->value();
-            else if (ve.type=="stringlist") setVal = ((QLineEdit*)ve.widget)->text().split(',', Qt::SkipEmptyParts);
-            else if (ve.type=="gradient") setVal = ((GradientEditor*)ve.widget)->toString();
-            else setVal = ((QLineEdit*)ve.widget)->text();
-            Settings::writeVal(ve.key, setVal);
-        }
-        // Save synthetic progressbars.style
-        QList<QWidget*> pages = this->findChildren<QWidget*>();
-        for (QWidget *page : pages){
-            QVariant v = page->property("pbStyleBox");
-            if (v.isValid()){
-                QComboBox *box = reinterpret_cast<QComboBox*>(v.value<void*>());
-                if (box && NSE::Settings::settings()) NSE::Settings::settings()->setValue("progressbars.style", box->currentIndex());
-            }
-        }
-        Settings::read(); if (m_demoDialog) repolishPreview();
-        QMessageBox::information(this, "Atmo", "Settings applied. Some apps may need restart to reflect changes.");
-    }
-
-    void repolishWidget(QWidget *root){ if (!root) return; auto *st = root->style(); QList<QWidget*> ws = root->findChildren<QWidget*>(); ws << root; for (QWidget *w : ws){ st->unpolish(w); st->polish(w); w->update(); } }
-    void repolishPreview(){ repolishWidget(m_preview); repolishWidget(m_demoPreview); }
-    static void updateColorButton(QPushButton *btn, const QColor &c)
-    {
-        QPalette pal(btn->palette());
-        pal.setColor(QPalette::Button, c);
-        pal.setColor(QPalette::ButtonText, Color::lum(c) > 140 ? Qt::black : Qt::white);
-        btn->setPalette(pal);
-        btn->update();
-    }
+    // ---------- Event Filter (for description updates) ----------
     bool eventFilter(QObject *o, QEvent *e) override
     {
         if (m_desc && (e->type() == QEvent::FocusIn || e->type() == QEvent::Enter))
@@ -555,17 +763,222 @@ private slots:
         return QMainWindow::eventFilter(o, e);
     }
 
-    bool copyDefaultNSEConf(){ const QString userDir = QDir::homePath()+"/.config/NSE"; QDir().mkpath(userDir); const QString userFile=userDir+"/NSE.conf"; const QString tmpl = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf")); if (tmpl.isEmpty()) return false; QFile::remove(userFile); return QFile::copy(tmpl, userFile);} 
+private slots:
+    void showCategory(QListWidgetItem *current, QListWidgetItem * /*previous*/)
+    {
+        if (!current)
+        {
+            m_stack->setCurrentIndex(0);
+            return;
+        }
+        int idx = current->data(Qt::UserRole).toInt();
+        m_stack->setCurrentIndex(idx);
+        if (m_desc)
+            m_desc->setText(tr("Configure %1 settings.").arg(current->text()));
+    }
 
-    void revertDefaults(){ if (!copyDefaultNSEConf()){ QMessageBox::warning(this, "Atmo", "Could not locate default template. Falling back to internal defaults."); Settings::writeDefaults(); } Settings::read(); for (auto it=m_editors.begin(); it!=m_editors.end(); ++it){ const VarEditor &ve = it.value(); QVariant cur = Settings::readVal(ve.key); if (ve.type=="bool") ((QCheckBox*)ve.widget)->setChecked(cur.toBool()); else if (ve.type=="int") ((QSpinBox*)ve.widget)->setValue(cur.toInt()); else if (ve.type=="float") ((QDoubleSpinBox*)ve.widget)->setValue(cur.toDouble()); else if (ve.type=="stringlist") ((QLineEdit*)ve.widget)->setText(cur.toStringList().join(", ")); else if (ve.type=="gradient") ((GradientEditor*)ve.widget)->setFromString(cur.toString()); else ((QLineEdit*)ve.widget)->setText(cur.toString()); } if (m_demoDialog) repolishPreview(); QMessageBox::information(this, "Atmo", "Defaults restored."); }
+    void showAbout()
+    {
+        if (!m_aboutBox)
+            m_aboutBox = new ManagerAboutBox(this);
+        m_aboutBox->show();
+        m_aboutBox->raise();
+        m_aboutBox->activateWindow();
+    }
+
+    void showDemo()
+    {
+        // Save and re-read config
+        writeConfig();
+        Settings::read();
+
+        if (!m_demoDialog)
+        {
+            m_demoDialog = new QDialog(this);
+            m_demoDialog->setWindowTitle(tr("Atmo Demo Preview"));
+            m_demoDialog->resize(720, 500);
+
+            QVBoxLayout *v = new QVBoxLayout(m_demoDialog);
+            m_demoPreview = makePreview(m_demoDialog);
+            v->addWidget(m_demoPreview);
+
+            QDialogButtonBox *box = new QDialogButtonBox(QDialogButtonBox::Close, m_demoDialog);
+            connect(box, &QDialogButtonBox::rejected, m_demoDialog, &QDialog::close);
+            v->addWidget(box);
+        }
+
+        // Apply Atmo style to the demo dialog
+        if (QStyle *atmo = QStyleFactory::create("Atmo"))
+            m_demoDialog->setStyle(atmo);
+
+        repolishWidget(m_demoPreview);
+        m_demoDialog->show();
+        m_demoDialog->raise();
+    }
+
+    void writeConfig()
+    {
+        for (auto it = m_editors.begin(); it != m_editors.end(); ++it)
+        {
+            const VarEditor &ve = it.value();
+            QVariant setVal;
+
+            if (ve.type == "bool")
+                setVal = static_cast<QCheckBox *>(ve.widget)->isChecked();
+            else if (ve.type == "int")
+                setVal = static_cast<QSpinBox *>(ve.widget)->value();
+            else if (ve.type == "float")
+                setVal = static_cast<QDoubleSpinBox *>(ve.widget)->value();
+            else if (ve.type == "stringlist")
+                setVal = static_cast<QLineEdit *>(ve.widget)->text().split(',', Qt::SkipEmptyParts);
+            else if (ve.type == "gradient")
+                setVal = static_cast<GradientEditor *>(ve.widget)->toString();
+            else
+                setVal = static_cast<QLineEdit *>(ve.widget)->text();
+
+            Settings::writeVal(ve.key, setVal);
+        }
+
+        // Save synthetic progressbars.style
+        QList<QWidget *> pages = this->findChildren<QWidget *>();
+        for (QWidget *page : pages)
+        {
+            QVariant v = page->property("pbStyleBox");
+            if (v.isValid())
+            {
+                QComboBox *box = static_cast<QComboBox *>(v.value<void *>());
+                if (box && NSE::Settings::settings())
+                    NSE::Settings::settings()->setValue("progressbars.style", box->currentIndex());
+            }
+        }
+
+        Settings::read();
+        QMessageBox::information(this, "Atmo",
+            tr("Settings applied. Some apps may need restart to reflect changes."));
+    }
+
+    void revertDefaults()
+    {
+        if (QMessageBox::question(this, tr("Revert to Defaults"),
+                tr("Are you sure you want to reset all settings to defaults?"),
+                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
+            return;
+
+        // Try to copy from system template
+        const QString userDir = QDir::homePath() + "/.config/NSE";
+        QDir().mkpath(userDir);
+        const QString userFile = userDir + "/NSE.conf";
+        const QString tmpl = QStandardPaths::locate(
+            QStandardPaths::GenericDataLocation,
+            QStringLiteral("atmo/NSE.conf"));
+
+        if (!tmpl.isEmpty())
+        {
+            QFile::remove(userFile);
+            if (!QFile::copy(tmpl, userFile))
+            {
+                QMessageBox::warning(this, "Atmo",
+                    tr("Could not copy template file. Falling back to internal defaults."));
+                Settings::writeDefaults();
+            }
+        }
+        else
+        {
+            QMessageBox::warning(this, "Atmo",
+                tr("Could not locate default template. Falling back to internal defaults."));
+            Settings::writeDefaults();
+        }
+
+        // Re-read and refresh UI
+        Settings::read();
+        refreshEditorsFromSettings();
+
+        QMessageBox::information(this, "Atmo", tr("Defaults restored."));
+    }
+
+    void refreshEditorsFromSettings()
+    {
+        for (auto it = m_editors.begin(); it != m_editors.end(); ++it)
+        {
+            const VarEditor &ve = it.value();
+            QVariant cur = Settings::readVal(ve.key);
+
+            if (ve.type == "bool")
+                static_cast<QCheckBox *>(ve.widget)->setChecked(cur.toBool());
+            else if (ve.type == "int")
+                static_cast<QSpinBox *>(ve.widget)->setValue(cur.toInt());
+            else if (ve.type == "float")
+                static_cast<QDoubleSpinBox *>(ve.widget)->setValue(cur.toDouble());
+            else if (ve.type == "stringlist")
+                static_cast<QLineEdit *>(ve.widget)->setText(cur.toStringList().join(", "));
+            else if (ve.type == "gradient")
+                static_cast<GradientEditor *>(ve.widget)->setFromString(cur.toString());
+            else
+                static_cast<QLineEdit *>(ve.widget)->setText(cur.toString());
+        }
+
+        // Refresh colour pickers
+        for (QPushButton *picker : m_colourPickers)
+        {
+            QPalette::ColorRole role = static_cast<QPalette::ColorRole>(
+                picker->property("role").toInt());
+            updateColourButton(picker, QApplication::palette().color(role));
+        }
+    }
+
+    void openPaletteFile()
+    {
+        const QString userPalette = QDir::homePath() + "/.config/NSE/NSE.conf";
+        const QString path = QFileInfo(userPalette).absoluteFilePath();
+
+        // Try docsurf first (SynOS file viewer), fall back to xdg-open
+        if (!QProcess::startDetached("docsurf", QStringList() << path))
+            QProcess::startDetached("xdg-open", QStringList() << path);
+    }
+
+    // ---------- Helper Functions ----------
+    static void updateColourButton(QPushButton *btn, const QColor &c)
+    {
+        QPalette pal = btn->palette();
+        pal.setColor(QPalette::Button, c);
+        pal.setColor(QPalette::ButtonText, Color::lum(c) > 140 ? Qt::black : Qt::white);
+        btn->setPalette(pal);
+        btn->update();
+    }
+
+    static void repolishWidget(QWidget *root)
+    {
+        if (!root)
+            return;
+        QStyle *st = root->style();
+        QList<QWidget *> ws = root->findChildren<QWidget *>();
+        ws << root;
+        for (QWidget *w : ws)
+        {
+            st->unpolish(w);
+            st->polish(w);
+            w->update();
+        }
+    }
 };
 
+// --------------------------------------------------------------------------------
+//  Main Entry Point
+// --------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    app.setApplicationName("Atmo Manager");
+    app.setApplicationVersion("1.0");
+    app.setOrganizationName("Syndromatic");
+    app.setOrganizationDomain("syndromatic.com");
+
+    // Apply Atmo style if available
     if (QStyle *s = QStyleFactory::create("Atmo"))
         QApplication::setStyle(s);
-    ManagerWindow win; win.show();
+
+    ManagerWindow win;
+    win.show();
     return app.exec();
 }
 

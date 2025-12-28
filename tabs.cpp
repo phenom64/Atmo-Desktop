@@ -155,6 +155,7 @@ Style::drawSelector(const QStyleOptionTab *opt, QPainter *painter, const QTabBar
     case QTabBar::RoundedWest:
     case QTabBar::TriangularWest:
         lg = QLinearGradient(0, 0, r.width(), 0);
+        Q_FALLTHROUGH();
     case QTabBar::RoundedEast:
     case QTabBar::TriangularEast:
         if (opt->shape != QTabBar::RoundedWest && opt->shape != QTabBar::TriangularWest)
@@ -301,7 +302,7 @@ Style::drawDocumentTabShape(const QStyleOption *option, QPainter *painter, const
     QRect r(opt->rect);
     QLinearGradient lg;
     Sides sides(All);
-    const quint8 margin(!selected&&!opt->documentMode * 2);
+    const quint8 margin((!selected && !opt->documentMode) ? 2 : 0);
     const bool ltr = opt->direction == Qt::LeftToRight;
     switch (opt->shape)
     {
@@ -392,7 +393,7 @@ static void drawDocTabBar(const QStyleOptionTabBarBase *opt, QPainter *p, const 
 {
     if (p->device()->devType() != QInternal::Widget)
         return;
-    const bool documentMode = opt&&opt->documentMode || bar&&bar->documentMode();
+    const bool documentMode = (opt && opt->documentMode) || (bar && bar->documentMode());
     QWidget *dev = static_cast<QWidget *>(p->device());
     QRect r(rect.isValid()?rect: bar?bar->rect():dev->rect());
     if (Ops::isUnoTabBar(bar))

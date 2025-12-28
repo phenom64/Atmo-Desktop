@@ -62,7 +62,7 @@ TitleWidget::TitleWidget(QToolBar *parent)
     static const QString service("com.syndromatic.atmo.kwindeco"),
             interface("com.syndromatic.atmo.deco"),
             path("/NSEDecoAdaptor");
-    QDBusInterface *iface = new QDBusInterface(service, path, interface);
+    QDBusInterface *iface = new QDBusInterface(service, path, interface, QDBusConnection::sessionBus(), this);
     iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
 #endif
     connect(parent, SIGNAL(topLevelChanged(bool)), this, SLOT(toolBarFloatingChagned(bool)), Qt::QueuedConnection);

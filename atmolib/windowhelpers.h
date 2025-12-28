@@ -43,7 +43,7 @@ public:
 
 protected:
     explicit WindowHelpers(QObject *parent = 0);
-    static bool scheduleWindow(const qulonglong w);
+    static bool scheduleWindow(QWidget *w);
     static unsigned int getHeadHeight(QWidget *win, bool &separator, const int dataHeight);
     static void unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data);
 
@@ -51,14 +51,13 @@ signals:
     void windowDataChanged(QWidget *win);
 
 protected slots:
-    void updateWindowData(qulonglong window);
+    void updateWindowDataImpl(QWidget *win);
 #if HASDBUS
     void dataChanged(QDBusMessage msg);
 #endif
 
 private:
     static WindowHelpers *s_instance;
-    QList<qulonglong> m_scheduled;
     QMap<QWidget *, int> m_uno;
 };
 }

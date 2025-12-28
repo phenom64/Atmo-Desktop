@@ -75,10 +75,9 @@ protected:
     bool eventFilter(QObject *, QEvent *);
 
 protected slots:
-    void queryToolBar(qulonglong toolbar);
+    void queryToolBarImpl(QToolBar *toolbar);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
-    void change(const qulonglong w);
 
 private:
     static ToolBar *s_instance;
@@ -214,7 +213,7 @@ protected:
     void unlockDock(QDockWidget *dock);
 
 protected slots:
-    void lockWindowLater(const qulonglong w);
+    void lockWindowImpl(QWidget *win);
     void lockDocks(const bool locked);
 
 private:

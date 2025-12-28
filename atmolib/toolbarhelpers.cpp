@@ -110,23 +110,30 @@ ToolbarHelpers::fixSpacer(QToolBar *tb, int width)
     spacer->setVisible(!tb->isMovable()||width>7);
 }
 
-static QList<qulonglong> s_marginsQueue;
+static QList<QPointer<QToolBar>> s_marginsQueue;
 
 void
 ToolbarHelpers::adjustMarginsLater(QToolBar *toolBar)
 {
-    const qulonglong tb = (qulonglong)toolBar;
-    if (!s_marginsQueue.contains(tb))
+    QPointer<QToolBar> guard(toolBar);
+    if (guard.isNull())
+        return;
+    /* check if already queued */
+    for (const auto &queued : s_marginsQueue)
+        if (queued.data() == toolBar)
+            return;
+    s_marginsQueue << guard;
+    QTimer::singleShot(0, ToolbarHelpers::instance(), [guard]()
     {
-        s_marginsQueue << tb;
-        QMetaObject::invokeMethod(ToolbarHelpers::instance(), "adjustMargins", Qt::QueuedConnection, Q_ARG(qulonglong, tb));
-    }
+        s_marginsQueue.removeOne(guard);
+        if (guard.isNull())
+            return;
+        ToolbarHelpers::instance()->adjustMarginsImpl(guard.data());
+    });
 }
 void
-ToolbarHelpers::adjustMargins(qulonglong toolbar)
+ToolbarHelpers::adjustMarginsImpl(QToolBar *tb)
 {
-    s_marginsQueue.removeOne(toolbar);
-    QToolBar *tb = Ops::getChild<QToolBar *>(toolbar);
     if (!tb)
         return;
 

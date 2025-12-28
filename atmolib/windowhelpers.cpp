@@ -68,35 +68,49 @@ WindowHelpers::inUno(const QWidget *w)
     return w&&w->mapTo(w->window(), QPoint()).y() < unoHeight(w->window());
 }
 
+static QList<QPointer<QWidget>> s_scheduled;
+
 bool
-WindowHelpers::scheduleWindow(const qulonglong w)
+WindowHelpers::scheduleWindow(QWidget *w)
 {
-    if (instance()->m_scheduled.contains(w))
+    QPointer<QWidget> guard(w);
+    if (guard.isNull())
         return false;
-    instance()->m_scheduled << w;
+    for (const auto &queued : s_scheduled)
+        if (queued.data() == w)
+            return false;
+    s_scheduled << guard;
     return true;
 }
 
 void
 WindowHelpers::updateWindowDataLater(QWidget *win)
 {
-    const qulonglong window = (qulonglong)win;
-//    qDebug() << "WindowHelpers::updateWindowDataLater" << window;
-    if (scheduleWindow(window))
-        QMetaObject::invokeMethod(instance(), "updateWindowData", Qt::QueuedConnection, Q_ARG(qulonglong, window));
+    QPointer<QWidget> guard(win);
+    if (guard.isNull())
+        return;
+    if (scheduleWindow(win))
+    {
+        QTimer::singleShot(0, instance(), [guard]()
+        {
+            s_scheduled.removeOne(guard);
+            if (guard.isNull())
+                return;
+            instance()->updateWindowDataImpl(guard.data());
+        });
+    }
 }
 
 void
-WindowHelpers::updateWindowData(qulonglong window)
+WindowHelpers::updateWindowDataImpl(QWidget *win)
 {
-    m_scheduled.removeOne(window);
-    QWidget *win = Ops::getChild<QWidget *>(window);
     if (!win || !win->isWindow())
         return;
     if (!win->isVisible() || !win->testAttribute(Qt::WA_WState_Visible))
     {
         /* window not exposed yet, retry once mapped to avoid stale winId */
-        QTimer::singleShot(100, win, [win](){ WindowHelpers::updateWindowDataLater(win); });
+        QPointer<QWidget> guard(win);
+        QTimer::singleShot(100, win, [guard](){ if (guard) WindowHelpers::updateWindowDataLater(guard); });
         return;
     }
 

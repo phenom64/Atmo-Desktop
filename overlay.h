@@ -24,6 +24,7 @@
 
 #include <QWidget>
 #include <QTimer>
+#include <QPointer>
 #include "namespace.h"
 
 class QFrame;
@@ -89,11 +90,11 @@ class Restorer : public QTimer
 {
     Q_OBJECT
 public:
-    Restorer(qulonglong widget);
+    Restorer(QWidget *widget);
 public slots:
     void restore();
 private:
-    qulonglong m_widget;
+    QPointer<QWidget> m_guard;
 
 };
 

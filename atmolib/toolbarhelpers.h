@@ -40,7 +40,7 @@ protected:
 
 protected slots:
     void fixSpacer(QToolBar *toolbar, int width = 7);
-    void adjustMargins(qulonglong toolbar);
+    void adjustMarginsImpl(QToolBar *toolbar);
 
 private:
     static ToolbarHelpers *s_instance;

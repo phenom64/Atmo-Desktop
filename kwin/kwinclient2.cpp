@@ -390,7 +390,7 @@ Deco::border()
 {
     bool max(false);
     if (!client().isNull())
-        max = client().data()->isMaximized();
+        max = client().toStrongRef().data()->isMaximized();
     const int m = max||m_uno ? 0 : 6;
     return m;
 }
@@ -471,7 +471,7 @@ Deco::updateData()
         m_bgPix             = QPixmap::fromImage(data.image());
         m_hasSharedMem      = true;
 
-        data->decoId        = client().data()->decorationId();
+        data->decoId        = client().toStrongRef().data()->decorationId();
         data.unlock();
 
         m_tries = 0;
@@ -548,15 +548,15 @@ Deco::checkForDataFromWindowClass()
 {
     if (m_hasSharedMem)
         return;
-    KWindowInfo info(client().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
+    KWindowInfo info(client().toStrongRef().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
     Data::decoData(info.windowClassClass(), this);
     updateBgPixmap();
 
 #if HASDBUSMENU && HASXCB
     if (QX11Info::isPlatformX11() && m_showMenuBar && !m_menuBar)
     {
-        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().data()->windowId());
-        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().data()->windowId());
+        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().toStrongRef().data()->windowId());
+        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().toStrongRef().data()->windowId());
 
         if (objectPath && serviceName)
             m_menuBar = new MenuBar(this, serviceName.toString(), objectPath.toString());
@@ -592,7 +592,7 @@ Deco::updateLayout()
     if (m_leftButtons)
     {
         const int add = (m_buttonStyle == ButtonBase::Anton) * 2;
-        m_leftButtons->setPos(QPoint(leftBorder+add, client().data()->isModal()?2:4));
+        m_leftButtons->setPos(QPoint(leftBorder+add, client().toStrongRef().data()->isModal()?2:4));
         leftWidgetSize += m_leftButtons->geometry().width();
     }
 #if HASDBUSMENU
@@ -604,7 +604,7 @@ Deco::updateLayout()
 #endif
     if (m_rightButtons)
     {
-        m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+rightBorder)), client().data()->isModal()?2:4));
+        m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+rightBorder)), client().toStrongRef().data()->isModal()?2:4));
         rightWidgetSize += m_rightButtons->geometry().width()+8;
     }
     setTitleBar(QRect(borders().left(), 0, width-borders().right(), m_titleHeight));
@@ -682,7 +682,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         }
     }
 
-    if ((!dConf.deco.frameSize || client().toStrongRef().data()->isMaximized()) && !client().toStrongRef().data()->isModal() && !client().data()->isMaximized())
+    if ((!dConf.deco.frameSize || client().toStrongRef().data()->isMaximized()) && !client().toStrongRef().data()->isModal() && !client().toStrongRef().data()->isMaximized())
         paintBevel(painter, m_illumination/*bgLum*/);
     if (m_blingEnabled)
         paintBling(painter, titleTextArea());
@@ -1091,7 +1091,7 @@ Grip::Grip(Deco *d)
     setFixedSize(Size, Size);
     setCursor(Qt::SizeFDiagCursor);
     setMask(shape());
-    KDecoration2::DecoratedClient *c = m_deco->client().data();
+    KDecoration2::DecoratedClient *c = m_deco->client().toStrongRef().data();
     connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
     connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
     restack();
@@ -1102,7 +1102,7 @@ Grip::Grip(Deco *d)
 void
 Grip::setColor(const QColor &c)
 {
-    QPalette p = m_deco->client().data()->palette();
+    QPalette p = m_deco->client().toStrongRef().data()->palette();
     p.setColor(backgroundRole(), c);
     setPalette(p);
     regenPix();
@@ -1111,14 +1111,14 @@ Grip::setColor(const QColor &c)
 void
 Grip::updatePosition()
 {
-    KDecoration2::DecoratedClient *c = m_deco->client().data();
+    KDecoration2::DecoratedClient *c = m_deco->client().toStrongRef().data();
     XHandler::move(winId(), QPoint(c->width()-(Size+Margin), c->height()-(Size+Margin)));
 }
 
 void
 Grip::restack()
 {
-    if (XHandler::XWindow windowId = m_deco->client().data()->windowId())
+    if (XHandler::XWindow windowId = m_deco->client().toStrongRef().data()->windowId())
         XHandler::restack(winId(), windowId);
     else
         hide();
@@ -1128,7 +1128,7 @@ void
 Grip::mousePressEvent(QMouseEvent *e)
 {
     QWidget::mousePressEvent(e);
-    XHandler::mwRes(e->pos(), e->globalPos(), winId(), true, m_deco->client().data()->windowId());
+    XHandler::mwRes(e->pos(), e->globalPos(), winId(), true, m_deco->client().toStrongRef().data()->windowId());
 }
 
 void

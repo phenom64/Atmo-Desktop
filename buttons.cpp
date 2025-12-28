@@ -113,44 +113,76 @@ Style::drawPushButtonBevel(const QStyleOption *option, QPainter *painter, const 
     const bool sunken = isSunken(opt);
     const bool defaultOrFocus = (opt->features & QStyleOptionButton::DefaultButton) || (opt->state & State_HasFocus);
 
+    // Primary Aqua Button Logic
     if (defaultOrFocus && !(opt->features & QStyleOptionButton::Flat))
     {
         if (!s_focusPulseClock.isValid())
             s_focusPulseClock.start();
+            
         QColor base(opt->palette.color(QPalette::Highlight));
+        // Ensure we use uniform rounding for focus/default buttons
+        const int radius = dConf.pushbtn.rnd; 
+        
+        // Rect adjustment
         QRect r(opt->rect.adjusted(1, 1, -1, -1));
-        const int radius = dConf.pushbtn.rnd;
+        
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
-        // Force an outer/raised shadow so the focused button floats instead of looking sunken
+
+        // 1. Drop Shadow (Raised) - User Requirement: "Must float, not sunken"
+        // Explicitly unclipped shadow call
         GFX::drawShadow(Raised, opt->rect, painter, isEnabled(opt), radius);
+        
         QPainterPath path;
         path.addRoundedRect(r, radius, radius);
+
+        // 2. Base Gel Cylinder
         painter->fillPath(path, gelCylinder(r, base, sunken));
 
-        /* breathing inner glow */
+        // 3. Breathing Animation (Pulse)
         const qint64 now = s_focusPulseClock.elapsed();
-        const qreal phase = qSin(qreal(now) * 0.0085);
-        const int pulseAlpha = 190 + int(65 * phase);
-        const int hoverAlpha = (255/Steps) * Anim::Basic::level(widget);
-        const int glowAlpha = qMax(pulseAlpha, hoverAlpha);
-        if (widget && now - s_lastPulseFrame > 30)
+        // Slower, deeper breath for Aqua
+        const qreal phase = (qSin(qreal(now) * 0.003) + 1.0) / 2.0; // 0.0 to 1.0
+        
+        // Pulse alpha range: 0 to ~100 over the base
+        const int pulseAlpha = int(120 * phase);
+        
+        QColor glow(base.lighter(150));
+        glow.setAlpha(pulseAlpha);
+        painter->fillPath(path, glow);
+        
+        // Force update for animation
+        if (widget && now - s_lastPulseFrame > 30) // ~30fps cap
         {
             s_lastPulseFrame = now;
             const_cast<QWidget *>(widget)->update(opt->rect);
         }
-        QColor glow(base.lighter(160));
-        glow.setAlpha(glowAlpha);
-        painter->fillPath(path, glow);
-        if (hoverAlpha > pulseAlpha)
+
+        // 4. Hover Glare Overlay
+        // "Do not reset the pulse. Overlay a white Glare gradient..."
+        if (hl > 0)
         {
-            QColor glare(255, 255, 255, 80);
-            painter->fillPath(path, glare);
+             // Independent hover effect
+             QLinearGradient glare(r.topLeft(), r.bottomLeft());
+             glare.setColorAt(0.0, QColor(255, 255, 255, 90));
+             glare.setColorAt(0.5, QColor(255, 255, 255, 10));
+             glare.setColorAt(1.0, QColor(255, 255, 255, 0));
+             
+             // Modulate by hover level (0-Steps)
+             qreal op = qreal(hl)/qreal(Steps);
+             painter->save();
+             painter->setOpacity(op);
+             painter->fillPath(path, glare);
+             painter->restore();
         }
 
+        // 5. Specular Shine (Glass)
         painter->fillPath(path, gelShine(r));
+        
+        // 6. Border
         painter->setPen(QPen(base.darker(150), 1));
         painter->drawPath(path);
+        
         painter->restore();
         return true;
     }
@@ -467,7 +499,7 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 
     QColor bca(bc);
     QColor sc = Color::mid(bc, opt->palette.color(QPalette::Highlight), 2, 1);
-    const ShadowStyle shadow(dConf.differentInactive && shadow == Yosemite && !inActiveWindow ? Rect : dConf.toolbtn.shadow);
+    const ShadowStyle shadow(dConf.differentInactive && dConf.toolbtn.shadow == Yosemite && !inActiveWindow ? Rect : dConf.toolbtn.shadow);
     quint8 m = qMax<quint8>(1, GFX::shadowMargin(shadow));;
 
     Sides sides = bar ? Handlers::ToolBar::sides(tbtn) : btnSides(btn, widget->parentWidget());

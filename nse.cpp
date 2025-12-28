@@ -359,5 +359,13 @@ Style::drawText(const QRect &r,
 void
 Style::polishLater(QWidget *widget)
 {
-    QMetaObject::invokeMethod(this, "polishSlot", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)widget));
+    QPointer<QWidget> guard(widget);
+    if (guard.isNull())
+        return;
+    QTimer::singleShot(0, this, [this, guard]()
+    {
+        if (guard.isNull())
+            return;
+        polishSlotImpl(guard.data());
+    });
 }

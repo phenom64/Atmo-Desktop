@@ -222,25 +222,31 @@ ToolBar::isDirty(QToolBar *bar)
     return bar&&s_dirty.value(bar, true);
 }
 
-static QList<qulonglong> s_toolBarQuery;
+static QList<QPointer<QToolBar>> s_toolBarQuery;
 
 void
 ToolBar::queryToolBarLater(QToolBar *bar)
 {
-    const qulonglong tb = (qulonglong)bar;
-    if (!s_toolBarQuery.contains(tb))
+    QPointer<QToolBar> guard(bar);
+    if (guard.isNull())
+        return;
+    for (const auto &queued : s_toolBarQuery)
+        if (queued.data() == bar)
+            return;
+    s_toolBarQuery << guard;
+    QTimer::singleShot(0, instance(), [guard]()
     {
-        s_toolBarQuery << tb;
-        QMetaObject::invokeMethod(instance(), "queryToolBar", Qt::QueuedConnection, Q_ARG(qulonglong,tb));
-    }
+        s_toolBarQuery.removeOne(guard);
+        if (guard.isNull())
+            return;
+        instance()->queryToolBarImpl(guard.data());
+    });
 }
 
 void
-ToolBar::queryToolBar(qulonglong toolbar)
+ToolBar::queryToolBarImpl(QToolBar *bar)
 {
-    s_toolBarQuery.removeOne(toolbar);
-    QToolBar *bar = Ops::getChild<QToolBar *>(toolbar);
-    if (!bar || !bar->isVisible() /*|| !bar->window()->isVisible()*/)
+    if (!bar || !bar->isVisible())
         return;
 
     if (isDirty(bar))
@@ -290,17 +296,16 @@ ToolBar::sides(const QToolButton *btn)
 void
 ToolBar::changeLater(QWidget *w)
 {
-    QMetaObject::invokeMethod(instance(), "change", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)w));
-}
-
-void
-ToolBar::change(const qulonglong w)
-{
-    QWidget *widget = Ops::getChild<QWidget *>(w);
-    if (!widget)
+    QPointer<QWidget> guard(w);
+    if (guard.isNull())
         return;
-    QEvent e(QEvent::StyleChange);
-    QApplication::sendEvent(widget, &e);
+    QTimer::singleShot(0, instance(), [guard]()
+    {
+        if (guard.isNull())
+            return;
+        QEvent e(QEvent::StyleChange);
+        QApplication::sendEvent(guard.data(), &e);
+    });
 }
 
 bool
@@ -418,7 +423,7 @@ Window::Window(QObject *parent)
     static const QString service("com.syndromatic.atmo.kwindeco"),
             interface("com.syndromatic.atmo.deco"),
             path("/NSEDecoAdaptor");
-    QDBusInterface *iface = new QDBusInterface(service, path, interface);
+    QDBusInterface *iface = new QDBusInterface(service, path, interface, QDBusConnection::sessionBus(), this);
 //    iface->connection().connect(service, path, interface, "windowActiveChanged", this, SLOT(decoActiveChanged(QDBusMessage)));
     iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
 #endif
@@ -1310,13 +1315,20 @@ Dock
 void
 Dock::manage(QWidget *win)
 {
-    QMetaObject::invokeMethod(instance(), "lockWindowLater", Qt::QueuedConnection, Q_ARG(qulonglong, (qulonglong)win));
+    QPointer<QWidget> guard(win);
+    if (guard.isNull())
+        return;
+    QTimer::singleShot(0, instance(), [guard]()
+    {
+        if (guard.isNull())
+            return;
+        instance()->lockWindowImpl(guard.data());
+    });
 }
 
 void
-Dock::lockWindowLater(const qulonglong w)
+Dock::lockWindowImpl(QWidget *win)
 {
-    QWidget *win = Ops::getChild<QWidget *>(w);
     if (!win)
         return;
     QAction *a = new QAction("NSE::DockLocker", win);

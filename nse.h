@@ -26,6 +26,7 @@
 #include <QStylePlugin>
 #include <QEvent>
 #include <QStyleOption>
+#include <QPointer>
 #include "atmolib/macros.h"
 #include "atmolib/ops.h"
 #include "config/settings.h"
@@ -204,7 +205,7 @@ protected:
     void polishLater(QWidget *widget);
 
 protected slots:
-    void polishSlot(qulonglong w);
+    void polishSlotImpl(QWidget *w);
 
 private:
     StyleComplexControl m_cc[CCSize];
