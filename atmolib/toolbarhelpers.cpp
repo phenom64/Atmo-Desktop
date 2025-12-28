@@ -152,10 +152,14 @@ ToolbarHelpers::adjustMarginsImpl(QToolBar *tb)
 
     if (tb->isFloating())
     {
+        // Block signals during margin changes to prevent layout re-entrancy
+        const bool wasBlocked = tb->signalsBlocked();
+        tb->blockSignals(true);
         tb->setMovable(true);
         tb->setContentsMargins(0, 0, 0, 0);
         if (tb->layout())
             tb->layout()->setContentsMargins(0, 0, 0, 0);
+        tb->blockSignals(wasBlocked);
         return;
     }
 
@@ -178,7 +182,13 @@ ToolbarHelpers::adjustMarginsImpl(QToolBar *tb)
             d.unlock();
         }
         if (tb->style())
+        {
+            // Block signals during setContentsMargins to prevent layout re-entrancy
+            const bool wasBlocked = tb->signalsBlocked();
+            tb->blockSignals(true);
             tb->QWidget::setContentsMargins(0, 0, tb->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
+            tb->blockSignals(wasBlocked);
+        }
     }
     else if (tb->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
     {
