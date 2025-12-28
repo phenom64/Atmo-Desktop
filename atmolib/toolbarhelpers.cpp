@@ -26,6 +26,7 @@
 #include <QLayout>
 #include <QMainWindow>
 #include <QPointer>
+#include <QSet>
 #include "windowdata.h"
 #include "xhandler.h"
 #include <QWidgetAction>
@@ -111,6 +112,7 @@ ToolbarHelpers::fixSpacer(QToolBar *tb, int width)
 }
 
 static QList<QPointer<QToolBar>> s_marginsQueue;
+static QSet<QToolBar *> s_adjustingMargins;  // Re-entrancy guard
 
 void
 ToolbarHelpers::adjustMarginsLater(QToolBar *toolBar)
@@ -137,11 +139,23 @@ ToolbarHelpers::adjustMarginsImpl(QToolBar *tb)
     if (!tb)
         return;
 
+    // Re-entrancy guard: prevent recursive calls during layout updates
+    if (s_adjustingMargins.contains(tb))
+        return;
+    s_adjustingMargins.insert(tb);
+
+    // Use a scope guard pattern to ensure removal on all exit paths
+    struct Guard {
+        QToolBar *t;
+        ~Guard() { s_adjustingMargins.remove(t); }
+    } guard{tb};
+
     if (tb->isFloating())
     {
         tb->setMovable(true);
         tb->setContentsMargins(0, 0, 0, 0);
-        tb->layout()->setContentsMargins(0, 0, 0, 0);
+        if (tb->layout())
+            tb->layout()->setContentsMargins(0, 0, 0, 0);
         return;
     }
 
@@ -154,7 +168,8 @@ ToolbarHelpers::adjustMarginsImpl(QToolBar *tb)
             && win->toolBarArea(tb) == Qt::TopToolBarArea
             && !win->parentWidget())
     {
-        tb->layout()->setContentsMargins(0, 0, 0, 0);
+        if (tb->layout())
+            tb->layout()->setContentsMargins(0, 0, 0, 0);
         WindowData d = WindowData::memory(XHandler::windowId(win), win);
         int m(0);
         if (d && d.lock())
@@ -162,11 +177,13 @@ ToolbarHelpers::adjustMarginsImpl(QToolBar *tb)
             m = d->rightEmbedSize;
             d.unlock();
         }
-        tb->QWidget::setContentsMargins(0, 0, tb->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
+        if (tb->style())
+            tb->QWidget::setContentsMargins(0, 0, tb->style()->pixelMetric(QStyle::PM_ToolBarHandleExtent)+m, 6);
     }
     else if (tb->findChild<QTabBar *>()) //sick, put a tabbar in a toolbar... eiskaltdcpp does this :)
     {
-        tb->layout()->setContentsMargins(0, 0, 0, 0);
+        if (tb->layout())
+            tb->layout()->setContentsMargins(0, 0, 0, 0);
         tb->setMovable(false);
     }
     else
