@@ -111,8 +111,10 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
 
-add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+if(NOT TARGET uninstall)
+    add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+endif()
 
 # Runtime search path for helper apps that link libatmo/atmolib
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${KDE_INSTALL_LIBDIR}")
@@ -181,7 +183,10 @@ if(ATMO_BUILD_DECORATION)
 endif()
 
 if(ATMO_BUILD_KCM)
-    find_package(KF6 REQUIRED COMPONENTS KCMUtils ConfigWidgets I18n CoreAddons)
+    find_package(KF6KCMUtils REQUIRED)
+    find_package(KF6ConfigWidgets REQUIRED)
+    find_package(KF6I18n REQUIRED)
+    find_package(KF6CoreAddons REQUIRED)
     add_subdirectory(kcm)
 endif()
 

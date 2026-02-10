@@ -40,7 +40,7 @@ Recommended for full build:
 - `qt6-tools-dev`
 - `qt6-tools-dev-tools`
 - `libkf6coreaddons-dev`
-- `libkf6configcore-dev`
+- `libkf6config-dev`
 - `libkf6configwidgets-dev`
 - `libkf6kcmutils-dev`
 - `libkf6i18n-dev`
@@ -48,7 +48,7 @@ Recommended for full build:
 
 Optional features:
 - KWin decoration: `libkdecorations3-dev`
-- DBus menu integration: `libdbusmenu-qt6-dev`
+- DBus menu integration: `dbusmenu-qt6` CMake package (if available in your distro; feature auto-disables when missing)
 - X11 fallback path: `libxcb1-dev`, `libx11-dev`
 
 Package names can vary slightly across derivatives.

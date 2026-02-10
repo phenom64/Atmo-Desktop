@@ -6,7 +6,13 @@ if(NOT KDecoration3_FOUND)
     return()
 endif()
 
-find_package(KF6 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons ConfigCore KCMUtils I18n)
+find_package(KF6CoreAddons REQUIRED)
+find_package(KF6Config REQUIRED)
+find_package(KF6ConfigWidgets REQUIRED)
+find_package(KF6WindowSystem REQUIRED)
+find_package(KF6GuiAddons REQUIRED)
+find_package(KF6KCMUtils REQUIRED)
+find_package(KF6I18n REQUIRED)
 
 set(ATMO_KDECORATION_TARGET "")
 if(TARGET KDecoration3::KDecoration)
@@ -20,6 +26,9 @@ if(ATMO_KDECORATION_TARGET STREQUAL "")
 endif()
 
 find_package(dbusmenu-qt6 QUIET)
+if(NOT dbusmenu-qt6_FOUND)
+    message(STATUS "dbusmenu-qt6 not found: titlebar DBusMenu integration will be disabled.")
+endif()
 
 set(SRCS
     kwinclient2.cpp

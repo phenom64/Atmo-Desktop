@@ -10,10 +10,10 @@ Dependencies (Ubuntu/Kubuntu 26.04-era)
 
 Recommended for full feature build
 - qt6-tools-dev qt6-tools-dev-tools
-- libkf6coreaddons-dev libkf6configcore-dev libkf6configwidgets-dev
+- libkf6coreaddons-dev libkf6config-dev libkf6configwidgets-dev
 - libkf6kcmutils-dev libkf6i18n-dev libkf6guiaddons-dev
 - libkdecorations3-dev (optional decoration plugin)
-- libdbusmenu-qt6-dev (optional DBus menu integration)
+- dbusmenu-qt6 CMake package if your distro ships it (optional DBus menu integration)
 - libxcb1-dev libx11-dev (optional X11 fallback)
 
 Configure
