@@ -26,7 +26,7 @@
 #include <QEvent>
 #include "windowdata.h"
 #include "xhandler.h"
-#include <QX11Info>
+#include "qtx11extras_compat.h"
 #include "ops.h"
 #include "macmenu.h"
 #include <QLayout>
@@ -160,7 +160,11 @@ TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
         {
             const uint deco = data->decoId;
             data.unlock();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            XHandler::doubleClickEvent(e->globalPosition().toPoint(), deco, e->button());
+#else
             XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
+#endif
         }
         m_time = QX11Info::appTime()/*e->timestamp()*/;
     }
@@ -183,7 +187,11 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
 //#endif
     if (e->button() == Qt::LeftButton)
     {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        XHandler::mwRes(e->position().toPoint(), e->globalPosition().toPoint(), XHandler::windowId(window()));
+#else
         XHandler::mwRes(e->pos(), e->globalPos(), XHandler::windowId(window()));
+#endif
         return;
     }
     WindowData data = WindowData::memory(XHandler::windowId(window()), window());
@@ -191,7 +199,11 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
     {
         const uint deco = data->decoId;
         data.unlock();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        XHandler::pressEvent(e->globalPosition().toPoint(), deco, e->button());
+#else
         XHandler::pressEvent(e->globalPos(), deco, e->button());
+#endif
     }
 }
 
@@ -204,7 +216,7 @@ TitleWidget::wheelEvent(QWheelEvent *e)
     {
         const uint deco = data->decoId;
         data.unlock();
-        XHandler::wheelEvent(deco, e->delta()>0);
+        XHandler::wheelEvent(deco, e->angleDelta().y() > 0);
     }
 }
 

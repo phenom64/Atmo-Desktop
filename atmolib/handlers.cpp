@@ -57,11 +57,10 @@
 #include <QBuffer>
 #include <QHeaderView>
 #include <QToolTip>
-#include <QDesktopWidget>
 #include <QGroupBox>
 #include <QDockWidget>
 #include <QWidgetAction>
-#include <QX11Info>
+#include "qtx11extras_compat.h"
 #include "defines.h"
 #include "windowhelpers.h"
 #if HASDBUS
@@ -782,7 +781,11 @@ Drag::eventFilter(QObject *o, QEvent *e)
     if (!cd)
         return false;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    XHandler::mwRes(w->mapTo(w->window(), me->position().toPoint()), me->globalPosition().toPoint(), XHandler::windowId(w->window()));
+#else
     XHandler::mwRes(w->mapTo(w->window(), me->pos()), me->globalPos(), XHandler::windowId(w->window()));
+#endif
     return false;
 }
 

@@ -25,10 +25,6 @@
 #include <QStyleOption>
 #include <QStyleOptionTab>
 #include <QStyleOptionTabBarBase>
-#include <QStyleOptionTabBarBase>
-#include <QStyleOptionTab>
-#include <QStyleOptionTab>
-#include <QStyleOptionTabWidgetFrame>
 #include <QStyleOptionTabWidgetFrame>
 #include <QMainWindow>
 #include <QToolBar>
@@ -760,14 +756,15 @@ Style::drawToolBoxTabLabel(const QStyleOption *option, QPainter *painter, const 
 
     const QPalette pal(widget?widget->palette():opt->palette);
     const bool isSelected((opt->state & State_Selected) || opt->position == QStyleOptionToolBox::OnlyOneTab);
-    QRect textRect(opt->rect.adjusted(4, 0, -4, 0));
+    QRect textRect(opt->rect.adjusted(Ops::dpiScaled(widget, 4), 0, -Ops::dpiScaled(widget, 4), 0));
     if (!opt->icon.isNull())
     {
-        const QSize iconSize(16, 16); //no way to get this?
+        const int iconExtent = pixelMetric(PM_SmallIconSize, option, widget);
+        const QSize iconSize(iconExtent, iconExtent);
         const QPoint topLeft(textRect.topLeft());
         QRect r(topLeft+QPoint(0, textRect.height()/2-iconSize.height()/2), iconSize);
         opt->icon.paint(painter, r);
-        textRect.setLeft(r.right());
+        textRect.setLeft(r.right() + Ops::dpiScaled(widget, 2));
     }
     const QFont savedFont(painter->font());
     if (isSelected)

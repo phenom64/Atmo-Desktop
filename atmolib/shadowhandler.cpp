@@ -38,14 +38,23 @@
 #include "fx.h"
 
 #if HASX11 || HASXCB
-#include <QX11Info>
-static ulong s_root = QX11Info::appRootWindow();
+#include "qtx11extras_compat.h"
+static ulong s_root = 0;
 #else
 static ulong s_root = 0;
 #endif
 
 
 using namespace NSE;
+
+static inline ulong rootWindow()
+{
+#if HASX11 || HASXCB
+    if (!s_root && QX11Info::isPlatformX11())
+        s_root = QX11Info::appRootWindow();
+#endif
+    return s_root;
+}
 
 Q_DECL_EXPORT ShadowHandler *ShadowHandler::m_instance(0);
 
@@ -109,8 +118,11 @@ static QRect part(int part, int size, int d = 1)
 XHandler::XPixmap
 *ShadowHandler::shadows(bool active)
 {
+    const ulong root = rootWindow();
+    if (!root)
+        return nullptr;
     static XHandler::Value atom[2] = { XHandler::StoreInActiveShadow, XHandler::StoreActiveShadow };
-    XHandler::XPixmap *shadows = XHandler::getXProperty<XHandler::XPixmap>(s_root, atom[active]);
+    XHandler::XPixmap *shadows = XHandler::getXProperty<XHandler::XPixmap>(root, atom[active]);
     if (!shadows)
     {
         int size(dConf.deco.shadowSize);
@@ -145,22 +157,22 @@ XHandler::XPixmap
             else
                 data[i] = sd[i-8];
         }
-        XHandler::setXProperty<XHandler::XPixmap>(s_root, atom[active], XHandler::Long, data, 12);
+        XHandler::setXProperty<XHandler::XPixmap>(root, atom[active], XHandler::Long, data, 12);
     }
-    return XHandler::getXProperty<XHandler::XPixmap>(s_root, atom[active]);
+    return XHandler::getXProperty<XHandler::XPixmap>(root, atom[active]);
 }
 
 void
 ShadowHandler::installShadows(WId w, bool active)
 {
-    if (w != s_root)
+    if (w && w != rootWindow())
         XHandler::setXProperty<XHandler::XPixmap>(w, XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows(active), 12);
 }
 
 void
 ShadowHandler::removeShadows(WId w)
 {
-    if (w != s_root)
+    if (w && w != rootWindow())
         XHandler::deleteXProperty(w, XHandler::_KDE_NET_WM_SHADOW);
 }
 
@@ -198,6 +210,9 @@ ShadowHandler::removeDelete()
         XHandler::freePix(pix[a][i]);
         pix[a][i] = 0;
     }
-    XHandler::deleteXProperty(s_root, XHandler::StoreActiveShadow);
-    XHandler::deleteXProperty(s_root, XHandler::StoreInActiveShadow);
+    if (const ulong root = rootWindow())
+    {
+        XHandler::deleteXProperty(root, XHandler::StoreActiveShadow);
+        XHandler::deleteXProperty(root, XHandler::StoreInActiveShadow);
+    }
 }

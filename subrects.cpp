@@ -34,7 +34,6 @@
 #include <QGroupBox>
 #include <QStyleOptionProgressBar>
 #include <QStyleOptionDockWidget>
-#include <QStyleOptionDockWidget>
 #include <QProgressBar>
 #include <QStyleOptionToolButton>
 #include <QStyleOptionViewItem>
@@ -83,7 +82,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         if (!item)
             return QRect();
 
-        const int m(2);
+        const int m(Ops::dpiScaled(widget, 2));
         QRect textRect(item->rect.adjusted(m, 0, -m, 0)), iconRect(textRect), checkRect(textRect);
         if (item->features & QStyleOptionViewItem::HasCheckIndicator)
         {
@@ -93,7 +92,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             iconRect.setLeft(checkRect.right()+m);
         }
 
-        QSize iconSize(16, 16);
+        const int itemIcon = pixelMetric(PM_SmallIconSize, item, widget);
+        QSize iconSize(itemIcon, itemIcon);
         if (qobject_cast<const QAbstractItemView *>(widget))
             if (static_cast<const QAbstractItemView *>(widget)->iconSize().isValid())
                 iconSize = static_cast<const QAbstractItemView *>(widget)->iconSize();
@@ -149,7 +149,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
     {
         const QStyleOptionHeader *hdr = qstyleoption_cast<const QStyleOptionHeader *>(opt);
         QRect r(opt->rect);
-        const int extraMargin(16); // some space for good measure...
+        const int extraMargin(Ops::dpiScaled(widget, 16)); // some space for good measure...
         const int margin(pixelMetric(PM_HeaderMarkSize)+extraMargin);
         if (hdr->textAlignment & Qt::AlignRight)
             r.setRight(r.left()+margin);
@@ -170,7 +170,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         else
             r.setRight(r.right()-space);
 
-        int m(4);
+        int m(Ops::dpiScaled(widget, 4));
         r.adjust(m, 0, -m, 0);
         return r;
     }
@@ -184,7 +184,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             return QRect();
 
         const bool safBar(Ops::isSafariTabBar(bar));
-        int o(/*safBar?qBound<int>(2, dConf.tabs.safrnd, 4):*/4);
+        int o(/*safBar?qBound<int>(2, dConf.tabs.safrnd, 4):*/Ops::dpiScaled(widget, 4));
         int ladd((safBar && (tab->position == QStyleOptionTab::Beginning || tab->position == QStyleOptionTab::OnlyOneTab))*o);
         int radd((safBar && (tab->position == QStyleOptionTab::End || tab->position == QStyleOptionTab::OnlyOneTab) && bar->expanding())*(o));
         QRect rect(tab->rect.adjusted(ladd, 0, -radd, 0));
@@ -477,7 +477,7 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
         const QStyleOptionProgressBar *bar = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
         if (bar && dConf.progressbars.textPos)
         {
-            const quint16 add = bar->fontMetrics.width(bar->text);
+            const quint16 add = bar->fontMetrics.horizontalAdvance(bar->text);
             int x,y,w,h;
             bar->rect.getRect(&x, &y, &w, &h);
             const bool l(dConf.progressbars.textPos==1);
@@ -562,7 +562,7 @@ Style::comboBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget
     if (!cb)
         return ret;
     ret = cb->rect;
-    const int arrowSize(22);
+    const int arrowSize(Ops::dpiScaled(w, 22));
     const int m(cb->editable?GFX::shadowMargin(dConf.input.shadow):0);
     switch (sc)
     {
@@ -596,7 +596,7 @@ Style::scrollBarRect(const QStyleOptionComplex *opt, SubControl sc, const QWidge
 
     QRect r(slider->rect);
 
-    const int buttonSize(bool(dConf.scrollers.style)*16);
+    const int buttonSize(bool(dConf.scrollers.style) * Ops::dpiScaled(w, 16));
     bool hor(slider->orientation == Qt::Horizontal);
     if (hor)
         r.adjust(buttonSize, 0, -buttonSize, 0);
@@ -758,9 +758,9 @@ Style::toolButtonRect(const QStyleOptionComplex *opt, SubControl sc, const QWidg
     {
         ret = tb->rect;
         if (hor)
-            ret.setLeft(ret.right()-16);
+            ret.setLeft(ret.right()-Ops::dpiScaled(w, 16));
         else
-            ret.setTop(ret.bottom()-16);
+            ret.setTop(ret.bottom()-Ops::dpiScaled(w, 16));
         break;
     }
     default: break;
@@ -800,4 +800,3 @@ Style::spinBoxRect(const QStyleOptionComplex *opt, SubControl sc, const QWidget 
     }
     return visualRect(sb->direction, sb->rect, ret);
 }
-

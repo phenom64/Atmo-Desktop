@@ -34,12 +34,20 @@
 #define HASDBUS 0
 #endif
 
+#ifndef HASDBUSMENU
+#define HASDBUSMENU 0
+#endif
+
 #ifndef DEBUG
 #define DEBUG 0
 #endif
 
 #ifndef HASKF5
 #define HASKF5 0
+#endif
+
+#ifndef HASKF6
+#define HASKF6 0
 #endif
 
 #endif //DEFINES_H

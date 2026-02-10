@@ -1,88 +1,76 @@
 message(STATUS "preparing kwin deco")
 
-    #NOTE: most of this copied from the default breeze deco and adapted for Atmo
-    find_package(KF5 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons)
+find_package(KDecoration3 QUIET)
+if(NOT KDecoration3_FOUND)
+    message(WARNING "KDecoration3 not found. Skipping Atmo decoration plugin (Plasma 6).")
+    return()
+endif()
 
-    include(KDEInstallDirs)
-    include(KDECMakeSettings)
-    include(KDECompilerSettings)
-    include(GenerateExportHeader)
+find_package(KF6 REQUIRED COMPONENTS CoreAddons ConfigWidgets WindowSystem GuiAddons ConfigCore KCMUtils I18n)
 
-    execute_process(COMMAND kf5-config --install module OUTPUT_VARIABLE MODULEPATH OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(ATMO_KDECORATION_TARGET "")
+if(TARGET KDecoration3::KDecoration)
+    set(ATMO_KDECORATION_TARGET KDecoration3::KDecoration)
+elseif(TARGET KDecoration3::KDecoration3)
+    set(ATMO_KDECORATION_TARGET KDecoration3::KDecoration3)
+endif()
 
-    find_package(dbusmenu-qt5)
+if(ATMO_KDECORATION_TARGET STREQUAL "")
+    message(FATAL_ERROR "KDecoration3 was found, but no usable CMake target was exported.")
+endif()
 
-#     find_path(EFFECTS_H kwineffects.h PATH_SUFFIXES kf5)
-#     
-#     if (EFFECTS_H)
-#         include_directories(${EFFECTS_H})
-#     else (EFFECTS_H)
-#         message(STATUS "didnt find kwineffects.h, not building effects")
-#     endif (EFFECTS_H)
-#     
-#     find_library(KWIN_EFFECTS NAMES kwineffects PATH_SUFFIXES kf5)
-#     find_library(KWIN_GLUTILS NAMES kwinglutils PATH_SUFFIXES kf5)
-#     find_library(OPENGL NAMES GL)
-# 
-#     if (NOT KWIN_EFFECTS)
-#         message(STATUS "didnt find kwineffects lib, not building effects")
-#     endif (NOT KWIN_EFFECTS)
-# 
-#     if (NOT KWIN_GLUTILS)
-#         message(STATUS "didnt find kwin glutils lib, not building effects")
-#     endif (NOT KWIN_GLUTILS)
-# 
-#     if (NOT OPENGL)
-#         message(STATUS "didnt find opengl, not building effects")
-#     endif (NOT OPENGL)
-# 
-#     if (EFFECTS_H AND KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
-#         add_subdirectory(effects)
-#     endif (EFFECTS_H AND KWIN_GLUTILS AND KWIN_EFFECTS AND OPENGL)
+find_package(dbusmenu-qt6 QUIET)
 
-    set(SRCS
-        kwinclient2.cpp
-        decobutton.cpp
-        menubar.cpp
-        xcbatoms.cpp)
-    set(HDRS
-        kwinclient2.h
-        decobutton.h
-        decoadaptor.h
-        menubar.h
-        xcbatoms.h)
+set(SRCS
+    kwinclient2.cpp
+    decobutton.cpp
+)
+set(HDRS
+    kwinclient2.h
+    decobutton.h
+    decoadaptor.h
+    kdecoration_compat.h
+)
 
-    ### build library
-    add_library(atmodecoration MODULE ${SRCS} ${HDRS})
+if(ATMO_HAVE_XCB)
+    list(APPEND SRCS xcbatoms.cpp)
+    list(APPEND HDRS xcbatoms.h)
+endif()
 
-    target_link_libraries(atmodecoration
-        PUBLIC
-            Qt5::Core
-            Qt5::Gui
-            nsesettings
-            atmolib
-        PRIVATE
-            KDecoration2::KDecoration
-            KF5::ConfigCore
-            KF5::CoreAddons
-            KF5::ConfigWidgets
-            KF5::GuiAddons
-            KF5::WindowSystem)
-    if (QTDBUS_FOUND)
-        target_link_libraries(atmodecoration PUBLIC Qt5::DBus)
-    endif ()
+if(dbusmenu-qt6_FOUND)
+    list(APPEND SRCS menubar.cpp)
+    list(APPEND HDRS menubar.h)
+endif()
 
-    if (dbusmenu-qt5_FOUND)
-        target_link_libraries(atmodecoration PUBLIC dbusmenu-qt5)
-        add_definitions(-DHASDBUSMENU=1)
-    endif ()
+add_library(atmodecoration MODULE ${SRCS} ${HDRS})
+target_compile_definitions(atmodecoration PRIVATE ATMO_USE_KDECORATION3=1)
 
-    if (XCB_FOUND)
-        target_link_libraries(atmodecoration PUBLIC Qt5::X11Extras XCB::XCB)
-    else ()
-        if (X11_FOUND)
-            target_link_libraries(atmodecoration PUBLIC Qt5::X11Extras ${X11_X11_LIB} ${X11_LIBRARIES})
-        endif ()
-    endif ()
-    
-    install(TARGETS atmodecoration DESTINATION ${MODULEPATH}/org.kde.kdecoration2)
+target_link_libraries(atmodecoration
+    PUBLIC
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        nsesettings
+        atmolib
+    PRIVATE
+        ${ATMO_KDECORATION_TARGET}
+        KF6::ConfigCore
+        KF6::CoreAddons
+        KF6::ConfigWidgets
+        KF6::GuiAddons
+        KF6::WindowSystem
+        KF6::KCMUtils
+        KF6::I18n
+        ${ATMO_X11_LIBS}
+)
+
+if(TARGET Qt6::DBus)
+    target_link_libraries(atmodecoration PUBLIC Qt6::DBus)
+endif()
+
+if(dbusmenu-qt6_FOUND)
+    target_link_libraries(atmodecoration PUBLIC dbusmenu-qt6)
+    target_compile_definitions(atmodecoration PRIVATE HASDBUSMENU=1)
+endif()
+
+install(TARGETS atmodecoration DESTINATION ${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration3)

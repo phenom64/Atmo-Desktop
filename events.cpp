@@ -101,7 +101,13 @@ Style::eventFilter(QObject *o, QEvent *e)
         {
             QMouseEvent *me = static_cast<QMouseEvent *>(e);
             if (!menuBar->actionAt(me->pos()))
+            {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                XHandler::mwRes(me->position().toPoint(), me->globalPosition().toPoint(), menuBar->winId());
+#else
                 XHandler::mwRes(me->pos(), me->globalPos(), menuBar->winId());
+#endif
+            }
         }
         break;
     }

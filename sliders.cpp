@@ -29,7 +29,6 @@
 #include <QTextEdit>
 #include <QProgressBar>
 #include <QStyleOptionProgressBar>
-#include <QStyleOptionProgressBar>
 #include <QTextBrowser>
 #include <QApplication>
 #include <QPolygon>
@@ -104,7 +103,7 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
     if (dConf.scrollers.style == 0)
     {
         QPalette::ColorRole fg(Ops::fgRole(area, QPalette::WindowText)), bg(Ops::bgRole(area, QPalette::Window));
-        const int m(3);
+        const int m(Ops::dpiScaled(widget, 3));
         slider.adjust(m, m, -m, -m);
 
         QColor bgc(opt->palette.color(bg));
@@ -285,11 +284,13 @@ Style::drawScrollBar(const QStyleOptionComplex *option, QPainter *painter, const
             int sz(qMin(slider.width(), slider.height()));
             if (!sz)
                 return true;
-            quint64 check((quint64)pal.color(QPalette::Highlight).rgba()|(quint64)sz << 32);
-            QMap<quint64, QPixmap> pixMap;
+            const qreal dpr = painter->device()->devicePixelRatioF();
+            quint64 check((quint64)pal.color(QPalette::Highlight).rgba() | (quint64)sz << 32 | (quint64)qBound(10, qRound(dpr * 10.0), 255) << 48);
+            static QMap<quint64, QPixmap> pixMap;
             if (!pixMap.contains(check))
             {
-                QPixmap pix(sz, sz);
+                QPixmap pix(qMax(1, qRound(sz * dpr)), qMax(1, qRound(sz * dpr)));
+                pix.setDevicePixelRatio(dpr);
                 pix.fill(Qt::transparent);
                 QPainter p(&pix);
                 QLinearGradient gradient(pix.rect().topLeft(), hor?pix.rect().bottomLeft():pix.rect().topRight());
@@ -515,5 +516,3 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
     }
     return true;
 }
-
-

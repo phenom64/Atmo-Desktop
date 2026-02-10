@@ -23,10 +23,8 @@
 #define DECOBUTTON_H
 
 #include "../atmolib/widgets.h" //buttonbase class
-#include <KDecoration2/DecorationButton>
-#include <KDecoration2/DecorationButtonGroup>
+#include "kdecoration_compat.h"
 
-namespace KDecoration2 { class Decoration; }
 namespace NSE
 {
 class Deco;
@@ -39,12 +37,11 @@ class Button : public KDecoration2::DecorationButton, public ButtonBase
     Q_OBJECT
 public:
     ~Button();
-    explicit Button(QObject *parent, const QVariantList &args);
     static Button *create(KDecoration2::DecorationButtonType buttonType, KDecoration2::Decoration *decoration, QObject *parent);
-    void paint(QPainter *painter, const QRect &repaintArea);
-    const QRect buttonRect() const { return geometry().toRect(); }
+    void paint(QPainter *painter, const AtmoDecoRect &repaintArea);
+    const QRect buttonRect() const { return atmoToRect(geometry()); }
     const QSize buttonSize() const;
-    void updateGeometry() { setGeometry(QRect(geometry().topLeft().toPoint(), buttonSize())); }
+    void updateGeometry() { setGeometry(AtmoDecoRect(geometry().topLeft(), buttonSize())); }
     static bool isSupported(KDecoration2::DecorationButtonType t, Deco *d);
 
 protected:

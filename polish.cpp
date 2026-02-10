@@ -47,7 +47,6 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QDockWidget>
-#include <QDesktopWidget>
 #include <QLabel>
 #include <QProgressBar>
 #include <QApplication>

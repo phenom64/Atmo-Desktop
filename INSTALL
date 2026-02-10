@@ -1,14 +1,42 @@
-Dummy Instructions
+Atmo Desktop Framework (Qt6/KF6)
 
-INSTALL:
+Dependencies (Ubuntu/Kubuntu 26.04-era)
+- build-essential
+- cmake
+- ninja-build
+- extra-cmake-modules
+- qt6-base-dev
+- libkf6windowsystem-dev
 
-mkdir build
-cd build
-cmake ../ -DCMAKE_INSTALL_PREFIX=/usr
-make
-sudo make install 
+Recommended for full feature build
+- qt6-tools-dev qt6-tools-dev-tools
+- libkf6coreaddons-dev libkf6configcore-dev libkf6configwidgets-dev
+- libkf6kcmutils-dev libkf6i18n-dev libkf6guiaddons-dev
+- libkdecorations3-dev (optional decoration plugin)
+- libdbusmenu-qt6-dev (optional DBus menu integration)
+- libxcb1-dev libx11-dev (optional X11 fallback)
 
-UNINSTALL:
+Configure
+cmake -S . -B build -GNinja \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_INSTALL_PREFIX=/usr \
+  -DATMO_BUILD_DECORATION=ON \
+  -DATMO_BUILD_KCM=ON \
+  -DATMO_ENABLE_X11_FALLBACK=ON \
+  -DBUILD_MANAGER=ON
 
-sudo make uninstall
+Build
+cmake --build build -j"$(nproc)"
 
+Install
+sudo cmake --install build
+
+Installed module paths (Plasma 6)
+- Style plugin: `${KDE_INSTALL_QTPLUGINDIR}/styles`
+- Decoration plugin: `${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration3`
+- KCM plugin: `${KDE_INSTALL_PLUGINDIR}/plasma/kcms/systemsettings`
+- KDecoration3 KCM hook: `${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration3.kcm`
+- Default config template: `${KDE_INSTALL_DATADIR}/atmo/NSE.conf`
+
+Uninstall
+sudo cmake --build build --target uninstall

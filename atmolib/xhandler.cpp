@@ -23,7 +23,10 @@
 #include <QDataStream>
 #include <QDebug>
 #include <QWidget>
-#include <QX11Info>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include "qtx11extras_compat.h"
 #include <QPainter>
 #include "xhandler.h"
 #include "../config/settings.h"
@@ -95,6 +98,8 @@ XHandler::init()
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(QX11Info::connection(), false, strlen(atoms[i]), atoms[i]);
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(QX11Info::connection(), cookie, 0);
         xcb_atom[i] = reply ? reply->atom : 0;
+        if (reply)
+            free(reply);
 #elif HASX11
         atom[i] = XInternAtom(QX11Info::display(), atoms[i], False);
 #endif
@@ -402,7 +407,7 @@ XHandler::compositingActive()
 {
     if (!hasX11Handle())
         return false;
-#if defined(HASXCB)
+#if HASXCB
     static xcb_atom_t atom = 0;
     xcb_connection_t *c = QX11Info::connection();
     if (!atom)
@@ -411,13 +416,18 @@ XHandler::compositingActive()
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(c, false, net_wm_cm_name.size(), qPrintable(net_wm_cm_name));
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(c, cookie, 0);
         atom = reply ? reply->atom : 0;
+        if (reply)
+            free(reply);
     }
     if (!atom)
         return false;
 
     xcb_get_selection_owner_cookie_t cookie = xcb_get_selection_owner(c, atom);
     xcb_get_selection_owner_reply_t *reply = xcb_get_selection_owner_reply(c, cookie, NULL);
-    return reply && reply->owner;
+    const bool active = reply && reply->owner;
+    if (reply)
+        free(reply);
+    return active;
 #elif HASX11
     static Atom *net_wm_cm = 0;
     if (!net_wm_cm)
@@ -428,6 +438,8 @@ XHandler::compositingActive()
         *net_wm_cm = XInternAtom(QX11Info::display(), net_wm_cm_name, False);
     }
     return XGetSelectionOwner(QX11Info::display(), *net_wm_cm) != None;
+#else
+    return false;
 #endif
 }
 
@@ -454,7 +466,7 @@ XHandler::x11Pixmap(const QImage &qtImg)
     xcb_create_pixmap(c, qtImg.depth(), pixmapId, QX11Info::appRootWindow(), qtImg.width(), qtImg.height());
     xcb_gcontext_t gcId = xcb_generate_id(c);
     xcb_create_gc(c, gcId, pixmapId, 0, 0);
-    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, pixmapId, gcId, qtImg.width(), qtImg.height(), 0, 0, 0, qtImg.depth(), qtImg.byteCount(), qtImg.bits());
+    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, pixmapId, gcId, qtImg.width(), qtImg.height(), 0, 0, 0, qtImg.depth(), static_cast<uint32_t>(qtImg.sizeInBytes()), qtImg.bits());
     xcb_free_gc(c, gcId);
     return pixmapId;
 #elif HASX11

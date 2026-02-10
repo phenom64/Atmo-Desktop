@@ -1,24 +1,25 @@
 #include <KPluginFactory>
-#include <KCModule>
+#include <KCMUtils/KCModule>
+#include <KPluginMetaData>
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QProcess>
 #include <QFileInfo>
+#include <QWidget>
 
 class KCMAtmo : public KCModule {
     Q_OBJECT
 public:
-    explicit KCMAtmo(QWidget *parent = nullptr, const QVariantList &args = QVariantList())
-        : KCModule(parent, args)
+    explicit KCMAtmo(QObject *parent, const KPluginMetaData &metaData, const QVariantList &args)
+        : KCModule(parent, metaData, args)
     {
         auto *lay = new QVBoxLayout(this);
-        auto *lbl = new QLabel(tr("Atmo (NSE) – Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), this);
+        auto *lbl = new QLabel(tr("Atmo (NSE) - Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), this);
         lbl->setWordWrap(true);
         lay->addWidget(lbl);
         auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), this);
         lay->addWidget(btn);
-        setLayout(lay);
         connect(btn, &QPushButton::clicked, this, [this]
         {
             const QString bin("/usr/bin/atmo_manager");
@@ -30,6 +31,6 @@ public:
     }
 };
 
-K_PLUGIN_FACTORY_WITH_JSON(KCMAtmoFactory, "kcm_atmo.json", registerPlugin<KCMAtmo>();)
+K_PLUGIN_CLASS_WITH_JSON(KCMAtmo, "kcm_atmo.json")
 
 #include "kcm_atmo.moc"

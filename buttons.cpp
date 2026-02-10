@@ -551,10 +551,13 @@ Style::drawToolButtonBevel(const QStyleOption *option, QPainter *painter, const 
 //        bc = Color::mid(bc, sc, Steps-hover, hover);
 
     static QMap<quint64, QPixmap> s_map;
-    const quint64 check(bc.rgba() | (quint64)(hor?rect.height():rect.width())<<32 | (quint64)(hor?Qt::Horizontal:Qt::Vertical)<<40 | (quint64)(dConf.toolbtn.mask+1) << 48);
+    const qreal dpr = painter->device()->devicePixelRatioF();
+    const quint64 dprKey = static_cast<quint64>(qBound(10, qRound(dpr * 10.0), 255));
+    const quint64 check(bc.rgba() | (quint64)(hor ? rect.height() : rect.width()) << 32 | (quint64)(hor ? Qt::Horizontal : Qt::Vertical) << 40 | (quint64)(dConf.toolbtn.mask + 1) << 48 | dprKey << 56);
     if (!s_map.contains(check))
     {
-        QPixmap pix(!hor?rect.width():1, hor?rect.height():1);
+        QPixmap pix(qMax(1, qRound((!hor ? rect.width() : 1) * dpr)), qMax(1, qRound((hor ? rect.height() : 1) * dpr)));
+        pix.setDevicePixelRatio(dpr);
         if (bc.alpha() != 0xff || !dConf.toolbtn.mask)
             pix.fill(Qt::transparent);
         QPainter p(&pix);

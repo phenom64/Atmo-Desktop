@@ -1,29 +1,34 @@
 message(STATUS "preparing atmolib")
 
-project(atmolib)
+project(atmolib LANGUAGES CXX)
 
-file(GLOB styleSRCS *.cpp)
-file(GLOB styleHDRS *.h)
-set(styleMOC_HDRS animhandler.h handlers.h progresshandler.h widgets.h stackanimator.h windowdata.h titlewidget.h toolbarhelpers.h windowhelpers.h)
+file(GLOB styleSRCS CONFIGURE_DEPENDS *.cpp)
+file(GLOB styleHDRS CONFIGURE_DEPENDS *.h)
 
-if (QTDBUS_FOUND)
-    set(styleSRCS ${styleSRCS} macmenu.cpp)
-    set(styleHDRS ${styleHDRS} macmenu.h macmenu-dbus.h)
-    set(styleMOC_HDRS ${styleMOC_HDRS} macmenu.h macmenu-dbus.h)
-endif ()
+# macmenu integration is DBus-driven; keep optional
+if(NOT QTDBUS_FOUND)
+    list(REMOVE_ITEM styleSRCS "${CMAKE_CURRENT_SOURCE_DIR}/macmenu.cpp")
+    list(REMOVE_ITEM styleHDRS "${CMAKE_CURRENT_SOURCE_DIR}/macmenu.h" "${CMAKE_CURRENT_SOURCE_DIR}/macmenu-dbus.h")
+endif()
 
-qt5_wrap_cpp(styleMOC_SRCS ${styleMOC_HDRS})
+add_library(atmolib SHARED ${styleSRCS} ${styleHDRS})
+target_include_directories(atmolib
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_BINARY_DIR}
+)
 
-add_library(atmolib SHARED ${styleSRCS} ${styleHDRS} ${styleMOC_SRCS})
+target_link_libraries(atmolib
+    PRIVATE
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        nsesettings
+        ${ATMO_X11_LIBS}
+)
 
-target_link_libraries(atmolib Qt5::Core Qt5::Gui Qt5::Widgets Qt5::DBus Qt5::X11Extras nsesettings)
+if(TARGET Qt6::DBus)
+    target_link_libraries(atmolib PRIVATE Qt6::DBus)
+endif()
 
-if (XCB_FOUND)
-    target_link_libraries(atmolib XCB::XCB)
-endif ()
-
-if (X11_FOUND)
-    target_link_libraries(atmolib ${X11_LIBRARIES})
-endif ()
-
-install(TARGETS atmolib LIBRARY DESTINATION ${LIBDIR})
+install(TARGETS atmolib LIBRARY DESTINATION ${KDE_INSTALL_LIBDIR})

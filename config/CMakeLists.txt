@@ -1,23 +1,19 @@
 message(STATUS "preparing config")
 
-# shared settings lib
-project(nsesettings)
-set(sharedSRCS settings.cpp)
-set(sharedHDRS settings.h)
-add_library(nsesettings SHARED ${sharedSRCS} ${sharedHDRS})
-target_link_libraries(nsesettings Qt5::Core)
-install(TARGETS nsesettings LIBRARY DESTINATION ${LIBDIR})
-install(FILES ${sharedHDRS} DESTINATION include/nse)
+project(nsesettings LANGUAGES CXX)
 
-set(PRO_NAME atmo_config)
-set(configSRCS main.cpp styleconfig.cpp)
-set(configHDRS styleconfig.h)
-qt5_wrap_ui(UI_HDRS config.ui)
-qt5_wrap_cpp(MOC_SRCS ${configHDRS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+add_library(nsesettings SHARED settings.cpp settings.h)
+target_link_libraries(nsesettings PUBLIC Qt6::Core)
+target_include_directories(nsesettings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS nsesettings LIBRARY DESTINATION ${KDE_INSTALL_LIBDIR})
+install(FILES settings.h DESTINATION ${KDE_INSTALL_INCLUDEDIR}/nse)
 
-# standalone application to launch from terminal
-project(${PRO_NAME})
-add_executable(${PRO_NAME} ${UI_HDRS} ${configSRCS} ${MOC_SRCS} ${configHDRS})
-target_link_libraries(${PRO_NAME} Qt5::Core Qt5::Gui Qt5::Widgets nsesettings)
-install(TARGETS ${PRO_NAME} DESTINATION bin)
+add_executable(atmo_config main.cpp styleconfig.cpp styleconfig.h config.ui)
+target_link_libraries(atmo_config
+    PRIVATE
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        nsesettings
+)
+install(TARGETS atmo_config RUNTIME DESTINATION ${KDE_INSTALL_BINDIR})

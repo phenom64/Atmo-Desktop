@@ -637,7 +637,7 @@ GFX::drawHandle(QPainter *p, const QRect &r, const bool hor)
 static int randInt(int low, int high)
 {
     // Random number between low and high
-    return qrand() % ((high + 1) - low) + low;
+    return QRandomGenerator::global()->bounded(low, high + 1);
 }
 
 enum Noise { ASDF = -1, RandomNoise = 0, BrushedMetal = 1, WhiteDots = 2, DiagonalStripes = 3, RaisedDots = 4, Donpo = 5, BigStripes = 6 };

@@ -208,9 +208,9 @@ MacMenu::activate(QMenuBar *menu)
         if (i > -1)
             title = title.mid(i, name.length());
     }
-    foreach (const QString &s, m_titleSeperators) {
+    for (const QString &s : m_titleSeperators) {
         if (title.contains(s)) {
-            title.section(s, -1);
+            title = title.section(s, -1);
             break;
         }
     }
@@ -223,7 +223,8 @@ MacMenu::activate(QMenuBar *menu)
 
     // register the menu via dbus
     QStringList entries;
-    foreach (QAction* action, menu->actions())
+    const QList<QAction *> menuActions = menu->actions();
+    for (QAction *action : menuActions)
         if (action->isSeparator())
             entries << "<XBAR_SEPARATOR/>";
         else
@@ -415,7 +416,8 @@ static QMenuBar *bar4menu(QMenu *menu)
         return 0;
     if (menu->menuAction()->associatedWidgets().isEmpty())
         return 0;
-    foreach (QWidget *w, menu->menuAction()->associatedWidgets())
+    const QList<QWidget *> widgets = menu->menuAction()->associatedWidgets();
+    for (QWidget *w : widgets)
         if (qobject_cast<QMenuBar*>(w))
             return static_cast<QMenuBar *>(w);
     return 0;

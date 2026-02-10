@@ -13,7 +13,11 @@
             { "Name": "Syndromatic Ltd." }
         ]
     },
-    "org.kde.kdecoration2": {
+    "X-KDE-ConfigModule": "kcm_atmo",
+    "ServiceTypes": [
+        "org.kde.kdecoration3"
+    ],
+    "org.kde.kdecoration3": {
         "blur": false,
         "kcmodule": true
     }

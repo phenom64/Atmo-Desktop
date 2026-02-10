@@ -56,6 +56,8 @@ public:
     static QPalette::ColorRole opposingRole(const QPalette::ColorRole &role);
     static QPalette::ColorRole bgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::Window);
     static QPalette::ColorRole fgRole(const QWidget *w, const QPalette::ColorRole fallBack = QPalette::WindowText);
+    static qreal scaleForWidget(const QWidget *w);
+    static int dpiScaled(const QWidget *w, qreal px);
     static void swap(int &t1, int &t2);
     template<typename T> static void swap(T &t1, T &t2)
     {

@@ -23,12 +23,11 @@
 
 #include "menubar.h"
 #include "kwinclient2.h"
+#include "../atmolib/ops.h"
 
-#include <KDecoration2/DecorationButtonGroup>
-#include <KDecoration2/DecorationButton>
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecoratedClient>
+#if !defined(ATMO_USE_KDECORATION3)
 #include <KWindowInfo>
+#endif
 
 #include <QEvent>
 #include <QMouseEvent>
@@ -63,7 +62,7 @@ MenuBar::MenuBar(Deco *deco, const QString &service, const QString &path)
     , prevHovered(0)
     , active(0)
 {
-    setSpacing(8);
+    setSpacing(Ops::dpiScaled(nullptr, 8));
     connect(importer, &DBusMenuImporter::menuUpdated, this, &MenuBar::menuUpdated);
 //    connect(importer, &DBusMenuImporter::menuReadyToBeShown, this, &MenuBar::menuUpdated);
     QMetaObject::invokeMethod(importer, "updateMenu", Qt::QueuedConnection);
@@ -84,7 +83,7 @@ MenuBar::menuUpdated()
 }
 
 void
-MenuBar::paint(QPainter *painter, const QRect &repaintArea)
+MenuBar::paint(QPainter *painter, const AtmoDecoRect &repaintArea)
 {
     const QPen pen = painter->pen();
     const QBrush brush = painter->brush();
@@ -93,7 +92,8 @@ MenuBar::paint(QPainter *painter, const QRect &repaintArea)
     QLinearGradient grad(0, geometry().top(), 0, geometry().height());
     grad.setStops(QGradientStops() << QGradientStop(0.0, QColor(0,0,0,31)) << QGradientStop(1.0, Qt::transparent));
     painter->setBrush(grad);
-    painter->drawRoundedRect(geometry().translated(0.5, 0.5).adjusted(0,0,-1,-1), 2.0, 2.0);
+    const qreal radius = Ops::dpiScaled(nullptr, 2);
+    painter->drawRoundedRect(geometry().translated(0.5, 0.5).adjusted(0,0,-1,-1), radius, radius);
     painter->setPen(pen);
     painter->setBrush(brush);
 
@@ -238,12 +238,13 @@ QAction
 }
 
 void
-MenuBarItem::paint(QPainter *painter, const QRect &repaintArea)
+MenuBarItem::paint(QPainter *painter, const AtmoDecoRect &repaintArea)
 {
     if (!hasGeo)
     {
-        QRect geo = painter->fontMetrics().boundingRect(QRect(), Qt::TextHideMnemonic, text()).adjusted(-2, 0, 2, 0);
-        geo.setHeight(m->deco->titleBar().height()-4);
+        const int textPad = Ops::dpiScaled(nullptr, 2);
+        QRect geo = painter->fontMetrics().boundingRect(QRect(), Qt::TextHideMnemonic, text()).adjusted(-textPad, 0, textPad, 0);
+        geo.setHeight(m->deco->titleBar().height() - Ops::dpiScaled(nullptr, 4));
         setGeometry(geo);
         hasGeo = true;
         QMetaObject::invokeMethod(m->deco, "updateLayout", Qt::QueuedConnection);
@@ -251,20 +252,21 @@ MenuBarItem::paint(QPainter *painter, const QRect &repaintArea)
     const QPen pen = painter->pen();
     if (isHovered())
     {
-        QColor bg = m->deco->client().data()->palette().color(QPalette::WindowText);
+        QColor bg = m->deco->window()->palette().color(QPalette::WindowText);
         bg.setAlpha(31);
         const QBrush brush = painter->brush();
         painter->setBrush(bg);
         painter->setPen(Qt::NoPen);
-        painter->drawRoundedRect(geometry(), 2.0, 2.0);
+        const qreal radius = Ops::dpiScaled(nullptr, 2);
+        painter->drawRoundedRect(geometry(), radius, radius);
         painter->setBrush(brush);
     }
-    if (m->deco->client().data()->isActive() && m->deco->m_textBevOpacity)
+    if (m->deco->window()->isActive() && m->deco->m_textBevOpacity)
     {
         const int rgb = m->deco->m_isDark ? 0 : 255;
         const QColor bevel(rgb,rgb,rgb, m->deco->m_textBevOpacity);
         painter->setPen(bevel);
-        painter->drawText(geometry().translated(0, 1.0), Qt::TextHideMnemonic|Qt::AlignCenter, text());
+        painter->drawText(geometry().translated(0, Ops::dpiScaled(nullptr, 1)), Qt::TextHideMnemonic|Qt::AlignCenter, text());
     }
     painter->setPen(m->deco->m_fg);
     painter->drawText(geometry(), Qt::TextHideMnemonic|Qt::AlignCenter, text());
@@ -317,8 +319,13 @@ QMenu
 QRect
 MenuBarItem::topLevelGeo() const
 {
-    KWindowInfo info(m->deco->client().data()->decorationId(), NET::WMGeometry);
-    return QRect(info.geometry().topLeft()+geometry().topLeft().toPoint(), info.geometry().topLeft()+geometry().bottomRight().toPoint()+QPoint(1, 1));
+#if defined(ATMO_USE_KDECORATION3)
+    const QPointF topLeft = m->deco->window()->position() + geometry().topLeft();
+    return QRect(topLeft.toPoint(), geometry().size().toSize());
+#else
+    KWindowInfo info(m->deco->winId(), NET::WMGeometry);
+    return QRect(info.geometry().topLeft() + geometry().topLeft(), info.geometry().topLeft() + geometry().bottomRight() + QPoint(1, 1));
+#endif
 }
 
 void

@@ -25,9 +25,10 @@
 #include <QDebug>
 #include <QScopedPointer>
 #include <QString>
+#include <cstring>
 #include <xcb/xcb_atom.h>
 #include <xcb/xproto.h>
-#include <QX11Info>
+#include "../atmolib/qtx11extras_compat.h"
 #include <qwindowdefs.h>
 
 namespace Xcb
@@ -38,8 +39,11 @@ class Atom
 public:
     Atom(const char *atomName)
     {
-        xcb_intern_atom_cookie_t c = xcb_intern_atom(QX11Info::connection(), false, strlen(atomName), qPrintable(atomName));
-        m_reply.reset(xcb_intern_atom_reply(QX11Info::connection(), c, 0));
+        xcb_connection_t *connection = QX11Info::connection();
+        if (!connection)
+            return;
+        xcb_intern_atom_cookie_t c = xcb_intern_atom(connection, false, strlen(atomName), atomName);
+        m_reply.reset(xcb_intern_atom_reply(connection, c, 0));
     }
     operator xcb_atom_t() const { return m_reply ? m_reply.data()->atom: 0; }
 
@@ -52,11 +56,14 @@ class Property
 public:
     Property(const char *atomName, const WId window)
     {
+        xcb_connection_t *connection = QX11Info::connection();
+        if (!connection)
+            return;
         Atom atom(atomName);
         if (atom)
         {
-            xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(QX11Info::connection(), false, window, atom, XCB_ATOM_ANY, 0, 0xffffffff);
-            m_reply.reset(xcb_get_property_reply(QX11Info::connection(), cookie, 0));
+            xcb_get_property_cookie_t cookie = xcb_get_property_unchecked(connection, false, window, atom, XCB_ATOM_ANY, 0, 0xffffffff);
+            m_reply.reset(xcb_get_property_reply(connection, cookie, 0));
         }
     }
     operator bool () const { return length(); }
