@@ -23,7 +23,7 @@
 #define SETTINGS_H
 #include <QStringList>
 #include <QPair>
-#include <QBrush>
+#include <QGradient>
 #include <QPalette>
 #include <QVariant>
 
