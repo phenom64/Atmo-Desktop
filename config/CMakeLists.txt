@@ -7,6 +7,8 @@ target_link_libraries(nsesettings
     PUBLIC
         Qt6::Core
         Qt6::Gui
+    PRIVATE
+        Qt6::Widgets
 )
 target_include_directories(nsesettings PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 install(TARGETS nsesettings LIBRARY DESTINATION ${KDE_INSTALL_LIBDIR})
