@@ -23,7 +23,8 @@
 #include <QSettings>
 #include <QFileInfo>
 #include <QDir>
-#include <QApplication>
+#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QDesktopServices>
 #include <QPalette>
 #include <QDebug>
@@ -500,10 +501,11 @@ static const QString confPath()
 
 static const QString getPreset(QSettings *s, const QString &appName)
 {
-    if (qApp->arguments().contains("--nsepreset"))
-        if (int i = qApp->arguments().indexOf("--nsepreset")+1)
-            if (i < qApp->arguments().count())
-                return qApp->arguments().at(i);
+    const QStringList args = QCoreApplication::arguments();
+    if (args.contains("--nsepreset"))
+        if (int i = args.indexOf("--nsepreset") + 1)
+            if (i < args.count())
+                return args.at(i);
 
     QString preset;
     s->beginGroup("Presets");
@@ -525,14 +527,15 @@ static const QString getPreset(QSettings *s, const QString &appName)
 static const QString appName()
 {
     QString app;
-    if (qApp)
+    if (QCoreApplication::instance())
     {
-        if (!qApp->arguments().isEmpty())
-            app = qApp->arguments().first();
-        else if (!qApp->applicationName().isEmpty())
-            app = qApp->applicationName();
+        const QStringList args = QCoreApplication::arguments();
+        if (!args.isEmpty())
+            app = args.first();
+        else if (!QCoreApplication::applicationName().isEmpty())
+            app = QCoreApplication::applicationName();
         else
-            app = QFileInfo(qApp->applicationFilePath()).fileName();
+            app = QFileInfo(QCoreApplication::applicationFilePath()).fileName();
     }
     if (app.contains("/"))
         app = QFileInfo(app).fileName();
@@ -720,7 +723,7 @@ Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
     paletteSettings()->beginGroup(groups[g]);
     QString string = paletteSettings()->value(roles[r], QString()).toString();
     if (string.isEmpty())
-        string = qApp->palette().color(g, r).name();
+        string = QGuiApplication::palette().color(g, r).name();
     if (string.size() == 8 && string.toUInt(0, 16))
     {
         string.remove(0, 2);
@@ -736,7 +739,7 @@ Settings::writePalette()
     QSettings *s = paletteSettings();
     if (!s || QFileInfo(s->fileName()).exists())
         return;
-    const QPalette pal(QApplication::palette());
+    const QPalette pal(QGuiApplication::palette());
     for (int g = 0; g < QPalette::NColorGroups; ++g)
         for (int r = 0; r < QPalette::NColorRoles; ++r)
             writePaletteColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, pal.color((QPalette::ColorGroup)g, (QPalette::ColorRole)r));
