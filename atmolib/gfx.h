@@ -25,7 +25,7 @@
 //#include <QPixmap>
 //#include <QPainter>
 #include <QtGlobal>
-#include <QtGui>
+#include <QPainterPath>
 #include <QPalette>
 #include <QStyleOptionTab>
 #include "../namespace.h"

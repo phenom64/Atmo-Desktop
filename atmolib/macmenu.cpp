@@ -48,7 +48,7 @@
 #include "macmenu.h"
 #include "macmenu-dbus.h"
 
-#include <QtDebug>
+#include <QDebug>
 
 using namespace BE;
 
