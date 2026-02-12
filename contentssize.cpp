@@ -410,7 +410,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         QSize sz(contentsSize);
         const int margin = Ops::dpiScaled(widget, 8);
         const QStyleOptionProgressBar *bar = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
-        const bool hor(!bar || bar->orientation==Qt::Horizontal);
+        const bool hor(!bar || (bar->state & State_Horizontal));
         if (bar && dConf.progressbars.textPos == 1)
         {
             const quint16 add = bar->fontMetrics.horizontalAdvance(bar->text);

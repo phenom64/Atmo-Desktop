@@ -481,7 +481,8 @@ Style::subElementRect(SubElement r, const QStyleOption *opt, const QWidget *widg
             int x,y,w,h;
             bar->rect.getRect(&x, &y, &w, &h);
             const bool l(dConf.progressbars.textPos==1);
-            if (bar->orientation==Qt::Horizontal)
+            const bool horizontal = (bar->state & State_Horizontal);
+            if (horizontal)
             {
                 if (r == SE_ProgressBarLabel)
                     return visualRect(bar->direction, opt->rect, QRect(l?x:x+w-add, y, add, h));

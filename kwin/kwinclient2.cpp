@@ -321,11 +321,18 @@ Deco::init()
     connect(window(), &AtmoDecoratedWindow::captionChanged, this, &Deco::captionChanged);
     connect(window(), &AtmoDecoratedWindow::maximizedChanged, this, &Deco::maximizedChanged);
 
-    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this](){reconfigure();});
-    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this](){reconfigure();});
-    connect(settings().data(), &KDecoration2::DecorationSettings::fontChanged, this, [this](){ m_font = settings().data()->font(); update();});
-
+#if defined(ATMO_USE_KDECORATION3)
+    const auto decoSettings = settings();
+    connect(decoSettings.get(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this]() { reconfigure(); });
+    connect(decoSettings.get(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this]() { reconfigure(); });
+    connect(decoSettings.get(), &KDecoration2::DecorationSettings::fontChanged, this, [this]() { m_font = settings()->font(); update(); });
+    m_font = decoSettings->font();
+#else
+    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this]() { reconfigure(); });
+    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this]() { reconfigure(); });
+    connect(settings().data(), &KDecoration2::DecorationSettings::fontChanged, this, [this]() { m_font = settings().data()->font(); update(); });
     m_font = settings().data()->font();
+#endif
 
     if (window()->isResizeable() && winId() && !m_grip)
         m_grip = new Grip(this);
@@ -411,11 +418,7 @@ Deco::decoKey() const
         return id;
 #if defined(ATMO_USE_KDECORATION3)
     if (window())
-    {
-        if (window()->decorationId())
-            return window()->decorationId();
-        return qHash(window()->internalId());
-    }
+        return qHash(window()->windowClass() + window()->caption());
 #endif
     return static_cast<quint32>(reinterpret_cast<quintptr>(this) & 0xffffffffu);
 }
@@ -454,11 +457,19 @@ void
 Deco::setButtonsVisible(const bool visible)
 {
     if (m_leftButtons)
-        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
-            m_leftButtons->buttons().at(i).data()->setVisible(visible);
+    {
+        const auto buttons = m_leftButtons->buttons();
+        for (const auto &button : buttons)
+            if (button)
+                button->setVisible(visible);
+    }
     if (m_rightButtons)
-        for (int i = 0; i < m_rightButtons->buttons().count(); ++i)
-            m_rightButtons->buttons().at(i).data()->setVisible(visible);
+    {
+        const auto buttons = m_rightButtons->buttons();
+        for (const auto &button : buttons)
+            if (button)
+                button->setVisible(visible);
+    }
 }
 
 WindowData
@@ -1218,8 +1229,3 @@ Grip::paintEvent(QPaintEvent *)
 }
 
 } //NSE
-
-/*
- * Required for the K_PLUGIN_FACTORY_WITH_JSON vtable
- */
-#include "kwinclient2.moc"

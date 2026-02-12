@@ -11,7 +11,7 @@
 
 #include <QDateTime>
 #include <QGuiApplication>
-#include <QNativeInterface>
+#include <QtGui/qguiapplication_platform.h>
 #include <QScreen>
 
 #if HASXCB

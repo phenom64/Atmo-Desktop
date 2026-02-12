@@ -26,7 +26,7 @@
 //#include <QSharedMemory>
 #include <QDebug>
 #include <QPointer>
-#include "defines.h"
+#include "../defines.h"
 
 #if HASDBUS
 #include <QDBusAbstractAdaptor>

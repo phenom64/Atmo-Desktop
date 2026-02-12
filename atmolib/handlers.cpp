@@ -952,7 +952,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
 
             area->verticalScrollBar()->setValue(realVal);
             vp->setAttribute(Qt::WA_NoSystemBackground); //this disables the viewport bg to get painted in the uno area, only items get painted
-            vp->render(&img, vp->mapTo(win, QPoint(0, title-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), 0);
+            vp->render(&img, vp->mapTo(win, QPoint(0, title-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), QWidget::RenderFlags());
             vp->setAttribute(Qt::WA_NoSystemBackground, false);
             area->verticalScrollBar()->setValue(prevVal);
             if (view)

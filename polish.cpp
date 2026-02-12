@@ -416,7 +416,7 @@ Style::polish(QWidget *widget)
         widget->setForegroundRole(QPalette::WindowText);
         if (QLayout *l = widget->layout())
         {
-            l->setMargin(0);
+            l->setContentsMargins(0, 0, 0, 0);
             l->setSpacing(0);
         }
     }

@@ -79,9 +79,11 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     {
     case PM_LayoutHorizontalSpacing:
     case PM_LayoutVerticalSpacing:
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case PM_DefaultTopLevelMargin:
     case PM_DefaultChildMargin:
     case PM_DefaultLayoutSpacing:
+#endif
         return px(4);
     case PM_LayoutLeftMargin:
     case PM_LayoutRightMargin:

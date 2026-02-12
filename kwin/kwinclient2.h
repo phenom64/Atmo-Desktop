@@ -25,6 +25,8 @@
 #include <QDBusAbstractAdaptor>
 #include <QVariant>
 #include <QDebug>
+#include <QWidget>
+#include <QPaintEvent>
 #include <netwm_def.h>
 #include <KPluginFactory>
 #include "kdecoration_compat.h"

@@ -53,6 +53,7 @@ endif()
 
 add_library(atmodecoration MODULE ${SRCS} ${HDRS})
 target_compile_definitions(atmodecoration PRIVATE ATMO_USE_KDECORATION3=1)
+target_include_directories(atmodecoration PRIVATE ${CMAKE_SOURCE_DIR})
 
 target_link_libraries(atmodecoration
     PUBLIC

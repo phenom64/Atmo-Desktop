@@ -26,8 +26,7 @@
 #include <QScopedPointer>
 #include <QString>
 #include <cstring>
-#include <xcb/xcb_atom.h>
-#include <xcb/xproto.h>
+#include <xcb/xcb.h>
 #include "../atmolib/qtx11extras_compat.h"
 #include <qwindowdefs.h>
 

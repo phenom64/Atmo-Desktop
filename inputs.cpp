@@ -314,7 +314,7 @@ Style::progressContents(const QStyleOption *opt, const QWidget *widget) const
     if (bar->minimum == 0 && bar->maximum == 0) //busy
         return bar->rect;
     const QRect optrect(subElementRect(SE_ProgressBarGroove, opt, widget));
-    const bool hor(!barv2 || barv2->orientation == Qt::Horizontal);
+    const bool hor(!barv2 || (barv2->state & State_Horizontal));
     qreal d((qreal)(hor?optrect.width():optrect.height())/(qreal)bar->maximum);
     int progress(d*bar->progress);
     int w(hor?progress:optrect.width());

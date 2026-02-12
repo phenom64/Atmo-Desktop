@@ -265,7 +265,7 @@ Style::drawFrame(const QStyleOption *option, QPainter *painter, const QWidget *w
     if (!widget || widget->isWindow() || Overlay::overlay(widget))
         return true;
 
-    const QStyleOptionFrameV3 *opt = qstyleoption_cast<const QStyleOptionFrameV3 *>(option);
+    const QStyleOptionFrame *opt = qstyleoption_cast<const QStyleOptionFrame *>(option);
     if (!opt)
         return true;
 

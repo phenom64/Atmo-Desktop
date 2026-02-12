@@ -24,6 +24,8 @@
 #include <QToolBar>
 #include <QPainter>
 #include <QEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
 #include "windowdata.h"
 #include "xhandler.h"
 #include "qtx11extras_compat.h"

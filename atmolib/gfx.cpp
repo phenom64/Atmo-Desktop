@@ -39,6 +39,9 @@
 #include <QGroupBox>
 #include <QStyleOptionToolButton>
 #include <QVBoxLayout>
+#include <QDir>
+#include <QImageReader>
+#include <QRandomGenerator>
 
 #include "fx.h"
 #include "gfx.h"

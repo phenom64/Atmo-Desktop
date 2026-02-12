@@ -220,10 +220,14 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
 //    KDecoration2::DecoratedClient *c = m_deco->window();
 
     KDecoration2::DecorationButtonGroup *group = s == Left ? m_deco->m_leftButtons : m_deco->m_rightButtons;
-    QVector< QPointer<KDecoration2::DecorationButton > > buttons = group->buttons();
+    const auto buttons = group->buttons();
     QHBoxLayout *l = new QHBoxLayout(this);
-    for (int i = 0; i < buttons.count(); ++i)
-        l->addWidget(new EmbeddedButton(this, (ButtonBase::Type)buttons.at(i).data()->type()));
+    for (const auto &button : buttons)
+    {
+        if (!button)
+            continue;
+        l->addWidget(new EmbeddedButton(this, static_cast<ButtonBase::Type>(button->type())));
+    }
     l->setContentsMargins(0, 0, 0, 0);
     l->setSpacing(Ops::dpiScaled(nullptr, 4));
     setContentsMargins(0, 0, 0, 0);

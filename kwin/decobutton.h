@@ -22,6 +22,8 @@
 #ifndef DECOBUTTON_H
 #define DECOBUTTON_H
 
+#include <QEnterEvent>
+
 #include "../atmolib/widgets.h" //buttonbase class
 #include "kdecoration_compat.h"
 
@@ -124,8 +126,8 @@ protected:
     Deco *decoration() const;
     void hoverChanged();
     void paintEvent(QPaintEvent *e);
-    void enterEvent(QEvent *e) { hover(); QWidget::enterEvent(e); }
-    void leaveEvent(QEvent *e) { unhover(); QWidget::enterEvent(e); }
+    void enterEvent(QEnterEvent *e) { hover(); QWidget::enterEvent(e); }
+    void leaveEvent(QEvent *e) { unhover(); QWidget::leaveEvent(e); }
     void mousePressEvent(QMouseEvent *e) { processMouseEvent(e); /*QWidget::mousePressEvent(e);*/ }
     void mouseReleaseEvent(QMouseEvent *e) { processMouseEvent(e); update();/*QWidget::mouseReleaseEvent(e);*/ }
 

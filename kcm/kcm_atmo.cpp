@@ -1,5 +1,5 @@
 #include <KPluginFactory>
-#include <KCMUtils/KCModule>
+#include <KCModule>
 #include <KPluginMetaData>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -11,14 +11,15 @@
 class KCMAtmo : public KCModule {
     Q_OBJECT
 public:
-    explicit KCMAtmo(QObject *parent, const KPluginMetaData &metaData, const QVariantList &args)
-        : KCModule(parent, metaData, args)
+    explicit KCMAtmo(QObject *parent, const KPluginMetaData &metaData)
+        : KCModule(parent, metaData)
     {
-        auto *lay = new QVBoxLayout(this);
-        auto *lbl = new QLabel(tr("Atmo (NSE) - Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), this);
+        QWidget *root = widget();
+        auto *lay = new QVBoxLayout(root);
+        auto *lbl = new QLabel(tr("Atmo (NSE) - Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), root);
         lbl->setWordWrap(true);
         lay->addWidget(lbl);
-        auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), this);
+        auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), root);
         lay->addWidget(btn);
         connect(btn, &QPushButton::clicked, this, [this]
         {
