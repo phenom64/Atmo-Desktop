@@ -23,7 +23,8 @@
 #include <QSettings>
 #include <QFileInfo>
 #include <QDir>
-#include <QApplication>
+#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QDesktopServices>
 #include <QPalette>
 #include <QDebug>
@@ -169,6 +170,11 @@ static const char *s_key[] = {
     "shadows.ontextopacity"
 };
 
+static inline QString keyString(const int key)
+{
+    return QString::fromLatin1(s_key[key]);
+}
+
 static const char *s_description[] = {
     /*"opacity"*/                   "Opacity for UNO parts, *NOT* enabled atm due to problems with Qt5",
     /*"blacklist"*/                 "Blacklist of apps that should not get opacity if set, mostly media players should be here",
@@ -303,7 +309,7 @@ static const char *s_description[] = {
 
 static const QVariant s_default[] = {
     100,
-    "smplayer",
+    QStringLiteral("smplayer"),
     false,
     1,
     false,
@@ -327,20 +333,20 @@ static const QVariant s_default[] = {
     5,
     0,
     false,
-    "#FFC05E",
-    "#88EB51",
-    "#F98862",
+    QStringLiteral("#FFC05E"),
+    QStringLiteral("#88EB51"),
+    QStringLiteral("#F98862"),
 
     8,
     3,
-    "0.0:5, 1.0:-5",
-    "-1:0",
+    QStringLiteral("0.0:5, 1.0:-5"),
+    QStringLiteral("-1:0"),
 
     8,
     3,
-    "0.0:5, 1.0:-5",
-    "0.0:-5, 1.0:5",
-    "-1:0",
+    QStringLiteral("0.0:5, 1.0:-5"),
+    QStringLiteral("0.0:-5, 1.0:5"),
+    QStringLiteral("-1:0"),
     false,
     false,
     false,
@@ -351,16 +357,16 @@ static const QVariant s_default[] = {
     8,
     8,
     3,
-    "0.0:-5, 1.0:5",
-    "-1:0",
+    QStringLiteral("0.0:-5, 1.0:5"),
+    QStringLiteral("-1:0"),
 
     0,
     true,
     true,
     4,
     3,
-    "0.0:5, 1.0:-5",
-    "0.0:-5, 1.0:5",
+    QStringLiteral("0.0:5, 1.0:-5"),
+    QStringLiteral("0.0:-5, 1.0:5"),
     4,
     0,
     16,
@@ -369,8 +375,8 @@ static const QVariant s_default[] = {
     false,
 
     true,
-    "0.0:5, 1.0:-5",
-    "-1:0",
+    QStringLiteral("0.0:5, 1.0:-5"),
+    QStringLiteral("-1:0"),
     5,
     QString(),
     0,
@@ -381,32 +387,32 @@ static const QVariant s_default[] = {
     0,
 
     false,
-    "0:5, 1:-5",
-    "0.0:5, 1.0:-5",
+    QStringLiteral("0:5, 1:-5"),
+    QStringLiteral("0.0:5, 1.0:-5"),
     0,
 
     16,
     true,
     false,
-    "0.0:5, 1.0:-5",
-    "0.0:-5, 1.0:5",
+    QStringLiteral("0.0:5, 1.0:-5"),
+    QStringLiteral("0.0:-5, 1.0:5"),
     0,
     false,
     0,
 
     12,
     0,
-    "0.0:5, 1.0:-5",
-    "0.0:5, 0.5:-5, 1.0:5",
+    QStringLiteral("0.0:5, 1.0:-5"),
+    QStringLiteral("0.0:5, 0.5:-5, 1.0:5"),
     0,
     0,
     true,
 
     true,
-    "0:5, 1:-5",
+    QStringLiteral("0:5, 1:-5"),
     0,
     6,
-    "0:5, 1:-5",
+    QStringLiteral("0:5, 1:-5"),
     Sunken,
     4,
     0xff,
@@ -418,10 +424,10 @@ static const QVariant s_default[] = {
     4,
     false,
     0,
-    "0:5, 1:-5",
+    QStringLiteral("0:5, 1:-5"),
     32,
 
-    "0.0:-10, 0.5:10, 1.0:-10",
+    QStringLiteral("0.0:-10, 0.5:10, 1.0:-10"),
     0,
     QString(),
     0,
@@ -436,8 +442,9 @@ static const QVariant s_default[] = {
 Settings::Key
 Settings::key(const QString k)
 {
+    const QString key = k.toLower();
     for (int i = 0; i < Keycount; ++i)
-        if (s_key[i] == k.toLower())
+        if (keyString(i) == key)
             return (Key)i;
     return Invalid;
 }
@@ -494,19 +501,20 @@ const char
 
 static const QString confPath()
 {
-    static const QString cp = QString("%1/.config/NSE").arg(QDir::homePath());
+    static const QString cp = QStringLiteral("%1/.config/NSE").arg(QDir::homePath());
     return cp;
 }
 
 static const QString getPreset(QSettings *s, const QString &appName)
 {
-    if (qApp->arguments().contains("--nsepreset"))
-        if (int i = qApp->arguments().indexOf("--nsepreset")+1)
-            if (i < qApp->arguments().count())
-                return qApp->arguments().at(i);
+    const QStringList args = QCoreApplication::arguments();
+    if (args.contains(QStringLiteral("--nsepreset")))
+        if (int i = args.indexOf(QStringLiteral("--nsepreset")) + 1)
+            if (i < args.count())
+                return args.at(i);
 
     QString preset;
-    s->beginGroup("Presets");
+    s->beginGroup(QStringLiteral("Presets"));
     const QStringList presets(s->childKeys());
     const int count(presets.count());
     for (int i = 0; i < count; ++i)
@@ -525,16 +533,17 @@ static const QString getPreset(QSettings *s, const QString &appName)
 static const QString appName()
 {
     QString app;
-    if (qApp)
+    if (QCoreApplication::instance())
     {
-        if (!qApp->arguments().isEmpty())
-            app = qApp->arguments().first();
-        else if (!qApp->applicationName().isEmpty())
-            app = qApp->applicationName();
+        const QStringList args = QCoreApplication::arguments();
+        if (!args.isEmpty())
+            app = args.first();
+        else if (!QCoreApplication::applicationName().isEmpty())
+            app = QCoreApplication::applicationName();
         else
-            app = QFileInfo(qApp->applicationFilePath()).fileName();
+            app = QFileInfo(QCoreApplication::applicationFilePath()).fileName();
     }
-    if (app.contains("/"))
+    if (app.contains(QLatin1Char('/')))
         app = QFileInfo(app).fileName();
     return app;
 }
@@ -543,23 +552,23 @@ static const QString appName()
 Settings::Settings() : m_settings(0), m_presetSettings(0), m_paletteSettings(0), m_overrideSettings(0)
 {
     conf.appName = appName();
-    if (conf.appName == "eiskaltdcpp-qt")
+    if (conf.appName == QStringLiteral("eiskaltdcpp-qt"))
         conf.app = Eiskalt;
-    else if (conf.appName == "konversation")
+    else if (conf.appName == QStringLiteral("konversation"))
         conf.app = Konversation;
-    else if (conf.appName == "konsole")
+    else if (conf.appName == QStringLiteral("konsole"))
         conf.app = Konsole;
-    else if (conf.appName == "kwin" || conf.appName == "kwin_x11" || conf.appName == "kwin_wayland")
+    else if (conf.appName == QStringLiteral("kwin") || conf.appName == QStringLiteral("kwin_x11") || conf.appName == QStringLiteral("kwin_wayland"))
         conf.app = KWin;
-    else if (conf.appName == "be.shell")
+    else if (conf.appName == QStringLiteral("be.shell"))
         conf.app = BEShell;
-    else if (conf.appName == "yakuake")
+    else if (conf.appName == QStringLiteral("yakuake"))
         conf.app = Yakuake;
-    else if (conf.appName == "plasma-desktop")
+    else if (conf.appName == QStringLiteral("plasma-desktop"))
         conf.app = Plasma;
-    else if (conf.appName == "dfm")
+    else if (conf.appName == QStringLiteral("dfm"))
         conf.app = DFM;
-    else if (conf.appName == "systemsettings")
+    else if (conf.appName == QStringLiteral("systemsettings"))
         conf.app = SystemSettings;
     else
         conf.app = Unspecific;
@@ -567,8 +576,8 @@ Settings::Settings() : m_settings(0), m_presetSettings(0), m_paletteSettings(0),
     const QDir settingsDir(confPath());
     if (!settingsDir.exists())
         QDir().mkpath(confPath());
-    QString settingsFileName("NSE");
-    const QString settingsFilePath = settingsDir.absoluteFilePath(QString("%1.conf").arg(settingsFileName));
+    QString settingsFileName(QStringLiteral("NSE"));
+    const QString settingsFilePath = settingsDir.absoluteFilePath(QStringLiteral("%1.conf").arg(settingsFileName));
     if (!QFileInfo::exists(settingsFilePath))
     {
         // Try to provision defaults from system share path: share/atmo/NSE.conf
@@ -578,17 +587,17 @@ Settings::Settings() : m_settings(0), m_presetSettings(0), m_paletteSettings(0),
     }
     m_settings = new QSettings(settingsFilePath, QSettings::IniFormat);
     const QString preset(getPreset(m_settings, conf.appName));
-    const QFileInfo presetFile(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)));
+    const QFileInfo presetFile(settingsDir.absoluteFilePath(QStringLiteral("%1.conf").arg(preset)));
     if (!preset.isEmpty())
     {
         if (presetFile.exists())
         {
-            m_presetSettings = new QSettings(settingsDir.absoluteFilePath(QString("%1.conf").arg(preset)), QSettings::IniFormat);
-            const QString paletteFileName = m_presetSettings->value(s_key[Palette], s_default[Palette]).toString();
+            m_presetSettings = new QSettings(settingsDir.absoluteFilePath(QStringLiteral("%1.conf").arg(preset)), QSettings::IniFormat);
+            const QString paletteFileName = m_presetSettings->value(keyString(Palette), s_default[Palette]).toString();
             if (!paletteFileName.isEmpty())
             {
                 QString settingsPath(confPath());
-                settingsPath.append(QString("/%1.conf").arg(paletteFileName));
+                settingsPath.append(QStringLiteral("/%1.conf").arg(paletteFileName));
                 m_paletteSettings = new QSettings(settingsPath, QSettings::IniFormat);
             }
         }
@@ -616,13 +625,13 @@ Settings
 Gradient
 Settings::stringToGrad(const QString &string)
 {
-    const QStringList pairs(string.split(",", Qt::SkipEmptyParts));
+    const QStringList pairs(string.split(QLatin1Char(','), Qt::SkipEmptyParts));
     Gradient gradient;
     if (pairs.isEmpty())
         return gradient;
     for (int i = 0; i < pairs.count(); ++i)
     {
-        QStringList pair(pairs.at(i).split(":"));
+        QStringList pair(pairs.at(i).split(QLatin1Char(':')));
         if (pair.count() != 2)
             break;
         bool ok;
@@ -677,7 +686,7 @@ Settings::gradientStops(const Gradient pairs)
 
 static Tint tintColor(const QString &tint)
 {
-    const QStringList pair(tint.split(":"));
+    const QStringList pair(tint.split(QLatin1Char(':')));
     Tint c;
     if (pair.count() != 2)
         return c;
@@ -709,22 +718,22 @@ static const char *roles[QPalette::NColorRoles] =
 void
 Settings::writePaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r, QColor c)
 {
-    paletteSettings()->beginGroup(groups[g]);
-    paletteSettings()->setValue(roles[r], c.name());
+    paletteSettings()->beginGroup(QString::fromLatin1(groups[g]));
+    paletteSettings()->setValue(QString::fromLatin1(roles[r]), c.name());
     paletteSettings()->endGroup();
 }
 
 QColor
 Settings::readPaletteColor(QPalette::ColorGroup g, QPalette::ColorRole r)
 {
-    paletteSettings()->beginGroup(groups[g]);
-    QString string = paletteSettings()->value(roles[r], QString()).toString();
+    paletteSettings()->beginGroup(QString::fromLatin1(groups[g]));
+    QString string = paletteSettings()->value(QString::fromLatin1(roles[r]), QString()).toString();
     if (string.isEmpty())
-        string = qApp->palette().color(g, r).name();
+        string = QGuiApplication::palette().color(g, r).name();
     if (string.size() == 8 && string.toUInt(0, 16))
     {
         string.remove(0, 2);
-        string.prepend("#");
+        string.prepend(QLatin1Char('#'));
     }
     paletteSettings()->endGroup();
     return QColor(string);
@@ -736,7 +745,7 @@ Settings::writePalette()
     QSettings *s = paletteSettings();
     if (!s || QFileInfo(s->fileName()).exists())
         return;
-    const QPalette pal(QApplication::palette());
+    const QPalette pal(QGuiApplication::palette());
     for (int g = 0; g < QPalette::NColorGroups; ++g)
         for (int r = 0; r < QPalette::NColorRoles; ++r)
             writePaletteColor((QPalette::ColorGroup)g, (QPalette::ColorRole)r, pal.color((QPalette::ColorGroup)g, (QPalette::ColorRole)r));
@@ -821,7 +830,7 @@ Settings::setFileName(const QString &file)
 {
     if (instance()->m_overrideSettings)
         restoreFileName();
-    instance()->m_overrideSettings = new QSettings(QString("%1/%2.conf").arg(confPath(), file), QSettings::IniFormat);
+    instance()->m_overrideSettings = new QSettings(QStringLiteral("%1/%2.conf").arg(confPath(), file), QSettings::IniFormat);
 }
 
 void
@@ -840,7 +849,7 @@ Settings::writeVal(const Key k, const QVariant v)
 {
     if (!settings())
         return;
-    settings()->setValue(s_key[k], v);
+    settings()->setValue(keyString(k), v);
 }
 
 QVariant
@@ -850,12 +859,12 @@ Settings::readVal(const Key k)
         return QVariant();
     QVariant var;
     if (instance()->m_overrideSettings)
-        var = instance()->m_overrideSettings->value(s_key[k], QVariant());
+        var = instance()->m_overrideSettings->value(keyString(k), QVariant());
     if (!var.isValid() && instance()->m_presetSettings)
-        var = instance()->m_presetSettings->value(s_key[k], QVariant());
+        var = instance()->m_presetSettings->value(keyString(k), QVariant());
     if (var.isValid())
         return var;
-    return instance()->m_settings->value(s_key[k], s_default[k]);
+    return instance()->m_settings->value(keyString(k), s_default[k]);
 }
 
 const char *
@@ -1017,7 +1026,7 @@ Settings::read()
     conf.progressbars.stripeSize= readInt(Progstripe);
     // Separate style key (not part of the original key enum, read directly)
     if (QSettings *s = settings())
-        conf.progressbars.style = s->value("progressbars.style", 1).toUInt();
+        conf.progressbars.style = s->value(QStringLiteral("progressbars.style"), 1).toUInt();
     else
         conf.progressbars.style = 1;
     
@@ -1059,7 +1068,7 @@ Settings::formatIconPathsList(QStringList &paths)
     for (int i = 0; i < paths.size(); ++i)
     {
         QString path = paths.at(i);
-        path.replace("~", home);
+        path.replace(QLatin1Char('~'), home);
         newPaths << path;
     }
     paths = newPaths;
@@ -1073,7 +1082,7 @@ Settings::writeDefaults()
 
     qDebug() << "attempting to write default values...";
     for (int i = 0; i < Keycount; ++i)
-        settings()->setValue(s_key[i], s_default[i]);
+        settings()->setValue(keyString(i), s_default[i]);
     settings()->sync();
 }
 

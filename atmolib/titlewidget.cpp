@@ -24,9 +24,11 @@
 #include <QToolBar>
 #include <QPainter>
 #include <QEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
 #include "windowdata.h"
 #include "xhandler.h"
-#include <QX11Info>
+#include "atmox11.h"
 #include "ops.h"
 #include "macmenu.h"
 #include <QLayout>
@@ -59,11 +61,11 @@ TitleWidget::TitleWidget(QToolBar *parent)
 #if HASDBUS
     if (BE::MacMenu::instance())
         connect(BE::MacMenu::instance(), SIGNAL(activeChanged()), this, SLOT(macMenuChanged()));
-    static const QString service("com.syndromatic.atmo.kwindeco"),
-            interface("com.syndromatic.atmo.deco"),
-            path("/NSEDecoAdaptor");
+    static const QString service(QStringLiteral("com.syndromatic.atmo.kwindeco")),
+            interface(QStringLiteral("com.syndromatic.atmo.deco")),
+            path(QStringLiteral("/NSEDecoAdaptor"));
     QDBusInterface *iface = new QDBusInterface(service, path, interface, QDBusConnection::sessionBus(), this);
-    iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
+    iface->connection().connect(service, path, interface, QStringLiteral("dataChanged"), this, SLOT(dataChanged(QDBusMessage)));
 #endif
     connect(parent, SIGNAL(topLevelChanged(bool)), this, SLOT(toolBarFloatingChagned(bool)), Qt::QueuedConnection);
     connect(parent, SIGNAL(orientationChanged(Qt::Orientation)), this, SLOT(toolBarOrientationChagned(Qt::Orientation)));
@@ -123,7 +125,7 @@ TitleWidget::paintEvent(QPaintEvent *)
 //    p.drawText(rect, Qt::AlignTop|Qt::AlignHCenter, qApp->applicationDisplayName());
 //    p.setFont(f);
     if (!title.isEmpty())
-        title.append(QString(" - "));
+        title.append(QStringLiteral(" - "));
     title.append(qApp->applicationDisplayName());
 #endif
     const QString &elidedTitle = p.fontMetrics().elidedText(title, Qt::ElideRight, rect().width()-20, Qt::TextShowMnemonic);
@@ -147,7 +149,7 @@ TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
 {
     e->accept();
 //    QWidget::mouseDoubleClickEvent(e);
-    const int clickSpeed = QX11Info::appTime()/*e->timestamp()*/-m_time;
+    const int clickSpeed = AtmoX11::appTime()/*e->timestamp()*/-m_time;
     //sometimes if the window is inactive, and we click the titlebar in order
     //to move the window, instead for whatever reason we get a doubleclick event,
     //these mystical 2 clicks are usually closer together then any human (me)
@@ -160,9 +162,9 @@ TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
         {
             const uint deco = data->decoId;
             data.unlock();
-            XHandler::doubleClickEvent(e->globalPos(), deco, e->button());
+            XHandler::doubleClickEvent(e->globalPosition().toPoint(), deco, e->button());
         }
-        m_time = QX11Info::appTime()/*e->timestamp()*/;
+        m_time = AtmoX11::appTime()/*e->timestamp()*/;
     }
 }
 
@@ -179,11 +181,11 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
 //#if QT_VERSION >= 0x050000
 //    m_time = e->timestamp();
 //#else
-    m_time = QX11Info::appTime();
+    m_time = AtmoX11::appTime();
 //#endif
     if (e->button() == Qt::LeftButton)
     {
-        XHandler::mwRes(e->pos(), e->globalPos(), XHandler::windowId(window()));
+        XHandler::mwRes(e->position().toPoint(), e->globalPosition().toPoint(), XHandler::windowId(window()));
         return;
     }
     WindowData data = WindowData::memory(XHandler::windowId(window()), window());
@@ -191,7 +193,7 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
     {
         const uint deco = data->decoId;
         data.unlock();
-        XHandler::pressEvent(e->globalPos(), deco, e->button());
+        XHandler::pressEvent(e->globalPosition().toPoint(), deco, e->button());
     }
 }
 
@@ -204,7 +206,7 @@ TitleWidget::wheelEvent(QWheelEvent *e)
     {
         const uint deco = data->decoId;
         data.unlock();
-        XHandler::wheelEvent(deco, e->delta()>0);
+        XHandler::wheelEvent(deco, e->angleDelta().y() > 0);
     }
 }
 

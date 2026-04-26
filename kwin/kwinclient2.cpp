@@ -28,19 +28,14 @@
 #include "../atmolib/shadowhandler.h"
 #include "../atmolib/gfx.h"
 #include "../atmolib/fx.h"
+#include "../atmolib/debug.h"
 #include "../atmolib/macros.h"
 #include "../atmolib/ops.h"
 
-#include <KDecoration2/DecoratedClient>
-#include <KDecoration2/DecorationButtonGroup>
-#include <KDecoration2/DecorationSettings>
-#include <KDecoration2/DecorationShadow>
-#include <KDecoration2/DecorationButton>
 
 #include <KConfigGroup>
 #include <KColorUtils>
 #include <KSharedConfig>
-#include <KCModule>
 
 #include <KWindowInfo>
 #include <KWindowSystem>
@@ -62,9 +57,11 @@
 #include <qmath.h>
 
 #include <QDebug>
+#if HASXCB || HASX11
+#include "../atmolib/atmox11.h"
 #if HASXCB
-#include <QX11Info>
-#include <xcbatoms.h>
+#include "xcbatoms.h"
+#endif
 #endif
 
 #if HASDBUSMENU
@@ -75,16 +72,12 @@
 //    DSPDecoFactory,
 //    "dsp.json",
 //    registerPlugin<NSE::Deco>();
-//    registerPlugin<NSE::Button>(QStringLiteral("button"));
-//    registerPlugin<NSE::ConfigModule>(QStringLiteral("kcmodule"));
-//)
+//    //    //)
 
 static DSPDecoFactory *s_factory(0);
 DSPDecoFactory::DSPDecoFactory()
 {
     registerPlugin<NSE::Deco>();
-    registerPlugin<NSE::Button>(QStringLiteral("button"));
-    registerPlugin<NSE::ConfigModule>(QStringLiteral("kcmodule"));
     NSE::Deco::Data::readWindowData();
     //        NSE::SharedDataAdaptorManager::instance();
     NSE::Settings::read();
@@ -104,10 +97,10 @@ DSPDecoFactory::~DSPDecoFactory()
 void
 DSPDecoFactory::shapeCorners()
 {
-    static const QString destination("org.kde.KWin");
-    static const QString path("/ShapeCorners");
-    static const QString interface("org.kde.kwin");
-    static const QString method("setRoundness");
+    static const QString destination(QStringLiteral("org.kde.KWin"));
+    static const QString path(QStringLiteral("/ShapeCorners"));
+    static const QString interface(QStringLiteral("org.kde.kwin"));
+    static const QString method(QStringLiteral("setRoundness"));
     QDBusMessage msg = QDBusMessage::createMethodCall(destination, path, interface, method);
     msg << dConf.deco.shadowRnd;
     QDBusConnection::sessionBus().send(msg);
@@ -116,12 +109,19 @@ DSPDecoFactory::shapeCorners()
 namespace NSE
 {
 
-ConfigModule::ConfigModule(QWidget *parent, const QVariantList &args) : KCModule(parent, args)
-{
+///-------------------------------------------------------------------------------------------------
 
+static qreal snapDecoMetric(qreal value, qreal scale)
+{
+    if (value <= 0.0)
+        return 0.0;
+    return qMax(KDecoration3::snapToPixelGrid(value, scale), KDecoration3::pixelSize(scale));
 }
 
-///-------------------------------------------------------------------------------------------------
+static qreal decoScale(const Deco *deco)
+{
+    return deco && deco->window() ? deco->window()->scale() : 1.0;
+}
 
 QMap<QString, Deco::Data> Deco::Data::s_data;
 
@@ -129,24 +129,24 @@ void
 Deco::Data::addDataForWinClass(const QString &winClass, QSettings &s)
 {
     Data d;
-    QString fgColor = s.value("fgcolor", "#000000").toString();
+    QString fgColor = s.value(QStringLiteral("fgcolor"), QStringLiteral("#000000")).toString();
     d.fg = QColor(fgColor);
-    if (fgColor.size() == QString("0xff000000").size() && fgColor.startsWith("0x")) //old format
+    if (fgColor.size() == QStringLiteral("0xff000000").size() && fgColor.startsWith(QStringLiteral("0x"))) //old format
         d.fg = QColor::fromRgba(fgColor.toUInt(0, 16));
 
-    QString bgColor = s.value("bgcolor", "#ffffff").toString();
+    QString bgColor = s.value(QStringLiteral("bgcolor"), QStringLiteral("#ffffff")).toString();
     d.bg = QColor(bgColor);
-    if (bgColor.size() == QString("0xffffffff").size() && bgColor.startsWith("0x")) //old format
+    if (bgColor.size() == QStringLiteral("0xffffffff").size() && bgColor.startsWith(QStringLiteral("0x"))) //old format
         d.bg = QColor::fromRgba(bgColor.toUInt(0, 16));
 
-    d.grad = NSE::Settings::stringToGrad(s.value("gradient", "0:10, 1:-10").toString());
-    d.noise = s.value("noise", 20).toUInt();
-    d.separator = s.value("separator", true).toBool();
-    d.btnStyle = s.value("btnstyle", -2).toInt();
-    d.icon = s.value("icon", false).toBool();
-    d.illumination = s.value("illumination", 63).toInt();
-    d.noiseStyle = s.value("noiseStyle", 0).toInt();
-    d.menubar = s.value("menubar", false).toBool();
+    d.grad = NSE::Settings::stringToGrad(s.value(QStringLiteral("gradient"), QStringLiteral("0:10, 1:-10")).toString());
+    d.noise = s.value(QStringLiteral("noise"), 20).toUInt();
+    d.separator = s.value(QStringLiteral("separator"), true).toBool();
+    d.btnStyle = s.value(QStringLiteral("btnstyle"), -2).toInt();
+    d.icon = s.value(QStringLiteral("icon"), false).toBool();
+    d.illumination = s.value(QStringLiteral("illumination"), 63).toInt();
+    d.noiseStyle = s.value(QStringLiteral("noiseStyle"), 0).toInt();
+    d.menubar = s.value(QStringLiteral("menubar"), false).toBool();
     Data::s_data.insert(winClass, d);
 }
 
@@ -154,18 +154,19 @@ void
 Deco::Data::readWindowData()
 {
     s_data.clear();
-    static const QString confPath(QString("%1/.config/NSE").arg(QDir::homePath()));
-    QSettings s(QString("%1/NSEdeco.conf").arg(confPath), QSettings::IniFormat);
+    static const QString confPath(QStringLiteral("%1/.config/NSE").arg(QDir::homePath()));
+    QSettings s(QStringLiteral("%1/NSEdeco.conf").arg(confPath), QSettings::IniFormat);
     bool hasDefault(false);
-    foreach (const QString winClass, s.childGroups())
+    const QStringList groups = s.childGroups();
+    for (const QString &winClass : groups)
     {
         s.beginGroup(winClass);
-        hasDefault |= (winClass == "default");
+        hasDefault |= (winClass == QStringLiteral("default"));
         addDataForWinClass(winClass, s);
         s.endGroup();
     }
     if (!hasDefault)
-        addDataForWinClass("default", s);
+        addDataForWinClass(QStringLiteral("default"), s);
 }
 
 void
@@ -175,7 +176,7 @@ Deco::Data::decoData(const QString &winClass, Deco *d)
     if (s_data.contains(winClass))
         data = s_data.value(winClass);
     else
-        data = s_data.value("default");
+        data = s_data.value(QStringLiteral("default"));
     d->m_bg = data.bg;
     d->m_fg = data.fg;
     d->m_gradient = data.grad;
@@ -205,14 +206,14 @@ AdaptorManager
 AdaptorManager::AdaptorManager()
 {
     m_adaptor = new DecoAdaptor(this);
-    QDBusConnection::sessionBus().registerService("com.syndromatic.atmo.kwindeco");
-    QDBusConnection::sessionBus().registerObject("/NSEDecoAdaptor", this);
+    QDBusConnection::sessionBus().registerService(QStringLiteral("com.syndromatic.atmo.kwindeco"));
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/NSEDecoAdaptor"), this);
 }
 
 AdaptorManager::~AdaptorManager()
 {
-    QDBusConnection::sessionBus().unregisterService("com.syndromatic.atmo.kwindeco");
-    QDBusConnection::sessionBus().unregisterObject("/NSEDecoAdaptor");
+    QDBusConnection::sessionBus().unregisterService(QStringLiteral("com.syndromatic.atmo.kwindeco"));
+    QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/NSEDecoAdaptor"));
     s_instance = 0;
     m_adaptor = 0;
 }
@@ -221,14 +222,14 @@ void
 AdaptorManager::windowChanged(uint win, bool active)
 {
     if (m_adaptor)
-        emit m_adaptor->windowActiveChanged(win, active);
+        Q_EMIT m_adaptor->windowActiveChanged(win, active);
 }
 
 void
 AdaptorManager::dataChanged(uint win)
 {
     if (m_adaptor)
-        emit m_adaptor->dataChanged(win);
+        Q_EMIT m_adaptor->dataChanged(win);
 }
 
 ///-------------------------------------------------------------------------------------------------
@@ -236,7 +237,7 @@ AdaptorManager::dataChanged(uint win)
 static Deco *s_hovered(0);
 
 Deco::Deco(QObject *parent, const QVariantList &args)
-    : KDecoration2::Decoration(parent, args)
+    : KDecoration3::Decoration(parent, args)
     , m_leftButtons(0)
     , m_rightButtons(0)
     , m_prevLum(0)
@@ -292,13 +293,21 @@ Deco::~Deco()
     AdaptorManager::instance()->removeDeco(this);
 }
 
+#if defined(ATMO_USE_KDECORATION3)
+bool
+Deco::init()
+#else
 void
 Deco::init()
+#endif
 {
-    KDecoration2::Decoration::init();
-    m_buttonManager = ButtonGroupBase::buttonGroup(client().toStrongRef().data()->windowId());
-    setBorders(QMargins(0, 0, 0, 0));
-    setTitleHeight(client().toStrongRef().data()->isModal()?20:25);
+#if !defined(ATMO_USE_KDECORATION3)
+    KDecoration3::Decoration::init();
+#endif
+    m_buttonManager = ButtonGroupBase::buttonGroup(decoKey());
+    ATMO_LOG << "KDecoration init key=" << decoKey() << " winId=" << winId();
+    setBorders(AtmoDecoMargins(0, 0, 0, 0));
+    setTitleHeight(window()->isModal() ? Ops::dpiScaled(nullptr, 20) : Ops::dpiScaled(nullptr, 25));
     m_bevel = 1;
     m_illumination = 127;
     m_textBevOpacity = 127;
@@ -308,30 +317,42 @@ Deco::init()
     if (!shadowOpacity)
         shadowOpacity = 127;
 
+    AdaptorManager::instance()->addDeco(this);
+    m_buttonStyle = dConf.deco.buttons;
+    checkForDataFromWindowClass();
+    QTimer::singleShot(1000, this, &Deco::checkForDataFromWindowClass); //spotify libreoffice... sets the windowclass late
     if (const uint id = winId())
     {
-        AdaptorManager::instance()->addDeco(this);
-        m_buttonStyle = dConf.deco.buttons;
-        checkForDataFromWindowClass();
-//        QMetaObject::invokeMethod(this, "checkForDataFromWindowClass", Qt::QueuedConnection);
-        QTimer::singleShot(1000, this, &Deco::checkForDataFromWindowClass); //spotify libreoffice... sets the windowclass late
         ShadowHandler::installShadows(id);
     }
     else
         updateBgPixmap();
 
-    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::widthChanged, this, [this](){updateLayout();});
-    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::activeChanged, this, &Deco::activeChanged);
-    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::captionChanged, this, &Deco::captionChanged);
-    connect(client().toStrongRef().data(), &KDecoration2::DecoratedClient::maximizedChanged, this, &Deco::maximizedChanged);
+    connect(window(), &AtmoDecoratedWindow::widthChanged, this, [this]() { updateLayout(); });
+    connect(window(), &AtmoDecoratedWindow::activeChanged, this, &Deco::activeChanged);
+    connect(window(), &AtmoDecoratedWindow::captionChanged, this, &Deco::captionChanged);
+    connect(window(), &AtmoDecoratedWindow::maximizedChanged, this, &Deco::maximizedChanged);
+    connect(window(), &AtmoDecoratedWindow::heightChanged, this, [this]() { updateLayout(); });
+    connect(window(), &AtmoDecoratedWindow::paletteChanged, this, [this]() { updateBgPixmap(); update(); });
+    connect(window(), &AtmoDecoratedWindow::nextScaleChanged, this, [this]() {
+        setTitleHeight(m_titleHeight);
+        updateLayout();
+    });
 
-    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, [this](){reconfigure();});
-    connect(settings().data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, [this](){reconfigure();});
-    connect(settings().data(), &KDecoration2::DecorationSettings::fontChanged, this, [this](){ m_font = settings().data()->font(); update();});
-
+#if defined(ATMO_USE_KDECORATION3)
+    const auto decoSettings = settings();
+    connect(decoSettings.get(), &KDecoration3::DecorationSettings::decorationButtonsLeftChanged, this, [this]() { reconfigure(); });
+    connect(decoSettings.get(), &KDecoration3::DecorationSettings::decorationButtonsRightChanged, this, [this]() { reconfigure(); });
+    connect(decoSettings.get(), &KDecoration3::DecorationSettings::fontChanged, this, [this]() { m_font = settings()->font(); update(); });
+    m_font = decoSettings->font();
+#else
+    connect(settings().data(), &KDecoration3::DecorationSettings::decorationButtonsLeftChanged, this, [this]() { reconfigure(); });
+    connect(settings().data(), &KDecoration3::DecorationSettings::decorationButtonsRightChanged, this, [this]() { reconfigure(); });
+    connect(settings().data(), &KDecoration3::DecorationSettings::fontChanged, this, [this]() { m_font = settings().data()->font(); update(); });
     m_font = settings().data()->font();
+#endif
 
-    if (client().toStrongRef().data()->isResizeable() && client().toStrongRef().data()->windowId() && !m_grip)
+    if (window()->isResizeable() && winId() && !m_grip)
         m_grip = new Grip(this);
 
     if (m_blingEnabled)
@@ -347,6 +368,9 @@ Deco::init()
     recalculate();
     reconfigure();
     updateData();
+#if defined(ATMO_USE_KDECORATION3)
+    return true;
+#endif
 }
 
 void
@@ -354,18 +378,18 @@ Deco::reconfigure()
 {
     if (m_leftButtons)
         delete m_leftButtons;
-    m_leftButtons = new KDecoration2::DecorationButtonGroup(this);
-    m_leftButtons->setSpacing(4);
-    QVector<KDecoration2::DecorationButtonType> lb = settings()->decorationButtonsLeft();
+    m_leftButtons = new KDecoration3::DecorationButtonGroup(this);
+    m_leftButtons->setSpacing(Ops::dpiScaled(nullptr, 4));
+    QVector<KDecoration3::DecorationButtonType> lb = settings()->decorationButtonsLeft();
 
     for (int i = 0; i < lb.count(); ++i)
         if (Button *b = Button::create(lb.at(i), this, m_leftButtons))
             m_leftButtons->addButton(b);
     if (m_rightButtons)
         delete m_rightButtons;
-    m_rightButtons = new KDecoration2::DecorationButtonGroup(this);
-    m_rightButtons->setSpacing(4);
-    QVector<KDecoration2::DecorationButtonType> rb = settings()->decorationButtonsRight();
+    m_rightButtons = new KDecoration3::DecorationButtonGroup(this);
+    m_rightButtons->setSpacing(Ops::dpiScaled(nullptr, 4));
+    QVector<KDecoration3::DecorationButtonType> rb = settings()->decorationButtonsRight();
     for (int i = 0; i < rb.count(); ++i)
         if (Button *b = Button::create(rb.at(i), this, m_rightButtons))
             m_rightButtons->addButton(b);
@@ -389,18 +413,54 @@ const int
 Deco::border()
 {
     bool max(false);
-    if (!client().isNull())
-        max = client().toStrongRef().data()->isMaximized();
-    const int m = max||m_uno ? 0 : 6;
+    if (!!window())
+        max = window()->isMaximized();
+    const int m = max || m_uno ? 0 : Ops::dpiScaled(nullptr, 6);
     return m;
+}
+
+quint32
+Deco::winId() const
+{
+#if defined(ATMO_USE_KDECORATION3)
+    return 0;
+#else
+    return window() ? window()->windowId() : 0;
+#endif
+}
+
+quint32
+Deco::decoKey() const
+{
+    if (const quint32 id = winId())
+        return id;
+#if defined(ATMO_USE_KDECORATION3)
+    if (window())
+        return qHash(window()->windowClass() + window()->caption());
+#endif
+    return static_cast<quint32>(reinterpret_cast<quintptr>(this) & 0xffffffffu);
+}
+
+QString
+Deco::windowClassName() const
+{
+#if defined(ATMO_USE_KDECORATION3)
+    return window() ? window()->windowClass() : QString();
+#else
+    if (!winId())
+        return QString();
+    KWindowInfo info(winId(), NET::WM2WindowClass);
+    return info.windowClassClass();
+#endif
 }
 
 void
 Deco::maximizedChanged(const bool max)
 {
     Q_UNUSED(max)
-    const int m = border();
-    setBorders(QMargins(m, titleBar().height(), m, m));
+    const qreal scale = decoScale(this);
+    const qreal m = snapDecoMetric(border(), scale);
+    setBorders(AtmoDecoMargins(m, snapDecoMetric(titleBar().height(), scale), m, m));
 }
 
 void
@@ -416,17 +476,25 @@ void
 Deco::setButtonsVisible(const bool visible)
 {
     if (m_leftButtons)
-        for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
-            m_leftButtons->buttons().at(i).data()->setVisible(visible);
+    {
+        const auto buttons = m_leftButtons->buttons();
+        for (const auto &button : buttons)
+            if (button)
+                button->setVisible(visible);
+    }
     if (m_rightButtons)
-        for (int i = 0; i < m_rightButtons->buttons().count(); ++i)
-            m_rightButtons->buttons().at(i).data()->setVisible(visible);
+    {
+        const auto buttons = m_rightButtons->buttons();
+        for (const auto &button : buttons)
+            if (button)
+                button->setVisible(visible);
+    }
 }
 
 WindowData
 Deco::getShm()
 {
-    WindowData data = WindowData::memory(winId(), this);
+    WindowData data = WindowData::memory(decoKey(), this);
     if (data && data.lock())
     {
         if (!data->imageHeight)
@@ -471,7 +539,9 @@ Deco::updateData()
         m_bgPix             = QPixmap::fromImage(data.image());
         m_hasSharedMem      = true;
 
-        data->decoId        = client().toStrongRef().data()->decorationId();
+        data->decoId = winId();
+        if (!data->decoId)
+            data->decoId = decoKey();
         data.unlock();
 
         m_tries = 0;
@@ -493,7 +563,9 @@ Deco::updateData()
 
     if (!m_uno)
     {
-        setBorders(QMargins(border(),titleHeight(),border(),border()));
+        const qreal scale = decoScale(this);
+        const qreal side = snapDecoMetric(border(), scale);
+        setBorders(AtmoDecoMargins(side, snapDecoMetric(titleHeight(), scale), side, side));
         if (m_grip)
         {
             m_grip->deleteLater();
@@ -519,12 +591,12 @@ Deco::updateData()
     if (m_leftButtons)
     {
         if (m_buttonStyle == ButtonBase::Anton)
-            m_leftButtons->setSpacing(-2);
+            m_leftButtons->setSpacing(-Ops::dpiScaled(nullptr, 2));
     }
     if (m_rightButtons)
     {
         if (m_buttonStyle == ButtonBase::Anton)
-            m_rightButtons->setSpacing(-2);
+            m_rightButtons->setSpacing(-Ops::dpiScaled(nullptr, 2));
     }
 
     if (m_blingEnabled)
@@ -540,7 +612,7 @@ Deco::updateData()
     updateBgPixmap();
     update();
     if (winDataChanged)
-        emit dataChanged();
+        Q_EMIT dataChanged();
 }
 
 void
@@ -548,15 +620,18 @@ Deco::checkForDataFromWindowClass()
 {
     if (m_hasSharedMem)
         return;
-    KWindowInfo info(client().toStrongRef().data()->windowId(), NET::WMWindowType|NET::WMVisibleName|NET::WMName, NET::WM2WindowClass);
-    Data::decoData(info.windowClassClass(), this);
+    QString winClass = windowClassName();
+    if (winClass.isEmpty())
+        winClass = QStringLiteral("default");
+    ATMO_LOG << "Applying decoration data for window class: " << winClass;
+    Data::decoData(winClass, this);
     updateBgPixmap();
 
-#if HASDBUSMENU && HASXCB
-    if (QX11Info::isPlatformX11() && m_showMenuBar && !m_menuBar)
+#if HASDBUSMENU && HASXCB && !defined(ATMO_USE_KDECORATION3)
+    if (AtmoX11::isAvailable() && m_showMenuBar && !m_menuBar)
     {
-        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", client().toStrongRef().data()->windowId());
-        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", client().toStrongRef().data()->windowId());
+        Xcb::Property objectPath("_KDE_NET_WM_APPMENU_OBJECT_PATH", winId());
+        Xcb::Property serviceName("_KDE_NET_WM_APPMENU_SERVICE_NAME", winId());
 
         if (objectPath && serviceName)
             m_menuBar = new MenuBar(this, serviceName.toString(), objectPath.toString());
@@ -574,41 +649,46 @@ void
 Deco::setTitleHeight(const int h)
 {
     m_titleHeight = h;
-    QRect tb(titleBar());
-    tb.setHeight(h);
+    const qreal scale = decoScale(this);
+    AtmoDecoRect tb(titleBar());
+    tb.setHeight(snapDecoMetric(h, scale));
     setTitleBar(tb);
-    QMargins b(borders());
-    b.setTop(h);
+    AtmoDecoMargins b(borders());
+    b.setTop(snapDecoMetric(h, scale));
     setBorders(b);
 }
 
 void
 Deco::updateLayout()
 {
-    const int width = rect().width()-borders().left()-borders().right();
-    int leftBorder = borders().left() ? borders().left() : 6;
-    int rightBorder = borders().right() ? borders().right() : 6;
-    int leftWidgetSize = leftBorder, rightWidgetSize = rightBorder;
+    const qreal scale = decoScale(this);
+    const qreal rectWidth = rect().width();
+    const qreal borderLeft = borders().left();
+    const qreal borderRight = borders().right();
+    const qreal width = rectWidth - borderLeft - borderRight;
+    const qreal leftBorder = borderLeft > 0.0 ? borderLeft : snapDecoMetric(6, scale);
+    const qreal rightBorder = borderRight > 0.0 ? borderRight : snapDecoMetric(6, scale);
+    qreal leftWidgetSize = leftBorder, rightWidgetSize = rightBorder;
     if (m_leftButtons)
     {
         const int add = (m_buttonStyle == ButtonBase::Anton) * 2;
-        m_leftButtons->setPos(QPoint(leftBorder+add, client().toStrongRef().data()->isModal()?2:4));
+        m_leftButtons->setPos(AtmoDecoPoint(leftBorder + add, window()->isModal() ? Ops::dpiScaled(nullptr, 2) : Ops::dpiScaled(nullptr, 4)));
         leftWidgetSize += m_leftButtons->geometry().width();
     }
 #if HASDBUSMENU
     if (m_menuBar)
     {
-        m_menuBar->setPos(QPointF(leftWidgetSize+8, 2.0));
+        m_menuBar->setPos(QPointF(leftWidgetSize + Ops::dpiScaled(nullptr, 8), Ops::dpiScaled(nullptr, 2)));
         leftWidgetSize += m_menuBar->geometry().width();
     }
 #endif
     if (m_rightButtons)
     {
-        m_rightButtons->setPos(QPoint((rect().width()-(m_rightButtons->geometry().width()+rightBorder)), client().toStrongRef().data()->isModal()?2:4));
-        rightWidgetSize += m_rightButtons->geometry().width()+8;
+        m_rightButtons->setPos(AtmoDecoPoint((rectWidth - (m_rightButtons->geometry().width() + rightBorder)), window()->isModal() ? Ops::dpiScaled(nullptr, 2) : Ops::dpiScaled(nullptr, 4)));
+        rightWidgetSize += m_rightButtons->geometry().width() + Ops::dpiScaled(nullptr, 8);
     }
-    setTitleBar(QRect(borders().left(), 0, width-borders().right(), m_titleHeight));
-    m_textRect = QRect(QPoint(leftWidgetSize+8*2, 0), QPoint(width-borders().right()-rightWidgetSize, titleHeight()));
+    setTitleBar(AtmoDecoRect(borderLeft, 0, width, snapDecoMetric(m_titleHeight, scale)));
+    m_textRect = QRect(QPoint(qRound(leftWidgetSize + Ops::dpiScaled(nullptr, 16)), 0), QPoint(qRound(rectWidth - borderRight - rightWidgetSize), titleHeight()));
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 
@@ -616,15 +696,16 @@ void
 Deco::activeChanged(const bool active)
 {
 //    update();
-//    AdaptorManager::instance()->windowChanged(client().data()->windowId(), active);
+//    AdaptorManager::instance()->windowChanged(window()->windowId(), active);
     if (m_grip)
         m_grip->setColor(Color::mid(m_fg, m_bg, 1, 2));;
-    ShadowHandler::installShadows(client().toStrongRef().data()->windowId(), active);
+    if (const quint32 id = winId())
+        ShadowHandler::installShadows(id, active);
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 
 void
-Deco::paint(QPainter *painter, const QRect &repaintArea)
+Deco::paint(QPainter *painter, const AtmoDecoRect &repaintArea)
 {
     if (!painter->isActive())
         return;
@@ -635,9 +716,9 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     painter->setBrushOrigin(titleBar().topLeft());
     if (!m_bgPix.isNull())
     {
-        QRect r = rect();
+        QRect r = atmoToRect(rect());
         if (m_uno)
-            r = titleBar();
+            r = atmoToRect(titleBar());
         painter->drawTiledPixmap(r, m_bgPix);
         needPaintBg = false;
     }
@@ -656,7 +737,7 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         if (!m_pix.isNull())
             painter->drawTiledPixmap(titleBar(), m_pix);
         else
-            painter->fillRect(titleBar(), client().toStrongRef().data()->palette().color(QPalette::Window));
+            painter->fillRect(titleBar(), window()->palette().color(QPalette::Window));
     }
 
     if (m_opacity != 0xff && !m_uno)
@@ -667,42 +748,42 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
     }
 
     if (m_separator)
-        painter->fillRect(0, titleHeight()-1, titleBar().width(), 1, QColor(0, 0, 0, m_shadowOpacity));
+        painter->fillRect(0, titleHeight() - 1, qRound(titleBar().width()), 1, QColor(0, 0, 0, m_shadowOpacity));
     if (m_contAware)
     {
-        if (!m_mem)
-            m_mem = new QSharedMemory(QString::number(client().toStrongRef().data()->windowId()), this);
-        if ((m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
+        if (!m_mem && winId())
+            m_mem = new QSharedMemory(QString::number(winId()), this);
+        if (m_mem && (m_mem->isAttached() || m_mem->attach(QSharedMemory::ReadOnly)) && m_mem->lock())
         {
             const uchar *idata(reinterpret_cast<const uchar *>(m_mem->constData()));
             painter->drawImage(QPoint(0, 0),
-                               QImage(idata, titleBar().width(), titleHeight(), QImage::Format_ARGB32_Premultiplied),
+                               QImage(idata, qRound(titleBar().width()), titleHeight(), QImage::Format_ARGB32_Premultiplied),
                                titleBar());
             m_mem->unlock();
         }
     }
 
-    if ((!dConf.deco.frameSize || client().toStrongRef().data()->isMaximized()) && !client().toStrongRef().data()->isModal() && !client().toStrongRef().data()->isMaximized())
+    if ((!dConf.deco.frameSize || window()->isMaximized()) && !window()->isModal() && !window()->isMaximized())
         paintBevel(painter, m_illumination/*bgLum*/);
     if (m_blingEnabled)
         paintBling(painter, titleTextArea());
 
     //text
-    const bool paintText(titleBar().height() > 19);
+    const bool paintText(titleBar().height() > Ops::dpiScaled(nullptr, 19));
 
     QFont f(painter->font());
     if (paintText)
     {
-        if (client().toStrongRef().data()->isActive())
+        if (window()->isActive())
         {
             f.setBold(true);
             painter->setFont(f);
         }
         int flags = Qt::AlignCenter|Qt::TextHideMnemonic;
 
-        QString text(client().toStrongRef().data()->caption());
-        QRect textRect(painter->fontMetrics().boundingRect(titleBar(), flags, text));
-        const int iconPad = m_icon*20;
+        QString text(window()->caption());
+        QRect textRect(painter->fontMetrics().boundingRect(atmoToRect(titleBar()), flags, text));
+        const int iconPad = m_icon * Ops::dpiScaled(nullptr, 20);
         if (m_textRect.x()+iconPad > textRect.x())
         {
             textRect.moveLeft(m_textRect.left()+iconPad);
@@ -713,19 +794,19 @@ Deco::paint(QPainter *painter, const QRect &repaintArea)
         if (m_icon)
         {
 
-            QRect ir(QPoint(), QSize(16, 16));
-            ir.moveTop(titleBar().top()+(titleBar().height()/2-ir.height()/2));
-            ir.moveLeft(textRect.left()-20);
-            client().toStrongRef().data()->icon().paint(painter, ir, Qt::AlignCenter, client().toStrongRef().data()->isActive()?QIcon::Active:QIcon::Disabled);
+            QRect ir(QPoint(), QSize(Ops::dpiScaled(nullptr, 16), Ops::dpiScaled(nullptr, 16)));
+            ir.moveTop(qRound(titleBar().top() + (titleBar().height() / 2.0 - ir.height() / 2.0)));
+            ir.moveLeft(textRect.left() - Ops::dpiScaled(nullptr, 20));
+            window()->icon().paint(painter, ir, Qt::AlignCenter, window()->isActive()?QIcon::Active:QIcon::Disabled);
         }
         if (textRect.right() > m_textRect.right())
             textRect.setRight(m_textRect.right());
         text = painter->fontMetrics().elidedText(text, Qt::ElideRight, m_textRect.width()-iconPad, flags);
-        if (client().toStrongRef().data()->isActive() && m_textBevOpacity)
+        if (window()->isActive() && m_textBevOpacity)
         {
             const int rgb(m_isDark?0:255);
             painter->setPen(QColor(rgb, rgb, rgb, m_textBevOpacity));
-            painter->drawText(textRect.translated(0, 1), flags, text);
+            painter->drawText(textRect.translated(0, Ops::dpiScaled(nullptr, 1)), flags, text);
         }
         painter->setPen(m_fg);
         painter->drawText(textRect, flags, text);
@@ -752,7 +833,7 @@ void
 Deco::paintBevel(QPainter *painter, const int bgLum)
 {
 //#if 0
-    static const int size(5);
+    const int size = Ops::dpiScaled(nullptr, 5);
     if (m_bevelCorner[0].isNull() || m_prevLum != bgLum)
     {
         m_prevLum = bgLum;
@@ -789,9 +870,10 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
         m_bevelCorner[1] = QPixmap::fromImage(tmp.copy(QRect(size+1, 0, size, size)));
         m_bevelCorner[2] = QPixmap::fromImage(tmp.copy(size, 0, 1, 4));
     }
-    painter->drawPixmap(QRect(rect().topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
-    painter->drawPixmap(QRect(rect().topRight()-QPoint(m_bevelCorner[1].width()-1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
-    painter->drawTiledPixmap(rect().adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(rect().height()-4)), m_bevelCorner[2]);
+    const QRect decoRect = atmoToRect(rect());
+    painter->drawPixmap(QRect(decoRect.topLeft(), m_bevelCorner[0].size()), m_bevelCorner[0]);
+    painter->drawPixmap(QRect(decoRect.topRight() - QPoint(m_bevelCorner[1].width() - 1, 0), m_bevelCorner[1].size()), m_bevelCorner[1]);
+    painter->drawTiledPixmap(decoRect.adjusted(m_bevelCorner[0].width(), 0, -m_bevelCorner[1].width(), -(decoRect.height() - 4)), m_bevelCorner[2]);
 
     static QPixmap cornerErase[2];
     if (cornerErase[0].isNull())
@@ -811,8 +893,8 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
     }
     const QPainter::CompositionMode mode = painter->compositionMode();
     painter->setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    painter->drawPixmap(QRect(rect().topLeft(), cornerErase[0].size()), cornerErase[0]);
-    painter->drawPixmap(QRect(rect().topRight()-QPoint(cornerErase[1].width()-1, 0), cornerErase[1].size()), cornerErase[1]);
+    painter->drawPixmap(QRect(decoRect.topLeft(), cornerErase[0].size()), cornerErase[0]);
+    painter->drawPixmap(QRect(decoRect.topRight() - QPoint(cornerErase[1].width() - 1, 0), cornerErase[1].size()), cornerErase[1]);
     painter->setCompositionMode(mode);
 
 //#endif
@@ -821,17 +903,17 @@ Deco::paintBevel(QPainter *painter, const int bgLum)
 void
 Deco::paintBling(QPainter *painter, const QRect &r)
 {
-    static int rad(16);
+    const int rad = Ops::dpiScaled(nullptr, 16);
     if (!m_bling)
     {
         m_bling = new QPixmap[3]();
 
-        const int mid(16);
+        const int mid = Ops::dpiScaled(nullptr, 16);
         QRect rect(0, 0, rad*2+mid, r.height());
-        QImage tmp(rect.size()+QSize(8,8), QImage::Format_ARGB32_Premultiplied);
+        QImage tmp(rect.size() + QSize(Ops::dpiScaled(nullptr, 8), Ops::dpiScaled(nullptr, 8)), QImage::Format_ARGB32_Premultiplied);
         tmp.fill(Qt::transparent);
         QPainter p(&tmp);
-        int blurRad(4);
+        const int blurRad = Ops::dpiScaled(nullptr, 4);
         QRect pathRect = rect.adjusted(blurRad, 0, -blurRad, -blurRad);
         p.setRenderHint(QPainter::Antialiasing);
         QPainterPath bling = blingPath(1, pathRect, rad);
@@ -846,7 +928,7 @@ Deco::paintBling(QPainter *painter, const QRect &r)
 
             FX::expblur(tmp, blurRad);
 
-            tmp = tmp.copy(0,0,tmp.width()-8, tmp.height()-8);
+            tmp = tmp.copy(0, 0, tmp.width() - Ops::dpiScaled(nullptr, 8), tmp.height() - Ops::dpiScaled(nullptr, 8));
             p.begin(&tmp);
             p.setRenderHint(QPainter::Antialiasing);
             const QColor c = m_bg;
@@ -872,7 +954,7 @@ Deco::paintBling(QPainter *painter, const QRect &r)
 
             FX::expblur(tmp, 2);
 
-            tmp = tmp.copy(0,0,tmp.width()-8, tmp.height()-8);
+            tmp = tmp.copy(0, 0, tmp.width() - Ops::dpiScaled(nullptr, 8), tmp.height() - Ops::dpiScaled(nullptr, 8));
             p.begin(&tmp);
             p.setRenderHint(QPainter::Antialiasing);
             p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
@@ -906,9 +988,10 @@ Deco::paintBling(QPainter *painter, const QRect &r)
 const QRect
 Deco::titleTextArea() const
 {
-    int left = m_leftButtons ? m_leftButtons->geometry().right()+1 : titleBar().left();
-    int right = (m_rightButtons ? m_rightButtons->geometry().left() : titleBar().right()) - left;
-    return QRect(left, 0, right, titleBar().height());
+    const QRect tb = atmoToRect(titleBar());
+    const int left = m_leftButtons ? qRound(m_leftButtons->geometry().right()) + 1 : tb.left();
+    const int right = (m_rightButtons ? qRound(m_rightButtons->geometry().left()) : tb.right()) - left;
+    return QRect(left, 0, right, tb.height());
 }
 
 const QPainterPath
@@ -989,7 +1072,11 @@ Deco::event(QEvent *event)
                 s_hovered->hoverLeave();
             s_hovered = this;
         }
-        const QPoint p(static_cast<QHoverEvent *>(event)->pos());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        const AtmoDecoPoint p(static_cast<QHoverEvent *>(event)->position());
+#else
+        const AtmoDecoPoint p(static_cast<QHoverEvent *>(event)->pos());
+#endif
         if (!m_isHovered && titleBar().contains(p))
             hoverEnter();
         else if (m_isHovered && !titleBar().contains(p))
@@ -1002,7 +1089,7 @@ Deco::event(QEvent *event)
         break;
     default: break;
     }
-    return KDecoration2::Decoration::event(event);
+    return KDecoration3::Decoration::event(event);
 }
 
 void
@@ -1018,7 +1105,7 @@ Deco::hoverEnter()
     if (m_leftButtons)
         for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
         {
-            QPointer<KDecoration2::DecorationButton> button = m_leftButtons->buttons().at(i);
+            QPointer<KDecoration3::DecorationButton> button = m_leftButtons->buttons().at(i);
             if (button)
                 if (Button *b = qobject_cast<Button *>(button.data()))
                     b->hover();
@@ -1026,7 +1113,7 @@ Deco::hoverEnter()
     if (m_rightButtons)
         for (int i = 0; i < m_rightButtons->buttons().count(); ++i)
         {
-            QPointer<KDecoration2::DecorationButton> button = m_rightButtons->buttons().at(i);
+            QPointer<KDecoration3::DecorationButton> button = m_rightButtons->buttons().at(i);
             if (button)
                 if (Button *b = qobject_cast<Button *>(button.data()))
                     b->hover();
@@ -1041,7 +1128,7 @@ Deco::hoverLeave()
 //    if (m_menuBar && !m_menuBar->hasShownMenues())
 //    {
 //        m_menuBar->stopMousePolling();
-//        QVector<QPointer<KDecoration2::DecorationButton> > kids = m_menuBar->buttons();
+//        QVector<QPointer<KDecoration3::DecorationButton> > kids = m_menuBar->buttons();
 //        for (int i = 0; i < kids.count(); ++i)
 //            static_cast<MenuBarItem *>(kids.at(i).data())->hoverLeave();
 //    }
@@ -1049,7 +1136,7 @@ Deco::hoverLeave()
     if (m_leftButtons)
         for (int i = 0; i < m_leftButtons->buttons().count(); ++i)
         {
-            QPointer<KDecoration2::DecorationButton> button = m_leftButtons->buttons().at(i);
+            QPointer<KDecoration3::DecorationButton> button = m_leftButtons->buttons().at(i);
             if (button)
                 if (Button *b = qobject_cast<Button *>(button.data()))
                     b->unhover();
@@ -1057,7 +1144,7 @@ Deco::hoverLeave()
     if (m_rightButtons)
         for (int i = 0; i < m_rightButtons->buttons().count(); ++i)
         {
-            QPointer<KDecoration2::DecorationButton> button = m_rightButtons->buttons().at(i);
+            QPointer<KDecoration3::DecorationButton> button = m_rightButtons->buttons().at(i);
             if (button)
                 if (Button *b = qobject_cast<Button *>(button.data()))
                     b->unhover();
@@ -1069,16 +1156,16 @@ Deco::hoverLeave()
 QPolygon
 Grip::shape()
 {
-    static const QPolygon &p = QPolygon() << QPoint(Size, 0) << QPoint(Size, Size) << QPoint(0, Size); //topright, bottomright, bottomleft
-    return p;
+    const int gripSize = Ops::dpiScaled(nullptr, Size);
+    return QPolygon() << QPoint(gripSize, 0) << QPoint(gripSize, gripSize) << QPoint(0, gripSize); //topright, bottomright, bottomleft
 }
 
 Grip::Grip(Deco *d)
     : QWidget(0)
     , m_deco(d)
 {
-#if HASXCB
-    if (!QX11Info::isPlatformX11() || !m_deco)
+#if HASXCB || HASX11
+    if (!AtmoX11::isAvailable() || !m_deco || !m_deco->winId())
     {
         hide();
         return;
@@ -1088,12 +1175,13 @@ Grip::Grip(Deco *d)
     return;
 #endif
     setFocusPolicy(Qt::NoFocus);
-    setFixedSize(Size, Size);
+    const int gripSize = Ops::dpiScaled(nullptr, Size);
+    setFixedSize(gripSize, gripSize);
     setCursor(Qt::SizeFDiagCursor);
     setMask(shape());
-    KDecoration2::DecoratedClient *c = m_deco->client().toStrongRef().data();
-    connect(c, &KDecoration2::DecoratedClient::heightChanged, this, &Grip::updatePosition);
-    connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Grip::updatePosition);
+    AtmoDecoratedWindow *c = m_deco->window();
+    connect(c, &AtmoDecoratedWindow::heightChanged, this, &Grip::updatePosition);
+    connect(c, &AtmoDecoratedWindow::widthChanged, this, &Grip::updatePosition);
     restack();
     updatePosition();
     show();
@@ -1102,7 +1190,7 @@ Grip::Grip(Deco *d)
 void
 Grip::setColor(const QColor &c)
 {
-    QPalette p = m_deco->client().toStrongRef().data()->palette();
+    QPalette p = m_deco->window()->palette();
     p.setColor(backgroundRole(), c);
     setPalette(p);
     regenPix();
@@ -1111,14 +1199,18 @@ Grip::setColor(const QColor &c)
 void
 Grip::updatePosition()
 {
-    KDecoration2::DecoratedClient *c = m_deco->client().toStrongRef().data();
-    XHandler::move(winId(), QPoint(c->width()-(Size+Margin), c->height()-(Size+Margin)));
+    AtmoDecoratedWindow *c = m_deco->window();
+    if (!c || !m_deco->winId())
+        return;
+    const int gripSize = Ops::dpiScaled(nullptr, Size);
+    const int gripMargin = Ops::dpiScaled(nullptr, Margin);
+    XHandler::move(winId(), QPoint(c->width() - (gripSize + gripMargin), c->height() - (gripSize + gripMargin)));
 }
 
 void
 Grip::restack()
 {
-    if (XHandler::XWindow windowId = m_deco->client().toStrongRef().data()->windowId())
+    if (XHandler::XWindow windowId = m_deco->winId())
         XHandler::restack(winId(), windowId);
     else
         hide();
@@ -1128,7 +1220,10 @@ void
 Grip::mousePressEvent(QMouseEvent *e)
 {
     QWidget::mousePressEvent(e);
-    XHandler::mwRes(e->pos(), e->globalPos(), winId(), true, m_deco->client().toStrongRef().data()->windowId());
+    if (m_deco->winId())
+    {
+        XHandler::mwRes(e->position().toPoint(), e->globalPosition().toPoint(), winId(), true, m_deco->winId());
+    }
 }
 
 void
@@ -1136,12 +1231,12 @@ Grip::regenPix()
 {
     QImage img(size(), QImage::Format_ARGB32);
     QPainter p(&img);
-    p.setPen(QPen(QColor(0, 0, 0, 255), 2.0f));
+    p.setPen(QPen(QColor(0, 0, 0, 255), qMax<qreal>(1.0, Ops::scaleForWidget(this) * 2.0)));
     p.setBrush(palette().color(backgroundRole()));
     p.setRenderHint(QPainter::Antialiasing);
     p.drawPolygon(shape());
     p.end();
-    FX::expblur(img, 2);
+    FX::expblur(img, qMax(1, Ops::dpiScaled(this, 2)));
     m_pix = QPixmap::fromImage(img);
 }
 
@@ -1153,8 +1248,3 @@ Grip::paintEvent(QPaintEvent *)
 }
 
 } //NSE
-
-/*
- * Required for the K_PLUGIN_FACTORY_WITH_JSON vtable
- */
-#include "kwinclient2.moc"

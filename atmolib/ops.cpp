@@ -37,6 +37,9 @@
 #include <QMenuBar>
 #include <QLabel>
 #include <QToolBox>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QWindow>
 
 #include "ops.h"
 #include "xhandler.h"
@@ -134,4 +137,39 @@ Ops::swap(int &t1, int &t2)
     const int tmp(t1);
     t1 = t2;
     t2 = tmp;
+}
+
+qreal
+Ops::devicePixelRatioForWidget(const QWidget *w)
+{
+    const QScreen *screen = nullptr;
+    if (w)
+    {
+        if (w->windowHandle())
+            screen = w->windowHandle()->screen();
+        if (!screen && w->window() && w->window()->windowHandle())
+            screen = w->window()->windowHandle()->screen();
+        if (!screen)
+            screen = w->screen();
+    }
+    if (!screen)
+        screen = QGuiApplication::primaryScreen();
+    if (!screen)
+        return 1.0;
+
+    const qreal scale = screen->devicePixelRatio();
+    return qMax<qreal>(1.0, scale);
+}
+
+qreal
+Ops::scaleForWidget(const QWidget *w)
+{
+    return devicePixelRatioForWidget(w);
+}
+
+int
+Ops::dpiScaled(const QWidget *w, qreal px)
+{
+    Q_UNUSED(w)
+    return qRound(px);
 }

@@ -100,8 +100,10 @@ Style::eventFilter(QObject *o, QEvent *e)
         if (QMenuBar *menuBar = qobject_cast<QMenuBar *>(w))
         {
             QMouseEvent *me = static_cast<QMouseEvent *>(e);
-            if (!menuBar->actionAt(me->pos()))
-                XHandler::mwRes(me->pos(), me->globalPos(), menuBar->winId());
+            if (!menuBar->actionAt(me->position().toPoint()))
+            {
+                XHandler::mwRes(me->position().toPoint(), me->globalPosition().toPoint(), menuBar->winId());
+            }
         }
         break;
     }

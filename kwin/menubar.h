@@ -22,8 +22,7 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
 
-#include <KDecoration2/DecorationButtonGroup>
-#include <KDecoration2/DecorationButton>
+#include "kdecoration_compat.h"
 
 class QAction;
 class QTimer;
@@ -33,7 +32,7 @@ namespace NSE
 {
 class Deco;
 class MenuBarItem;
-class MenuBar : public KDecoration2::DecorationButtonGroup
+class MenuBar : public KDecoration3::DecorationButtonGroup
 {
     Q_OBJECT
 public:
@@ -44,7 +43,7 @@ public:
     void startMousePolling();
     void stopMousePolling();
     QAction *actionFromText(const QString &text) const;
-    void paint(QPainter *painter, const QRect &repaintArea);
+    void paint(QPainter *painter, const AtmoDecoRect &repaintArea);
 
     Deco *deco;
     DBusMenuImporter *importer;
@@ -64,14 +63,14 @@ protected Q_SLOTS:
     void menuUpdated();
 };
 
-class MenuBarItem : public KDecoration2::DecorationButton
+class MenuBarItem : public KDecoration3::DecorationButton
 {
     Q_OBJECT
     friend class MenuBar;
 public:
     MenuBarItem(MenuBar *menu, int index);
     ~MenuBarItem();
-    void paint(QPainter *painter, const QRect &repaintArea);
+    void paint(QPainter *painter, const AtmoDecoRect &repaintArea);
     QString text() const;
     virtual QAction *action() const;
     QMenu *menu() const;
@@ -86,7 +85,7 @@ protected:
     void hoverEnterEvent(QHoverEvent *event);
     void hoverLeaveEvent(QHoverEvent *event);
 
-protected slots:
+protected Q_SLOTS:
     virtual void click();
 };
 

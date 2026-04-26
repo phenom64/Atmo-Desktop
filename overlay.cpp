@@ -343,8 +343,8 @@ static QRect windowGeo(const QWidget *widget)
     return QRect(widget->mapTo(widget->window(), QPoint(0, 0)), widget->size());
 }
 
-static const QString sideString[4] = { "Left", "Top", "Right", "Bottom" };
-static const QString reversedSideString[4] = { "Right", "Bottom", "Left", "Top" };
+static const QString sideString[4] = { QStringLiteral("Left"), QStringLiteral("Top"), QStringLiteral("Right"), QStringLiteral("Bottom") };
+static const QString reversedSideString[4] = { QStringLiteral("Right"), QStringLiteral("Bottom"), QStringLiteral("Left"), QStringLiteral("Top") };
 static const Position position[4] = { West, North, East, South };
 
 void
@@ -485,7 +485,7 @@ Overlay
 bool
 Overlay::isSplitter(QWidget *w, const Position p)
 {
-    if (!(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == "qt_qmainwindow_extended_splitter")))
+    if (!(qobject_cast<QSplitterHandle *>(w) || (w->objectName() == QStringLiteral("qt_qmainwindow_extended_splitter"))))
         return false;
 
     QRect geo = windowGeo(w);

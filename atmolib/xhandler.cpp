@@ -23,7 +23,10 @@
 #include <QDataStream>
 #include <QDebug>
 #include <QWidget>
-#include <QX11Info>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include "atmox11.h"
 #include <QPainter>
 #include "xhandler.h"
 #include "../config/settings.h"
@@ -45,7 +48,7 @@
 
 using namespace NSE;
 
-static char *atoms[XHandler::ValueCount] =
+static const char *atoms[XHandler::ValueCount] =
 {
     "_NET_WORKAREA",
     "_NET_CURRENT_DESKTOP",
@@ -66,12 +69,12 @@ static Atom atom[XHandler::ValueCount];
 /* helper guard for wayland: do not touch null xcb/x11 handles when X11 is unavailable */
 static inline bool hasX11Handle()
 {
-    if (!QX11Info::isPlatformX11())
+    if (!AtmoX11::isAvailable())
         return false;
 #if HASXCB
-    return QX11Info::connection();
+    return AtmoX11::connection();
 #elif HASX11
-    return QX11Info::display();
+    return AtmoX11::display();
 #else
     return false;
 #endif
@@ -92,11 +95,13 @@ XHandler::init()
     for (int i = 0; i < XHandler::ValueCount; ++i)
     {
 #if HASXCB
-        xcb_intern_atom_cookie_t cookie = xcb_intern_atom(QX11Info::connection(), false, strlen(atoms[i]), atoms[i]);
-        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(QX11Info::connection(), cookie, 0);
+        xcb_intern_atom_cookie_t cookie = xcb_intern_atom(AtmoX11::connection(), false, strlen(atoms[i]), atoms[i]);
+        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(AtmoX11::connection(), cookie, 0);
         xcb_atom[i] = reply ? reply->atom : 0;
+        if (reply)
+            free(reply);
 #elif HASX11
-        atom[i] = XInternAtom(QX11Info::display(), atoms[i], False);
+        atom[i] = XInternAtom(AtmoX11::display(), atoms[i], False);
 #endif
     }
     isInited = true;
@@ -113,12 +118,12 @@ XHandler::changeProperty(const XWindow w, const Value v, const TypeSize size, co
 #if HASXCB
     if (xcb_atom[v])
     {
-        xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, w, xcb_atom[v], XCB_ATOM_CARDINAL, size, nitems, data);
-        xcb_flush(QX11Info::connection());
+        xcb_change_property(AtmoX11::connection(), XCB_PROP_MODE_REPLACE, w, xcb_atom[v], XCB_ATOM_CARDINAL, size, nitems, data);
+        xcb_flush(AtmoX11::connection());
     }
 #elif HASX11
-    XChangeProperty(QX11Info::display(), w, atom[v], XA_CARDINAL, size, PropModeReplace, data, nitems);
-    XSync(QX11Info::display(), False);
+    XChangeProperty(AtmoX11::display(), w, atom[v], XA_CARDINAL, size, PropModeReplace, data, nitems);
+    XSync(AtmoX11::display(), False);
 #endif
 }
 
@@ -130,8 +135,8 @@ unsigned char
 #if HASXCB
     if (xcb_atom[v])
     {
-        xcb_get_property_cookie_t cookie = xcb_get_property(QX11Info::connection(), false, w, xcb_atom[v], XCB_ATOM_CARDINAL, offset, length);
-        xcb_get_property_reply_t *reply =  xcb_get_property_reply(QX11Info::connection(), cookie, NULL);
+        xcb_get_property_cookie_t cookie = xcb_get_property(AtmoX11::connection(), false, w, xcb_atom[v], XCB_ATOM_CARDINAL, offset, length);
+        xcb_get_property_reply_t *reply =  xcb_get_property_reply(AtmoX11::connection(), cookie, NULL);
         if (reply)
         {
             n = xcb_get_property_value_length(reply);
@@ -156,7 +161,7 @@ unsigned char
     int format;
     unsigned long nitems, after;
     unsigned char *d(0);
-    XGetWindowProperty(QX11Info::display(), w, atom[v], offset, length, False, XA_CARDINAL, &type, &format, &nitems, &after, &d);
+    XGetWindowProperty(AtmoX11::display(), w, atom[v], offset, length, False, XA_CARDINAL, &type, &format, &nitems, &after, &d);
     n = nitems;
     return d;
 #endif
@@ -171,12 +176,12 @@ XHandler::deleteXProperty(const XWindow w, const Value v)
 #if HASXCB
     if (xcb_atom[v])
     {
-        xcb_delete_property(QX11Info::connection(), w, xcb_atom[v]);
-        xcb_flush(QX11Info::connection());
+        xcb_delete_property(AtmoX11::connection(), w, xcb_atom[v]);
+        xcb_flush(AtmoX11::connection());
     }
 #elif HASX11
-    XDeleteProperty(QX11Info::display(), w, atom[v]);
-    XSync(QX11Info::display(), False);
+    XDeleteProperty(AtmoX11::display(), w, atom[v]);
+    XSync(AtmoX11::display(), False);
 #endif
 }
 
@@ -229,20 +234,20 @@ XHandler::releaseEvent(const QPoint &globalPos, const XWindow win, const Qt::Mou
     xcb_button_mask_t mask;
     xcb_button_index_t index;
     xcbIndexMask(button, index, mask);
-    xcb_connection_t *connection = QX11Info::connection();
+    xcb_connection_t *connection = AtmoX11::connection();
     xcb_button_release_event_t releaseEvent;
     memset(&releaseEvent, 0, sizeof(releaseEvent));
     releaseEvent.response_type = XCB_BUTTON_RELEASE;
     releaseEvent.event =  win;
     releaseEvent.child = XCB_WINDOW_NONE;
-    releaseEvent.root = QX11Info::appRootWindow();
+    releaseEvent.root = AtmoX11::rootWindow();
     releaseEvent.event_x = 0;
     releaseEvent.event_y = 0;
     releaseEvent.root_x = globalPos.x();
     releaseEvent.root_y = globalPos.y();
     releaseEvent.detail = index;
     releaseEvent.state = mask;
-    releaseEvent.time = QX11Info::appTime();
+    releaseEvent.time = AtmoX11::appTime();
     releaseEvent.same_screen = true;
     xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_RELEASE, reinterpret_cast<const char*>(&releaseEvent));
     xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);
@@ -259,20 +264,20 @@ XHandler::pressEvent(const QPoint &globalPos, const XWindow win, const Qt::Mouse
     xcb_button_mask_t mask;
     xcb_button_index_t index;
     xcbIndexMask(button, index, mask);
-    xcb_connection_t *connection = QX11Info::connection();
+    xcb_connection_t *connection = AtmoX11::connection();
     xcb_button_press_event_t pressEvent;
     memset(&pressEvent, 0, sizeof(pressEvent));
     pressEvent.response_type = XCB_BUTTON_PRESS;
     pressEvent.event =  win;
     pressEvent.child = XCB_WINDOW_NONE;
-    pressEvent.root = QX11Info::appRootWindow();
+    pressEvent.root = AtmoX11::rootWindow();
     pressEvent.event_x = 0;
     pressEvent.event_y = 0;
     pressEvent.root_x = globalPos.x();
     pressEvent.root_y = globalPos.y();
     pressEvent.detail = index;
     pressEvent.state = mask;
-    pressEvent.time = XCB_CURRENT_TIME /*QX11Info::appTime()*/;
+    pressEvent.time = XCB_CURRENT_TIME /*AtmoX11::appTime()*/;
     pressEvent.same_screen = true;
     xcb_send_event(connection, false, win, XCB_EVENT_MASK_BUTTON_PRESS, reinterpret_cast<const char*>(&pressEvent));
     xcb_ungrab_pointer(connection, XCB_TIME_CURRENT_TIME);
@@ -286,13 +291,13 @@ XHandler::wheelEvent(const XHandler::XWindow win, const bool up)
     if (!hasX11Handle())
         return;
 #if HASXCB
-    xcb_connection_t *connection = QX11Info::connection();
+    xcb_connection_t *connection = AtmoX11::connection();
     xcb_button_press_event_t wheelEvent;
     memset(&wheelEvent, 0, sizeof(wheelEvent));
     wheelEvent.response_type = XCB_BUTTON_PRESS;
     wheelEvent.event =  win;
     wheelEvent.child = XCB_WINDOW_NONE;
-    wheelEvent.root = QX11Info::appRootWindow();
+    wheelEvent.root = AtmoX11::rootWindow();
     wheelEvent.detail = up?XCB_BUTTON_INDEX_4:XCB_BUTTON_INDEX_5;
     wheelEvent.state = up?XCB_BUTTON_MASK_4:XCB_BUTTON_MASK_5;
     wheelEvent.time = XCB_CURRENT_TIME;
@@ -310,12 +315,12 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
 #if HASXCB
     if (!dest)
         dest = win;
-    xcb_connection_t *connection = QX11Info::connection();
+    xcb_connection_t *connection = AtmoX11::connection();
 
     static xcb_atom_t atom = 0;
     if (!atom)
     {
-        const QString atomName("_NET_WM_MOVERESIZE");
+        const QString atomName(QStringLiteral("_NET_WM_MOVERESIZE"));
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(connection, false, atomName.size(), qPrintable(atomName));
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(connection, cookie, 0);
         atom = reply ? reply->atom : 0;
@@ -329,7 +334,7 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
     releaseEvent.response_type = XCB_BUTTON_RELEASE;
     releaseEvent.event =  win;
     releaseEvent.child = XCB_WINDOW_NONE;
-    releaseEvent.root = QX11Info::appRootWindow();
+    releaseEvent.root = AtmoX11::rootWindow();
     releaseEvent.event_x = localPos.x();
     releaseEvent.event_y = localPos.y();
     releaseEvent.root_x = globalPos.x();
@@ -355,7 +360,7 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
     clientMessageEvent.data.data32[3] = Qt::LeftButton;
     clientMessageEvent.data.data32[4] = 0;
 
-    xcb_send_event(connection, false, QX11Info::appRootWindow(),
+    xcb_send_event(connection, false, AtmoX11::rootWindow(),
                    XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |
                    XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT,
                    reinterpret_cast<const char*>(&clientMessageEvent));
@@ -365,25 +370,25 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
     XEvent xrev;
     xrev.xbutton.serial = 0; //?????
     xrev.xbutton.button = Button1;
-    xrev.xbutton.display = QX11Info::display();
-    xrev.xbutton.root = QX11Info::appRootWindow();
+    xrev.xbutton.display = AtmoX11::display();
+    xrev.xbutton.root = AtmoX11::rootWindow();
     xrev.xbutton.same_screen = True;
     xrev.xbutton.send_event = False;
     xrev.xbutton.state = Button1Mask;
     xrev.xbutton.window = win;
-    xrev.xbutton.time = QX11Info::appTime();
+    xrev.xbutton.time = AtmoX11::appTime();
     xrev.xbutton.type = ButtonRelease;
     xrev.xbutton.x_root = globalPos.x();
     xrev.xbutton.y_root = globalPos.y();
     xrev.xbutton.x = localPos.x();
     xrev.xbutton.y = localPos.y();
-    XSendEvent(QX11Info::display(), win, False, Button1Mask|ButtonReleaseMask, &xrev);
+    XSendEvent(AtmoX11::display(), win, False, Button1Mask|ButtonReleaseMask, &xrev);
 
-    static Atom netWmMoveResize = XInternAtom(QX11Info::display(), "_NET_WM_MOVERESIZE", False);
+    static Atom netWmMoveResize = XInternAtom(AtmoX11::display(), "_NET_WM_MOVERESIZE", False);
     XEvent xev;
     xev.xclient.type = ClientMessage;
     xev.xclient.message_type = netWmMoveResize;
-    xev.xclient.display = QX11Info::display();
+    xev.xclient.display = AtmoX11::display();
     xev.xclient.window = win;
     xev.xclient.format = 32;
     xev.xclient.data.l[0] = globalPos.x();
@@ -391,9 +396,9 @@ XHandler::mwRes(const QPoint &localPos, const QPoint &globalPos, const XWindow w
     xev.xclient.data.l[2] = resize?_NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT:_NET_WM_MOVERESIZE_MOVE;
     xev.xclient.data.l[3] = Button1;
     xev.xclient.data.l[4] = 0;
-    XUngrabPointer(QX11Info::display(), QX11Info::appTime()); //is this necessary? ...oh well, sizegrip does it...
-    XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
-    XSync(QX11Info::display(), False);
+    XUngrabPointer(AtmoX11::display(), AtmoX11::appTime()); //is this necessary? ...oh well, sizegrip does it...
+    XSendEvent(AtmoX11::display(), AtmoX11::rootWindow(), False, SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+    XSync(AtmoX11::display(), False);
 #endif
 }
 
@@ -402,32 +407,39 @@ XHandler::compositingActive()
 {
     if (!hasX11Handle())
         return false;
-#if defined(HASXCB)
+#if HASXCB
     static xcb_atom_t atom = 0;
-    xcb_connection_t *c = QX11Info::connection();
+    xcb_connection_t *c = AtmoX11::connection();
     if (!atom)
     {
-        const QString &net_wm_cm_name = QString("_NET_WM_CM_S%1").arg(QString::number(QX11Info::appScreen()));
+        const QString net_wm_cm_name = QStringLiteral("_NET_WM_CM_S%1").arg(QString::number(AtmoX11::appScreen()));
         xcb_intern_atom_cookie_t cookie = xcb_intern_atom(c, false, net_wm_cm_name.size(), qPrintable(net_wm_cm_name));
         xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(c, cookie, 0);
         atom = reply ? reply->atom : 0;
+        if (reply)
+            free(reply);
     }
     if (!atom)
         return false;
 
     xcb_get_selection_owner_cookie_t cookie = xcb_get_selection_owner(c, atom);
     xcb_get_selection_owner_reply_t *reply = xcb_get_selection_owner_reply(c, cookie, NULL);
-    return reply && reply->owner;
+    const bool active = reply && reply->owner;
+    if (reply)
+        free(reply);
+    return active;
 #elif HASX11
     static Atom *net_wm_cm = 0;
     if (!net_wm_cm)
     {
         char net_wm_cm_name[ 100 ];
-        sprintf(net_wm_cm_name, "_NET_WM_CM_S%d", DefaultScreen(QX11Info::display()));
+        sprintf(net_wm_cm_name, "_NET_WM_CM_S%d", DefaultScreen(AtmoX11::display()));
         net_wm_cm = new Atom();
-        *net_wm_cm = XInternAtom(QX11Info::display(), net_wm_cm_name, False);
+        *net_wm_cm = XInternAtom(AtmoX11::display(), net_wm_cm_name, False);
     }
-    return XGetSelectionOwner(QX11Info::display(), *net_wm_cm) != None;
+    return XGetSelectionOwner(AtmoX11::display(), *net_wm_cm) != None;
+#else
+    return false;
 #endif
 }
 
@@ -448,13 +460,13 @@ XHandler::x11Pixmap(const QImage &qtImg)
     if (qtImg.isNull())
         return 0;
 #if HASXCB
-    xcb_connection_t *c = QX11Info::connection();
+    xcb_connection_t *c = AtmoX11::connection();
     //    xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(c)).data;
     xcb_pixmap_t pixmapId = xcb_generate_id(c);
-    xcb_create_pixmap(c, qtImg.depth(), pixmapId, QX11Info::appRootWindow(), qtImg.width(), qtImg.height());
+    xcb_create_pixmap(c, qtImg.depth(), pixmapId, AtmoX11::rootWindow(), qtImg.width(), qtImg.height());
     xcb_gcontext_t gcId = xcb_generate_id(c);
     xcb_create_gc(c, gcId, pixmapId, 0, 0);
-    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, pixmapId, gcId, qtImg.width(), qtImg.height(), 0, 0, 0, qtImg.depth(), qtImg.byteCount(), qtImg.bits());
+    xcb_put_image(c, XCB_IMAGE_FORMAT_Z_PIXMAP, pixmapId, gcId, qtImg.width(), qtImg.height(), 0, 0, 0, qtImg.depth(), static_cast<uint32_t>(qtImg.sizeInBytes()), qtImg.bits());
     xcb_free_gc(c, gcId);
     return pixmapId;
 #elif HASX11
@@ -483,10 +495,10 @@ XHandler::x11Pixmap(const QImage &qtImg)
     ximage.blue_mask        = 0x000000ff;
     ximage.obdata           = 0;
     XInitImage(&ximage);
-    Pixmap pix = XCreatePixmap(QX11Info::display(), QX11Info::appRootWindow(), qtImg.width(), qtImg.height(), 32);
-    GC gc = XCreateGC(QX11Info::display(), pix, 0, 0);
-    XPutImage(QX11Info::display(), pix, gc, &ximage, 0, 0, 0, 0, qtImg.width(), qtImg.height());
-    XFreeGC(QX11Info::display(), gc);
+    Pixmap pix = XCreatePixmap(AtmoX11::display(), AtmoX11::rootWindow(), qtImg.width(), qtImg.height(), 32);
+    GC gc = XCreateGC(AtmoX11::display(), pix, 0, 0);
+    XPutImage(AtmoX11::display(), pix, gc, &ximage, 0, 0, 0, 0, qtImg.width(), qtImg.height());
+    XFreeGC(AtmoX11::display(), gc);
     return pix;
 #endif
     return 0;
@@ -498,9 +510,9 @@ XHandler::freePix(const XPixmap pixmap)
     if (!hasX11Handle())
         return;
 #if HASXCB
-    xcb_free_pixmap(QX11Info::connection(), pixmap);
+    xcb_free_pixmap(AtmoX11::connection(), pixmap);
 #elif HASX11
-    XFreePixmap(QX11Info::display(), pixmap);
+    XFreePixmap(AtmoX11::display(), pixmap);
 #endif
 }
 
@@ -510,7 +522,7 @@ XHandler::reparent(const XWindow child, const XWindow parent)
     if (!hasX11Handle())
         return;
 #if HASXCB
-    xcb_connection_t *c = QX11Info::connection();
+    xcb_connection_t *c = AtmoX11::connection();
     xcb_reparent_window(c, child, parent, 0, 0);
 //    static const quint32 value[] = {XCB_STACK_MODE_ABOVE};
 //    xcb_configure_window(c, child, XCB_CONFIG_WINDOW_STACK_MODE, value);
@@ -524,7 +536,7 @@ XHandler::restack(const XWindow win, const XWindow parent)
     if (!hasX11Handle())
         return;
 #if HASXCB
-    xcb_connection_t *c = QX11Info::connection();
+    xcb_connection_t *c = AtmoX11::connection();
     xcb_window_t current = parent;
     xcb_query_tree_cookie_t cookie = xcb_query_tree_unchecked(c, current);
     xcb_query_tree_reply_t *tree = xcb_query_tree_reply(c, cookie, 0);
@@ -551,7 +563,7 @@ XHandler::move(const XWindow win, const QPoint &p)
         return;
 #if HASXCB
     unsigned int values[2] = {p.x(), p.y()};
-    xcb_configure_window(QX11Info::connection(), win, XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
+    xcb_configure_window(AtmoX11::connection(), win, XCB_CONFIG_WINDOW_X|XCB_CONFIG_WINDOW_Y, values);
 #endif
 }
 

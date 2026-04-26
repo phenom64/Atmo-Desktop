@@ -47,10 +47,10 @@ protected:
     static unsigned int getHeadHeight(QWidget *win, bool &separator, const int dataHeight);
     static void unoBg(QWidget *win, int &w, int h, const QPalette &pal, uchar *data);
 
-signals:
+Q_SIGNALS:
     void windowDataChanged(QWidget *win);
 
-protected slots:
+protected Q_SLOTS:
     void updateWindowDataImpl(QWidget *win);
 #if HASDBUS
     void dataChanged(QDBusMessage msg);

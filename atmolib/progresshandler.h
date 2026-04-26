@@ -44,7 +44,7 @@ public:
     static void manage(QProgressBar *bar);
     static void release(QProgressBar *bar);
 
-protected slots:
+protected Q_SLOTS:
     void valueChanged();
 
 protected:

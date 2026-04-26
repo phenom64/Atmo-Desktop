@@ -204,7 +204,7 @@ protected:
                   const bool forceStretch = false) const;
     void polishLater(QWidget *widget);
 
-protected slots:
+protected Q_SLOTS:
     void polishSlotImpl(QWidget *w);
 
 private:

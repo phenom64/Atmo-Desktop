@@ -33,12 +33,12 @@ class StyleConfig : public QWidget
 public:
     explicit StyleConfig(QWidget *parent = 0);
 
-public slots:
+public Q_SLOTS:
     //slots that the systemsettings tries and connect to
     void save();
     void defaults();
 
-signals:
+Q_SIGNALS:
     //signals used by the systemsettings
     void changed(bool changed);
 

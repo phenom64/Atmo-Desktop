@@ -48,13 +48,13 @@
 #include "macmenu.h"
 #include "macmenu-dbus.h"
 
-#include <QtDebug>
+#include <QDebug>
 
 using namespace BE;
 
 static MacMenu *s_instance = 0;
 static QStringList title_seps;
-#define MSG(_FNC_) QDBusMessage::createMethodCall( "org.kde.XBar", "/XBar", "org.kde.XBar", _FNC_ )
+#define MSG(_FNC_) QDBusMessage::createMethodCall(QStringLiteral("org.kde.XBar"), QStringLiteral("/XBar"), QStringLiteral("org.kde.XBar"), QStringLiteral(_FNC_))
 #define XBAR_SEND( _MSG_ ) QDBusConnection::sessionBus().send( _MSG_ )
 
 inline bool operator< (const MacMenu::QMenuBar_p &ptr1, const MacMenu::QMenuBar_p &ptr2) {
@@ -84,15 +84,15 @@ static FullscreenWatcher *fullscreenWatcher = 0;
 
 MacMenu::MacMenu() : QObject()
 {
-    m_titleSeperators << " - " <<
-                        QString(" %1 ").arg(QChar(0x2013)) << // utf-8 dash
-                        QString(" %1 ").arg(QChar(0x2014)); // utf-8 em dash
-    usingMacMenu = QDBusConnection::sessionBus().interface()->isServiceRegistered("org.kde.XBar");
-    emit activeChanged();
-    service = QString("org.kde.XBar-%1").arg(QCoreApplication::applicationPid());
+    m_titleSeperators << QStringLiteral(" - ") <<
+                        QStringLiteral(" %1 ").arg(QChar(0x2013)) << // utf-8 dash
+                        QStringLiteral(" %1 ").arg(QChar(0x2014)); // utf-8 em dash
+    usingMacMenu = QDBusConnection::sessionBus().interface()->isServiceRegistered(QStringLiteral("org.kde.XBar"));
+    Q_EMIT activeChanged();
+    service = QStringLiteral("org.kde.XBar-%1").arg(QCoreApplication::applicationPid());
     // register me
     QDBusConnection::sessionBus().registerService(service);
-    QDBusConnection::sessionBus().registerObject("/XBarClient", this);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/XBarClient"), this);
 
     connect (qApp, SIGNAL(aboutToQuit()), this, SLOT(deactivate()));
 }
@@ -175,7 +175,7 @@ MacMenu::activate()
             { actions.remove(*menu); menu = items.erase(menu); }
     }
     usingMacMenu = true;
-    emit activeChanged();
+    Q_EMIT activeChanged();
 }
 
 void
@@ -199,7 +199,7 @@ MacMenu::activate(QMenuBar *menu)
     // find a nice header
     QString title = menu->window()->windowTitle();
     const QStringList appArgs = QCoreApplication::arguments();
-    QString name = appArgs.isEmpty() ? "" : appArgs.at(0).section('/', -1);
+    QString name = appArgs.isEmpty() ? QString() : appArgs.at(0).section(QLatin1Char('/'), -1);
     if (title.isEmpty())
         title = name;
     else
@@ -208,9 +208,9 @@ MacMenu::activate(QMenuBar *menu)
         if (i > -1)
             title = title.mid(i, name.length());
     }
-    foreach (const QString &s, m_titleSeperators) {
+    for (const QString &s : m_titleSeperators) {
         if (title.contains(s)) {
-            title.section(s, -1);
+            title = title.section(s, -1);
             break;
         }
     }
@@ -218,14 +218,15 @@ MacMenu::activate(QMenuBar *menu)
         if (!menu->actions().isEmpty())
             title = menu->actions().at(0)->text();
         if (title.isEmpty())
-            title = "QApplication";
+            title = QStringLiteral("QApplication");
     }
 
     // register the menu via dbus
     QStringList entries;
-    foreach (QAction* action, menu->actions())
+    const QList<QAction *> menuActions = menu->actions();
+    for (QAction *action : menuActions)
         if (action->isSeparator())
-            entries << "<XBAR_SEPARATOR/>";
+            entries << QStringLiteral("<XBAR_SEPARATOR/>");
         else
             entries << action->text();
     XBAR_SEND( MSG("registerMenu") << service << (qlonglong)menu << title << entries );
@@ -280,7 +281,7 @@ MacMenu::deactivate()
         else
             i = items.erase(i);
     }
-    emit activeChanged();
+    Q_EMIT activeChanged();
 }
 
 void
@@ -415,7 +416,8 @@ static QMenuBar *bar4menu(QMenu *menu)
         return 0;
     if (menu->menuAction()->associatedWidgets().isEmpty())
         return 0;
-    foreach (QWidget *w, menu->menuAction()->associatedWidgets())
+    const QList<QWidget *> widgets = menu->menuAction()->associatedWidgets();
+    for (QWidget *w : widgets)
         if (qobject_cast<QMenuBar*>(w))
             return static_cast<QMenuBar *>(w);
     return 0;
@@ -446,7 +448,7 @@ void
 MacMenu::changeAction(QMenuBar *menu, QActionEvent *ev)
 {
     int idx;
-    const QString title = ev->action()->isSeparator() ? "<XBAR_SEPARATOR/>" : ev->action()->text();
+    const QString title = ev->action()->isSeparator() ? QStringLiteral("<XBAR_SEPARATOR/>") : ev->action()->text();
     if (ev->type() == QEvent::ActionAdded)
     {
         idx = ev->before() ? menu->actions().indexOf(ev->before())-1 : -1;

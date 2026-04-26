@@ -26,8 +26,8 @@
 #include "atmolib/color.h"
 #include "atmolib/animhandler.h"
 #include "atmolib/shadowhandler.h"
+#include "atmolib/debug.h"
 #include "atmolib/progresshandler.h"
-#include "atmolib/animhandler.h"
 #include "atmolib/handlers.h"
 #include "atmolib/windowhelpers.h"
 #include "config/settings.h"
@@ -53,10 +53,10 @@
 #include <QStyleFactory>
 
 #if HASXCB || HASX11
-#include <QX11Info>
+#include "atmolib/atmox11.h"
 #endif
 
-#if HASKF5
+#if HASKF6
 #include <KWindowSystem>
 #endif
 
@@ -65,18 +65,18 @@ using namespace NSE;
 QStringList
 AtmoStylePlugin::keys() const
 {
-    return QStringList() << "Atmo";
+    return QStringList() << QStringLiteral("Atmo");
 }
 
 QStyle
 *AtmoStylePlugin::create(const QString &key)
 {
-    if (key.compare("Atmo", Qt::CaseInsensitive) == 0)
+    if (key.compare(QStringLiteral("Atmo"), Qt::CaseInsensitive) == 0)
         return new Style();
     return 0;
 }
 
-// Qt5 plugin metadata is handled via Q_PLUGIN_METADATA in nse.h
+// Plugin metadata is handled via Q_PLUGIN_METADATA in nse.h
 
 #if 0
 #if QT_VERSION >= 0x050000
@@ -109,13 +109,17 @@ static TranslucencyWatcher t;
 
 Style::Style() : QCommonStyle()
 {
+    ATMO_LOG << "Style initialization started on platform " << QGuiApplication::platformName();
     NSE::Settings::read();
 #if HASXCB || HASX11
-    if (QX11Info::isPlatformX11())
+    if (AtmoX11::isAvailable())
+    {
+        ATMO_LOG << "X11 backend detected, initializing X11 integration";
         XHandler::init();
+    }
     else
     {
-        /* running under wayland: skip X11 initialization so blur/shadow atoms remain disabled safely */
+        ATMO_LOG << "Wayland backend detected, skipping X11 init and using backend-agnostic path";
     }
 #else
     XHandler::init();
@@ -135,7 +139,7 @@ Style::Style() : QCommonStyle()
         QIcon::setThemeName(dConf.iconTheme);
     }
 
-//#if HASKF5
+//#if HASKF6
 //    connect(KWindowSystem::self(), &KWindowSystem::windowAdded, this, &Style::kf5WindowAdded);
 //#endif
 }
@@ -241,8 +245,10 @@ Style::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment, const
 QPixmap
 Style::standardPixmap(StandardPixmap sp, const QStyleOption *opt, const QWidget *widget) const
 {
-    const int size(16);
-    QPixmap pix(size, size);
+    const int size(pixelMetric(PM_SmallIconSize, opt, widget));
+    const qreal dpr = widget ? widget->devicePixelRatioF() : qApp->devicePixelRatio();
+    QPixmap pix(qMax(1, qRound(size * dpr)), qMax(1, qRound(size * dpr)));
+    pix.setDevicePixelRatio(dpr);
     pix.fill(Qt::transparent);
     QPainter p(&pix);
     p.setRenderHint(QPainter::Antialiasing);

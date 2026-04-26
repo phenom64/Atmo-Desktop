@@ -43,7 +43,7 @@ protected:
     int yPos() const;
     QPoint thePos() const;
 
-protected slots:
+protected Q_SLOTS:
     void restack();
 
 private:

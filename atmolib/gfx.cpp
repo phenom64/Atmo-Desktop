@@ -39,6 +39,9 @@
 #include <QGroupBox>
 #include <QStyleOptionToolButton>
 #include <QVBoxLayout>
+#include <QDir>
+#include <QImageReader>
+#include <QRandomGenerator>
 
 #include "fx.h"
 #include "gfx.h"
@@ -637,7 +640,7 @@ GFX::drawHandle(QPainter *p, const QRect &r, const bool hor)
 static int randInt(int low, int high)
 {
     // Random number between low and high
-    return qrand() % ((high + 1) - low) + low;
+    return QRandomGenerator::global()->bounded(low, high + 1);
 }
 
 enum Noise { ASDF = -1, RandomNoise = 0, BrushedMetal = 1, WhiteDots = 2, DiagonalStripes = 3, RaisedDots = 4, Donpo = 5, BigStripes = 6 };
@@ -735,7 +738,7 @@ GFX::noisePix(const qint8 style, const QString &fileName)
     }
     case ASDF:
     {
-        const QString file = QString("%1/.local/share/data/NSE/%2").arg(QDir::homePath(), fileName); //needs to be from xdg
+        const QString file = QStringLiteral("%1/.local/share/data/NSE/%2").arg(QDir::homePath(), fileName); //needs to be from xdg
 //        qDebug() << file;
         QImageReader reader(file);
         if (!reader.canRead())

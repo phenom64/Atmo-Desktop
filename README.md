@@ -1,161 +1,128 @@
 # Atmo Desktop Framework (NSE)
 
-An elegant Qt 5 widget style and KWin decoration designed for SynOS. Atmo brings the New Syndromatic Experience (NSE) to KDE/Qt apps with a unified toolbar/titlebar (UNO), refined shadows and gradients, and a highly configurable, text‑based theme system.
+Atmo is a Qt style plugin (`QStyle`) and optional KWin decoration for Plasma 6, using a text-based theme/config system (`NSE.conf`).
 
-Developed and maintained by Syndromatic Ltd. Derived from “styleproject” (2013, Robert Metsaranta), modernized for Qt 5.
+This branch is modernized for:
+- Qt 6.10+
+- KDE Frameworks 6.24+
+- Plasma 6.6+ / KDecoration3
+- Wayland-first behavior with optional X11 fallback
+- HiDPI and fractional scaling correctness
 
----
+## Components
 
-## ✨ Highlights
+- `atmo` style plugin: Qt style plugin key `Atmo`
+- `atmodecoration` (optional): KWin decoration plugin (KDecoration3)
+- `kcm_atmo` (optional): System Settings KCM entry
+- `nsesettings`: shared NSE config library
+- `atmo_config`: CLI helper for NSE config
+- `atmo_manager`: optional GUI manager
 
-- **Qt 5 style plugin:** Ships as a standard `QStyle` plugin named `Atmo`.
-- **KWin decoration:** Optional decoration module (KDecoration2) for a unified look.
-- **UNO:** Unified titlebar + toolbar area with optional translucency.
-- **Content‑aware toolbars (experimental):** Toolbars can respond to underlying content.
-- **Animated interactions:** Hover states, mouseover animations, and polished shadows.
-- **Text‑file configuration:** Human‑readable `NSE.conf` with extensive options for buttons, inputs, tabs, sliders, shadows, and more.
-- **KF5 integration:** Uses `KF5::WindowSystem`; supports X11/XCB for shadows and effects.
+## Configuration Model
 
-> Note: Wayland support is limited where code depends on X11 (`QX11Info`/XCB). For best results run on Plasma/X11. This will be fixed in the future with SynOS 2 "Juniper"
+Atmo keeps the text-based NSE configuration workflow:
+- User config: `~/.config/NSE/NSE.conf`
+- Installed default template: `/usr/share/atmo/NSE.conf`
 
----
+Defaults are auto-provisioned from the installed template when the user file is missing.
 
-## 📦 Dependencies
+## Build Dependencies (Ubuntu/Kubuntu 26.04-era)
 
-Tested on SynOS Canora Beta 2 (Ubuntu/Debian base) with Qt 5.
+Required baseline:
+- `build-essential`
+- `cmake`
+- `ninja-build`
+- `extra-cmake-modules`
+- `qt6-base-dev`
+- `libkf6windowsystem-dev`
 
-- Required (Debian/Ubuntu):
-  - `build-essential cmake extra-cmake-modules`
-  - `qtbase5-dev qttools5-dev qtdeclarative5-dev`
-  - `libqt5x11extras5-dev libqt5opengl5-dev libqt5dbus5`
-  - `libx11-dev libxcb1-dev libxcb-util-dev`
-  - `libkf5windowsystem-dev`
-  - `libdbusmenu-qt5-dev` (for mac‑menu integration)
-- Optional (for KWin decoration):
-  - `libkdecorations2-dev`
+Recommended for full build:
+- `qt6-tools-dev`
+- `qt6-tools-dev-tools`
+- `libkf6coreaddons-dev`
+- `libkf6config-dev`
+- `libkf6configwidgets-dev`
+- `libkf6kcmutils-dev`
+- `libkf6i18n-dev`
+- `libkf6guiaddons-dev`
 
----
+Optional features:
+- KWin decoration: `libkdecorations3-dev`
+- DBus menu integration: `dbusmenu-qt6` CMake package (if available in your distro; feature auto-disables when missing)
+- X11 fallback path: `libxcb1-dev`, `libx11-dev`
 
-## 🚀 Build & Install
+Package names can vary slightly across derivatives.
 
-```
-git clone https://github.com/phenom64/atmo-desktop.git
-cd atmo-desktop
-mkdir -p build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-make -j"$(nproc)"
-sudo make install
-```
+## Build
 
-What gets installed:
-- Qt style plugin `Atmo` into Qt’s `plugins/styles` directory
-- Default config at `/usr/share/atmo/NSE.conf`
-- `atmo_config` helper CLI into `/usr/bin`
-- KWin decoration module (if KDecoration2 is present)
+```bash
+cmake -S . -B build -GNinja \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_INSTALL_PREFIX=/usr \
+  -DATMO_BUILD_DECORATION=ON \
+  -DATMO_BUILD_KCM=ON \
+  -DATMO_ENABLE_X11_FALLBACK=ON \
+  -DBUILD_MANAGER=ON
 
-Uninstall:
-- From the build directory: `sudo make uninstall`
-
----
-
-## 🧩 Enabling Atmo in KDE
-
-- Widget Style: open System Settings → “Application Style” → pick `Atmo`.
-- Window Decoration: System Settings → “Window Decorations” → pick `Atmo` (requires KDecoration2; only shows if the decoration module was built).
-
-If the style does not appear, see Troubleshooting below.
-
----
-
-## ⚙️ Configuration (NSE.conf)
-
-Atmo reads settings from `~/.config/NSE/NSE.conf`.
-
-- First run: The project auto‑provisions `~/.config/NSE/NSE.conf` from `/usr/share/atmo/NSE.conf` if the user config is missing.
-- Edit directly with your editor, or use the helper:
-
-```
-# Write defaults (if you want to reset/seed values)
-atmo_config --writedefaults
-
-# Open the active config in your default text editor
-atmo_config --edit
-
-# Discover variables and get documentation
-atmo_config --listvars
-atmo_config --printinfo opacity
+cmake --build build -j"$(nproc)"
+sudo cmake --install build
 ```
 
-Notable sections (examples):
-- **Window decoration (`deco.*`):** Button style, shadow size/roundness, and icon visibility.
-- **Push/Tool buttons (`pushbtn.*`, `toolbtn.*`):** Roundness, gradients, shadows, tints.
-- **Inputs (`input.*`):** Roundness, shadow, gradient, tint.
-- **Tabs (`tabs.*`):** Safari/Chrome styles, roundness, gradients, close button position.
-- **UNO (`uno.*`):** Enable/disable, gradient, tint, noise, blur, overlay, orientation.
-- **Sliders/Scrollbars/Progress (`sliders.*`, `scrollers.*`, `progressbars.*`):** Size, gradients, groove styles, dot/metallic effects.
-- **Shadows (`shadows.*`):** Opacity and illumination for on‑widget and text shadows.
+Useful toggles:
+- `-DATMO_BUILD_DECORATION=OFF` to skip KDecoration3 plugin
+- `-DATMO_ENABLE_X11_FALLBACK=OFF` for strict Wayland-only runtime paths
+- `-DATMO_BUILD_KCM=OFF` to skip System Settings module
 
-Each key has an inline description in the source (see `config/settings.cpp`) and via `atmo_config --printinfo`.
+## Install Locations
 
----
+- Style plugin: `${KDE_INSTALL_QTPLUGINDIR}/styles`
+- KWin decoration plugin: `${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration3` (if built)
+- KCM plugin (System Settings): `${KDE_INSTALL_PLUGINDIR}/plasma/kcms/systemsettings` (if built)
+- KCM plugin (KDecoration3 hook): `${KDE_INSTALL_PLUGINDIR}/org.kde.kdecoration3.kcm` (if built)
+- KCM metadata: `${KDE_INSTALL_KSERVICESDIR}`
+- Default config template: `${KDE_INSTALL_DATADIR}/atmo/NSE.conf`
 
-## 🧱 Project Structure
+## Enabling in Plasma 6
 
-- `atmolib/`: Core rendering, masks, animations, handlers, widgets (the Atmo style’s internal library)
-- `config/`: NSE settings library and `atmo_config` CLI
-- `kwin/`: KWin decoration (KDecoration2) and plugin metadata
-- `NSE.conf`: Default config template installed to `/usr/share/atmo/NSE.conf`
-- `README.md`: This document
+- Application Style: `System Settings -> Colors & Themes -> Application Style -> Atmo`
+- Window Decoration (if built): `System Settings -> Colors & Themes -> Window Decorations -> Atmo`
+- KCM (if built): appears under System Settings modules as Atmo
 
----
+## Wayland and HiDPI Notes
 
-## 🔧 Development Notes
+- Wayland is the primary runtime path.
+- X11-only behavior is runtime-gated and only used when X11 is actually available.
+- Core style rendering does not require X11 on Wayland.
+- Logical widget metrics stay in Qt device-independent pixels; DPR is applied only to backing pixmaps and pixel-grid-sensitive decoration strokes.
+- Pixmap caches for frequently-rendered primitives now include device pixel ratio in cache keys.
+- KDecoration3 titlebar and border geometry is recomputed on scale changes and snapped to the compositor pixel grid.
 
-- Style plugin key: `Atmo` (appears in Qt’s style list)
-- Namespace: `NSE` (New Syndromatic Experience)
-- Former names: `styleproject`/`DSP` → modernized to Atmo/NSE (Qt 5 only)
-- X11/XCB are used for certain effects; Wayland is partially supported
+## Debug Logging
 
-Build tips:
-- Ensure `extra-cmake-modules` is installed so CMake can find KF5 and XCB.
-- To debug plugin discovery: `export QT_DEBUG_PLUGINS=1` then run a Qt app.
+Set `ATMO_DEBUG=1` to enable runtime debug logs:
 
----
+```bash
+ATMO_DEBUG=1 systemsettings
+```
 
-## 🧪 Troubleshooting
+## Smoke Test Checklist
 
-- **Style not listed under Application Style:**
-  - Verify the plugin installed to Qt’s plugin path: `qmake -query QT_INSTALL_PLUGINS`
-  - Ensure `libatmo.so` exists under `…/plugins/styles/`
-  - Try `QT_DEBUG_PLUGINS=1 systemsettings5` to check plugin load messages
+1. Build with Qt6/KF6 and install.
+2. In Plasma 6 Wayland session:
+   - Select `Atmo` in Application Style.
+   - Verify widgets/toolbars/tabs render and react correctly.
+3. If decoration built:
+   - Select `Atmo` in Window Decorations.
+   - Verify button interactions and title rendering.
+4. Verify `NSE.conf` compatibility:
+   - Existing keys continue to load from `~/.config/NSE/NSE.conf`.
+5. Test scaling at 125%, 150%, 175%:
+   - Title/buttons/shadows remain crisp.
+   - No clipped or tiny controls.
+6. Optional X11 fallback check:
+   - Start an X11 session and verify fallback-only features still behave.
 
-- **Decoration not listed:**
-  - Make sure `libkdecorations2-dev` was present at build time (module is optional)
-  - Reconfigure and rebuild after installing it
+## Known Limitations
 
-- **No translucency/shadows on Wayland:**
-  - Effects using X11/xcb may not apply on Wayland sessions
-  - Use an X11 session for complete feature support
-
----
-
-## 🗺️ Roadmap
-
-- Continue Wayland parity where possible
-- Tidy deprecated Qt 5 APIs and smooth migration path to Qt 6
-- Expand presets and polish default palette/icon theme handling
-
----
-
-## 🙏 Credits
-
-- Original base: **styleproject** (c) 2013, Robert Metsaranta — Thank you for the foundation and inspiration.
-- Atmo/NSE: (c) 2025 Syndromatic Ltd.
-
-This project is distributed under the **GNU General Public License, version 2 or later (GPL‑2.0‑or‑later)**. See the per‑file headers and top‑level license notices.
-
----
-
-## 🌐 Links
-
-- Syndromatic: https://syndromatic.com
+- Some legacy X11-native effects (that depend on X11 window IDs/properties) intentionally degrade on native Wayland instead of forcing XWayland assumptions.
+- DBusMenu titlebar integration remains backend/desktop dependent and may be unavailable in some Wayland setups.

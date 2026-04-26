@@ -25,9 +25,6 @@
 #include <QStyleOption>
 #include <QStyleOptionMenuItem>
 #include <QStyleOptionViewItem>
-#include <QStyleOptionViewItem>
-#include <QStyleOptionViewItem>
-#include <QStyleOptionViewItem>
 #include <QAbstractItemView>
 #include <QMenu>
 #include <QTreeView>
@@ -63,11 +60,14 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
     const bool hasCheckBox(opt->checkType == QStyleOptionMenuItem::NonExclusive);
     const bool hasMenu(opt->menuItemType == QStyleOptionMenuItem::SubMenu);
     const QPalette pal(opt->palette);
+    const int smallIcon = pixelMetric(PM_SmallIconSize, opt, widget);
+    const int baseMargin = Ops::dpiScaled(widget, 6);
+    const int checkMargin = smallIcon + Ops::dpiScaled(widget, 8);
 
-    int leftMargin(isMenu?(opt->menuHasCheckableItems||hasCheckBox||hasRadioButton?24:6):0), rightMargin(isMenu?(hasMenu||isSeparator?24:6):0), h(opt->rect.height()), w(opt->rect.width());
+    int leftMargin(isMenu ? (opt->menuHasCheckableItems || hasCheckBox || hasRadioButton ? checkMargin : baseMargin) : 0), rightMargin(isMenu ? (hasMenu || isSeparator ? checkMargin : baseMargin) : 0), h(opt->rect.height()), w(opt->rect.width());
 
-    QRect button(0, opt->rect.top(), 9, 9);
-    button.moveLeft(button.left()+qMax(6, (leftMargin/2 - h/2)));
+    QRect button(0, opt->rect.top(), Ops::dpiScaled(widget, 9), Ops::dpiScaled(widget, 9));
+    button.moveLeft(button.left() + qMax(baseMargin, (leftMargin / 2 - h / 2)));
     button.moveTop(button.top()+((h/2)-(button.height()/2)));
     QRect textRect(opt->rect.adjusted(qMax(button.right()+1, leftMargin), 0, -rightMargin, 0));
     QRect arrow(textRect.right()+((rightMargin/2)-(h/2)), opt->rect.top(), h, h);
@@ -122,9 +122,9 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
         QAction *a(static_cast<const QMenu *>(widget)->actionAt(opt->rect.topLeft()));
         if (a && !a->icon().isNull())
         {
-            const QRect iconRect(textRect.adjusted(0, 0, -(textRect.width()-16), 0));
-            textRect.setLeft(textRect.left()+20);
-            const QPixmap icon(a->icon().pixmap(16, opt->ENABLED?QIcon::Normal:QIcon::Disabled));
+            const QRect iconRect(textRect.adjusted(0, 0, -(textRect.width() - smallIcon), 0));
+            textRect.setLeft(textRect.left() + smallIcon + Ops::dpiScaled(widget, 4));
+            const QPixmap icon(a->icon().pixmap(smallIcon, opt->ENABLED ? QIcon::Normal : QIcon::Disabled));
             drawItemPixmap(painter, iconRect, Qt::AlignCenter, icon);
         }
     }
@@ -139,9 +139,9 @@ Style::drawMenuItem(const QStyleOption *option, QPainter *painter, const QWidget
     }
 
     if (isMenu && hasMenu)
-        GFX::drawArrow(painter, pal.color(fg), arrow.shrinked(6), East, dConf.arrowSize, Qt::AlignCenter, true);
+        GFX::drawArrow(painter, pal.color(fg), arrow.shrinked(Ops::dpiScaled(widget, 6)), East, dConf.arrowSize, Qt::AlignCenter, true);
 
-    QStringList text(opt->text.split("\t"));
+    QStringList text(opt->text.split(QLatin1Char('\t')));
     const int align[] = { isSeparator?Qt::AlignCenter:Qt::AlignLeft|Qt::AlignVCenter, Qt::AlignRight|Qt::AlignVCenter };
 //    const bool enabled[] = { opt->state & State_Enabled, opt->state & State_Enabled && opt->state & (State_Selected | State_Sunken) };
 

@@ -179,7 +179,7 @@ WindowHelpers::updateWindowDataImpl(QWidget *win)
         data.setButtonGradient(dConf.toolbtn.gradient);
         data.unlock();
         QMetaObject::invokeMethod(win, "update", Qt::QueuedConnection);
-        emit instance()->windowDataChanged(win);
+        Q_EMIT instance()->windowDataChanged(win);
         data.sync();
     }
 }

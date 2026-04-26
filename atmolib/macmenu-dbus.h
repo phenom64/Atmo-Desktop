@@ -57,7 +57,7 @@ private:
 public:
    MacMenuAdaptor(MacMenu *macMenu) : QDBusAbstractAdaptor(macMenu), mm(macMenu) { }
 
-public slots:
+public Q_SLOTS:
    Q_NOREPLY void activate() { mm->activate(); }
    Q_NOREPLY void deactivate() { mm->deactivate(); }
    Q_NOREPLY void popup(qlonglong key, int idx, int x, int y)

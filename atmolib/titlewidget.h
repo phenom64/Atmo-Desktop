@@ -53,7 +53,7 @@ protected:
 
     bool eventFilter(QObject *o, QEvent *e);
 
-protected slots:
+protected Q_SLOTS:
     void toolBarMovableChanged(const bool movable);
     void toolBarFloatingChagned(const bool floating);
     void toolBarOrientationChagned(const Qt::Orientation o);

@@ -74,7 +74,7 @@ protected:
     void checkForArrowPress(QToolButton *tb, const QPoint pos);
     bool eventFilter(QObject *, QEvent *);
 
-protected slots:
+protected Q_SLOTS:
     void queryToolBarImpl(QToolBar *toolbar);
     void toolBarDeleted(QObject *toolBar);
     void toolBtnDeleted(QObject *toolBtn);
@@ -100,17 +100,17 @@ public:
     static void applyTranslucency(QWidget *widget);
     static void applyBlur(QWidget *widget);
 
-public slots:
+public Q_SLOTS:
     void updateDecoBg(QWidget *w);
 
-signals:
+Q_SIGNALS:
     void windowDataChanged(QWidget *win);
 
 protected:
     Window(QObject *parent = 0);
     bool eventFilter(QObject *, QEvent *);
 
-protected slots:
+protected Q_SLOTS:
     void menuShow();
 
 private:
@@ -151,7 +151,7 @@ protected:
     void regenBg(QMainWindow *win);
     static QSharedMemory *mem(QMainWindow *win);
 
-protected slots:
+protected Q_SLOTS:
     void updateWin(QWidget *mainWin);
     void vpDeleted(QObject *vp);
 
@@ -212,7 +212,7 @@ protected:
     void lockDock(QDockWidget *dock);
     void unlockDock(QDockWidget *dock);
 
-protected slots:
+protected Q_SLOTS:
     void lockWindowImpl(QWidget *win);
     void lockDocks(const bool locked);
 

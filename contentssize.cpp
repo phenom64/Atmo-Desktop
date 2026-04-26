@@ -84,21 +84,21 @@ static QSize menuItemSize(const QStyleOptionMenuItem *item, const QMenu *menu, Q
         {
             const QAction *a(actions.at(i));
             if (a->text() == item->text && a->font().bold())
-                cs.rwidth() += (QFontMetrics(a->font()).width(item->text) - QFontMetrics(item->font).width(item->text));
+                cs.rwidth() += (QFontMetrics(a->font()).horizontalAdvance(item->text) - QFontMetrics(item->font).horizontalAdvance(item->text));
         }
     }
 
-    cs += QSize((item->menuHasCheckableItems?32:6)+32, 0); //just to add some decent width to the menu
+    cs += QSize((item->menuHasCheckableItems ? Ops::dpiScaled(menu, 32) : Ops::dpiScaled(menu, 6)) + Ops::dpiScaled(menu, 32), 0); //just to add some decent width to the menu
     if (dConf.menues.icons)
-        cs.rwidth()+= 20;
+        cs.rwidth() += Ops::dpiScaled(menu, 20);
     const bool isSeparator(item->menuItemType == QStyleOptionMenuItem::Separator);
     const bool hasText(!item->text.isEmpty());
     if (isSeparator && !hasText)
-        cs += QSize(0, 2);
+        cs += QSize(0, Ops::dpiScaled(menu, 2));
     else if (isSeparator)
         cs.rheight() += item->fontMetrics.height();
     else
-        cs += QSize(0, 6);
+        cs += QSize(0, Ops::dpiScaled(menu, 6));
 
     return cs;
 }
@@ -113,19 +113,19 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         QSize sz(contentsSize);
         if (sz.height() < opt->fontMetrics.height())
             sz.rheight() = opt->fontMetrics.height();
-        sz.rheight()+=4;
+        sz.rheight() += Ops::dpiScaled(widget, 4);
         return sz;
     }
     case CT_PushButton:
     {
         QSize sz(contentsSize);
-        sz+=QSize(8, pixelMetric(PM_ButtonMargin, opt, widget));
+        sz += QSize(Ops::dpiScaled(widget, 8), pixelMetric(PM_ButtonMargin, opt, widget));
         if (sz.height() < dConf.baseSize)
             sz.setHeight(dConf.baseSize);
         const QStyleOptionButton *btn = qstyleoption_cast<const QStyleOptionButton *>(opt);
         if (btn && !btn->text.isEmpty())
             if (sz.width() < 75)
-                sz.setWidth(75);
+                sz.setWidth(Ops::dpiScaled(widget, 75));
         return sz;
     }
     case CT_TabBarTab:
@@ -176,9 +176,9 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             sz.rwidth() += safBar ? (dConf.tabs.safrnd<<1) : TabPadding;
 
         if (vertical)
-            sz.rheight() += 4;
+            sz.rheight() += Ops::dpiScaled(widget, 4);
         else
-            sz.rwidth() += 4;
+            sz.rwidth() += Ops::dpiScaled(widget, 4);
 
         if (!safBar && tab->documentMode)
         {
@@ -192,9 +192,9 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 if (docTabSize && bar /*&& map.value(bar)*/)
                 {
                     if (vertical)
-                        sz.setHeight(qBound(32, docTabSize, (((bar->height()&~1)-32)/bar->count())-1));
+                        sz.setHeight(qBound(Ops::dpiScaled(widget, 32), docTabSize, (((bar->height() & ~1) - Ops::dpiScaled(widget, 32)) / bar->count()) - 1));
                     else
-                        sz.setWidth(qBound(32, docTabSize, (((bar->width()&~1)-32)/bar->count())-1));
+                        sz.setWidth(qBound(Ops::dpiScaled(widget, 32), docTabSize, (((bar->width() & ~1) - Ops::dpiScaled(widget, 32)) / bar->count()) - 1));
                 }
             }
             if (tab->position != QStyleOptionTab::Middle)
@@ -209,7 +209,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     {
 
         if (!widget || !widget->parentWidget() || widget->inherits("KMultiTabBarTab"))
-            return contentsSize + QSize(8,8);
+            return contentsSize + QSize(Ops::dpiScaled(widget, 8), Ops::dpiScaled(widget, 8));
 
         const QStyleOptionToolButton *optbtn = qstyleoption_cast<const QStyleOptionToolButton *>(opt);
         if (!optbtn)
@@ -225,7 +225,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         if (!hor && bar && bar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon)
         {
             sz.setWidth(bar->iconSize().width());
-            sz.rheight()+=16;
+            sz.rheight() += Ops::dpiScaled(widget, 16);
         }
         static const int add(qFloor(dConf.baseSize*0.2f)), hAdd(qFloor(add*0.2f));
         sz+=QSize(hor?add:hAdd, hor?hAdd:add);
@@ -251,9 +251,9 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                 else if (sides & ends)
                     *hvsz += m;
                 if (btn && btn->group())
-                    *hvsz += 8;
+                    *hvsz += Ops::dpiScaled(widget, 8);
                 if (btn && btn->isCheckable() && !isFull)
-                    *hvsz += 2;
+                    *hvsz += Ops::dpiScaled(widget, 2);
             }
             static const int minSz(dConf.baseSize);
 
@@ -282,7 +282,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         const QStyleOptionSpinBox *box = qstyleoption_cast<const QStyleOptionSpinBox *>(opt);
 //        const QSpinBox *spinBox = qobject_cast<const QSpinBox *>(widget);
         QSize sz(contentsSize);
-        sz.rwidth()+=7;
+        sz.rwidth() += Ops::dpiScaled(widget, 7);
         sz.rwidth()+=(GFX::shadowMargin(dConf.input.shadow)*2)+pixelMetric(PM_SpinBoxSliderHeight, opt, widget);
         sz.setHeight(qMax<int>(dConf.baseSize, sz.height()));
         if (box && box->frame)
@@ -295,7 +295,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
         if (!item)
             return contentsSize;
 
-        QSize sz(contentsSize+QSize(8, 0));
+        QSize sz(contentsSize + QSize(Ops::dpiScaled(widget, 8), 0));
         if (widget)
         {
             const QList<QAction *> actions = widget->actions();
@@ -312,9 +312,9 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
                      * set in the styleshit.
                      */
                     QFont wf(widget->font());
-                    const int ww(QFontMetrics(wf).width(item->text));
+                    const int ww(QFontMetrics(wf).horizontalAdvance(item->text));
                     wf.setBold(true);
-                    const int bw(QFontMetrics(wf).width(item->text));
+                    const int bw(QFontMetrics(wf).horizontalAdvance(item->text));
                     sz.rwidth() += bw - ww;
                 }
             }
@@ -356,7 +356,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             QSize sz(contentsSize);
             int add(dConf.input.rnd?dConf.input.rnd/2:0);
             sz.setHeight(dConf.baseSize);
-            sz+=QSize(add*2+40, pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
+            sz += QSize(add * 2 + Ops::dpiScaled(widget, 40), pixelMetric(PM_ComboBoxFrameWidth, opt, widget));
             return sz;
         }
 
@@ -368,7 +368,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             h+=pixelMetric(PM_ComboBoxFrameWidth, opt, widget)*2;
         }
 
-        w+=40; //margins left/right for text and arrow...
+        w += Ops::dpiScaled(widget, 40); //margins left/right for text and arrow...
         h = qMax<int>(dConf.baseSize, h);
         return QSize(w, h);
     }
@@ -389,7 +389,7 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
             if (item->decorationPosition < QStyleOptionViewItem::Top) //horizontal item layout
             {
                 sz.setHeight(item->icon.isNull()?item->fontMetrics.height():item->decorationSize.height() + m);
-                sz.setWidth(item->decorationSize.width() + m + item->fontMetrics.width(item->text));
+                sz.setWidth(item->decorationSize.width() + m + item->fontMetrics.horizontalAdvance(item->text));
             }
             else
             {
@@ -408,12 +408,12 @@ Style::sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &c
     case CT_ProgressBar:
     {
         QSize sz(contentsSize);
-        int margin = 8;
+        const int margin = Ops::dpiScaled(widget, 8);
         const QStyleOptionProgressBar *bar = qstyleoption_cast<const QStyleOptionProgressBar *>(opt);
-        const bool hor(!bar || bar->orientation==Qt::Horizontal);
+        const bool hor(!bar || (bar->state & State_Horizontal));
         if (bar && dConf.progressbars.textPos == 1)
         {
-            const quint16 add = bar->fontMetrics.width(bar->text);
+            const quint16 add = bar->fontMetrics.horizontalAdvance(bar->text);
             if (hor)
                 sz.rwidth() += add + margin;
             else

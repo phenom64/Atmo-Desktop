@@ -44,7 +44,7 @@ protected:
     static void dumpWidget(QPixmap &pix, QWidget *w);
     static void drawRecursive(QPainter *p, QWidget *w);
 
-protected slots:
+protected Q_SLOTS:
     void currentChanged(int i);
     void widgetRemoved(int i);
     void animate();

@@ -52,7 +52,7 @@ protected:
     int hoverLevel(const QWidget *widget);
     void remove(QWidget *w);
 
-protected slots:
+protected Q_SLOTS:
     void removeSender();
     void animate();
 
@@ -78,7 +78,7 @@ protected:
     int hoverLevel(const QTabBar *tb, Tab tab);
     void remove(QTabBar *tb);
 
-protected slots:
+protected Q_SLOTS:
     void removeSender();
     void animate();
 
@@ -104,7 +104,7 @@ protected:
     int hoverLevel(const QToolButton *tb, bool arrow);
     void remove(QToolButton *tb);
 
-protected slots:
+protected Q_SLOTS:
     void removeSender();
     void animate();
 
@@ -126,7 +126,7 @@ protected:
     bool eventFilter(QObject *o, QEvent *e);
     bool processWheelEvent(QWheelEvent *e);
 
-protected slots:
+protected Q_SLOTS:
     void updateScrollValue();
 
 private:

@@ -20,7 +20,7 @@
 *   therealestrob@gmail.com                                              *
 ***************************************************************************/
 #include "sizegrip.h"
-#include <QX11Info>
+#include "../atmolib/atmox11.h"
 #include <X11/Xlib.h>
 #include "fixx11h.h"
 #include <QEvent>
@@ -88,10 +88,10 @@ SizeGrip::restack()
         WId parent_return(0);
         WId *children_return = 0;
         unsigned int nchildren_return;
-        XQueryTree(QX11Info::display(), w, &root_return, &parent_return, &children_return, &nchildren_return);
+        XQueryTree(NSE::AtmoX11::display(), w, &root_return, &parent_return, &children_return, &nchildren_return);
         if (parent_return)
         {
-            XReparentWindow(QX11Info::display(), winId(), parent_return, 0, 0);
+            XReparentWindow(NSE::AtmoX11::display(), winId(), parent_return, 0, 0);
             repos();
 //            XMapWindow(QX11Info::display(), winId());
             show();
@@ -150,7 +150,7 @@ SizeGrip::eventFilter(QObject *o, QEvent *e)
 void
 SizeGrip::mousePressEvent(QMouseEvent *e)
 {
-    XHandler::mwRes(e->pos(), e->globalPos(), m_client->windowId(), true);
+    XHandler::mwRes(e->position().toPoint(), e->globalPosition().toPoint(), m_client->windowId(), true);
 }
 
 void

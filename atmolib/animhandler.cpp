@@ -601,10 +601,11 @@ ScrollAnimator::updateScrollValue()
 bool
 ScrollAnimator::processWheelEvent(QWheelEvent *e)
 {
-    if (e->orientation() == Qt::Horizontal || e->modifiers())
+    const QPoint delta = e->angleDelta();
+    if (qAbs(delta.x()) > qAbs(delta.y()) || e->modifiers())
         return false;
     const bool wasUp(m_up);
-    m_up = e->delta() > 0;
+    m_up = delta.y() > 0;
     if (m_up != wasUp)
         m_delta = 0;
 

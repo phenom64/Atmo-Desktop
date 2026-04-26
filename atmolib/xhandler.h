@@ -70,8 +70,9 @@ public:
     typedef unsigned long XPixmap;
     typedef unsigned long dlong;
 #else
-    typedef void XPixmap;
-    typedef void dlong;
+    // Keep concrete integral fallback types so no-X11 builds still compile.
+    typedef quint32 XPixmap;
+    typedef quint32 dlong;
 #endif
     typedef WId XWindow;
 

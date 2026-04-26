@@ -57,11 +57,10 @@
 #include <QBuffer>
 #include <QHeaderView>
 #include <QToolTip>
-#include <QDesktopWidget>
 #include <QGroupBox>
 #include <QDockWidget>
 #include <QWidgetAction>
-#include <QX11Info>
+#include "atmox11.h"
 #include "defines.h"
 #include "windowhelpers.h"
 #if HASDBUS
@@ -111,7 +110,7 @@ static QRegion paintRegion(QMainWindow *win)
                 geo.setRight(right);
                 geo.setLeft(left);
             }
-            if (qApp->applicationName() == "konsole")
+            if (qApp->applicationName() == QStringLiteral("konsole"))
             {
                 geo.setLeft(win->rect().left());
                 geo.setRight(win->rect().right());
@@ -420,12 +419,12 @@ Window::Window(QObject *parent)
     : QObject(parent)
 {
 #if HASDBUS
-    static const QString service("com.syndromatic.atmo.kwindeco"),
-            interface("com.syndromatic.atmo.deco"),
-            path("/NSEDecoAdaptor");
+    static const QString service(QStringLiteral("com.syndromatic.atmo.kwindeco")),
+            interface(QStringLiteral("com.syndromatic.atmo.deco")),
+            path(QStringLiteral("/NSEDecoAdaptor"));
     QDBusInterface *iface = new QDBusInterface(service, path, interface, QDBusConnection::sessionBus(), this);
 //    iface->connection().connect(service, path, interface, "windowActiveChanged", this, SLOT(decoActiveChanged(QDBusMessage)));
-    iface->connection().connect(service, path, interface, "dataChanged", this, SLOT(dataChanged(QDBusMessage)));
+    iface->connection().connect(service, path, interface, QStringLiteral("dataChanged"), this, SLOT(dataChanged(QDBusMessage)));
 #endif
 }
 
@@ -595,7 +594,7 @@ Window::eventFilter(QObject *o, QEvent *e)
             if (!p
                     || !qobject_cast<QMainWindow *>(p)
                     || p == w
-                    || p->objectName() == "BE::Desk")
+                    || p->objectName() == QStringLiteral("BE::Desk"))
                 return false;
 
             w->setWindowFlags(w->windowFlags() | Qt::FramelessWindowHint);
@@ -628,15 +627,15 @@ Window::eventFilter(QObject *o, QEvent *e)
                 return false;
 
             QToolBar *tb(mw->findChild<QToolBar *>());
-            if (!tb || tb->findChild<QToolButton *>("NSE_menubutton"))
+            if (!tb || tb->findChild<QToolButton *>(QStringLiteral("NSE_menubutton")))
                 return false;
 
             QToolButton *tbtn(new QToolButton(tb));
-            tbtn->setText("Menu");
+            tbtn->setText(QStringLiteral("Menu"));
             QMenu *m = new QMenu(tbtn);
             m->addActions(menuBar->actions());
             connect(m, SIGNAL(aboutToShow()), this, SLOT(menuShow()));
-            tbtn->setObjectName("NSE_menubutton");
+            tbtn->setObjectName(QStringLiteral("NSE_menubutton"));
             tbtn->setMenu(m);
             tbtn->setPopupMode(QToolButton::InstantPopup);
             QAction *before(tb->actions().first());
@@ -774,15 +773,15 @@ Drag::eventFilter(QObject *o, QEvent *e)
             || !w->isActiveWindow())
         return false;
     QMouseEvent *me(static_cast<QMouseEvent *>(e));
-    if (!w->rect().contains(me->pos()) || me->button() != Qt::LeftButton)
+    if (!w->rect().contains(me->position().toPoint()) || me->button() != Qt::LeftButton)
         return false; 
     bool cd(canDrag(w));
     if (QTabBar *tabBar = qobject_cast<QTabBar *>(w))
-        cd = (tabBar->tabAt(me->pos()) == -1);
+        cd = (tabBar->tabAt(me->position().toPoint()) == -1);
     if (!cd)
         return false;
 
-    XHandler::mwRes(w->mapTo(w->window(), me->pos()), me->globalPos(), XHandler::windowId(w->window()));
+    XHandler::mwRes(w->mapTo(w->window(), me->position().toPoint()), me->globalPosition().toPoint(), XHandler::windowId(w->window()));
     return false;
 }
 
@@ -949,7 +948,7 @@ ScrollWatcher::regenBg(QMainWindow *win)
 
             area->verticalScrollBar()->setValue(realVal);
             vp->setAttribute(Qt::WA_NoSystemBackground); //this disables the viewport bg to get painted in the uno area, only items get painted
-            vp->render(&img, vp->mapTo(win, QPoint(0, title-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), 0);
+            vp->render(&img, vp->mapTo(win, QPoint(0, title-qMin(uno+offset, prevVal))), QRegion(0, 0, area->width(), uno), QWidget::RenderFlags());
             vp->setAttribute(Qt::WA_NoSystemBackground, false);
             area->verticalScrollBar()->setValue(prevVal);
             if (view)
@@ -1331,9 +1330,9 @@ Dock::lockWindowImpl(QWidget *win)
 {
     if (!win)
         return;
-    QAction *a = new QAction("NSE::DockLocker", win);
-    a->setObjectName("NSE::DockLocker");
-    a->setShortcut(QKeySequence("Ctrl+Alt+D"));
+    QAction *a = new QAction(QStringLiteral("NSE::DockLocker"), win);
+    a->setObjectName(QStringLiteral("NSE::DockLocker"));
+    a->setShortcut(QKeySequence(QStringLiteral("Ctrl+Alt+D")));
     a->setShortcutContext(Qt::ApplicationShortcut);
     a->setCheckable(true);
     a->setChecked(false);
@@ -1375,14 +1374,14 @@ Dock::lockDock(QDockWidget *dock)
 
     QLabel *l = new QLabel(dock);
     l->setContentsMargins(0, -l->fontMetrics().height(), 0, -l->fontMetrics().height());
-    l->setObjectName("NSE::DockLockerTitleBar");
+    l->setObjectName(QStringLiteral("NSE::DockLockerTitleBar"));
     dock->setTitleBarWidget(l);
 }
 
 void
 Dock::unlockDock(QDockWidget *dock)
 {
-    if (!dock->titleBarWidget() || dock->titleBarWidget()->objectName() != "NSE::DockLockerTitleBar")
+    if (!dock->titleBarWidget() || dock->titleBarWidget()->objectName() != QStringLiteral("NSE::DockLockerTitleBar"))
         return;
     QWidget *w = dock->titleBarWidget();
     if (s_customDockTitleBars.contains(dock))

@@ -47,7 +47,6 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QDockWidget>
-#include <QDesktopWidget>
 #include <QLabel>
 #include <QProgressBar>
 #include <QApplication>
@@ -110,7 +109,7 @@ Style::polish(QWidget *widget)
 
     //some special handling
     if (dConf.splitterExt
-            && (widget->objectName() == "qt_qmainwindow_extended_splitter"
+            && (widget->objectName() == QStringLiteral("qt_qmainwindow_extended_splitter")
                 || qobject_cast<QSplitterHandle *>(widget)))
         SplitterExt::manage(widget);
 
@@ -237,7 +236,7 @@ Style::polish(QWidget *widget)
             Handlers::Window::manage(widget);
         }
         const bool isFrameLessMainWindow(((widget->windowFlags() & Qt::FramelessWindowHint)
-                                          && widget->windowRole().startsWith("MainWindow")));
+                                          && widget->windowRole().startsWith(QStringLiteral("MainWindow"))));
         if (widget->windowType() == Qt::Popup
                 || widget->windowType() == Qt::ToolTip
                 || widget->windowType() == Qt::Dialog
@@ -417,7 +416,7 @@ Style::polish(QWidget *widget)
         widget->setForegroundRole(QPalette::WindowText);
         if (QLayout *l = widget->layout())
         {
-            l->setMargin(0);
+            l->setContentsMargins(0, 0, 0, 0);
             l->setSpacing(0);
         }
     }

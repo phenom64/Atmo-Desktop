@@ -36,7 +36,7 @@ StyleConfig::StyleConfig(QWidget *parent) : QWidget(parent)
 void
 StyleConfig::save()
 {
-    emit changed(true);
+    Q_EMIT changed(true);
 }
 
 void

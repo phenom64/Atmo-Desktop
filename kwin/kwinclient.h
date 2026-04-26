@@ -124,7 +124,7 @@ protected:
     const QRect positionRect(const KDecorationDefines::Position pos) const;
     const int titleHeight() const;
 
-protected slots:
+protected Q_SLOTS:
     void readCompositing();
     void memoryDestroyed(QObject *);
 

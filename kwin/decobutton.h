@@ -22,11 +22,11 @@
 #ifndef DECOBUTTON_H
 #define DECOBUTTON_H
 
-#include "../atmolib/widgets.h" //buttonbase class
-#include <KDecoration2/DecorationButton>
-#include <KDecoration2/DecorationButtonGroup>
+#include <QEnterEvent>
 
-namespace KDecoration2 { class Decoration; }
+#include "../atmolib/widgets.h" //buttonbase class
+#include "kdecoration_compat.h"
+
 namespace NSE
 {
 class Deco;
@@ -34,21 +34,20 @@ class Button;
 
 ///-----------------------------------------------------------------------------
 
-class Button : public KDecoration2::DecorationButton, public ButtonBase
+class Button : public KDecoration3::DecorationButton, public ButtonBase
 {
     Q_OBJECT
 public:
     ~Button();
-    explicit Button(QObject *parent, const QVariantList &args);
-    static Button *create(KDecoration2::DecorationButtonType buttonType, KDecoration2::Decoration *decoration, QObject *parent);
-    void paint(QPainter *painter, const QRect &repaintArea);
-    const QRect buttonRect() const { return geometry().toRect(); }
+    static Button *create(KDecoration3::DecorationButtonType buttonType, KDecoration3::Decoration *decoration, QObject *parent);
+    void paint(QPainter *painter, const AtmoDecoRect &repaintArea);
+    const QRect buttonRect() const { return atmoToRect(geometry()); }
     const QSize buttonSize() const;
-    void updateGeometry() { setGeometry(QRect(geometry().topLeft().toPoint(), buttonSize())); }
-    static bool isSupported(KDecoration2::DecorationButtonType t, Deco *d);
+    void updateGeometry() { setGeometry(AtmoDecoRect(geometry().topLeft(), buttonSize())); }
+    static bool isSupported(KDecoration3::DecorationButtonType t, Deco *d);
 
 protected:
-    explicit Button(KDecoration2::DecorationButtonType buttonType, Deco *decoration, QObject *parent = 0);
+    explicit Button(KDecoration3::DecorationButtonType buttonType, Deco *decoration, QObject *parent = 0);
 
     void hoverEnterEvent(QHoverEvent *event);
     void hoverLeaveEvent(QHoverEvent *event);
@@ -93,7 +92,7 @@ protected:
     void showEvent(QShowEvent *e);
     void restack();
 
-protected slots:
+protected Q_SLOTS:
     void updatePosition();
 
 private:
@@ -127,8 +126,8 @@ protected:
     Deco *decoration() const;
     void hoverChanged();
     void paintEvent(QPaintEvent *e);
-    void enterEvent(QEvent *e) { hover(); QWidget::enterEvent(e); }
-    void leaveEvent(QEvent *e) { unhover(); QWidget::enterEvent(e); }
+    void enterEvent(QEnterEvent *e) { hover(); QWidget::enterEvent(e); }
+    void leaveEvent(QEvent *e) { unhover(); QWidget::leaveEvent(e); }
     void mousePressEvent(QMouseEvent *e) { processMouseEvent(e); /*QWidget::mousePressEvent(e);*/ }
     void mouseReleaseEvent(QMouseEvent *e) { processMouseEvent(e); update();/*QWidget::mouseReleaseEvent(e);*/ }
 

@@ -67,39 +67,42 @@ Style::layoutSpacingAndMargins(const QWidget *w)
             return 0;
     }
     if (qobject_cast<const QGroupBox *>(w))
-        return 8;
-    return 4;
+        return Ops::dpiScaled(w, 8);
+    return Ops::dpiScaled(w, 4);
 }
 
 int
 Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
 {
+    const auto px = [widget](qreal value) { return Ops::dpiScaled(widget, value); };
     switch (metric)
     {
     case PM_LayoutHorizontalSpacing:
     case PM_LayoutVerticalSpacing:
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case PM_DefaultTopLevelMargin:
     case PM_DefaultChildMargin:
     case PM_DefaultLayoutSpacing:
-        return 4;
+#endif
+        return px(4);
     case PM_LayoutLeftMargin:
     case PM_LayoutRightMargin:
     case PM_LayoutBottomMargin:
     case PM_LayoutTopMargin:
         return layoutSpacingAndMargins(widget);
     case PM_HeaderMarkSize:
-        return 9;
+        return px(9);
     case PM_ButtonMargin:
-        return 4;
+        return px(4);
     case PM_SpinBoxFrameWidth:
         return 0;
     case PM_SpinBoxSliderHeight:
         return widget?widget->height()/2:option->rect.height()/2;
     case PM_TabCloseIndicatorHeight:
     case PM_TabCloseIndicatorWidth:
-        return 16;
+        return px(16);
     case PM_TabBarTabOverlap:	//19	Number of pixels the tabs should overlap. (Currently only used in styles, not inside of QTabBar)
-        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget))?dConf.tabs.safrnd+4:0;
+        return Ops::isSafariTabBar(qobject_cast<const QTabBar *>(widget)) ? px(dConf.tabs.safrnd + 4) : 0;
     case PM_TabBarTabHSpace:	//20	Extra space added to the tab width.
     {
 //        const QTabBar *bar = qobject_cast<const QTabBar *>(widget);
@@ -129,21 +132,21 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
     case PM_ExclusiveIndicatorHeight:
     {
         static const int sm = GFX::shadowMargin(dConf.pushbtn.shadow);
-        return 16+sm;
+        return px(16 + sm);
     }
     case PM_CheckBoxLabelSpacing:
     case PM_RadioButtonLabelSpacing:
-        return 4;
-    case PM_MenuVMargin: return 6;
+        return px(4);
+    case PM_MenuVMargin: return px(6);
     case PM_MenuHMargin: return 0;
     case PM_MenuBarPanelWidth:
     case PM_MenuPanelWidth: return 0;
-    case PM_MenuBarItemSpacing: return 8;
+    case PM_MenuBarItemSpacing: return px(8);
     case PM_DockWidgetSeparatorExtent:
     case PM_SplitterWidth:
     {
         if (!dConf.uno.enabled || !dConf.uno.overlay)
-            return 6;
+            return px(6);
         if (const QSplitter *splitter = qobject_cast<const QSplitter *>(widget))
         {
             for (int i = 0; i < splitter->count(); ++i)
@@ -152,38 +155,38 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
                 if (!w->isVisible())
                     continue;
                 if (!Overlay::overlay(w))
-                    return 8;
+                    return px(8);
             }
         }
         if (widget && widget->parentWidget() && widget->parentWidget()->inherits("NavigationBar")) //qupzilla "toolbar" splitter
-            return 8;
-        return (dConf.uno.enabled && dConf.app != NSE::Settings::Eiskalt && qobject_cast<const QMainWindow *>(widget?widget->window():0)) ? 1 : 6;
+            return px(8);
+        return (dConf.uno.enabled && dConf.app != NSE::Settings::Eiskalt && qobject_cast<const QMainWindow *>(widget ? widget->window() : 0)) ? qMax(1, px(1)) : px(6);
     }
     case PM_DockWidgetTitleBarButtonMargin: return 0;
     case PM_DefaultFrameWidth:
     {
         if (!widget)
-            return 2;
+            return px(2);
         if (Overlay::overlay(widget))
             return 0;
         if (qobject_cast<const QLineEdit *>(widget) || qobject_cast<const QComboBox *>(widget) || widget->isWindow())
             return 0;
         if (qobject_cast<const QCalendarWidget *>(widget))
-            return 2;
+            return px(2);
         if (qobject_cast<const QGroupBox *>(widget))
-            return 8;
+            return px(8);
         if (qobject_cast<const QAbstractScrollArea *>(widget))
         {
 //            if (!dConf.uno.enabled && static_cast<const QFrame *>(widget)->frameStyle() == (QFrame::StyledPanel|QFrame::Sunken))
-//                return 4;
+//                return px(4);
             static const quint8 sm = qMax(2, GFX::shadowMargin(dConf.views.viewShadow) + bool(dConf.views.viewShadow<Raised));
             static const quint8 pm = dConf.views.traditional ? qMax<quint8>(sm, (dConf.views.viewRnd >> 1)) : 2;
-            return pm;
+            return px(pm);
         }
 
         const QFrame *frame = qobject_cast<const QFrame *>(widget);
         if (frame && frame->frameShadow() == QFrame::Raised)
-            return 8;
+            return px(8);
         if (option && option->state & State_Raised) //the buttons in qtcreator....
             return 0;
 
@@ -193,29 +196,34 @@ Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget
         if (mw->centralWidget() && mw->centralWidget()->isAncestorOf(widget))
         if (!static_cast<const QFrame *>(widget)->frameStyle())
             return 0;
-        return 2;
+        return px(2);
     }
     case PM_ComboBoxFrameWidth: return 0;
-    case PM_ToolBarExtensionExtent: return dConf.arrowSize*2;
+    case PM_ToolBarExtensionExtent: return px(dConf.arrowSize * 2);
     case PM_ToolBarItemSpacing: return 0;
-    case PM_ToolBarSeparatorExtent: return 8;
-    case PM_ToolBarFrameWidth: return inUno(qobject_cast<QToolBar *>(const_cast<QWidget *>(widget)))?2:6;
+    case PM_ToolBarSeparatorExtent: return px(8);
+    case PM_ToolBarFrameWidth: return inUno(qobject_cast<QToolBar *>(const_cast<QWidget *>(widget))) ? px(2) : px(6);
     case PM_ToolBarHandleExtent:
     {
 //        if (const QToolBar *bar = qobject_cast<const QToolBar *>(widget))
 //        if (WindowData *data = WindowData::memory(bar->parentWidget()->winId(), bar->parentWidget()))
 //            return data->value<uint>(WindowData::LeftEmbedSize, 0);
-        return 9-GFX::shadowMargin(dConf.toolbtn.shadow);
+        return qMax(1, px(9 - GFX::shadowMargin(dConf.toolbtn.shadow)));
     }
 //    case PM_SliderThickness: return 12;
-    case PM_ScrollBarExtent: if (dConf.scrollers.style) return dConf.scrollers.size; return Ops::isOrInsideA<const QDockWidget *>(widget)?(int)(dConf.scrollers.size*0.8f)|1:dConf.scrollers.size;
+    case PM_ScrollBarExtent:
+        if (dConf.scrollers.style)
+            return px(dConf.scrollers.size);
+        if (Ops::isOrInsideA<const QDockWidget *>(widget))
+            return qMax(1, px(dConf.scrollers.size * 0.8f) | 1);
+        return px(dConf.scrollers.size);
     case PM_SliderThickness:
     case PM_SliderLength:
-    case PM_SliderControlThickness: return dConf.sliders.size/*qMin(option->rect.height(), option->rect.width())*/;
-    case PM_SliderTickmarkOffset: return 8;
-    case PM_ScrollBarSliderMin: return 32;
+    case PM_SliderControlThickness: return px(dConf.sliders.size)/*qMin(option->rect.height(), option->rect.width())*/;
+    case PM_SliderTickmarkOffset: return px(8);
+    case PM_ScrollBarSliderMin: return px(32);
     case PM_ToolTipLabelFrameWidth:
-        return 8;
+        return px(8);
 #if QT_VERSION >= 0x050000
     case PM_ScrollView_ScrollBarOverlap:
     {

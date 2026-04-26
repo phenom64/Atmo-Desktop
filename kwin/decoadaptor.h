@@ -36,11 +36,11 @@ class DecoAdaptor : public QDBusAbstractAdaptor
 public:
     DecoAdaptor(AdaptorManager *parent = 0) : QDBusAbstractAdaptor(parent), m_manager(parent){}
 
-public slots:
+public Q_SLOTS:
     Q_NOREPLY void updateData(uint win) { m_manager->updateData(win); }
     Q_NOREPLY void updateDeco(uint win) { m_manager->updateDeco(win); }
 
-signals:
+Q_SIGNALS:
      void windowActiveChanged(uint win, bool active);
      void dataChanged(uint win);
 

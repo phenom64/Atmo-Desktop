@@ -45,7 +45,7 @@ protected:
     bool eventFilter(QObject *, QEvent *);
     void scheduleUpdate();
 
-protected slots:
+protected Q_SLOTS:
     void overlayDeleted();
     void updateOverlays();
 
@@ -74,7 +74,7 @@ protected:
     void addSide(const Side s);
     bool isSplitter(QWidget *w, const Position p);
 
-private slots:
+private Q_SLOTS:
     void updateOverlay();
 
 private:
@@ -91,7 +91,7 @@ class Restorer : public QTimer
     Q_OBJECT
 public:
     Restorer(QWidget *widget);
-public slots:
+public Q_SLOTS:
     void restore();
 private:
     QPointer<QWidget> m_guard;

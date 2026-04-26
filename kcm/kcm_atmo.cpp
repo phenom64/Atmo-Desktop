@@ -1,35 +1,37 @@
 #include <KPluginFactory>
 #include <KCModule>
+#include <KPluginMetaData>
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QProcess>
 #include <QFileInfo>
+#include <QWidget>
 
 class KCMAtmo : public KCModule {
     Q_OBJECT
 public:
-    explicit KCMAtmo(QWidget *parent = nullptr, const QVariantList &args = QVariantList())
-        : KCModule(parent, args)
+    explicit KCMAtmo(QObject *parent, const KPluginMetaData &metaData)
+        : KCModule(parent, metaData)
     {
-        auto *lay = new QVBoxLayout(this);
-        auto *lbl = new QLabel(tr("Atmo (NSE) – Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), this);
+        QWidget *root = widget();
+        auto *lay = new QVBoxLayout(root);
+        auto *lbl = new QLabel(tr("Atmo (NSE) - Settings stub.\nOpen the full Atmo Framework Manager for complete configuration."), root);
         lbl->setWordWrap(true);
         lay->addWidget(lbl);
-        auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), this);
+        auto *btn = new QPushButton(tr("Open Atmo Framework Manager"), root);
         lay->addWidget(btn);
-        setLayout(lay);
         connect(btn, &QPushButton::clicked, this, [this]
         {
-            const QString bin("/usr/bin/atmo_manager");
+            const QString bin(QStringLiteral("/usr/bin/atmo_manager"));
             if (QFileInfo::exists(bin))
                 QProcess::startDetached(bin);
             else
-                QProcess::startDetached("atmo_manager"); // fallback if custom path is used
+                QProcess::startDetached(QStringLiteral("atmo_manager")); // fallback if custom path is used
         });
     }
 };
 
-K_PLUGIN_FACTORY_WITH_JSON(KCMAtmoFactory, "kcm_atmo.json", registerPlugin<KCMAtmo>();)
+K_PLUGIN_CLASS_WITH_JSON(KCMAtmo, "kcm_atmo.json")
 
 #include "kcm_atmo.moc"

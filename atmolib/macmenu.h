@@ -75,9 +75,9 @@ public:
     void popDown(qlonglong key);
     void raise(qlonglong key);
     typedef QPointer<QMenuBar> QMenuBar_p;
-signals:
+Q_SIGNALS:
     void activeChanged();
-public slots:
+public Q_SLOTS:
     void activate();
     void deactivate();
 protected:
@@ -99,7 +99,7 @@ private:
     bool usingMacMenu;
     QString service;
     QStringList m_titleSeperators;
-private slots:
+private Q_SLOTS:
     void menuClosed();
     void _release(QObject *);
 };

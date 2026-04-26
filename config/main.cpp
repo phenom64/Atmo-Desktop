@@ -222,7 +222,7 @@ static void genHighlight(const QString &file)
         }
 
     QColor c = QColor::fromHsv(activeHue, sat, val);
-    const QString color = QString("#%1").arg(QString::number(c.rgba(), 16).mid(2));
+    const QString color = QStringLiteral("#%1").arg(QString::number(c.rgba(), 16).mid(2));
     std::cout << std::endl << "Generated color: " << std::endl << color.toLocal8Bit().data() << std::endl;
 }
 
@@ -276,9 +276,9 @@ static void printNSEConfigOptions()
 
 static bool copyDefaultNSEConf()
 {
-    const QString userDir = QDir::homePath() + "/.config/NSE";
+    const QString userDir = QDir::homePath() + QStringLiteral("/.config/NSE");
     QDir().mkpath(userDir);
-    const QString userFile = userDir + "/NSE.conf";
+    const QString userFile = userDir + QStringLiteral("/NSE.conf");
     const QString templateFile = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("atmo/NSE.conf"));
     if (templateFile.isEmpty())
         return false;
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
     case NSEConfigOptions: printNSEConfigOptions(); break;
     case PrintInfo:
     {
-        NSE::Settings::Key k = NSE::Settings::key(argv[2]);
+        NSE::Settings::Key k = NSE::Settings::key(QString::fromLocal8Bit(argv[2]));
         if (k != NSE::Settings::Invalid)
         {
             const char *typeName = NSE::Settings::defaultValue(k).typeName();
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
         break;
     }
     case ShadowInfo: printShadowInfo(atoi(argv[2])); break;
-    case GenHighlight: genHighlight(argv[2]); break;
+    case GenHighlight: genHighlight(QString::fromLocal8Bit(argv[2])); break;
     case ListVars: printVars(); break;
     default: printHelp(); break;
     }

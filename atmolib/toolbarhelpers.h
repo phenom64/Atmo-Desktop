@@ -38,7 +38,7 @@ public:
 protected:
     explicit ToolbarHelpers(QObject *parent = 0);
 
-protected slots:
+protected Q_SLOTS:
     void fixSpacer(QToolBar *toolbar, int width = 7);
     void adjustMarginsImpl(QToolBar *toolbar);
 

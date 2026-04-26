@@ -22,20 +22,17 @@
 #include "decobutton.h"
 #include "kwinclient2.h"
 #include "../atmolib/color.h"
+#include "../atmolib/ops.h"
 #include "../atmolib/xhandler.h"
 
-#include <KDecoration2/DecorationButtonGroup>
-#include <KDecoration2/DecorationButton>
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecoratedClient>
 #include <QPainter>
 #include <QDebug>
 #include <QMouseEvent>
 #include <QHBoxLayout>
 #include <QCoreApplication>
 
-#if HASXCB
-#include <QX11Info>
+#if HASXCB || HASX11
+#include "../atmolib/atmox11.h"
 #endif
 
 namespace NSE
@@ -43,23 +40,12 @@ namespace NSE
 
 ///-------------------------------------------------------------------------------------------------
 
-Button::Button(QObject *parent, const QVariantList &args)
-    : KDecoration2::DecorationButton(args.at(0).value<KDecoration2::DecorationButtonType>(),
-                                     args.at(1).value<KDecoration2::Decoration*>(),
-                                     parent)
-    , ButtonBase((ButtonBase::Type)args.at(0).value<KDecoration2::DecorationButtonType>(),
-                 static_cast<Deco *>(args.at(1).value<KDecoration2::Decoration*>())->m_buttonManager)
-{
-    m_decoration = static_cast<Deco *>(args.at(1).value<KDecoration2::Decoration*>());
-    setGeometry(QRect(QPoint(0, 0), buttonSize()));
-}
-
-Button::Button(KDecoration2::DecorationButtonType type, Deco *decoration, QObject *parent)
-    : KDecoration2::DecorationButton(type, decoration, parent)
+Button::Button(KDecoration3::DecorationButtonType type, Deco *decoration, QObject *parent)
+    : KDecoration3::DecorationButton(type, decoration, parent)
     , ButtonBase((ButtonBase::Type)type, decoration->m_buttonManager)
 {
     m_decoration = decoration;
-    setGeometry(QRect(QPoint(0, 0), buttonSize()));
+    setGeometry(AtmoDecoRect(AtmoDecoPoint(0, 0), buttonSize()));
 }
 
 Button::~Button()
@@ -67,22 +53,22 @@ Button::~Button()
 }
 
 bool
-Button::isSupported(KDecoration2::DecorationButtonType t, Deco *d)
+Button::isSupported(KDecoration3::DecorationButtonType t, Deco *d)
 {
     bool supported(true);
     switch (t)
     {
-    case KDecoration2::DecorationButtonType::Close: supported = d->client().data()->isCloseable(); break;
-    case KDecoration2::DecorationButtonType::Maximize: supported = d->client().data()->isMaximizeable(); break;
-    case KDecoration2::DecorationButtonType::Minimize: supported = d->client().data()->isMinimizeable(); break;
-    case KDecoration2::DecorationButtonType::Shade: supported = d->client().data()->isShadeable(); break;
+    case KDecoration3::DecorationButtonType::Close: supported = d->window()->isCloseable(); break;
+    case KDecoration3::DecorationButtonType::Maximize: supported = d->window()->isMaximizeable(); break;
+    case KDecoration3::DecorationButtonType::Minimize: supported = d->window()->isMinimizeable(); break;
+    case KDecoration3::DecorationButtonType::Shade: supported = d->window()->isShadeable(); break;
     default: break;
     }
     return supported;
 }
 
 Button
-*Button::create(KDecoration2::DecorationButtonType type, KDecoration2::Decoration *decoration, QObject *parent)
+*Button::create(KDecoration3::DecorationButtonType type, KDecoration3::Decoration *decoration, QObject *parent)
 {
     if (Deco *d = qobject_cast<Deco *>(decoration))
         if (isSupported(type, d))
@@ -97,17 +83,21 @@ Button::buttonSize() const
 //    {
 //        return QSize();
 //    }
+    const int small = Ops::dpiScaled(nullptr, 15);
+    const int regular = Ops::dpiScaled(nullptr, 16);
+    const int antonClose = Ops::dpiScaled(nullptr, 19);
+    const int anton = Ops::dpiScaled(nullptr, 17);
     if (buttonStyle() == ButtonBase::Anton)
     {
         if (buttonType() == ButtonBase::Close)
-            return QSize(19, 15);
-        return QSize(17, 15);
+            return QSize(antonClose, small);
+        return QSize(anton, small);
     }
-    return QSize(16, 16);
+    return QSize(regular, regular);
 }
 
 void
-Button::paint(QPainter *painter, const QRect &repaintArea)
+Button::paint(QPainter *painter, const AtmoDecoRect &repaintArea)
 {
 //    if (buttonType() == ApplicationMenu)
 //    {
@@ -131,37 +121,37 @@ Button::paint(QPainter *painter, const QRect &repaintArea)
 const bool
 Button::isActive() const
 {
-    return decoration()->client().data()->isActive();
+    return decoration()->window()->isActive();
 }
 
 const bool
 Button::isMaximized() const
 {
-    return decoration()->client().data()->isMaximized();
+    return decoration()->window()->isMaximized();
 }
 
 const bool
 Button::keepBelow() const
 {
-    return decoration()->client().data()->isKeepBelow();
+    return decoration()->window()->isKeepBelow();
 }
 
 const bool
 Button::keepAbove() const
 {
-    return decoration()->client().data()->isKeepAbove();
+    return decoration()->window()->isKeepAbove();
 }
 
 const bool
 Button::onAllDesktops() const
 {
-    return decoration()->client().data()->isOnAllDesktops();
+    return decoration()->window()->isOnAllDesktops();
 }
 
 const bool
 Button::shade() const
 {
-    return decoration()->client().data()->isShaded();
+    return decoration()->window()->isShaded();
 }
 
 const bool
@@ -173,21 +163,21 @@ Button::isDark() const
 void
 Button::hoverEnterEvent(QHoverEvent *event)
 {
-    KDecoration2::DecorationButton::hoverEnterEvent(event);
+    KDecoration3::DecorationButton::hoverEnterEvent(event);
 //    hover();
 }
 
 void
 Button::hoverLeaveEvent(QHoverEvent *event)
 {
-    KDecoration2::DecorationButton::hoverLeaveEvent(event);
+    KDecoration3::DecorationButton::hoverLeaveEvent(event);
 //    unhover();
 }
 
 void
 Button::mouseReleaseEvent(QMouseEvent *event)
 {
-    KDecoration2::DecorationButton::mouseReleaseEvent(event);
+    KDecoration3::DecorationButton::mouseReleaseEvent(event);
 //    update();
     processMouseEvent(event);
     update();
@@ -196,7 +186,7 @@ Button::mouseReleaseEvent(QMouseEvent *event)
 void
 Button::mousePressEvent(QMouseEvent *event)
 {
-    KDecoration2::DecorationButton::mousePressEvent(event);
+    KDecoration3::DecorationButton::mousePressEvent(event);
     processMouseEvent(event);
     update();
 }
@@ -217,25 +207,29 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
     , m_hasBeenShown(false)
 {
     bool isX11(false);
-#if HASXCB
-    isX11 = QX11Info::isPlatformX11();
+#if HASXCB || HASX11
+    isX11 = AtmoX11::isAvailable();
 #endif
-    if (!isX11 || !m_deco)
+    if (!isX11 || !m_deco || !m_deco->winId())
     {
         hide();
         return;
     }
     setFocusPolicy(Qt::NoFocus);
 //    setFixedSize(48, 16);
-//    KDecoration2::DecoratedClient *c = m_deco->client().data();
+//    KDecoration3::DecoratedClient *c = m_deco->window();
 
-    KDecoration2::DecorationButtonGroup *group = s == Left ? m_deco->m_leftButtons : m_deco->m_rightButtons;
-    QVector< QPointer<KDecoration2::DecorationButton > > buttons = group->buttons();
+    KDecoration3::DecorationButtonGroup *group = s == Left ? m_deco->m_leftButtons : m_deco->m_rightButtons;
+    const auto buttons = group->buttons();
     QHBoxLayout *l = new QHBoxLayout(this);
-    for (int i = 0; i < buttons.count(); ++i)
-        l->addWidget(new EmbeddedButton(this, (ButtonBase::Type)buttons.at(i).data()->type()));
+    for (const auto &button : buttons)
+    {
+        if (!button)
+            continue;
+        l->addWidget(new EmbeddedButton(this, static_cast<ButtonBase::Type>(button->type())));
+    }
     l->setContentsMargins(0, 0, 0, 0);
-    l->setSpacing(4);
+    l->setSpacing(Ops::dpiScaled(nullptr, 4));
     setContentsMargins(0, 0, 0, 0);
     setLayout(l);
 
@@ -243,7 +237,7 @@ EmbeddedWidget::EmbeddedWidget(Deco *d, const Side s)
     updatePosition();
 
     if (s == Right)
-        connect(d->client().data(), &KDecoration2::DecoratedClient::widthChanged, this, &EmbeddedWidget::updatePosition);
+        connect(d->window(), &AtmoDecoratedWindow::widthChanged, this, &EmbeddedWidget::updatePosition);
 
     connect(m_deco, SIGNAL(dataChanged()), this, SLOT(update()));
     show();
@@ -278,9 +272,9 @@ EmbeddedWidget::showEvent(QShowEvent *e)
     if (d && d.lock())
     {
         if (m_side == Left)
-            d->leftEmbedSize = width()+8;
+            d->leftEmbedSize = width() + Ops::dpiScaled(nullptr, 8);
         if (m_side == Right)
-            d->rightEmbedSize = width()+8;
+            d->rightEmbedSize = width() + Ops::dpiScaled(nullptr, 8);
         d.unlock();
     }
     AdaptorManager::instance()->dataChanged(m_deco->winId());
@@ -290,7 +284,9 @@ EmbeddedWidget::showEvent(QShowEvent *e)
 const QPoint
 EmbeddedWidget::topLeft() const
 {
-    return QPoint(m_side==Left?8:m_deco->titleBar().width()-width()-8, 4);
+    const int sidePad = Ops::dpiScaled(nullptr, 8);
+    const int topPad = Ops::dpiScaled(nullptr, 4);
+    return QPoint(m_side == Left ? sidePad : m_deco->titleBar().width() - width() - sidePad, topPad);
 }
 
 void
@@ -322,7 +318,10 @@ EmbeddedWidget::mousePressEvent(QMouseEvent *e)
 {
     m_press = true;
     QWidget::mousePressEvent(e);
-    XHandler::pressEvent(e->globalPos(), m_deco->client().data()->decorationId(), e->button());
+    if (m_deco->winId())
+    {
+        XHandler::pressEvent(e->globalPosition().toPoint(), m_deco->winId(), e->button());
+    }
 }
 
 void
@@ -330,21 +329,27 @@ EmbeddedWidget::mouseReleaseEvent(QMouseEvent *e)
 {
     m_press = false;
     QWidget::mouseReleaseEvent(e);
-    XHandler::releaseEvent(e->globalPos(), m_deco->client().data()->decorationId(), e->button());
+    if (m_deco->winId())
+    {
+        XHandler::releaseEvent(e->globalPosition().toPoint(), m_deco->winId(), e->button());
+    }
 }
 
 void
 EmbeddedWidget::mouseMoveEvent(QMouseEvent *e)
 {
     QWidget::mouseMoveEvent(e);
-    if (m_press)
-        XHandler::mwRes(e->pos(), e->globalPos(), m_deco->client().data()->windowId());
+    if (m_press && m_deco->winId())
+    {
+        XHandler::mwRes(e->position().toPoint(), e->globalPosition().toPoint(), m_deco->winId());
+    }
 }
 
 void
 EmbeddedWidget::wheelEvent(QWheelEvent *e)
 {
-    XHandler::wheelEvent(m_deco->client().data()->decorationId(), e->delta()>0);
+    if (m_deco->winId())
+        XHandler::wheelEvent(m_deco->winId(), e->angleDelta().y() > 0);
     e->accept();
 }
 
@@ -395,7 +400,8 @@ EmbeddedButton::EmbeddedButton(QWidget *parent, const Type &t)
     , ButtonBase(t)
 {
     setAttribute(Qt::WA_Hover);
-    setFixedSize(16, 16);
+    const int buttonExtent = Ops::dpiScaled(nullptr, 16);
+    setFixedSize(buttonExtent, buttonExtent);
     setForegroundRole(QPalette::ButtonText);
     setBackgroundRole(QPalette::Button);
 }
@@ -417,37 +423,37 @@ EmbeddedButton::paintEvent(QPaintEvent *e)
 const bool
 EmbeddedButton::isActive() const
 {
-    return decoration()->client().data()->isActive();
+    return decoration()->window()->isActive();
 }
 
 const bool
 EmbeddedButton::isMaximized() const
 {
-    return decoration()->client().data()->isMaximized();
+    return decoration()->window()->isMaximized();
 }
 
 const bool
 EmbeddedButton::keepBelow() const
 {
-    return decoration()->client().data()->isKeepBelow();
+    return decoration()->window()->isKeepBelow();
 }
 
 const bool
 EmbeddedButton::keepAbove() const
 {
-    return decoration()->client().data()->isKeepAbove();
+    return decoration()->window()->isKeepAbove();
 }
 
 const bool
 EmbeddedButton::onAllDesktops() const
 {
-    return decoration()->client().data()->isOnAllDesktops();
+    return decoration()->window()->isOnAllDesktops();
 }
 
 const bool
 EmbeddedButton::shade() const
 {
-    return decoration()->client().data()->isShaded();
+    return decoration()->window()->isShaded();
 }
 
 const bool
@@ -468,7 +474,7 @@ EmbeddedButton::isDark() const
 //        return Color::mid(fg, bg, 1, (!dark*4)+(!isActive()*(dark?2:8)));
 //    }
 //    if (c == ButtonBase::Highlight)
-//        return d->client().data()->palette().color(QPalette::Highlight);
+//        return d->window()->palette().color(QPalette::Highlight);
 //    if (c == ButtonBase::Fg)
 //        return d->fgColor();
 //    if (c == ButtonBase::Bg)
@@ -497,7 +503,13 @@ EmbeddedButton::onClick(const Qt::MouseButton &button)
         case Shade: decoration()->requestToggleShade(); break;
         case KeepAbove: decoration()->requestToggleKeepAbove(); break;
         case KeepBelow: decoration()->requestToggleKeepBelow(); break;
-        case Menu: decoration()->requestShowWindowMenu(); break;
+        case Menu:
+#if defined(ATMO_USE_KDECORATION3)
+            decoration()->requestShowWindowMenu(buttonRect().translated(mapToGlobal(QPoint(0, 0))));
+#else
+            decoration()->requestShowWindowMenu();
+#endif
+            break;
         default: break;
         }
 //    }

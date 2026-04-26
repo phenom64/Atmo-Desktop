@@ -23,16 +23,15 @@
 #define KWINCLIENT2_H
 
 #include <QDBusAbstractAdaptor>
-#include <KCModule>
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecoratedClient>
 #include <QVariant>
 #include <QDebug>
+#include <QWidget>
+#include <QPaintEvent>
 #include <netwm_def.h>
 #include <KPluginFactory>
+#include "kdecoration_compat.h"
 #include "../config/settings.h"
 #include "../atmolib/windowdata.h"
-namespace KDecoration2 { class DecorationButtonGroup; }
 class WindowData;
 class QPixmap;
 class QSharedMemory;
@@ -47,7 +46,7 @@ public:
     explicit DSPDecoFactory();
     ~DSPDecoFactory();
 
-protected slots:
+protected Q_SLOTS:
     void shapeCorners();
 
 //protected:
@@ -61,69 +60,13 @@ protected slots:
 namespace NSE
 {
 
-class ConfigModule : public KCModule
-{
-    Q_OBJECT
-public:
-    ConfigModule(QWidget *parent = 0, const QVariantList &args = QVariantList());
-    ~ConfigModule() {}
-public slots:
-    /**
-     * Load the configuration data into the module.
-     *
-     * The load method sets the user interface elements of the
-     * module to reflect the current settings stored in the
-     * configuration files.
-     *
-     * This method is invoked whenever the module should read its configuration
-     * (most of the times from a config file) and update the user interface.
-     * This happens when the user clicks the "Reset" button in the control
-     * center, to undo all of his changes and restore the currently valid
-     * settings. It is also called right after construction.
-     */
-    void load() {}
-
-    /**
-     * Save the configuration data.
-     *
-     * The save method stores the config information as shown
-     * in the user interface in the config files.
-     *
-     * If necessary, this method also updates the running system,
-     * e.g. by restarting applications. This normally does not apply for
-     * KSettings::Dialog modules where the updating is taken care of by
-     * KSettings::Dispatcher.
-     *
-     * save is called when the user clicks "Apply" or "Ok".
-     *
-     * If you use KConfigXT, saving is taken care off automatically and
-     * you do not need to load manually. However, if you for some reason reimplement it and
-     * also are using KConfigXT, you must call this function, otherwise the saving of KConfigXT
-     * options will not work. Call it at the very end of your reimplementation, to avoid
-     * changed() signals getting emitted when you modify widgets.
-     */
-    void save() {}
-
-    /**
-     * Sets the configuration to sensible default values.
-     *
-     * This method is called when the user clicks the "Default"
-     * button. It should set the display to useful values.
-     *
-     * If you use KConfigXT, you do not have to reimplement this function since
-     * the fetching and settings of default values is done automatically. However, if you
-     * reimplement and also are using KConfigXT, remember to call the base function at the
-     * very end of your reimplementation.
-     */
-    void defaults() {}
-};
 class Grip;
 class EmbedHandler;
 class ButtonGroup;
 class ButtonGroupBase;
 class MenuBar;
 
-class Deco : public KDecoration2::Decoration
+class Deco : public KDecoration3::Decoration
 {
     friend class Button;
     friend class Grip;
@@ -159,15 +102,17 @@ public:
     };
     explicit Deco(QObject *parent = 0, const QVariantList &args = QVariantList());
     ~Deco();
-    void paint(QPainter *painter, const QRect &repaintArea);
-    bool event(QEvent *event);
+    void paint(QPainter *painter, const AtmoDecoRect &repaintArea) override;
+    bool event(QEvent *event) override;
     const int titleHeight() const;
     void setTitleHeight(const int h);
     const int border();
-    const quint32 winId() const { return client().data()->windowId(); }
-//    QSharedData<KDecoration2::DecorationShadow> shadow() const;
+    quint32 winId() const;
+    quint32 decoKey() const;
+    QString windowClassName() const;
+//    QSharedData<KDecoration3::DecorationShadow> shadow() const;
 
-public slots:
+public Q_SLOTS:
     /**
      * This method gets invoked from the framework once the Decoration is created and
      * completely setup.
@@ -175,14 +120,18 @@ public slots:
      * An inheriting class should override this method and perform all initialization in
      * this method instead of the constructor.
      **/
+#if defined(ATMO_USE_KDECORATION3)
+    bool init() override;
+#else
     void init();
+#endif
 
     void updateData();
 
-signals:
+Q_SIGNALS:
     void dataChanged();
 
-protected slots:
+protected Q_SLOTS:
     void updateLayout();
     void activeChanged(const bool active);
     void captionChanged(const QString &caption) { update(); }
@@ -208,7 +157,7 @@ protected:
     void removeEmbedder();
 
 private:
-    KDecoration2::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
+    KDecoration3::DecorationButtonGroup *m_leftButtons, *m_rightButtons;
     ButtonGroupBase *m_buttonManager;
     EmbedHandler *m_embedder;
     QPixmap m_pix, m_bevelCorner[3], *m_bling, m_bgPix;
@@ -252,7 +201,7 @@ public:
         for (int i = 0; i < m_decos.count(); ++i)
         {
             NSE::Deco *d = m_decos.at(i);
-            if (d->client().data()->windowId() == win)
+            if (d->winId() == win || d->decoKey() == win)
             {
                 d->updateData();
                 return;
@@ -264,7 +213,7 @@ public:
         for (int i = 0; i < m_decos.count(); ++i)
         {
             NSE::Deco *d = m_decos.at(i);
-            if (d->client().data()->windowId() == win)
+            if (d->winId() == win || d->decoKey() == win)
             {
                 d->update();
                 return;
@@ -300,7 +249,7 @@ protected:
     void regenPix();
     static QPolygon shape();
 
-protected slots:
+protected Q_SLOTS:
     void updatePosition();
 
 private:

@@ -82,10 +82,10 @@ WindowData::sync()
 #if HASDBUS
     if (!winId())
         return;
-    static const QString destination("com.syndromatic.atmo.kwindeco");
-    static const QString path("/NSEDecoAdaptor");
-    static const QString interface("com.syndromatic.atmo.deco");
-    static const QString method("updateData");
+    static const QString destination(QStringLiteral("com.syndromatic.atmo.kwindeco"));
+    static const QString path(QStringLiteral("/NSEDecoAdaptor"));
+    static const QString interface(QStringLiteral("com.syndromatic.atmo.deco"));
+    static const QString method(QStringLiteral("updateData"));
     QDBusMessage msg = QDBusMessage::createMethodCall(destination, path, interface, method);
     msg << winId();
     QDBusConnection::sessionBus().send(msg);
