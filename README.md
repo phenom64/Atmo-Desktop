@@ -1,5 +1,7 @@
 # Atmo Desktop Framework (NSE)
 
+## IMPORTANT: The master branch is currently out-of-date, with Qt 5 code. Switch to the qt6-plasma6-migration branch to keep up with the latest work from Syndromatic.
+
 An elegant Qt 5 widget style and KWin decoration designed for SynOS. Atmo brings the New Syndromatic Experience (NSE) to KDE/Qt apps with a unified toolbar/titlebar (UNO), refined shadows and gradients, and a highly configurable, text‑based theme system.
 
 Developed and maintained by Syndromatic Ltd. Derived from “styleproject” (2013, Robert Metsaranta), modernized for Qt 5.
