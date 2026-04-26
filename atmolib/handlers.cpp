@@ -718,6 +718,7 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
     if (qobject_cast<QMainWindow *>(w->parentWidget()) && w->parentWidget()->parentWidget()) //weird case where mainwindow is embedded in another window
         return false;
 
+    bool drewSharedUno = false;
     WindowData data = WindowData::memory(XHandler::windowId(win), win);
     if (data && data.lock())
     {
@@ -728,9 +729,45 @@ Window::drawUnoPart(QPainter *p, QRect r, const QWidget *w, QPoint offset)
         p->fillRect(r, data.image());
         p->setBrushOrigin(bo);
         data.unlock();
+        drewSharedUno = true;
+    }
+    if (!drewSharedUno)
+    {
+        QPalette pal(win->palette());
+        if (!Color::contrast(pal.color(win->backgroundRole()), pal.color(win->foregroundRole())))
+            pal = QApplication::palette();
+        if (dConf.differentInactive && !WindowHelpers::isActiveWindow(win))
+        {
+            pal.setColor(QPalette::Inactive, win->backgroundRole(), Color::mid(pal.color(win->backgroundRole()), Qt::white, 20, 1));
+            pal.setColor(QPalette::Inactive, win->foregroundRole(), Color::mid(pal.color(win->foregroundRole()), Qt::white, 20, 1));
+            pal.setCurrentColorGroup(QPalette::Inactive);
+        }
+
+        QColor bc(pal.color(win->backgroundRole()));
+        if (dConf.uno.tint.first.isValid())
+            bc = Color::mid(bc, dConf.uno.tint.first, 100 - dConf.uno.tint.second, dConf.uno.tint.second);
+        QBrush b(bc);
+        if (!dConf.uno.gradient.isEmpty())
+        {
+            QLinearGradient lg(0, 0, dConf.uno.hor ? win->width() : 0, dConf.uno.hor ? 0 : clientUno);
+            lg.setStops(Settings::gradientStops(dConf.uno.gradient, bc));
+            b = QBrush(lg);
+        }
+
+        p->save();
+        if (!qobject_cast<const QStatusBar *>(w))
+            p->setBrushOrigin(-offset);
+        p->fillRect(r, b);
+        if (dConf.uno.noise)
+        {
+            const QPixmap noise = FX::mid(GFX::noise(), b, dConf.uno.noise, 100 - dConf.uno.noise, QSize(win->width(), clientUno));
+            p->setCompositionMode(QPainter::CompositionMode_Overlay);
+            p->drawTiledPixmap(r, noise, offset);
+        }
+        p->restore();
     }
     const QPoint tl = w->mapTo(win, QPoint(0, 0));
-    if (dConf.uno.contAware && tl.y() < clientUno)
+    if (dConf.uno.contAware && XHandler::windowId(win) && tl.y() < clientUno)
         ScrollWatcher::drawContBg(p, win, r, offset);
 
     if (tl.y()+r.height() == clientUno)
@@ -781,6 +818,8 @@ Drag::eventFilter(QObject *o, QEvent *e)
     if (!cd)
         return false;
 
+    if (!XHandler::windowId(w->window()))
+        return false;
     XHandler::mwRes(w->mapTo(w->window(), me->position().toPoint()), me->globalPosition().toPoint(), XHandler::windowId(w->window()));
     return false;
 }
@@ -874,6 +913,8 @@ ScrollWatcher::updateWin(QWidget *mainWin)
 QSharedMemory
 *ScrollWatcher::mem(QMainWindow *win)
 {
+    if (!XHandler::windowId(win))
+        return 0;
     QSharedMemory *m(0);
     if (s_mem.contains(win))
         m = s_mem.value(win);

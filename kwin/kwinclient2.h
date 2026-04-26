@@ -146,6 +146,8 @@ protected:
     void hoverLeave();
 
     void updateBgPixmap();
+    void applyNativeShadow();
+    uint nativeShadowThemeHash() const;
     WindowData getShm();
     void paintBevel(QPainter *painter, const int bgLum);
     void paintBling(QPainter *painter, const QRect &r);

@@ -393,7 +393,7 @@ static const QVariant s_default[] = {
 
     16,
     true,
-    false,
+    true,
     QStringLiteral("0.0:5, 1.0:-5"),
     QStringLiteral("0.0:-5, 1.0:5"),
     0,

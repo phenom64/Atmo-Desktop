@@ -22,6 +22,7 @@
 #include "kwinclient2.h"
 #include "decobutton.h"
 #include "decoadaptor.h"
+#include "decorationshadowcache.h"
 #include "menubar.h"
 #include "../atmolib/color.h"
 #include "../atmolib/xhandler.h"
@@ -54,6 +55,8 @@
 #include <QDir>
 #include <QMenu>
 #include <QWindow>
+#include <QGuiApplication>
+#include <QScreen>
 #include <qmath.h>
 
 #include <QDebug>
@@ -120,7 +123,14 @@ static qreal snapDecoMetric(qreal value, qreal scale)
 
 static qreal decoScale(const Deco *deco)
 {
-    return deco && deco->window() ? deco->window()->scale() : 1.0;
+    return deco && deco->window() ? deco->window()->nextScale() : 1.0;
+}
+
+static qreal decorationDpr()
+{
+    if (QScreen *screen = QGuiApplication::primaryScreen())
+        return qMax<qreal>(1.0, screen->devicePixelRatio());
+    return 1.0;
 }
 
 QMap<QString, Deco::Data> Deco::Data::s_data;
@@ -321,22 +331,27 @@ Deco::init()
     m_buttonStyle = dConf.deco.buttons;
     checkForDataFromWindowClass();
     QTimer::singleShot(1000, this, &Deco::checkForDataFromWindowClass); //spotify libreoffice... sets the windowclass late
+#if defined(ATMO_USE_KDECORATION3)
+    applyNativeShadow();
+#else
     if (const uint id = winId())
     {
         ShadowHandler::installShadows(id);
     }
     else
         updateBgPixmap();
+#endif
 
     connect(window(), &AtmoDecoratedWindow::widthChanged, this, [this]() { updateLayout(); });
     connect(window(), &AtmoDecoratedWindow::activeChanged, this, &Deco::activeChanged);
     connect(window(), &AtmoDecoratedWindow::captionChanged, this, &Deco::captionChanged);
     connect(window(), &AtmoDecoratedWindow::maximizedChanged, this, &Deco::maximizedChanged);
     connect(window(), &AtmoDecoratedWindow::heightChanged, this, [this]() { updateLayout(); });
-    connect(window(), &AtmoDecoratedWindow::paletteChanged, this, [this]() { updateBgPixmap(); update(); });
+    connect(window(), &AtmoDecoratedWindow::paletteChanged, this, [this]() { updateBgPixmap(); applyNativeShadow(); update(); });
     connect(window(), &AtmoDecoratedWindow::nextScaleChanged, this, [this]() {
         setTitleHeight(m_titleHeight);
         updateLayout();
+        applyNativeShadow();
     });
 
 #if defined(ATMO_USE_KDECORATION3)
@@ -397,6 +412,7 @@ Deco::reconfigure()
     m_buttonManager->setColors(m_bg, m_fg, m_minColor, m_maxColor, m_closeColor);
     m_buttonManager->clearCache();
     updateLayout();
+    applyNativeShadow();
 }
 
 void
@@ -454,6 +470,55 @@ Deco::windowClassName() const
 #endif
 }
 
+uint
+Deco::nativeShadowThemeHash() const
+{
+    uint hash = 0;
+    hash = ::qHash(dConf.deco.shadowSize, hash);
+    hash = ::qHash(dConf.deco.shadowRnd, hash);
+    hash = ::qHash(dConf.deco.frameSize, hash);
+    hash = ::qHash(dConf.shadows.opacity, hash);
+    hash = ::qHash(dConf.shadows.illumination, hash);
+    hash = ::qHash(dConf.shadows.darkRaisedEdges, hash);
+    hash = ::qHash(m_bg.rgba(), hash);
+    hash = ::qHash(m_fg.rgba(), hash);
+    hash = ::qHash(m_shadowOpacity, hash);
+    hash = ::qHash(m_uno, hash);
+    hash = ::qHash(m_titleHeight, hash);
+    return hash;
+}
+
+void
+Deco::applyNativeShadow()
+{
+#if defined(ATMO_USE_KDECORATION3)
+    if (!window())
+        return;
+    const int opacity = m_shadowOpacity ? m_shadowOpacity : dConf.shadows.opacity;
+    if (dConf.deco.shadowSize <= 0 || opacity <= 0 || window()->isMaximized())
+    {
+        setShadow(std::shared_ptr<KDecoration3::DecorationShadow>());
+        return;
+    }
+
+    const qreal scale = decoScale(this);
+    const qreal dpr = qMax<qreal>(scale, decorationDpr());
+    const int radius = dConf.deco.shadowRnd ? dConf.deco.shadowRnd : dConf.frameRnd;
+    const QColor tint = window()->palette().color(QPalette::Shadow).isValid()
+        ? Color::mid(window()->palette().color(QPalette::Shadow), m_bg, 1, 1)
+        : m_bg;
+    setShadow(DecorationShadowCache::shadow(scale,
+                                            dpr,
+                                            window()->isActive(),
+                                            dConf.deco.shadowSize,
+                                            opacity,
+                                            radius,
+                                            border(),
+                                            tint,
+                                            nativeShadowThemeHash()));
+#endif
+}
+
 void
 Deco::maximizedChanged(const bool max)
 {
@@ -461,6 +526,7 @@ Deco::maximizedChanged(const bool max)
     const qreal scale = decoScale(this);
     const qreal m = snapDecoMetric(border(), scale);
     setBorders(AtmoDecoMargins(m, snapDecoMetric(titleBar().height(), scale), m, m));
+    applyNativeShadow();
 }
 
 void
@@ -610,6 +676,7 @@ Deco::updateData()
     }
     recalculate();
     updateBgPixmap();
+    applyNativeShadow();
     update();
     if (winDataChanged)
         Q_EMIT dataChanged();
@@ -626,6 +693,7 @@ Deco::checkForDataFromWindowClass()
     ATMO_LOG << "Applying decoration data for window class: " << winClass;
     Data::decoData(winClass, this);
     updateBgPixmap();
+    applyNativeShadow();
 
 #if HASDBUSMENU && HASXCB && !defined(ATMO_USE_KDECORATION3)
     if (AtmoX11::isAvailable() && m_showMenuBar && !m_menuBar)
@@ -699,8 +767,13 @@ Deco::activeChanged(const bool active)
 //    AdaptorManager::instance()->windowChanged(window()->windowId(), active);
     if (m_grip)
         m_grip->setColor(Color::mid(m_fg, m_bg, 1, 2));;
+#if defined(ATMO_USE_KDECORATION3)
+    Q_UNUSED(active)
+    applyNativeShadow();
+#else
     if (const quint32 id = winId())
         ShadowHandler::installShadows(id, active);
+#endif
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 

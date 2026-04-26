@@ -114,7 +114,17 @@ WindowHelpers::updateWindowDataImpl(QWidget *win)
         return;
     }
 
-    WindowData data = WindowData::memory(XHandler::windowId(win), win, true);
+    const WId wid = XHandler::windowId(win);
+    if (!wid)
+    {
+        bool separator(true);
+        getHeadHeight(win, separator, 0);
+        QMetaObject::invokeMethod(win, "update", Qt::QueuedConnection);
+        Q_EMIT instance()->windowDataChanged(win);
+        return;
+    }
+
+    WindowData data = WindowData::memory(wid, win, true);
     if (data && data.lock())
     {
         QPalette pal(win->palette());
@@ -253,7 +263,10 @@ WindowHelpers::unoHeight(QWidget *win, bool includeClientPart, bool includeTitle
         height += instance()->m_uno.value(win, 0);
     if (!includeTitleBar)
         return height;
-    WindowData data = WindowData::memory(XHandler::windowId(win), win);
+    const WId wid = XHandler::windowId(win);
+    if (!wid)
+        return height + (dConf.uno.enabled ? 25 : 0);
+    WindowData data = WindowData::memory(wid, win);
     if (data && data.lock())
     {
 //        WindowDataLocker locker(data);

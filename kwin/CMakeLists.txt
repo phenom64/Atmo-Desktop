@@ -33,12 +33,14 @@ endif()
 set(SRCS
     kwinclient2.cpp
     decobutton.cpp
+    decorationshadowcache.cpp
 )
 set(HDRS
     kwinclient2.h
     decobutton.h
     decoadaptor.h
     kdecoration_compat.h
+    decorationshadowcache.h
 )
 
 if(ATMO_HAVE_XCB)

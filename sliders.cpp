@@ -489,8 +489,14 @@ Style::drawSlider(const QStyleOptionComplex *option, QPainter *painter, const QW
         const int add = !(slider.width() & 1) * 1;
         QConicalGradient cg(slider.center()+QPoint(add,add), -45);
 //        cg.setStops(NSE::Settings::gradientStops(dConf.sliders.sliderGrad, bgc));
-        const QColor light = Color::mid(bgc, Qt::white, 2, 1);
-        const QColor dark = Color::mid(bgc, Qt::black, 2, 1);
+        QColor metalBase = Color::mid(opt->palette.color(QPalette::Button), opt->palette.color(QPalette::Window), 1, 1);
+        int h = 0, s = 0, v = 0, a = 255;
+        metalBase.getHsv(&h, &s, &v, &a);
+        metalBase.setHsv(h, qMin(s, 24), qBound(120, v, 218), a);
+        if (!isEnabled(option))
+            metalBase = Color::mid(metalBase, opt->palette.color(QPalette::Window), 1, 2);
+        const QColor light = Color::mid(metalBase, Qt::white, 2, 1);
+        const QColor dark = Color::mid(metalBase, Qt::black, 2, 1);
         cg.setColorAt(0, light);
         cg.setColorAt(0.25f, dark);
         cg.setColorAt(0.5f, light);

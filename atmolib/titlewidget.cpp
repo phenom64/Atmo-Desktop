@@ -78,6 +78,13 @@ TitleWidget::TitleWidget(QToolBar *parent)
 void
 TitleWidget::manage(QToolBar *toolBar)
 {
+#if HASX11 || HASXCB
+    if (!AtmoX11::isAvailable())
+        return;
+#else
+    Q_UNUSED(toolBar)
+    return;
+#endif
     if (!toolBar->findChild<TitleWidget *>())
         new TitleWidget(toolBar);
 }
@@ -157,6 +164,8 @@ TitleWidget::mouseDoubleClickEvent(QMouseEvent *e)
     //you probably need some 30 years of lol if youre clicking faster then 75 ms)
     if (clickSpeed > 75 && clickSpeed < 300)
     {
+        if (!AtmoX11::isAvailable())
+            return;
         WindowData data = WindowData::memory(XHandler::windowId(window()), window());
         if (data && data.lock())
         {
@@ -185,9 +194,13 @@ TitleWidget::mousePressEvent(QMouseEvent *e)
 //#endif
     if (e->button() == Qt::LeftButton)
     {
+        if (!AtmoX11::isAvailable())
+            return;
         XHandler::mwRes(e->position().toPoint(), e->globalPosition().toPoint(), XHandler::windowId(window()));
         return;
     }
+    if (!AtmoX11::isAvailable())
+        return;
     WindowData data = WindowData::memory(XHandler::windowId(window()), window());
     if (data && data.lock())
     {
@@ -201,6 +214,8 @@ void
 TitleWidget::wheelEvent(QWheelEvent *e)
 {
     e->accept();
+    if (!AtmoX11::isAvailable())
+        return;
     WindowData data = WindowData::memory(XHandler::windowId(window()), window());
     if (data && data.lock())
     {

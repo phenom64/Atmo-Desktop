@@ -52,6 +52,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QVariant>
+#include <QMetaType>
 #include <QIcon>
 #include <QMap>
 #include <QStandardPaths>
@@ -63,6 +64,7 @@
 #include <QSlider>
 #include <QDialogButtonBox>
 #include <QSettings>
+#include <QFrame>
 
 #include "../atmolib/color.h"
 #include "../config/settings.h"
@@ -326,7 +328,7 @@ public:
 
         // ---------- Menu Bar (macOS style) ----------
         QMenu *fileMenu = menuBar()->addMenu(tr("File"));
-        fileMenu->addAction(tr("Close"), this, &QWidget::close, QKeySequence::Close);
+        fileMenu->addAction(tr("Close"), QKeySequence::Close, this, &QWidget::close);
 
         QMenu *helpMenu = menuBar()->addMenu(tr("Help"));
         helpMenu->addAction(tr("About Atmo Manager"), this, &ManagerWindow::showAbout);
@@ -524,6 +526,49 @@ private:
         return key.left(key.indexOf(QLatin1Char('.')));
     }
 
+    static QString categoryDescription(const QString &c)
+    {
+        static QMap<QString, QString> descriptions{
+            {QStringLiteral("General"), QStringLiteral("Global behaviour, menus, animation, icons, and application-wide Atmo defaults.")},
+            {QStringLiteral("deco"), QStringLiteral("Window decoration shape, titlebar controls, frame depth, and legacy embedding preferences.")},
+            {QStringLiteral("pushbtn"), QStringLiteral("Default push button roundness, depth, gradients, and tinting.")},
+            {QStringLiteral("toolbtn"), QStringLiteral("Toolbar button material, active states, icon handling, and mask behaviour.")},
+            {QStringLiteral("input"), QStringLiteral("Text fields, spin boxes, and editable controls, including UNO-specific roundness.")},
+            {QStringLiteral("tabs"), QStringLiteral("Tabbed views, document tabs, Safari-style tab blending, and close button behaviour.")},
+            {QStringLiteral("uno"), QStringLiteral("Unified titlebar and toolbar appearance: gradients, noise, tint, and content blending.")},
+            {QStringLiteral("menues"), QStringLiteral("Menu icons, menu gradients, menu-item highlights, and item shadows.")},
+            {QStringLiteral("sliders"), QStringLiteral("Slider handle material, groove fill, metallic controls, and progress-style feedback.")},
+            {QStringLiteral("scrollers"), QStringLiteral("Scrollbar thickness, thumb material, groove styling, and separators.")},
+            {QStringLiteral("views"), QStringLiteral("Tree/list/table view rows, headers, opacity, roundness, and traditional view styling.")},
+            {QStringLiteral("progressbars"), QStringLiteral("Progress bar depth, text placement, gradients, stripes, and visual style.")},
+            {QStringLiteral("windows"), QStringLiteral("Non-UNO window background gradients, noise textures, and orientation.")},
+            {QStringLiteral("shadows"), QStringLiteral("Shared widget shadow opacity, text beveling, illumination, and raised-edge treatment.")}
+        };
+        return descriptions.value(c, QStringLiteral("Advanced Atmo settings for this category."));
+    }
+
+    static QIcon categoryIcon(const QString &c)
+    {
+        static QMap<QString, QString> icons{
+            {QStringLiteral("General"), QStringLiteral("preferences-system")},
+            {QStringLiteral("deco"), QStringLiteral("preferences-system-windows")},
+            {QStringLiteral("pushbtn"), QStringLiteral("dialog-ok")},
+            {QStringLiteral("toolbtn"), QStringLiteral("configure-toolbars")},
+            {QStringLiteral("input"), QStringLiteral("edit-rename")},
+            {QStringLiteral("tabs"), QStringLiteral("tab-new")},
+            {QStringLiteral("uno"), QStringLiteral("preferences-desktop-theme")},
+            {QStringLiteral("menues"), QStringLiteral("view-list-details")},
+            {QStringLiteral("sliders"), QStringLiteral("audio-volume-high")},
+            {QStringLiteral("scrollers"), QStringLiteral("view-scroll")},
+            {QStringLiteral("views"), QStringLiteral("view-grid")},
+            {QStringLiteral("progressbars"), QStringLiteral("chronometer")},
+            {QStringLiteral("windows"), QStringLiteral("preferences-system-windows")},
+            {QStringLiteral("shadows"), QStringLiteral("preferences-desktop-effects")}
+        };
+        const QIcon icon = QIcon::fromTheme(icons.value(c, QStringLiteral("preferences-system")));
+        return icon.isNull() ? QIcon::fromTheme(QStringLiteral("preferences-system")) : icon;
+    }
+
     static QString prettyCategory(const QString &c)
     {
         static QMap<QString, QString> prettyNames{
@@ -601,8 +646,9 @@ private:
             m_stack->addWidget(page);
 
             QListWidgetItem *it = new QListWidgetItem(
-                QIcon::fromTheme(QStringLiteral("preferences-system")),
+                categoryIcon(cat),
                 prettyCategory(cat));
+            it->setToolTip(categoryDescription(cat));
             it->setData(Qt::UserRole, pageIdx++);
             m_sidebar->addItem(it);
         }
@@ -611,13 +657,38 @@ private:
     QWidget *createPage(const QString &cat)
     {
         QWidget *page = new QWidget;
-        QFormLayout *lay = new QFormLayout(page);
+        QVBoxLayout *pageLay = new QVBoxLayout(page);
+        pageLay->setContentsMargins(18, 18, 18, 18);
+        pageLay->setSpacing(14);
+
+        QLabel *title = new QLabel(prettyCategory(cat), page);
+        QFont titleFont = title->font();
+        titleFont.setPointSize(titleFont.pointSize() + 5);
+        titleFont.setBold(true);
+        title->setFont(titleFont);
+        pageLay->addWidget(title);
+
+        QLabel *summary = new QLabel(categoryDescription(cat), page);
+        summary->setWordWrap(true);
+        QPalette summaryPal = summary->palette();
+        summaryPal.setColor(QPalette::WindowText, summaryPal.color(QPalette::WindowText).darker(130));
+        summary->setPalette(summaryPal);
+        pageLay->addWidget(summary);
+
+        QFrame *rule = new QFrame(page);
+        rule->setFrameShape(QFrame::HLine);
+        rule->setFrameShadow(QFrame::Sunken);
+        pageLay->addWidget(rule);
+
+        QGroupBox *settingsBox = new QGroupBox(tr("Settings"), page);
+        QFormLayout *lay = new QFormLayout(settingsBox);
         lay->setLabelAlignment(Qt::AlignRight);
         lay->setRowWrapPolicy(QFormLayout::WrapLongRows);
         lay->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
         lay->setFormAlignment(Qt::AlignTop | Qt::AlignLeft);
-        lay->setContentsMargins(16, 16, 16, 16);
-        lay->setSpacing(10);
+        lay->setContentsMargins(14, 16, 14, 14);
+        lay->setHorizontalSpacing(18);
+        lay->setVerticalSpacing(10);
 
         for (int i = 0; i < Settings::Keycount; ++i)
         {
@@ -631,14 +702,15 @@ private:
             QWidget *ed = nullptr;
             QString type;
 
-            if (def.type() == QVariant::Bool)
+            const int typeId = def.typeId();
+            if (typeId == QMetaType::Bool)
             {
                 QCheckBox *cb = new QCheckBox;
                 cb->setChecked(cur.toBool());
                 ed = cb;
                 type = QStringLiteral("bool");
             }
-            else if (def.type() == QVariant::Int)
+            else if (typeId == QMetaType::Int)
             {
                 QSpinBox *sp = new QSpinBox;
                 sp->setRange(-9999, 9999);
@@ -646,7 +718,7 @@ private:
                 ed = sp;
                 type = QStringLiteral("int");
             }
-            else if (def.type() == QVariant::Double)
+            else if (typeId == QMetaType::Double || typeId == QMetaType::Float)
             {
                 QDoubleSpinBox *ds = new QDoubleSpinBox;
                 ds->setRange(-1e6, 1e6);
@@ -655,7 +727,7 @@ private:
                 ed = ds;
                 type = QStringLiteral("float");
             }
-            else if (def.type() == QVariant::StringList)
+            else if (typeId == QMetaType::QStringList)
             {
                 QLineEdit *le = new QLineEdit;
                 le->setText(cur.toStringList().join(QStringLiteral(", ")));
@@ -716,6 +788,8 @@ private:
             page->setProperty("pbStyleBox", QVariant::fromValue(static_cast<void *>(pbStyleBox)));
         }
 
+        pageLay->addWidget(settingsBox);
+        pageLay->addStretch();
         return page;
     }
 
@@ -774,7 +848,7 @@ private Q_SLOTS:
         int idx = current->data(Qt::UserRole).toInt();
         m_stack->setCurrentIndex(idx);
         if (m_desc)
-            m_desc->setText(tr("Configure %1 settings.").arg(current->text()));
+            m_desc->setText(current->toolTip());
     }
 
     void showAbout()

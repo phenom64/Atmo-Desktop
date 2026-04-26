@@ -56,6 +56,15 @@ static inline ulong rootWindow()
     return s_root;
 }
 
+static inline bool x11ShadowsAvailable()
+{
+#if HASX11 || HASXCB
+    return AtmoX11::isAvailable() && rootWindow();
+#else
+    return false;
+#endif
+}
+
 Q_DECL_EXPORT ShadowHandler *ShadowHandler::m_instance(0);
 
 ShadowHandler
@@ -69,6 +78,8 @@ ShadowHandler
 void
 ShadowHandler::showShadow(QWidget *w)
 {
+    if (!x11ShadowsAvailable())
+        return;
     if (w->isWindow()
             && w->testAttribute(Qt::WA_WState_Created)
             && w->internalWinId())
@@ -119,7 +130,7 @@ XHandler::XPixmap
 *ShadowHandler::shadows(bool active)
 {
     const ulong root = rootWindow();
-    if (!root)
+    if (!x11ShadowsAvailable() || !root)
         return nullptr;
     static XHandler::Value atom[2] = { XHandler::StoreInActiveShadow, XHandler::StoreActiveShadow };
     XHandler::XPixmap *shadows = XHandler::getXProperty<XHandler::XPixmap>(root, atom[active]);
@@ -165,20 +176,22 @@ XHandler::XPixmap
 void
 ShadowHandler::installShadows(WId w, bool active)
 {
-    if (w && w != rootWindow())
+    if (x11ShadowsAvailable() && w && w != rootWindow())
         XHandler::setXProperty<XHandler::XPixmap>(w, XHandler::_KDE_NET_WM_SHADOW, XHandler::Long, shadows(active), 12);
 }
 
 void
 ShadowHandler::removeShadows(WId w)
 {
-    if (w && w != rootWindow())
+    if (x11ShadowsAvailable() && w && w != rootWindow())
         XHandler::deleteXProperty(w, XHandler::_KDE_NET_WM_SHADOW);
 }
 
 void
 ShadowHandler::manage(QWidget *w)
 {
+    if (!x11ShadowsAvailable())
+        return;
     w->removeEventFilter(instance());
     if (w->isWindow())
         w->installEventFilter(instance());
@@ -195,6 +208,8 @@ ShadowHandler::manage(QWidget *w)
 void
 ShadowHandler::release(QWidget *w)
 {
+    if (!x11ShadowsAvailable())
+        return;
     w->removeEventFilter(instance());
     if (w->isWindow())
         removeShadows(XHandler::windowId(w));
@@ -203,6 +218,8 @@ ShadowHandler::release(QWidget *w)
 void
 ShadowHandler::removeDelete()
 {
+    if (!x11ShadowsAvailable())
+        return;
     for (int a = 0; a < 2; ++a)
     for (int i = 0; i < 8; ++i)
     if (pix[a][i])
